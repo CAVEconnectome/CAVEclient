@@ -28,7 +28,7 @@ class AnnotationClient(object):
         self._server_address = server_address
         self.session = requests.Session()
 
-        self._default_url_mapping = {"server_adress": self.server_address}
+        self._default_url_mapping = {"server_address": self._server_address}
 
     @property
     def dataset_name(self):
@@ -50,6 +50,17 @@ class AnnotationClient(object):
         url = ae["datasets"].format_map(self.default_url_mapping)
         response = self.session.get(url)
         assert(response.status_code == 200)
+        return response.json()
+
+    def get_dataset_schema(self, dataset_name=None):
+        if dataset_name is None:
+            dataset_name = self.dataset_name
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['dataset_name'] = dataset_name
+        url = ae["dataset_schema"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        assert(response.status_code==200)
         return response.json()
 
     # def get_dataset(self, dataset_name=None):
@@ -218,3 +229,35 @@ class AnnotationClient(object):
             responses.append(response.json)
 
         return responses
+
+
+    def lookup_supervoxel(self, xyz, dataset_name=None):
+        if dataset_name is None:
+            dataset_name = self.dataset_name
+        
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['dataset_name'] = dataset_name
+        endpoint_mapping['x'] = int(xyz[0])
+        endpoint_mapping['y'] = int(xyz[1])
+        endpoint_mapping['z'] = int(xyz[2])
+
+        url = ae['lookup_supervoxel'].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        assert(response.status_code == 200)
+        return response.json()
+
+
+    def get_annotations_of_root_id(self, annotation_type, root_id, dataset_name=None):
+        if dataset_name == None:
+            dataset_name = self.dataset_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['dataset_name'] = dataset_name
+        endpoint_mapping['annotation_type'] = annotation_type
+        endpoint_mapping['root_id'] = root_id
+
+        url = ae['existing_segment_annotation'].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        assert(response.status_code == 200)
+        return response.json()
+        
