@@ -52,12 +52,12 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
-    def get_dataset_schema(self, dataset_name=None):
+    def get_annotation_types(self, dataset_name=None):
         if dataset_name is None:
             dataset_name = self.dataset_name
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['dataset_name'] = dataset_name
-        url = ae["dataset_schema"].format_map(endpoint_mapping)
+        url = ae["annotation_types"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
         assert(response.status_code==200)

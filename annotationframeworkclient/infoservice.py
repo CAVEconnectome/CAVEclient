@@ -35,7 +35,7 @@ class InfoServiceClient(object):
             dataset_name = self.dataset_name
         assert(dataset_name is not None)
         
-        if (not use_stored) or (dataset not in self.cached_data):
+        if (not use_stored) or (dataset_name not in self.info_cache):
             endpoint_mapping = self.default_url_mapping
             endpoint_mapping['dataset_name'] = dataset_name
             url = ie['dataset_info'].format_map(endpoint_mapping)
@@ -60,10 +60,10 @@ class InfoServiceClient(object):
                                  dataset_name=dataset_name,
                                  use_stored=use_stored)
 
-    def annotation_dataset_name(self, dataset_name=None, use_stored=True):
-        return self.get_property('annotation_dataset_name',
-                                 dataset_name=dataset_name,
-                                 use_stored=use_stored)
+    # def annotation_dataset_name(self, dataset_name=None, use_stored=True):
+    #     return self.get_property('annotation_dataset_name',
+    #                              dataset_name=dataset_name,
+    #                              use_stored=use_stored)
 
     def flat_segmentation_source(self, dataset_name=None, use_stored=True):
         return self.get_property('flat_segmentation_source',

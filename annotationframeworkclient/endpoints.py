@@ -4,7 +4,7 @@
 
 annotationengine_endpoints = {
     "datasets": "{server_address}/annotation/datasets",
-    "dataset_schema": "{server_address}/annotation/dataset/{dataset_name}",
+    "annotation_types": "{server_address}/annotation/dataset/{dataset_name}",
     "existing_annotation": "{server_address}/annotation/dataset/{dataset_name}/"
                            "{annotation_type}/{annotation_id}",
     "new_annotation": "{server_address}/annotation/dataset/{dataset_name}/"
