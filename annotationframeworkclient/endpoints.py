@@ -11,7 +11,7 @@ annotationengine_endpoints = {
                       "{annotation_type}",
     "supervoxel": "{server_address}/voxel/dataset/{dataset_name}/{x}_{y}_{z}",
     "existing_segment_annotation": "{server_address}/chunked_annotation/dataset/{dataset_name}/"
-                                   "rootid/{object_id}/{annotation_type}",
+                                   "rootid/{root_id}/{annotation_type}",
 }
 
 infoservice_endpoints = {

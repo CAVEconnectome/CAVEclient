@@ -247,17 +247,17 @@ class AnnotationClient(object):
         return response.json()
 
 
-    def get_annotations_of_root_id(self, annotation_type, root_id, dataset_name=None):
-        if dataset_name == None:
-            dataset_name = self.dataset_name
+    # def get_annotations_of_root_id(self, annotation_type, root_id, dataset_name=None):
+    #     if dataset_name == None:
+    #         dataset_name = self.dataset_name
 
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['dataset_name'] = dataset_name
-        endpoint_mapping['annotation_type'] = annotation_type
-        endpoint_mapping['root_id'] = root_id
+    #     endpoint_mapping = self.default_url_mapping
+    #     endpoint_mapping['dataset_name'] = dataset_name
+    #     endpoint_mapping['annotation_type'] = annotation_type
+    #     endpoint_mapping['root_id'] = root_id
 
-        url = ae['existing_segment_annotation'].format_map(endpoint_mapping)
-        response = self.session.get(url)
-        assert(response.status_code == 200)
-        return response.json()
+    #     url = ae['existing_segment_annotation'].format_map(endpoint_mapping)
+    #     response = self.session.get(url)
+    #     assert(response.status_code == 200)
+    #     return response.json()
         
