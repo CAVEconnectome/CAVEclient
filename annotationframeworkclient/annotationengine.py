@@ -5,10 +5,12 @@ import cloudvolume
 import json
 import time
 #
-# from emannotationschemas.utils import get_flattened_bsp_keys_from_schema
-# from emannotationschemas import get_schema
+from emannotationschemas.utils import get_flattened_bsp_keys_from_schema
+from emannotationschemas import get_schema
 
 from annotationframeworkclient.endpoints import annotationengine_endpoints as ae
+from annotationframeworkclient import endpoints
+from annotationframeworkclient import infoservice
 
 
 class AnnotationClient(object):
@@ -22,13 +24,16 @@ class AnnotationClient(object):
         """
         if server_address is None:
             server_address = os.environ.get('ANNOTATION_ENGINE_ENDPOINT', None)
-        assert(server_address is not None)
 
+        if server_address is None:
+            self._server_address = endpoints.default_server_address
+        else:
+            self._server_address = server_address
         self._dataset_name = dataset_name
-        self._server_address = server_address
         self.session = requests.Session()
 
         self._default_url_mapping = {"server_address": self._server_address}
+        self._infoserviceclient = None
 
     @property
     def dataset_name(self):
@@ -41,6 +46,13 @@ class AnnotationClient(object):
     @property
     def default_url_mapping(self):
         return self._default_url_mapping.copy()
+
+    @property
+    def infoserviceclient(self):
+        if self._infoserviceclient is None:
+            self._infoserviceclient = infoservice.InfoServiceClient(server_address=self.server_address, dataset_name=self.dataset_name)
+
+        return self._infoserviceclient
 
     def get_datasets(self):
         """ Returns existing datasets
@@ -63,17 +75,16 @@ class AnnotationClient(object):
         assert(response.status_code==200)
         return response.json()
 
-    # def get_dataset(self, dataset_name=None):
-    #     """ Returns information about the dataset
-    #
-    #     :return: dict
-    #     """
-    #     if dataset_name is None:
-    #         dataset_name = self.dataset_name
-    #     url = "{}/dataset/{}".format(self.server_address, dataset_name)
-    #     response = self.session.get(url, verify=False)
-    #     assert(response.status_code == 200)
-    #     return response.json()
+    def get_dataset_info(self, dataset_name=None):
+        """ Returns information about a dataset
+
+        Calls get_dataset_info from informationserviceclient
+
+        :param dataset_name: str
+        :return: dict
+        """
+
+        return self.infoserviceclient.get_dataset_info(dataset_name=dataset_name)
 
     def get_annotation(self, annotation_type, annotation_id, dataset_name=None):
         """ Returns information about one specific annotation
@@ -176,11 +187,10 @@ class AnnotationClient(object):
         :param data_df: pandas DataFrame
         :return:
         """
-        raise NotImplementedError()
-
         if dataset_name is None:
             dataset_name = self.dataset_name
-        dataset_info = self.get_dataset(dataset_name)
+
+        dataset_info = self.get_dataset_info(dataset_name)
         cv = cloudvolume.CloudVolume(dataset_info["pychunkgraph_segmentation_source"])
         chunk_size = np.array(cv.info["scales"][0]["chunk_sizes"][0]) * 8
         bounds = np.array(cv.bounds.to_list()).reshape(2, 3)
@@ -214,6 +224,8 @@ class AnnotationClient(object):
 
         print("Number of blocks: %d" % n_blocks)
         time_start = time.time()
+
+        raise()
 
         responses = []
         for i_block in range(0, len(data_df), block_size):

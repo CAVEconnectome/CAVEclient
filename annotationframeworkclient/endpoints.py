@@ -1,6 +1,6 @@
 
 
-
+default_server_address = "https://www.dynamicannotationframework.com"
 
 annotationengine_endpoints = {
     "datasets": "{server_address}/annotation/datasets",
@@ -15,6 +15,10 @@ annotationengine_endpoints = {
 }
 
 infoservice_endpoints = {
-    "datasets": "{server_address}/api/datasets",
-    "dataset_info": "{server_address}/api/dataset/{dataset_name}",
+    "datasets": "{server_address}/info/api/datasets",
+    "dataset_info": "{server_address}/info/api/dataset/{dataset_name}",
+}
+
+schema_endpoints = {
+    "schema"
 }
