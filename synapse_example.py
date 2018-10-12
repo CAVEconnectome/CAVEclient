@@ -23,6 +23,8 @@ def load_synapses(path=HOME + "/Downloads/pinky100_final.df"):
     df['ctr_pt.position'] = list(np.array(df[['centroid_x', 'centroid_y', 'centroid_z']], dtype=np.int))
     df['post_pt.position'] = list(np.array(df[['postsyn_x', 'postsyn_y', 'postsyn_z']], dtype=np.int))
 
+    df = df[['pre_pt.position', 'ctr_pt.position', 'post_pt.position', 'size']]
+
     return df
 
 

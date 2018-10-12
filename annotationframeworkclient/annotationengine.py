@@ -12,6 +12,8 @@ from annotationframeworkclient.endpoints import annotationengine_endpoints as ae
 from annotationframeworkclient import endpoints
 from annotationframeworkclient import infoservice
 
+from multiwrapper import multiprocessing_utils as mu
+
 
 class AnnotationClient(object):
     def __init__(self, server_address=None, dataset_name=None):
@@ -178,8 +180,44 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
+    def _bulk_import_df_thread(self, args):
+        """ bulk_import_df helper """
+
+        data_df, url, block_size, n_retries = args
+
+        n_blocks = int(np.ceil(len(data_df) / block_size))
+
+        print("Number of blocks: %d" % n_blocks)
+
+        time_start = time.time()
+        responses = []
+        for i_block in range(0, len(data_df), block_size):
+            if i_block > 0:
+                dt = time.time() - time_start
+                eta = dt / i_block * len(data_df) - dt
+                print("%d / %d - dt = %.2fs - eta = %.2fs" %
+                      (i_block, len(data_df), dt, eta))
+
+            data_block = data_df[i_block: i_block + block_size].to_json()
+
+            response = 0
+
+            for i_try in range(n_retries):
+                response = self.session.post(url, json=data_block, timeout=300)
+
+                print(i_try, response.status_code)
+
+                if response.status_code == 200:
+                    break
+
+            responses.append(response.json)
+
+        return responses
+
+
     def bulk_import_df(self, annotation_type, data_df,
-                       block_size=10000, dataset_name=None):
+                       block_size=50, dataset_name=None,
+                       n_threads=20, n_retries=10):
         """ Imports all annotations from a single dataframe in one go
 
         :param dataset_name: str
@@ -212,33 +250,29 @@ class AnnotationClient(object):
         bspf_coords = (bspf_coords / chunk_size).astype(np.int)
 
         bspf_coords = bspf_coords[:, 0]
-        ind = np.lexsort(
-            (bspf_coords[:, 0], bspf_coords[:, 1], bspf_coords[:, 2]))
+        ind = np.lexsort((bspf_coords[:, 0], bspf_coords[:, 1], bspf_coords[:, 2]))
+
+        bspf_coords = None
 
         data_df = data_df.reindex(ind)
+
+        data_df_chunks = np.array_split(data_df, n_threads*3)
+        data_df = None
 
         url = "{}/annotation/dataset/{}/{}?bulk=true".format(self.server_address,
                                                              dataset_name,
                                                              annotation_type)
-        n_blocks = int(np.ceil(len(data_df) / block_size))
+        multi_args = []
+        for data_df_chunk in data_df_chunks:
+            multi_args.append([data_df_chunk, url, block_size, n_retries])
 
-        print("Number of blocks: %d" % n_blocks)
-        time_start = time.time()
-
-        raise()
+        results = mu.multithread_func(self._bulk_import_df_thread, multi_args,
+                                       n_threads=n_threads)
 
         responses = []
-        for i_block in range(0, len(data_df), block_size):
-            if i_block > 0:
-                dt = time.time() - time_start
-                eta = dt / i_block * len(data_df) - dt
-                print("%d / %d - dt = %.2fs - eta = %.2fs" %
-                      (i_block, len(data_df), dt, eta))
+        for result in results:
+            responses.extend(result)
 
-            data_block = data_df[i_block: i_block + block_size].to_json()
-            response = self.session.post(url, json=data_block, verify=False)
-            assert(response.status_code == 200)
-            responses.append(response.json)
 
         return responses
 
