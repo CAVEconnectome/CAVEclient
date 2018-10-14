@@ -8,8 +8,11 @@ from annotationframeworkclient import annotationengine as ae
 HOME = os.path.expanduser("~")
 
 
-def load_synapses(path=HOME + "/Downloads/pinky100_final.df"):
-    """ Cheap test scenario using real synapses """
+def load_synapses(path=HOME + "/Downloads/pinky100_final.df",
+                  scaling=(1, 1, 1)):
+    """ Test scenario using real synapses """
+
+    scaling = np.array(list(scaling))
 
     df = pd.read_csv(path)
 
@@ -19,9 +22,9 @@ def load_synapses(path=HOME + "/Downloads/pinky100_final.df"):
 
     df = df[mask]
 
-    df['pre_pt.position'] = list(np.array(df[['presyn_x', 'presyn_y', 'presyn_z']], dtype=np.int))
-    df['ctr_pt.position'] = list(np.array(df[['centroid_x', 'centroid_y', 'centroid_z']], dtype=np.int))
-    df['post_pt.position'] = list(np.array(df[['postsyn_x', 'postsyn_y', 'postsyn_z']], dtype=np.int))
+    df['pre_pt.position'] = list((np.array(df[['presyn_x', 'presyn_y', 'presyn_z']]) / scaling).astype(np.int))
+    df['ctr_pt.position'] = list((np.array(df[['centroid_x', 'centroid_y', 'centroid_z']]) / scaling).astype(np.int))
+    df['post_pt.position'] = list((np.array(df[['postsyn_x', 'postsyn_y', 'postsyn_z']]) / scaling).astype(np.int))
 
     df = df[['pre_pt.position', 'ctr_pt.position', 'post_pt.position', 'size']]
 

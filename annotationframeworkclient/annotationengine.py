@@ -183,27 +183,26 @@ class AnnotationClient(object):
     def _bulk_import_df_thread(self, args):
         """ bulk_import_df helper """
 
-        data_df, url, block_size, n_retries = args
+        data_df_cs, url, n_retries = args
 
-        n_blocks = int(np.ceil(len(data_df) / block_size))
-
-        print("Number of blocks: %d" % n_blocks)
+        print("Number of blocks: %d" % (len(data_df_cs)))
 
         time_start = time.time()
         responses = []
-        for i_block in range(0, len(data_df), block_size):
+        for i_block, data_df in enumerate(data_df_cs):
             if i_block > 0:
                 dt = time.time() - time_start
-                eta = dt / i_block * len(data_df) - dt
-                print("%d / %d - dt = %.2fs - eta = %.2fs" %
-                      (i_block, len(data_df), dt, eta))
+                eta = dt / i_block * len(data_df_cs) - dt
+                eta /= 3600
+                print("%d / %d - dt = %.2fs - eta = %.2fh" %
+                      (i_block, len(data_df_cs), dt, eta))
 
-            data_block = data_df[i_block: i_block + block_size].to_json()
+            data_df_json = data_df.to_json()
 
             response = 0
 
             for i_try in range(n_retries):
-                response = self.session.post(url, json=data_block, timeout=300)
+                response = self.session.post(url, json=data_df_json, timeout=300)
 
                 print(i_try, response.status_code)
 
@@ -216,8 +215,8 @@ class AnnotationClient(object):
 
 
     def bulk_import_df(self, annotation_type, data_df,
-                       block_size=50, dataset_name=None,
-                       n_threads=20, n_retries=10):
+                       min_block_size=40, dataset_name=None,
+                       n_threads=16, n_retries=100):
         """ Imports all annotations from a single dataframe in one go
 
         :param dataset_name: str
@@ -230,7 +229,7 @@ class AnnotationClient(object):
 
         dataset_info = self.get_dataset_info(dataset_name)
         cv = cloudvolume.CloudVolume(dataset_info["pychunkgraph_segmentation_source"])
-        chunk_size = np.array(cv.info["scales"][0]["chunk_sizes"][0]) * 8
+        chunk_size = np.array(cv.info["scales"][0]["chunk_sizes"][0]) * np.array([1, 1, 4])
         bounds = np.array(cv.bounds.to_list()).reshape(2, 3)
 
         Schema = get_schema(annotation_type)
@@ -249,22 +248,62 @@ class AnnotationClient(object):
         bspf_coords -= bounds[0]
         bspf_coords = (bspf_coords / chunk_size).astype(np.int)
 
-        bspf_coords = bspf_coords[:, 0]
-        ind = np.lexsort((bspf_coords[:, 0], bspf_coords[:, 1], bspf_coords[:, 2]))
+        if len(rel_column_keys) > 1:
+            f_shape = np.array(list(bspf_coords.shape))[[0, 2]]
+            bspf_coords_f = np.zeros(f_shape, dtype=np.int)
+
+            selector = np.argmin(bspf_coords, axis=1)[:, 2]
+
+            for i_k in range(len(rel_column_keys)):
+                m = selector == i_k
+                bspf_coords_f[m] = bspf_coords[m][:, i_k]
+        else:
+            bspf_coords_f = bspf_coords[:, 0]
 
         bspf_coords = None
 
-        data_df = data_df.reindex(ind)
+        ind = np.lexsort((bspf_coords_f[:, 0], bspf_coords_f[:, 1], bspf_coords_f[:, 2]))
 
-        data_df_chunks = np.array_split(data_df, n_threads*3)
-        data_df = None
+        # bspf_coords = None
+
+        data_df = data_df.reindex(ind)
+        bspf_coords_f = bspf_coords_f[ind]
+
+        data_df_chunks = []
+        range_start = 0
+        range_end = 1
+
+        for i_row in range(1, len(data_df)):
+            if np.sum(bspf_coords_f[i_row] - bspf_coords_f[i_row - 1]) == 0:
+                range_end += 1
+            elif (range_end - range_start) < min_block_size:
+                range_end += 1
+            else:
+                data_df_chunks.append(data_df[range_start: range_end])
+                range_start = i_row
+                range_end = i_row + 1
+
+        data_df_chunks.append(data_df[range_start: range_end])
 
         url = "{}/annotation/dataset/{}/{}?bulk=true".format(self.server_address,
                                                              dataset_name,
                                                              annotation_type)
+
+        print(url)
+
         multi_args = []
+        arg = []
         for data_df_chunk in data_df_chunks:
-            multi_args.append([data_df_chunk, url, block_size, n_retries])
+            arg.append(data_df_chunk)
+
+            if len(arg) > 1000:
+                multi_args.append([arg, url, n_retries])
+                arg = []
+
+        if len(arg) > 0:
+            multi_args.append([arg, url, n_retries])
+
+        print(len(multi_args))
 
         results = mu.multithread_func(self._bulk_import_df_thread, multi_args,
                                        n_threads=n_threads)
@@ -276,6 +315,7 @@ class AnnotationClient(object):
 
         return responses
 
+        # return data_df_chunks
 
     def lookup_supervoxel(self, xyz, dataset_name=None):
         if dataset_name is None:
