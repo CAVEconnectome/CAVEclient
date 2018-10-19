@@ -34,7 +34,7 @@ class InfoServiceClient(object):
         self.session = requests.Session()
         self.info_cache = dict()
 
-        self._default_url_mapping = {"server_address": self._server_address}
+        self._default_url_mapping = {"i_server_address": self._server_address}
 
     @property
     def dataset_name(self):
@@ -43,6 +43,11 @@ class InfoServiceClient(object):
     @property
     def server_address(self):
         return self._server_address
+
+    @server_address.setter
+    def server_address(self, value):
+        self._server_address = value
+        self._default_url_mapping['i_server_address'] = value
 
     @property
     def default_url_mapping(self):
