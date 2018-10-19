@@ -1,6 +1,7 @@
 import requests
 import re
-from .endpoints import infoservice_endpoints as ie
+from annotationframeworkclient.endpoints import infoservice_endpoints as ie
+from annotationframeworkclient import endpoints
 
 def format_neuroglancer(objurl):
     qry = re.search('^gs:\/\/', objurl)
@@ -23,8 +24,12 @@ output_map = {'raw': format_raw,
               }
 
 class InfoServiceClient(object):
-    def __init__(self, server_address, dataset_name=None):
-        self._server_address = server_address
+    def __init__(self, server_address=None, dataset_name=None):
+        if server_address is None:
+            self._server_address = endpoints.default_server_address
+        else:
+            self._server_address = server_address
+
         self._dataset_name = dataset_name
         self.session = requests.Session()
         self.info_cache = dict()
@@ -46,7 +51,7 @@ class InfoServiceClient(object):
 
     @property
     def default_url_mapping(self):
-        return self._default_url_mapping
+        return self._default_url_mapping.copy()
 
     def get_datasets(self):
         endpoint_mapping = self.default_url_mapping
@@ -72,7 +77,6 @@ class InfoServiceClient(object):
             self.info_cache[dataset_name] = response.json()
         
         return self.info_cache.get(dataset_name, None)
-
 
     def get_property(self, info_property, dataset_name=None, use_stored=True, format_for='raw'):
         if dataset_name is None:
