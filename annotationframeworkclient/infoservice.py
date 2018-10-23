@@ -1,19 +1,27 @@
 import requests
-import re
+from urllib.parse import urlparse
 from annotationframeworkclient.endpoints import infoservice_endpoints as ie
 from annotationframeworkclient import endpoints
 
 def format_neuroglancer(objurl):
-    qry = re.search('^gs:\/\/', objurl)
-    if qry is not None:
-        objurl = 'precomputed://{}'.format(objurl)
-    return objurl
+    qry = urlparse(objurl)
+    if qry.scheme == 'gs':
+        objurl_out='precomputed://{}'.format(objurl)
+    elif qry.scheme == 'http' or qry.scheme=='https':
+        objurl_out='precomputed://gs://{}'.format(qry.path[1:])
+    else:
+        objurl_out=None
+    return objurl_out
 
 def format_cloudvolume(objurl):
-    qry = re.search('^gs:\/\/', objurl)
-    if qry is not None:
-        objurl = 'https://storage.googleapis.com/{}'.format(objurl[5:])
-    return objurl
+    qry = urlparse(objurl)
+    if qry.scheme == 'gs':
+        objurl_out='https://storage.googleapis.com/{}{}'.format(qry.netloc, qry.path)
+    elif qry.netloc == 'storage.googleapis.com':
+        objurl_out=objurl
+    else:
+        objurl_out
+    return objurl_out
 
 def format_raw(objurl):
     return objurl
