@@ -30,6 +30,15 @@ chunkedgraph_endpoints = {
     # "handle_subgraph": "{cg_server_address}/segmentation/1.0/segment/{root_id}/subgraph",
 }
 
+
 schema_endpoints = {
-    "schema"
+    "schema" : "{emas_server_address}/schema/type",
+    "schema_definition": "{emas_server_address}/schema/type/{schema_type}",
+}
+
+
+jsonservice_endpoints = {
+    "upload_state" : "{json_server_address}/nglstate/post",
+    "get_state": "{json_server_address}/nglstate/{state_id}",
+    'get_state_raw': "{json_server_address}/nglstate/raw/{state_id}",
 }

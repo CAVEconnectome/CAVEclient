@@ -17,7 +17,7 @@ from multiwrapper import multiprocessing_utils as mu
 
 
 class AnnotationClient(object):
-    def __init__(self, server_address=None, dataset_name=None, cg_server_address=None, flat_segmentation_source=None, cg_segmentation_source=None):
+    def __init__(self, server_address=None, dataset_name=None, cg_server_address=None):
         """
         :param server_address: str or None
             server url
@@ -31,32 +31,12 @@ class AnnotationClient(object):
             self._server_address = server_address
         self._dataset_name = dataset_name
 
-        self._flat_segmentation_source = flat_segmentation_source
-        self._cg_segmentation_source = cg_segmentation_source
-        self._cg_server_address = cg_server_address 
-
         self._infoserviceclient = None
+        self._cg_server_address = cg_server_address 
 
         self.session = requests.Session()
         self._default_url_mapping = {"ae_server_address": self._server_address,
                                      'cg_server_address': self._cg_server_address}
-
-
-    @classmethod
-    def from_info_service(cls, info_server_address, dataset_name):
-        info_client = InfoServiceClient(server_address=info_server_address, dataset_name=dataset_name)
-        ae_server_address = info_client.annotation_endpoint()
-        cg_server_address = info_client.pychunkgraph_endpoint()
-        flat_segmentation_source = info_client.flat_segmentation_source()
-        cg_segmentation_source = info_client.pychunkgraph_segmentation_source()
-        new_ac = cls(ae_server_address=ae_server_address,
-                     dataset_name=dataset_name,
-                     cg_server_address=cg_server_address,
-                     flat_segmentation_source=flat_segmentation_source,
-                     cg_segmentation_source=cg_segmentation_source)
-        new_ac.infoservice = info_client
-        return new_ac
-
         
     @property
     def dataset_name(self):
@@ -378,11 +358,14 @@ class AnnotationClient(object):
         return response.json()
 
 
-    def get_root_id(self, supervoxel_id):
-        
+    def get_root_id(self, supervoxel_id, dataset_name=None):
+        if dataset_name is None:
+            dataset_name = self.dataset_name
+
         endpoint_mapping = self.default_url_mapping
         if endpoint_mapping['cg_server_address'] is None:
-            raise Exception('No chunked graph server specified')
+            self.cg_server_address = self.infoserviceclient.pychunkgraph_endpoint(dataset_name=dataset_name)
+
         url = cg['handle_root'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[supervoxel_id])
         assert(response.status_code == 200)
