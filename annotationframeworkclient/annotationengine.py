@@ -67,13 +67,11 @@ class AnnotationClient(object):
         self._cg_server_address = value
         self._default_url_mapping['cg_server_address'] = value
 
-
     def infoserviceclient(self):
         if self._infoserviceclient is None:
             self._infoserviceclient = infoservice.InfoServiceClient(server_address=self.server_address, dataset_name=self.dataset_name)
 
         return self._infoserviceclient
-
 
     def get_datasets(self):
         """ Returns existing datasets
@@ -85,18 +83,42 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
+    def get_tables(self, dataset_name=None):
+        """ Reads table infos
 
-    def get_annotation_types(self, dataset_name=None):
+        :param dataset_name: str
+        :return: dict
+        """
         if dataset_name is None:
             dataset_name = self.dataset_name
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['dataset_name'] = dataset_name
-        url = ae["annotation_types"].format_map(endpoint_mapping)
+        url = ae["table_names"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
         assert(response.status_code==200)
         return response.json()
 
+    def create_table(self, table_name, schema_name, dataset_name=None):
+        """ Creates a table
+
+        :param table_name: str
+        :param schema_name: str
+        :param dataset_name: str
+        :return: response
+        """
+        if dataset_name is None:
+            dataset_name = self.dataset_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['dataset_name'] = dataset_name
+        url = ae["table_names"].format_map(endpoint_mapping)
+        data = {'schema_name': schema_name,
+                'table_name': table_name}
+
+        response = requests.post(url, json=data)
+        assert(response.status_code==200)
+        return response.json()
 
     def get_dataset_info(self, dataset_name=None):
         """ Returns information about a dataset
@@ -109,12 +131,11 @@ class AnnotationClient(object):
 
         return self.infoserviceclient.get_dataset_info(dataset_name=dataset_name)
 
-
-    def get_annotation(self, annotation_type, annotation_id, dataset_name=None):
+    def get_annotation(self, table_name, annotation_id, dataset_name=None):
         """ Returns information about one specific annotation
 
         :param dataset_name: str
-        :param annotation_type: str
+        :param table_name: str
         :param annotation_id: np.uint64
         :return dict
         """
@@ -123,7 +144,7 @@ class AnnotationClient(object):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["annotation_type"] = annotation_type
+        endpoint_mapping["table_name"] = table_name
         endpoint_mapping["annotation_id"] = annotation_id
 
         url = ae["existing_annotation"].format_map(endpoint_mapping)
@@ -131,12 +152,11 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
-
-    def post_annotation(self, annotation_type, data, dataset_name=None):
+    def post_annotation(self, table_name, data, dataset_name=None):
         """ Post an annotation to the AnnotationEngine
 
         :param dataset_name: str
-        :param annotation_type: str
+        :param table_name: str
         :param data: dict
         :return dict
         """
@@ -147,7 +167,7 @@ class AnnotationClient(object):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["annotation_type"] = annotation_type
+        endpoint_mapping["table_name"] = table_name
 
         url = ae["new_annotation"].format_map(endpoint_mapping)
 
@@ -155,12 +175,11 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
-
-    def update_annotation(self, annotation_type, annotation_id, data,
+    def update_annotation(self, table_name, annotation_id, data,
                           dataset_name=None):
         """ Updates an existing annotation
 
-        :param annotation_type: str
+        :param table_name: str
         :param annotation_id: np.uint64
         :param data: dict
         :param dataset_name: str
@@ -171,7 +190,7 @@ class AnnotationClient(object):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["annotation_type"] = annotation_type
+        endpoint_mapping["table_name"] = table_name
         endpoint_mapping["annotation_id"] = annotation_id
 
         url = ae["existing_annotation"].format_map(endpoint_mapping)
@@ -180,13 +199,12 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
-
-    def delete_annotation(self, annotation_type, annotation_id,
+    def delete_annotation(self, table_name, annotation_id,
                           dataset_name=None):
         """ Delete an existing annotation
 
         :param dataset_name: str
-        :param annotation_type: str
+        :param table_name: str
         :param annotation_id: int
         :return dict
         """
@@ -195,7 +213,7 @@ class AnnotationClient(object):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["annotation_type"] = annotation_type
+        endpoint_mapping["table_name"] = table_name
         endpoint_mapping["annotation_id"] = annotation_id
 
         url = ae["existing_annotation"].format_map(endpoint_mapping)
@@ -203,7 +221,6 @@ class AnnotationClient(object):
         response = self.session.delete(url)
         assert(response.status_code == 200)
         return response.json()
-
 
     def _bulk_import_df_thread(self, args):
         """ bulk_import_df helper """
@@ -238,14 +255,13 @@ class AnnotationClient(object):
 
         return responses
 
-
-    def bulk_import_df(self, annotation_type, data_df,
+    def bulk_import_df(self, table_name, data_df,
                        min_block_size=40, dataset_name=None,
                        n_threads=16, n_retries=100):
         """ Imports all annotations from a single dataframe in one go
 
         :param dataset_name: str
-        :param annotation_type: str
+        :param table_name: str
         :param data_df: pandas DataFrame
         :return:
         """
@@ -257,7 +273,7 @@ class AnnotationClient(object):
         chunk_size = np.array(cv.info["scales"][0]["chunk_sizes"][0]) * np.array([1, 1, 4])
         bounds = np.array(cv.bounds.to_list()).reshape(2, 3)
 
-        Schema = get_schema(annotation_type)
+        Schema = get_schema(table_name)
         schema = Schema()
 
         rel_column_keys = get_flattened_bsp_keys_from_schema(schema)
@@ -312,7 +328,7 @@ class AnnotationClient(object):
 
         url = "{}/annotation/dataset/{}/{}?bulk=true".format(self.server_address,
                                                              dataset_name,
-                                                             annotation_type)
+                                                             table_name)
 
         print(url)
 
@@ -357,7 +373,6 @@ class AnnotationClient(object):
         assert(response.status_code == 200)
         return response.json()
 
-
     def get_root_id(self, supervoxel_id, dataset_name=None):
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -370,7 +385,6 @@ class AnnotationClient(object):
         response = self.session.post(url, json=[supervoxel_id])
         assert(response.status_code == 200)
         return np.squeeze(np.frombuffer(response.content, dtype=np.uint64)).tolist()
-
 
     def get_root_id_under_point(self, xyz, dataset_name=None):
         if dataset_name is None:

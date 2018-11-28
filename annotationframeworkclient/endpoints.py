@@ -4,7 +4,7 @@ default_server_address = "https://www.dynamicannotationframework.com"
 
 annotationengine_endpoints = {
     "datasets": "{ae_server_address}/annotation/datasets",
-    "annotation_types": "{ae_server_address}/annotation/dataset/{dataset_name}",
+    "table_names": "{ae_server_address}/annotation/dataset/{dataset_name}",
     "existing_annotation": "{ae_server_address}/annotation/dataset/{dataset_name}/"
                            "{annotation_type}/{annotation_id}",
     "new_annotation": "{ae_server_address}/annotation/dataset/{dataset_name}/"
