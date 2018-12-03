@@ -6,12 +6,12 @@ annotationengine_endpoints = {
     "datasets": "{ae_server_address}/annotation/datasets",
     "table_names": "{ae_server_address}/annotation/dataset/{dataset_name}",
     "existing_annotation": "{ae_server_address}/annotation/dataset/{dataset_name}/"
-                           "{annotation_type}/{annotation_id}",
+                           "{table_name}/{annotation_id}",
     "new_annotation": "{ae_server_address}/annotation/dataset/{dataset_name}/"
-                      "{annotation_type}",
+                      "{table_name}",
     "supervoxel": "{ae_server_address}/voxel/dataset/{dataset_name}/{x}_{y}_{z}",
     "existing_segment_annotation": "{server_address}/chunked_annotation/dataset/{dataset_name}/"
-                                   "rootid/{root_id}/{annotation_type}",
+                                   "rootid/{root_id}/{table_name}",
 }
 
 infoservice_endpoints = {

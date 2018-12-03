@@ -42,7 +42,6 @@ class AnnotationClient(object):
     def dataset_name(self):
         return self._dataset_name
 
-
     @property
     def server_address(self):
         return self._server_address
