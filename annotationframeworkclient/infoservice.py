@@ -105,6 +105,13 @@ class InfoServiceClient(object):
     #                              dataset_name=dataset_name,
     #                              use_stored=use_stored)
 
+    def pychunkedgraph_viewer_source(self, dataset_name=None, use_stored=True, format_for='raw'):
+        return self.get_property('pychunkedgraph_viewer_source',
+                                 dataset_name=dataset_name,
+                                 use_stored=use_stored,
+                                 format_for=format_for)
+
+
     def flat_segmentation_source(self, dataset_name=None, use_stored=True, format_for='raw'):
         return self.get_property('flat_segmentation_source',
                                  dataset_name=dataset_name,
