@@ -43,3 +43,11 @@ class JSONService(object):
         assert(response.status_code == 200)
         response_re = re.search('.*\/(\d+)', str(response.content))
         return int(response_re.groups()[0])
+
+    def build_neuroglancer_url(self, state_id, ngl_url):
+        url_mapping = self.default_url_mapping
+        url_mapping['state_id'] = state_id
+        get_state_url = jse['get_state'].format_map(url_mapping)
+        url = ngl_url + '/?json_url=' + get_state_url
+        return url
+
