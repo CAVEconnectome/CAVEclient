@@ -11,7 +11,6 @@ class ChunkedGraphClient(object):
             self._server_address = endpoints.default_server_address
         else:
             self._server_address = server_address
-        print(self._server_address)
         if table_name is None:
             info_client = infoservice.InfoServiceClient(server_address=self._server_address)
             pcg_vs = info_client.pychunkedgraph_viewer_source(dataset_name=dataset_name)
@@ -37,9 +36,7 @@ class ChunkedGraphClient(object):
     def get_leaves(self, root_id):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
-        print(cg['leaves_from_root'])
         url = cg['leaves_from_root'].format_map(endpoint_mapping)
-        print(url)
         response = self.session.post(url, json=[root_id])
         assert(response.status_code == 200)
         return np.squeeze(np.frombuffer(response.content, dtype=np.uint64)).tolist()
