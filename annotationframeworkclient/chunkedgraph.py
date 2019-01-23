@@ -26,17 +26,34 @@ class ChunkedGraphClient(object):
     def default_url_mapping(self):
         return self._default_url_mapping.copy()
 
-    def get_root_id(self, supervoxel_id):
+    def get_root_id(self, supervoxel_id, bounds=None):
         endpoint_mapping = self.default_url_mapping
         url = cg['handle_root'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[supervoxel_id])
         assert(response.status_code == 200)
-        return np.squeeze(np.frombuffer(response.content, dtype=np.uint64)).tolist()
-    
-    def get_leaves(self, root_id):
+        return np.frombuffer(response.content, dtype=np.uint64)
+
+    def get_leaves(self, root_id, bounds=None):
+        """
+        get the supervoxels for this root_id
+
+        params
+        ------
+        root_id: uint64 root id to find supervoxels for
+        bounds: 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
+        """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
         url = cg['leaves_from_root'].format_map(endpoint_mapping)
-        response = self.session.post(url, json=[root_id])
+        query_d = {}
+        if bounds is not None:
+            bounds_str=[]
+            for b in bounds:
+                bounds_str.append("-".join(str(b2) for b2 in b))
+            bounds_str = "_".join(bounds_str)
+            query_d['bounds'] = bounds_str
+
+        response = self.session.post(url, json=[root_id], params=query_d)
+     
         assert(response.status_code == 200)
-        return np.squeeze(np.frombuffer(response.content, dtype=np.uint64)).tolist()
+        return np.frombuffer(response.content, dtype=np.uint64)
