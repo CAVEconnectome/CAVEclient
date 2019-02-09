@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from annotationframeworkclient.endpoints import infoservice_endpoints as ie
 from annotationframeworkclient import endpoints
 
-def format_neuroglancer(objurl):
+def format_neuroglancer_precomputed(objurl):
     qry = urlparse(objurl)
     if qry.scheme == 'gs':
         objurl_out='precomputed://{}'.format(objurl)
@@ -12,6 +12,9 @@ def format_neuroglancer(objurl):
     else:
         objurl_out=None
     return objurl_out
+
+def format_neuroglancer_graphene(objurl):
+    return 'graphene://' + objurl
 
 def format_cloudvolume(objurl):
     qry = urlparse(objurl)
@@ -28,7 +31,8 @@ def format_raw(objurl):
 
 output_map = {'raw': format_raw,
               'cloudvolume': format_cloudvolume,
-              'neuroglancer': format_neuroglancer,
+              'neuroglancer_flat': format_neuroglancer_precomputed,
+              'neuroglancer_pcg': format_neuroglancer_graphene,
               }
 
 class InfoServiceClient(object):
@@ -106,6 +110,8 @@ class InfoServiceClient(object):
     #                              use_stored=use_stored)
 
     def pychunkedgraph_viewer_source(self, dataset_name=None, use_stored=True, format_for='raw'):
+        if format_for == 'neuroglancer':
+            format_for = 'neuroglancer_pcg'
         return self.get_property('pychunkedgraph_viewer_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
@@ -113,12 +119,16 @@ class InfoServiceClient(object):
 
 
     def flat_segmentation_source(self, dataset_name=None, use_stored=True, format_for='raw'):
+        if format_for == 'neuroglancer':
+            format_for = 'neuroglancer_flat'
         return self.get_property('flat_segmentation_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
                                  format_for=format_for)
 
     def image_source(self, dataset_name=None, use_stored=True, format_for='raw'):
+        if format_for == 'neuroglancer':
+            format_for = 'neuroglancer_flat'
         return self.get_property('image_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
