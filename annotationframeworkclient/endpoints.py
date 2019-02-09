@@ -42,3 +42,8 @@ jsonservice_endpoints = {
     "get_state": "{json_server_address}/nglstate/{state_id}",
     'get_state_raw': "{json_server_address}/nglstate/raw/{state_id}",
 }
+
+materialization_endpoints = {
+    "datasets": "{m_server_address}/materialize/api/dataset",
+    "get_dataset_version": "{m_server_address}/materialize/api/dataset/{dataset_name}",
+}
