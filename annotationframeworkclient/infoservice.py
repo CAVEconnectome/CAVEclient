@@ -14,7 +14,14 @@ def format_neuroglancer_precomputed(objurl):
     return objurl_out
 
 def format_neuroglancer_graphene(objurl):
-    return 'graphene://' + objurl
+    qry = urlparse(objurl)
+    if qry.scheme == 'http' or qry.scheme == 'https':
+        objurl_out = 'graphene://{}'.format(objurl)
+    elif qry.scheme == 'graphene':
+        objurl_out = objurl_out
+    else:
+        objurl_out = None
+    return objurl_out
 
 def format_cloudvolume(objurl):
     qry = urlparse(objurl)
