@@ -28,7 +28,7 @@ class MaterializationClient(ClientBase):
     def get_latest_version(self, only_valid=False, dataset_name=None):
         '''
             Finds the most recent materialization version.
-            Optionally, restricts search to only those version that have
+            Optionally, restricts search to only those versions that have
                 been labelled as valid.
         '''
         version_data = self.get_dataset_version_info()
