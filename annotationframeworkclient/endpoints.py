@@ -20,22 +20,15 @@ infoservice_endpoints = {
 }
 
 chunkedgraph_endpoints = {
-    # "handle_table": "{cg_server_address}/segmentation/1.0/table",
-    "handle_root": "{cg_server_address}/segmentation/1.0/graph/root",
-    # "handle_merge": "{cg_server_address}/segmentation/1.0/graph/merge",
-    # "handle_split": "{cg_server_address}/segmentation/1.0/graph/split",
-    # "handle_children": "{cg_server_address}/segmentation/1.0/segment/{parent_id}/childen",
-    # "handle_leaves": "{cg_server_address}/segmentation/1.0/segment/{root_id}/leaves",
-    # "handle_leaves_from_leaf": "{cg_server_address}/segmentation/1.0/segment/{atomic_id}/leaves_from_leave",
-    # "handle_subgraph": "{cg_server_address}/segmentation/1.0/segment/{root_id}/subgraph",
+    "get_root": "{cg_server_address}/segmentation/1.0/{table_id}/graph/{supervoxel_id}/root",
+    "get_leaves": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/leaves",
+    "get_leaves_from_leaves": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{supervoxel_id}/leaves_from_leave"
 }
-
 
 schema_endpoints = {
     "schema" : "{emas_server_address}/schema/type",
     "schema_definition": "{emas_server_address}/schema/type/{schema_type}",
 }
-
 
 jsonservice_endpoints = {
     "upload_state" : "{json_server_address}/nglstate/post",
