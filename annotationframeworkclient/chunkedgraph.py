@@ -33,6 +33,15 @@ class ChunkedGraphClient(object):
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
 
+    def get_merge_log(self, root_id):
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['root_id'] = root_id
+        url = cg['merge_log'].format_map(endpoint_mapping)
+        response = self.session.post(url, json=[root_id])
+     
+        assert(response.status_code == 200)
+        return response.json()
+
     def get_leaves(self, root_id, bounds=None):
         """
         get the supervoxels for this root_id
