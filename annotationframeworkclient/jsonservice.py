@@ -1,9 +1,9 @@
 import requests
-from urllib.parse import urlparse
 from annotationframeworkclient.endpoints import jsonservice_endpoints as jse
 from annotationframeworkclient import endpoints
 import json
 import re
+
 
 class JSONService(object):
     def __init__(self, server_address=None):

@@ -6,12 +6,13 @@ from annotationframeworkclient import endpoints
 def format_neuroglancer_precomputed(objurl):
     qry = urlparse(objurl)
     if qry.scheme == 'gs':
-        objurl_out='precomputed://{}'.format(objurl)
-    elif qry.scheme == 'http' or qry.scheme=='https':
-        objurl_out='precomputed://gs://{}'.format(qry.path[1:])
+        objurl_out = 'precomputed://{}'.format(objurl)
+    elif qry.scheme == 'http' or qry.scheme == 'https':
+        objurl_out = 'precomputed://gs://{}'.format(qry.path[1:])
     else:
-        objurl_out=None
+        objurl_out = None
     return objurl_out
+
 
 def format_neuroglancer_graphene(objurl):
     qry = urlparse(objurl)
@@ -23,24 +24,29 @@ def format_neuroglancer_graphene(objurl):
         objurl_out = None
     return objurl_out
 
+
 def format_cloudvolume(objurl):
     qry = urlparse(objurl)
     if qry.scheme == 'gs':
-        objurl_out='https://storage.googleapis.com/{}{}'.format(qry.netloc, qry.path)
+        objurl_out = 'https://storage.googleapis.com/{}{}'.format(qry.netloc,
+                                                                  qry.path)
     elif qry.netloc == 'storage.googleapis.com':
-        objurl_out=objurl
+        objurl_out = objurl
     else:
         objurl_out
     return objurl_out
 
+
 def format_raw(objurl):
     return objurl
+
 
 output_map = {'raw': format_raw,
               'cloudvolume': format_cloudvolume,
               'neuroglancer_flat': format_neuroglancer_precomputed,
               'neuroglancer_pcg': format_neuroglancer_graphene,
               }
+
 
 class InfoServiceClient(object):
     def __init__(self, server_address=None, dataset_name=None):
@@ -99,12 +105,11 @@ class InfoServiceClient(object):
 
     def get_property(self, info_property, dataset_name=None, use_stored=True, format_for='raw'):
         if dataset_name is None:
-            dataset_name=self.dataset_name
+            dataset_name = self.dataset_name
         assert(dataset_name is not None)
 
         self.get_dataset_info(dataset_name=dataset_name, use_stored=use_stored)
         return output_map.get(format_for, format_raw)(self.info_cache[dataset_name].get(info_property, None))
-
 
     def annotation_endpoint(self, dataset_name=None, use_stored=True):
         return self.get_property('annotation_engine_endpoint',
@@ -146,7 +151,8 @@ class InfoServiceClient(object):
                                  dataset_name=dataset_name,
                                  use_stored=use_stored)
 
-    def pychunkgraph_segmentation_source(self, dataset_name=None, use_stored=True, format_for='raw'):
+    def pychunkgraph_segmentation_source(self, dataset_name=None,
+                                         use_stored=True, format_for='raw'):
         return self.get_property('pychunkgraph_segmentation_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,

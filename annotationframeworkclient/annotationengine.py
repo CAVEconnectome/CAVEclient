@@ -1,8 +1,5 @@
 import requests
-import os
 import numpy as np
-import cloudvolume
-import json
 import time
 
 from emannotationschemas.utils import get_flattened_bsp_keys_from_schema
@@ -268,9 +265,24 @@ class AnnotationClient(object):
             dataset_name = self.dataset_name
 
         dataset_info = self.get_dataset_info(dataset_name)
-        cv = cloudvolume.CloudVolume(dataset_info["pychunkgraph_segmentation_source"])
-        chunk_size = np.array(cv.info["scales"][0]["chunk_sizes"][0]) * np.array([1, 1, 4])
-        bounds = np.array(cv.bounds.to_list()).reshape(2, 3)
+
+        endpoint_mapping = self.default_url_mapping
+        if endpoint_mapping['cg_server_address'] is None:
+            self.cg_server_address = self.infoserviceclient.pychunkgraph_endpoint(dataset_name=dataset_name)
+        
+        if endpoint_mapping['table_id'] is None:
+            pcg_seg_endpoint = self.infoserviceclient.pychunkedgraph_viewer_source(dataset_name=dataset_name)
+            pcg_table = pcg_seg_endpoint.split('/')[-1]
+            endpoint_mapping['table_id'] = pcg_table
+
+        url = cg['info'].format_map(endpoint_mapping)
+        
+        response = self.session.get(url)
+        assert(response.status_code == 200)
+        info = response.json()
+
+        chunk_size = np.array(info["scales"][0]["chunk_sizes"][0]) * np.array([1, 1, 4])
+        offset = np.array(info['scales'][0]['voxel_offset'])
 
         Schema = get_schema(table_name)
         schema = Schema()
@@ -285,7 +297,7 @@ class AnnotationClient(object):
                 np.array(data_df[rel_column_key].values.tolist())[:, None, :])
 
         bspf_coords = np.concatenate(bspf_coords, axis=1)
-        bspf_coords -= bounds[0]
+        bspf_coords -= offset
         bspf_coords = (bspf_coords / chunk_size).astype(np.int)
 
         if len(rel_column_keys) > 1:
@@ -346,7 +358,7 @@ class AnnotationClient(object):
         print(len(multi_args))
 
         results = mu.multithread_func(self._bulk_import_df_thread, multi_args,
-                                       n_threads=n_threads)
+                                      n_threads=n_threads)
 
         responses = []
         for result in results:

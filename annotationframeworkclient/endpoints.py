@@ -21,7 +21,11 @@ infoservice_endpoints = {
 
 chunkedgraph_endpoints = {
     # "handle_table": "{cg_server_address}/segmentation/1.0/table",
-    "handle_root": "{cg_server_address}/segmentation/1.0/graph/root",
+    "handle_root": "{cg_server_address}/segmentation/1.0/{table_id}/graph/root",
+    "info": "{cg_server_address}/segmentation/1.0/{table_id}/info",
+    "leaves_from_root": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/leaves",
+    "merge_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/merge_log",
+    "change_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/change_log"
     # "handle_merge": "{cg_server_address}/segmentation/1.0/graph/merge",
     # "handle_split": "{cg_server_address}/segmentation/1.0/graph/split",
     # "handle_children": "{cg_server_address}/segmentation/1.0/segment/{parent_id}/childen",
