@@ -4,6 +4,13 @@ from annotationframeworkclient import endpoints
 from annotationframeworkclient import infoservice
 from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
 
+def package_bounds(bounds):
+    bounds_str=[]
+    for b in bounds:
+        bounds_str.append("-".join(str(b2) for b2 in b))
+    bounds_str = "_".join(bounds_str)
+    return bounds_str
+
 class ChunkedGraphClient(object):
     def __init__(self, server_address=None, dataset_name=None,
                  table_name=None):
@@ -65,13 +72,21 @@ class ChunkedGraphClient(object):
         url = cg['leaves_from_root'].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
-            bounds_str=[]
-            for b in bounds:
-                bounds_str.append("-".join(str(b2) for b2 in b))
-            bounds_str = "_".join(bounds_str)
-            query_d['bounds'] = bounds_str
+            query_d['bounds'] = package_bounds(bounds)
 
         response = self.session.post(url, json=[root_id], params=query_d)
      
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
+
+    def get_contact_sites(self, root_id, bounds=None, calc_partners=False):
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['root_id'] = root_id
+        url = cg['contact_sites'].format_map(endpoint_mapping)
+        query_d = {}
+        if bounds is not None:
+            query_d['bounds'] = package_bounds(bounds)
+        query_d['partners']=calc_partners
+        response = self.session.post(url, json=[root_id], params=query_d)
+        contact_d = response.json()
+        return {int(k):v for k,v in contact_d.items()}
