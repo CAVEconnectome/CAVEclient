@@ -26,7 +26,8 @@ chunkedgraph_endpoints = {
     "leaves_from_root": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/leaves",
     "merge_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/merge_log",
     "change_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/change_log",
-    "contact_sites": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/contact_sites"
+    "contact_sites": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/contact_sites",
+    "cloudvolume_path": "graphene://{cg_server_address}/segmentation/1.0/{table_id}",
     # "handle_merge": "{cg_server_address}/segmentation/1.0/graph/merge",
     # "handle_split": "{cg_server_address}/segmentation/1.0/graph/split",
     # "handle_children": "{cg_server_address}/segmentation/1.0/segment/{parent_id}/childen",

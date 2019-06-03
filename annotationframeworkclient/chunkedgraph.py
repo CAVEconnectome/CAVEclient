@@ -90,3 +90,8 @@ class ChunkedGraphClient(object):
         response = self.session.post(url, json=[root_id], params=query_d)
         contact_d = response.json()
         return {int(k):v for k,v in contact_d.items()}
+
+    @property
+    def cloudvolume_path(self):
+        return cg['cloudvolume_path'].format_map(self.default_url_mapping)
+    
