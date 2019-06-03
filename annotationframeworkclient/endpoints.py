@@ -20,9 +20,19 @@ infoservice_endpoints = {
 }
 
 chunkedgraph_endpoints = {
-    "get_root": "{cg_server_address}/segmentation/1.0/{table_id}/graph/{supervoxel_id}/root",
-    "get_leaves": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/leaves",
-    "get_leaves_from_leaves": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{supervoxel_id}/leaves_from_leave"
+    # "handle_table": "{cg_server_address}/segmentation/1.0/table",
+    "handle_root": "{cg_server_address}/segmentation/1.0/{table_id}/graph/root",
+    "info": "{cg_server_address}/segmentation/1.0/{table_id}/info",
+    "leaves_from_root": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/leaves",
+    "merge_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/merge_log",
+    "change_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/change_log",
+    "contact_sites": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/contact_sites"
+    # "handle_merge": "{cg_server_address}/segmentation/1.0/graph/merge",
+    # "handle_split": "{cg_server_address}/segmentation/1.0/graph/split",
+    # "handle_children": "{cg_server_address}/segmentation/1.0/segment/{parent_id}/childen",
+    # "handle_leaves": "{cg_server_address}/segmentation/1.0/segment/{root_id}/leaves",
+    # "handle_leaves_from_leaf": "{cg_server_address}/segmentation/1.0/segment/{atomic_id}/leaves_from_leave",
+    # "handle_subgraph": "{cg_server_address}/segmentation/1.0/segment/{root_id}/subgraph",
 }
 
 schema_endpoints = {

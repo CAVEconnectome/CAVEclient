@@ -4,6 +4,7 @@ from annotationframeworkclient import endpoints
 import json
 import re
 
+
 class JSONService(object):
     def __init__(self, server_address=None):
         if server_address is None:
