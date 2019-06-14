@@ -11,6 +11,8 @@ from sqlalchemy import create_engine
 from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from emannotationschemas import models as em_models
 
+from multiwrapper import multiprocessing_utils as mu
+
 
 def lookup_supervoxels(xyzs, server_address=None, pcg_client=None, segmentation_scaling=[2,2,1]):
     '''
@@ -57,8 +59,42 @@ def lookup_root_ids(supervoxel_ids, pcg_client):
             oid = pcg_client.get_root_id(sv_id)
             root_ids.append(int(oid))
         except:
-            root_ids.append(-1)
+            root_ids.append(0)
     return root_ids
+
+def ersatz_point_query_multi(xyzs,
+                             pcg_client,
+                             segmentation_scaling=[2,2,1],
+                             additional_columns={},
+                             n_threads=None):
+    pt_dict = {}
+    for key, xyz in xyzs.items():
+        args = []
+        for pt in xyz:
+            args.append([pt, pcg_client._server_address, pcg_client.table_name, segmentation_scaling])
+        lookup_ids = mu.multithread_func(_single_point_query, args, verbose=True, n_threads=n_threads)
+        sv_ids = [ids[0] for ids in lookup_ids]
+        root_ids = [ids[1] for ids in lookup_ids]
+        
+        pt_dict['{}_position'.format(key)] = [list(loc) for loc in xyz]
+        pt_dict['{}_supervoxel_id'.format(key)] = sv_ids
+        pt_dict['{}_root_id'.format(key)] = root_ids
+
+    dat_dict = {**pt_dict, **additional_columns}
+    df = pd.DataFrame(dat_dict)
+    for key in xyzs.keys():
+        df['{}_position'.format(key)] = df['{}_position'.format(key)].astype('O')
+        df['{}_supervoxel_id'.format(key)] = df['{}_supervoxel_id'.format(key)].astype('O')
+        df['{}_root_id'.format(key)] = df['{}_root_id'.format(key)].astype('O')
+    return df
+
+
+def _single_point_query(args):
+    xyz, server_address, table_name, segmentation_scaling = args
+    pcg_client = ChunkedGraphClient(server_address=server_address, table_name=table_name)
+    sv_id = lookup_supervoxels([xyz], pcg_client=pcg_client, segmentation_scaling=segmentation_scaling)
+    root_id = lookup_root_ids(sv_id, pcg_client)
+    return (sv_id[0], root_id[0])
 
 
 def ersatz_point_query(xyzs,
@@ -97,7 +133,8 @@ def ersatz_annotation_query(annos,
                             bound_point_keys=['pt'],
                             segmentation_scaling=[2,2,1],
                             add_id=True,
-                            omit_type=True):
+                            omit_type=True,
+                            n_threads=1):
     xyzs = {}
     additional_columns = {}
 
@@ -127,10 +164,18 @@ def ersatz_annotation_query(annos,
     if 'id' not in annos[0].keys() and add_id is True:
         additional_columns['id'] = np.arange(1,len(annos)+1)
 
-    df =  ersatz_point_query(xyzs,
-                             pcg_client=pcg_client,
-                             segmentation_scaling=segmentation_scaling,
-                             additional_columns=additional_columns)
+    if n_threads == 1:
+        df =  ersatz_point_query(xyzs,
+                                 pcg_client=pcg_client,
+                                 segmentation_scaling=segmentation_scaling,
+                                 additional_columns=additional_columns)
+    else:
+        df =  ersatz_point_query_multi(xyzs,
+                         pcg_client=pcg_client,
+                         segmentation_scaling=segmentation_scaling,
+                         additional_columns=additional_columns,
+                         n_threads=n_threads)
+
     if add_id is True:
         df = df.reindex(['id'] + list(df.columns[df.columns!='id']), axis=1)
     return df
