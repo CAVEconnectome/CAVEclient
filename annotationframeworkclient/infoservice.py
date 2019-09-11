@@ -28,12 +28,12 @@ def format_neuroglancer_graphene(objurl):
 def format_cloudvolume(objurl):
     qry = urlparse(objurl)
     if qry.scheme == 'gs':
-        objurl_out = 'https://storage.googleapis.com/{}{}'.format(qry.netloc,
+        objurl_out = 'graphene://https://storage.googleapis.com/{}{}'.format(qry.netloc,
                                                                   qry.path)
     elif qry.netloc == 'storage.googleapis.com':
         objurl_out = objurl
     else:
-        objurl_out
+        objurl_out = None
     return objurl_out
 
 
