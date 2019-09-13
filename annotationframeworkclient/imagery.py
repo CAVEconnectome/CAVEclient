@@ -111,7 +111,8 @@ class ImageryClient(object):
         if self._img_cv is None:
             self._img_cv = cv.CloudVolume(self.image_source,
                                           mip=self._base_imagery_mip,
-                                          bounded=False)
+                                          bounded=False,
+                                          progress=False)
         return self._img_cv
 
     @property
@@ -139,7 +140,8 @@ class ImageryClient(object):
             self._seg_cv = cv.CloudVolume(self.segmentation_source,
                                           mip=self._base_segmentation_mip,
                                           use_https=True,
-                                          bounded=False)
+                                          bounded=False,
+                                          progress=False)
         return self._seg_cv
 
     @property
@@ -186,12 +188,12 @@ class ImageryClient(object):
             A list of a lower bound and upper bound point to bound the cutout in units of voxels in a resolution set by
             the base_resolution parameter
         mip : int, optional
-            [description], by default None
+            Mip level of imagery to get if something other than the default is wanted, by default None
         
         Returns
         -------
-        [type]
-            [description]
+        cloudvolume.VolumeCutout
+            An n-d image of the image requested with image intensity values as the elements.
         """
         if mip is None:
             mip = self._base_imagery_mip
@@ -199,35 +201,30 @@ class ImageryClient(object):
         slices = self._bounds_to_slices(bounds_vx)
         return self.image_cv.download(slices, mip=mip)
 
-    def split_segmentation_cutout(self, bounds, root_ids='all', mip=None, include_null_root=False):
-        """Generate segmentation cutouts with a single binary mask for each root id, organized as a dict with keys as root ids and masks as values.
+
+    def segmentation_cutout(self, bounds, root_ids='all', mip=None, verbose=False):
+        """Get a cutout of the segmentation imagery for some or all root ids between set bounds.
+        Note that if all root ids are requested in a large region, it could take a long time to query
+        all supervoxels.
         
         Parameters
         ----------
-        bounds : [type], optional
-            [description], by default None
-        root_ids : str, optional
-            [description], by default 'all'
-        mip : [type], optional
-            [description], by default None
-        split_by_root_id : bool, optional
-            [description], by default False
+        bounds : 2x3 list of ints
+            A list of the lower and upper bound point for the cutout. The units are voxels in the resolution set by the
+            base_resolution parameter.
+        root_ids : list, None, or 'all', optional
+            If a list, only compute the voxels for a specified set of root ids. If None, default to the supervoxel ids. If 'all',
+            find all root ids corresponding to the supervoxels in the cutout and get all of them. None, by default 'all'
+        mip : int, optional
+            Mip level of the segmentation if something other than the defualt is wanted, by default None
+        verbose : bool, optional
+            If true, prints statements about the progress as it goes. By default, False.
         
         Returns
         -------
-        [type]
-            [description]
+        numpy.ndarray 
+            Array whose elements correspond to the root id (or, if root_ids=None, the supervoxel id) at each voxel.
         """
-        seg_img = self.segmentation_cutout(bounds=bounds, root_ids=root_ids, mip=mip)
-        split_segmentation = {}
-        for root_id in np.unique(seg_img):
-            if include_null_root is False:
-                if root_id == 0:
-                    continue
-            split_segmentation[root_id] = (seg_img == root_id).astype(int)
-        return split_segmentation
-
-    def segmentation_cutout(self, bounds, root_ids='all', mip=None):
         if mip is None:
             mip = self._base_segmentation_mip
 
@@ -238,17 +235,70 @@ class ImageryClient(object):
         if root_ids == 'all':
             seg_cutout = self.segmentation_cv.download(slices, segids=None, mip=mip)
             root_id_map = self._all_root_id_map_for_cutout(
-                seg_cutout, pcg_bounds=pcg_bounds, mip=mip)
+                seg_cutout, pcg_bounds=pcg_bounds, mip=mip, verbose=verbose)
             return fastremap.remap(seg_cutout, root_id_map, preserve_missing_labels=True)
         else:
             return self.segmentation_cv.download(slices, segids=root_ids, mip=mip)
 
-    def _all_root_id_map_for_cutout(self, seg_cutout, pcg_bounds=None, mip=None):
+    def split_segmentation_cutout(self, bounds, root_ids='all', mip=None, include_null_root=False, verbose=False):
+        """Generate segmentation cutouts with a single binary mask for each root id, organized as a dict with keys as root ids and masks as values.
+        
+        Parameters
+        ----------
+        bounds : 2x3 list of ints
+            A list of the lower and upper bound point for the cutout. The units are voxels in the resolution set by the
+            base_resolution parameter.
+        root_ids : list, None, or 'all', optional
+            If a list, only compute the voxels for a specified set of root ids. If None, default to the supervoxel ids. If 'all',
+            find all root ids corresponding to the supervoxels in the cutout and get all of them. None, by default 'all'
+        mip : int, optional
+            Mip level of the segmentation if something other than the default is wanted, by default None
+        include_null_root : bool, optional
+            If True, includes root id of 0, which is usually reserved for a null segmentation value. Default is False.
+        verbose : bool, optional
+            If true, prints statements about the progress as it goes. By default, False.
+
+        Returns
+        -------
+        dict
+            Dict whose keys are root ids and whose values are the binary mask for that root id, with a 1 where the object contains the voxel.
+        """
+        seg_img = self.segmentation_cutout(bounds=bounds, root_ids=root_ids, mip=mip, verbose=verbose)
+        return self.segmentation_masks(seg_img, include_null_root)
+
+    def segmentation_masks(self, seg_img, include_null_root=False):
+        """Convert a segmentation array into a dict of binary masks for each root id.
+        
+        Parameters
+        ----------
+        seg_img : numpy.ndarray
+            Array with voxel values corresponding to the object id at that voxel
+        include_null_root : bool, optional
+            Create a mask for 0 id, which usually denotes no object, by default False
+        
+        Returns
+        -------
+        dict
+            Dict of binary masks. Keys are root ids, values are boolean n-d arrays with a 1 where that object is.
+        """
+        split_segmentation = {}
+        for root_id in np.unique(seg_img):
+            if include_null_root is False:
+                if root_id == 0:
+                    continue
+            split_segmentation[root_id] = (seg_img == root_id).astype(int)
+        return split_segmentation 
+
+    def _all_root_id_map_for_cutout(self, seg_cutout, pcg_bounds=None, mip=None, verbose=False):
+        """Helper function to query root ids for all supervoxels in a cutout
+        """
         sv_to_root_id = {}
 
         supervoxel_ids = np.unique(seg_cutout)
-        pbar = tqdm.tqdm(desc='Finding root ids', total=len(supervoxel_ids), unit='supervoxel')
-
+        if verbose:
+            pbar = tqdm.tqdm(desc='Finding root ids', total=len(supervoxel_ids), unit='supervoxel')
+        else:
+            pbar = None
         inds_to_update = supervoxel_ids == 0
         pbar.update(sum(inds_to_update))
 
@@ -262,37 +312,45 @@ class ImageryClient(object):
             for sv_id in supervoxel_ids[inds_to_update]:
                 sv_to_root_id[sv_id] = root_id
             supervoxel_ids[inds_to_update] = 0
-            pbar.update(sum(inds_to_update))
+            if pbar is not None:
+                pbar.update(sum(inds_to_update))
         return sv_to_root_id
 
-    def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', allow_resize=True, split_segmentations=False, include_null_root=False):
-        """[summary]
+    def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', allow_resize=True, split_segmentations=False, include_null_root=False, verbose=False):
+        """Download aligned and scaled imagery and segmentation data at a given resolution.
         
         Parameters
         ----------
-        bounds : [type]
-            [description]
-        image_mip : [type], optional
-            [description], by default None
-        segmentation_mip : [type], optional
-            [description], by default None
-        root_ids : str, optional
-            [description], by default 'all'
+        bounds : 2x3 list of ints
+            A list of the lower and upper bound point for the cutout. The units are voxels in the resolution set by the
+            base_resolution parameter.
+        image_mip : int, optional
+            Mip level of the imagery if something other than the default is wanted, by default None
+        segmentation_mip : int, optional
+            Mip level of the segmentation if something other than the default is wanted, by default None
+        root_ids : list, None, or 'all', optional
+            If a list, the segmentation cutout only includes voxels for a specified set of root ids.
+            If None, default to the supervoxel ids. If 'all', finds all root ids corresponding to the supervoxels
+            in the cutout and get all of them. By default 'all'.
         allow_resize : bool, optional
-            [description], by default True
+            Allow the lower resolution of the imagery and segmentation (typically imagery) to be upscaled to match whichever is higher resolution, by default True.
+            If False, returns an error if the resolutions do not match.
         split_segmentations : bool, optional
-            [description], by default False
-        
+            If True, the segmentation is returned as a dict of masks (using split_segmentation_cutout), and if False returned as
+            an array with root_ids (using segmentation_cutout), by default False
+        include_null_root : bool, optional
+            If True, includes root id of 0, which is usually reserved for a null segmentation value. Default is False.
+        verbose : bool, optional
+            If true, prints statements about the progress as it goes. By default, False.
+ 
         Returns
         -------
-        [type]
-            [description]
+        cloudvolume.VolumeCutout 
+            Imagery volume cutout
         
-        Raises
-        ------
-        DimensionException
-            [description]
-        """
+        numpy.ndarray or dict
+            Segmentation volume cutout as either an ndarray or dict of masks depending on the split_segmentations flag.
+        """        
         if image_mip is None:
             image_mip = self._base_imagery_mip
         if segmentation_mip is None:
@@ -310,13 +368,15 @@ class ImageryClient(object):
         if allow_resize is False:
             if zoom_to is not None:
                 raise DimensionException('Segmentation and imagery are not the same size base image')
-
-        print('Downloading images')
+        
+        if verbose:
+            print('Downloading images')
         img = self.image_cutout(bounds=bounds,
                                 mip=image_mip)
         img_shape = img.shape
 
-        print('Downloading segmentation')
+        if verbose:
+            print('Downloading segmentation')
         if split_segmentations is False:
             seg = self.segmentation_cutout(bounds,
                                            root_ids=root_ids,
@@ -348,28 +408,50 @@ class ImageryClient(object):
         return img, seg
 
     def image_resolution_to_mip(self, resolution):
-        """[summary]
+        """Gets the image mip level for a specified voxel resolution, if it exists
         
         Parameters
         ----------
-        resolution : [type]
-            [description]
+        resolution : 3 element array-like
+            x, y, and z resolution per voxel.
         
         Returns
         -------
-        [type]
-            [description]
+        int or None
+            If the resolution has a mip level for the imagery volume, returns it. Otherwise, returns None.
         """
         resolution = tuple(resolution)
         image_dict, _ = self.mip_resolutions()
         return image_dict.get(resolution, None)
 
     def segmentation_resolution_to_mip(self, resolution):
+        """Gets the segmentation mip level for a specified voxel resolution, if it exists
+
+        Parameters
+        ----------
+        resolution : 3 element array-like
+            x, y, and z resolution per voxel.
+
+        Returns
+        -------
+        int or None
+            If the resolution has a mip level for the segmentation volume, returns it. Otherwise, returns None.
+        """
         resolution = tuple(resolution)
         _, seg_dict = self.mip_resolutions()
         return seg_dict.get(resolution, None)
 
     def mip_resolutions(self):
+        """Gets a dict of resolutions and mip levels available for the imagery and segmentation volumes
+        
+        Returns
+        -------
+        dict
+            Keys are voxel resolution tuples, values are mip levels in the imagery volume as integers
+        
+        dict
+            Keys are voxel resolution tuples, values are mip levels in the segmentation volume as integers
+        """
         image_resolution = {}
         for mip in self.image_cv.available_mips:
             image_resolution[tuple(self.image_cv.mip_resolution(mip))] = mip
@@ -380,7 +462,25 @@ class ImageryClient(object):
         return image_resolution, segmentation_resolution
 
     def save_imagery(self, filename_prefix, bounds=None, mip=None, precomputed_image=None, slice_axis=2, verbose=False, **kwargs):
-        """Save queried or precomputed imagery
+        """Save queried or precomputed imagery to png files.
+        
+        Parameters
+        ----------
+        filename_prefix : str
+            Prefix for the imagery filename. The full filename will be {filename_prefix}_imagery.png
+        bounds : 2x3 list of ints, optional
+            A list of the lower and upper bound point for the cutout. The units are voxels in the resolution set by the
+            base_resolution parameter. Only used if a precomputed image is not passed. By default, None. 
+        mip : int, optional
+            Only used if a precomputed image is not passed. Mip level of imagery to get if something other than the default
+            is wanted, by default None
+        precomputed_image : cloudvolume.VolumeCutout, optional
+            Already downloaded VolumeCutout data to save explicitly. If called this way, the bounds and mip arguments will not apply.
+            If a precomputed image is not provided, bounds must be specified to download the cutout data. By default None
+        slice_axis : int, optional
+            If the image data is truly 3 dimensional, determines which axis to use to save serial images, by default 2 (i.e. z-axis)
+        verbose : bool, optional
+            If True, prints the progress, by default False
         """
         if precomputed_image is None:
             img = self.image_cutout(bounds, mip)
@@ -389,13 +489,39 @@ class ImageryClient(object):
         _save_image_slices(filename_prefix, 'imagery', img, slice_axis, 'imagery', verbose=verbose, **kwargs)
         return 
 
-    def save_segmentation_masks(self, filename_prefix, bounds=None, mip=None, root_ids='all', precomputed_segmentation=None, slice_axis=2, verbose=False, **kwargs):
-        '''Save queried or precomputed segmentation masks
-        '''
-        if precomputed_segmentation is None:
-            seg_dict = self.segmentation_cutout(bounds=bounds, root_ids=root_ids, mip=None, split_segmentation=True, include_null_root=False)
+    def save_segmentation_masks(self, filename_prefix, bounds=None, mip=None, root_ids='all', precomputed_masks=None, slice_axis=2, include_null_root=False, verbose=False, **kwargs):
+        """Save queried or precomputed segmentation masks to png files. Additional kwargs are passed to imageio.imwrite.
+        
+        Parameters
+        ----------
+        filename_prefix : str
+            Prefix for the segmentation filenames. The full filename will be either {filename_prefix}_root_id_{root_id}.png
+            or {filename_prefix}_root_id_{root_id}_{i}.png, depending on if multiple slices of each root id are saved.
+        bounds : 2x3 list of ints, optional
+            A list of the lower and upper bound point for the cutout. The units are voxels in the resolution set by the
+            base_resolution parameter. Only used if a precomputed segmentation is not passed. By default, None. 
+        mip : int, optional
+            Only used if a precomputed segmentation is not passed. Mip level of segmentation to get if something other than the default
+            is wanted, by default None
+        root_ids : list, None, or 'all', optional
+            If a list, the segmentation cutout only includes voxels for a specified set of root ids.
+            If None, default to the supervoxel ids. If 'all', finds all root ids corresponding to the supervoxels
+            in the cutout and get all of them. By default 'all'.
+        precomputed_masks : dict, optional
+            Already downloaded dict of mask data to save explicitly. If called this way, the bounds and mip arguments will not apply.
+            If precomputed_masks are not provided, bounds must be given to download cutout data. By default None
+        slice_axis : int, optional
+            If the image data is truly 3 dimensional, determines which axis to use to save serial images, by default 2 (i.e. z-axis)
+        include_null_root : bool, optional
+            If True, includes root id of 0, which is usually reserved for a null segmentation value. Default is False.
+        verbose : bool, optional
+            If True, prints the progress, by default False
+        """
+        if precomputed_masks is None:
+            seg_dict = self.segmentation_cutout(
+                bounds=bounds, root_ids=root_ids, mip=None, split_segmentation=True, include_null_root=include_null_root)
         else:
-            seg_dict = precomputed_segmentation
+            seg_dict = precomputed_masks
         
         for root_id, seg_mask in seg_dict.items():
             suffix = f'root_id_{root_id}'
@@ -404,22 +530,52 @@ class ImageryClient(object):
 
 
     def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, image_mip=None, segmentation_mip=None,
-                                          root_ids='all', allow_resize=True, imagery=True, segmentation=True,
-                                          precomputed_images=None, slice_axis=2, verbose=False, **kwargs):
-        """Download and save cutouts plus masks to a stack of files. 
-        """
-        if precomputed_images is not None:
-            img, seg_dict = precomputed_images
-        else:
-            img, seg_dict = self.image_and_segmentation_cutout(bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, split_segmentations=True)
+                                          root_ids='all', allow_resize=True, precomputed_data=None, slice_axis=2,
+                                          include_null_root=False, verbose=False, **kwargs):
+        """Save aligned and scaled imagery and segmentation mask cutouts as pngs. Kwargs are passed to imageio.imwrite.
         
-        if imagery:
-            self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose, **kwargs) 
-        if segmentation:
-            self.save_segmentation_masks(filename_prefix, precomputed_segmentation=seg_dict, slice_axis=slice_axis, verbose=verbose, **kwargs)
+        Parameters
+        ----------
+        filename_prefix : str
+            Prefix for the segmentation filenames. The full filename will be either {filename_prefix}_root_id_{root_id}.png
+            or {filename_prefix}_root_id_{root_id}_{i}.png, depending on if multiple slices of each root id are saved.
+        bounds : 2x3 list of ints, optional
+            A list of the lower and upper bound point for the cutout. The units are voxels in the resolution set by the
+            base_resolution parameter. Only used if a precomputed data is not passed. By default, None. 
+        image_mip : int, optional
+            Only used if a precomputed data is not passed. Mip level of imagery to get if something other than the default
+            is wanted, by default None.
+        segmentation_mip : int, optional
+            Only used if precomputed data is not passed. Mip level of segmentation to get if something other than the default
+            is wanted, by default None
+        root_ids : list, None, or 'all', optional
+            If a list, the segmentation cutout only includes voxels for a specified set of root ids.
+            If None, default to the supervoxel ids. If 'all', finds all root ids corresponding to the supervoxels
+            in the cutout and get all of them. By default 'all'.
+        allow_resize : bool, optional
+            If False, throws an error if image and segmentation mips don't have the same voxel resolution. By default, False.
+        precomputed_data : tuple, optional
+            Already computed tuple with imagery and segmentation mask data, in that order. If not provided, bounds must be given to download
+            cutout data. By default, None.
+        slice_axis : int, optional
+            If the image data is truly 3 dimensional, determines which axis to use to save serial images, by default 2 (i.e. z-axis)
+        include_null_root : bool, optional
+            If True, includes root id of 0, which is usually reserved for a null segmentation value. By default, False.
+        verbose : bool, optional
+            If True, prints the progress, by default False
+        """ 
+        if precomputed_data is not None:
+            img, seg_dict = precomputed_data
+        else:
+            img, seg_dict = self.image_and_segmentation_cutout(bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, include_null_root=include_null_root, split_segmentations=True)
+        
+        self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose, **kwargs) 
+        self.save_segmentation_masks(filename_prefix, precomputed_segmentation=seg_dict, slice_axis=slice_axis, verbose=verbose, **kwargs)
         return
 
 def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False, **kwargs):
+    """Helper function for generic image saving
+    """
     if image_type == 'imagery':
         to_pil = _greyscale_to_pil
     elif image_type == 'mask':
@@ -440,12 +596,14 @@ def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_
     return
 
 def _greyscale_to_pil(img):
+    """Helper function to convert one channel uint8 image data to RGB for saving.
+    """
     img = img.astype(np.uint8)
     pil_img = np.dstack(3*[img.squeeze()[:, :, np.newaxis]])
     return pil_img
 
 def _binary_mask_to_transparent_pil(img):
-    """Convert a MxN binary array to an MxNx4 PIL image with fully opaque white for 1 and fully transparent black for 0.
+    """Convert a binary array to an MxNx4 RGBa image with fully opaque white for 1 and fully transparent black for 0.
     """
     img = 255 * img.astype(np.uint8)
     pil_img = np.dstack(4*[img.squeeze()[:, :, np.newaxis]])
