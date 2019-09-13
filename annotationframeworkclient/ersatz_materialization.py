@@ -24,6 +24,7 @@ def lookup_supervoxels(xyzs, server_address=None, pcg_client=None, segmentation_
     sv_ids = []
     xyzs = xyzs / np.array(segmentation_scaling)
     cv = cloudvolume.CloudVolume(server_address,
+                                 use_https=True,
                                  progress=False)
     for xyz in xyzs:
         sv = cv[xyz[0], xyz[1], xyz[2]]
