@@ -170,20 +170,6 @@ class ImageryClient(object):
         bounds_mip_voxel = self._scale_nm_to_voxel(bounds_nm, mip, use_cv)
         return bounds_mip_voxel
 
-    def _process_bounds(self, bounds, center, width, height, depth):
-        if bounds is None:
-            if width is None:
-                width = 0
-            if height is None:
-                height = 0
-            if depth is None:
-                depth = 0
-
-            lbound = np.array(center) - np.floor(np.array([width, height, depth])/2)
-            ubound = lbound + np.array(width, height, depth).astype(int)
-            bounds = [lbound, ubound]
-        return bounds
-
     def _bounds_to_slices(self, bounds):
         lbounds = np.min(bounds, axis=0)
         ubounds = np.max(bounds, axis=0)+1
@@ -191,22 +177,14 @@ class ImageryClient(object):
                                   else lbounds[ii] for ii in range(3))
         return xslice, yslice, zslice
 
-    def image_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, mip=None):
+    def image_cutout(self, bounds, mip=None):
         """Get an image cutout for a certain location or set of bounds and a mip level.
         
         Parameters
         ----------
-        bounds : 2 x 3 list of ints, optional
+        bounds : 2 x 3 list of ints
             A list of a lower bound and upper bound point to bound the cutout in units of voxels in a resolution set by
-            the base_resolution parameter, by default None
-        center : 3 element list of ints, optional
-            Alternative way to specify bounds using a center point and width/depth/height values, by default None
-        width : int, optional
-            [description], by default None
-        height : int, optional
-            [description], by default None
-        depth : int, optional
-            [description], by default None
+            the base_resolution parameter
         mip : int, optional
             [description], by default None
         
@@ -217,25 +195,16 @@ class ImageryClient(object):
         """
         if mip is None:
             mip = self._base_imagery_mip
-        bounds = self._process_bounds(bounds, center, width, height, depth)
         bounds_vx = self._rescale_for_mip(bounds, mip, use_cv='image')
         slices = self._bounds_to_slices(bounds_vx)
         return self.image_cv.download(slices, mip=mip)
 
-    def split_segmentation_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, root_ids='all', mip=None, split_by_root_id=False):
+    def split_segmentation_cutout(self, bounds, root_ids='all', mip=None, include_null_root=False):
         """Generate segmentation cutouts with a single binary mask for each root id, organized as a dict with keys as root ids and masks as values.
         
         Parameters
         ----------
         bounds : [type], optional
-            [description], by default None
-        center : [type], optional
-            [description], by default None
-        width : [type], optional
-            [description], by default None
-        height : [type], optional
-            [description], by default None
-        depth : [type], optional
             [description], by default None
         root_ids : str, optional
             [description], by default 'all'
@@ -249,18 +218,19 @@ class ImageryClient(object):
         [type]
             [description]
         """
-        seg_img = self.segmentation_cutout(
-            bounds=bounds, center=center, width=width, height=height, depth=depth, root_ids=root_ids, mip=mip)
+        seg_img = self.segmentation_cutout(bounds=bounds, root_ids=root_ids, mip=mip)
         split_segmentation = {}
         for root_id in np.unique(seg_img):
+            if include_null_root is False:
+                if root_id == 0:
+                    continue
             split_segmentation[root_id] = (seg_img == root_id).astype(int)
         return split_segmentation
 
-    def segmentation_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, root_ids='all', mip=None):
+    def segmentation_cutout(self, bounds, root_ids='all', mip=None):
         if mip is None:
             mip = self._base_segmentation_mip
 
-        bounds = self._process_bounds(bounds, center, width, height, depth)
         pcg_bounds = self._rescale_for_mip(bounds, 0, use_cv='segmentation')
 
         bounds_vx = self._rescale_for_mip(bounds, mip, use_cv='segmentation')
@@ -295,10 +265,34 @@ class ImageryClient(object):
             pbar.update(sum(inds_to_update))
         return sv_to_root_id
 
-    def image_and_segmentation_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, image_mip=None, segmentation_mip=None, root_ids='all', allow_resize=True, split_segmentations=False):
-
-        bounds = self._process_bounds(bounds, center, width, height, depth)
-
+    def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', allow_resize=True, split_segmentations=False, include_null_root=False):
+        """[summary]
+        
+        Parameters
+        ----------
+        bounds : [type]
+            [description]
+        image_mip : [type], optional
+            [description], by default None
+        segmentation_mip : [type], optional
+            [description], by default None
+        root_ids : str, optional
+            [description], by default 'all'
+        allow_resize : bool, optional
+            [description], by default True
+        split_segmentations : bool, optional
+            [description], by default False
+        
+        Returns
+        -------
+        [type]
+            [description]
+        
+        Raises
+        ------
+        DimensionException
+            [description]
+        """
         if image_mip is None:
             image_mip = self._base_imagery_mip
         if segmentation_mip is None:
@@ -331,7 +325,8 @@ class ImageryClient(object):
         else:
             seg = self.split_segmentation_cutout(bounds,
                                                  root_ids=root_ids,
-                                                 mip=segmentation_mip)
+                                                 mip=segmentation_mip,
+                                                 include_null_root=include_null_root)
             if len(seg) > 0:
                 seg_shape = seg[list(seg.keys())[0]].shape
             else:
@@ -353,14 +348,26 @@ class ImageryClient(object):
         return img, seg
 
     def image_resolution_to_mip(self, resolution):
+        """[summary]
+        
+        Parameters
+        ----------
+        resolution : [type]
+            [description]
+        
+        Returns
+        -------
+        [type]
+            [description]
+        """
         resolution = tuple(resolution)
         image_dict, _ = self.mip_resolutions()
-        return image_dict[resolution]
+        return image_dict.get(resolution, None)
 
     def segmentation_resolution_to_mip(self, resolution):
         resolution = tuple(resolution)
         _, seg_dict = self.mip_resolutions()
-        return seg_dict[resolution]
+        return seg_dict.get(resolution, None)
 
     def mip_resolutions(self):
         image_resolution = {}
@@ -372,64 +379,64 @@ class ImageryClient(object):
             segmentation_resolution[tuple(self.segmentation_cv.mip_resolution(mip))] = mip
         return image_resolution, segmentation_resolution
 
-    def save_imagery(self, filename_prefix, bounds=None, center=None, width=None, height=None, depth=None, mip=None, precomputed_image=None, slice_axis=2, verbose=False, **kwargs):
+    def save_imagery(self, filename_prefix, bounds=None, mip=None, precomputed_image=None, slice_axis=2, verbose=False, **kwargs):
         """Save queried or precomputed imagery
         """
         if precomputed_image is None:
-            img = self.image_cutout(bounds, center, width, height, depth, mip)
+            img = self.image_cutout(bounds, mip)
         else:
             img = precomputed_image
-        _save_image_slices(filename_prefix, 'imagery', img, slice_axis, 'imagery', verbose=verbose)
+        _save_image_slices(filename_prefix, 'imagery', img, slice_axis, 'imagery', verbose=verbose, **kwargs)
         return 
 
-    def save_segmentation_masks(self, filename_prefix, bounds=None, center=None, width=None, height=None, depth=None, mip=None, root_ids='all', precomputed_segmentation=None, slice_axis=2, verbose=False, **kwargs):
+    def save_segmentation_masks(self, filename_prefix, bounds=None, mip=None, root_ids='all', precomputed_segmentation=None, slice_axis=2, verbose=False, **kwargs):
         '''Save queried or precomputed segmentation masks
         '''
         if precomputed_segmentation is None:
-            seg_dict = self.segmentation_cutout(bounds=bounds, center=center, width=width, height=height, depth=depth, root_ids=root_ids, mip=None)
+            seg_dict = self.segmentation_cutout(bounds=bounds, root_ids=root_ids, mip=None, split_segmentation=True, include_null_root=False)
         else:
             seg_dict = precomputed_segmentation
         
         for root_id, seg_mask in seg_dict.items():
             suffix = f'root_id_{root_id}'
-            _save_image_slices(filename_prefix, suffix, seg_mask, slice_axis, 'segmentation', verbose=verbose)
+            _save_image_slices(filename_prefix, suffix, seg_mask, slice_axis, 'mask', verbose=verbose, **kwargs)
         return
 
 
-    def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, center=None, width=None, height=None, depth=None, image_mip=None, segmentation_mip=None,
-                                          root_ids='all', allow_resize=True, imagery=True, segmentation=True, precomputed_images=None, slice_axis=2, verbose=False):
+    def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, image_mip=None, segmentation_mip=None,
+                                          root_ids='all', allow_resize=True, imagery=True, segmentation=True,
+                                          precomputed_images=None, slice_axis=2, verbose=False, **kwargs):
         """Download and save cutouts plus masks to a stack of files. 
         """
-        bounds = self._process_bounds(bounds, center, width, height, depth)
         if precomputed_images is not None:
             img, seg_dict = precomputed_images
         else:
             img, seg_dict = self.image_and_segmentation_cutout(bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, split_segmentations=True)
         
         if imagery:
-            self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose) 
+            self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose, **kwargs) 
         if segmentation:
-            self.save_segmentation_masks(filename_prefix, precomputed_segmentation=seg_dict, slice_axis=slice_axis, verbose=verbose)
+            self.save_segmentation_masks(filename_prefix, precomputed_segmentation=seg_dict, slice_axis=slice_axis, verbose=verbose, **kwargs)
         return
 
-def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False):
+def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False, **kwargs):
     if image_type == 'imagery':
         to_pil = _greyscale_to_pil
-    elif image_type == 'segmentation':
+    elif image_type == 'mask':
         to_pil = _binary_mask_to_transparent_pil
 
-    imgs = np.split(img, np.arange(img.shape[slice_axis]), axis=slice_axis)
+    imgs = np.split(img, img.shape[slice_axis], axis=slice_axis)
     if len(imgs) == 1:
         fname = f'{filename_prefix}_{filename_suffix}.png'
         imageio.imwrite(fname, to_pil(imgs[0].squeeze()), **kwargs)
         if verbose:
             print(f'Saved {fname}...')
-        else:
-            for ii, img_slice in enumerate(imgs):
-                fname = f'{filename_prefix}_{filename_suffix}_{ii}.png'
-                imageio.imwrite(fname, to_pil(img_slice.squeeze()), **kwargs)
-                if verbose:
-                    print(f'Saved {fname}...')
+    else:
+        for ii, img_slice in enumerate(imgs):
+            fname = f'{filename_prefix}_{filename_suffix}_{ii}.png'
+            imageio.imwrite(fname, to_pil(img_slice.squeeze()), **kwargs)
+            if verbose:
+                print(f'Saved {fname}...')
     return
 
 def _greyscale_to_pil(img):
