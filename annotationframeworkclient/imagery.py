@@ -10,6 +10,7 @@ from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from annotationframeworkclient.endpoints import default_server_address
 
 class DimensionException(Exception):
+    """Raised when image dimensions don't match"""
     pass
 
 class ImageryClient(object):
