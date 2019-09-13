@@ -1,20 +1,56 @@
-import cloudvolume as cv
+import fastremap
 import numpy as np
 import tqdm
-import fastremap
+import imageio
 from scipy import ndimage
-from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
+import cloudvolume as cv
 from annotationframeworkclient import infoservice
+import cloudvolume as cv
+from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from annotationframeworkclient.endpoints import default_server_address
 
+class DimensionException(Exception):
+    pass
 
 class ImageryClient(object):
+    """Class to help download imagery and segmentation data. Can either take
+       explicit cloudvolume paths for imagery and segmentation or use the Info Service
+       to look up the right paths.
+
+        Parameters
+        ----------
+        image_source : str, optional
+            CloudVolume path to an imagery source, by default None
+        segmentation_source : str, optional
+            CloudVolume path to a segmentation source, by default None
+        server_address : str, optional
+            Address of an Info Service host, by default None. If none, defaults to
+            https://www.dynamicannotationframework.com
+        dataset_name : str, optional
+            Dataset name to lookup information for in the Info Service, by default None
+        base_resolution : list, optional
+            Sets the voxel resolution that locations will be entered in, by default [4, 4, 40]
+        chunked_graph_server_address : str, optional
+            Location of a pychunkgraph server, by default None
+        chunked_segmentation : bool, optional
+            If true, use the chunkedgraph segmentation. If false, use the flat segmentation. By default True.
+        table_name : str, optional
+            Name of the chunkedgraph table (if used), by default None
+        image_mip : int, optional
+            Default mip level to use for imagery lookups, by default 0. Note that the same mip
+            level for imagery and segmentation can correspond to different voxel resolutions.
+        segmentation_mip : int, optional
+            Default mip level to use for segmentation lookups, by default 0.
+        segmentation : bool, optional
+            If False, no segmentation cloudvolume is initialized. By default True
+        imagery : bool, optional
+            If False, no imagery cloudvolume is initialized. By default True
+        """
     def __init__(self, image_source=None, segmentation_source=None,
                  server_address=None, dataset_name=None, base_resolution=[4, 4, 40],
                  chunked_graph_server_address=None, chunked_segmentation=True,
                  table_name=None, image_mip=0, segmentation_mip=0,
                  segmentation=True, imagery=True):
-
         self._info = None
         if server_address is None:
             self._server_address = default_server_address
@@ -36,10 +72,22 @@ class ImageryClient(object):
 
     @property
     def base_resolution(self):
+        """The voxel resolution assumed when locations are used for the client.
+        
+        Returns
+        -------
+        list
+            X, y, and z voxel resolution.
+        """
         return self._base_resolution
 
     @property
     def info(self):
+        """InfoClient for the imagery dataset (if set)
+        """
+        if self._server_address is None or self._dataset_name is None:
+            return None
+        
         if self._info is None:
             self._info = infoservice.InfoServiceClient(self._server_address,
                                                        self._dataset_name)
@@ -47,12 +95,16 @@ class ImageryClient(object):
 
     @property
     def image_source(self):
-        if self._image_source is None:
+        """Image Cloudvolume path
+        """
+        if self._image_source is None and self.info is not None:
             self._image_source = self.info.image_source(format_for='cloudvolume')
         return self._image_source
 
     @property
     def image_cv(self):
+        """Imagery CloudVolume
+        """
         if self._use_imagery is False:
             return None
 
@@ -64,6 +116,8 @@ class ImageryClient(object):
 
     @property
     def segmentation_source(self):
+        """Segmentation CloudVolume path
+        """
         if self._use_segmentation is False:
             return None
         elif self._segmentation_source is None:
@@ -77,6 +131,8 @@ class ImageryClient(object):
 
     @property
     def segmentation_cv(self):
+        """Segmentation CloudVolume object
+        """
         if self._use_segmentation is False:
             return None
         elif self._seg_cv is None:
@@ -88,6 +144,8 @@ class ImageryClient(object):
 
     @property
     def pcg_client(self):
+        """PychunkedGraph client object
+        """
         if self._use_segmentation is False:
             return None
         elif self._pcg_client is None:
@@ -134,6 +192,29 @@ class ImageryClient(object):
         return xslice, yslice, zslice
 
     def image_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, mip=None):
+        """Get an image cutout for a certain location or set of bounds and a mip level.
+        
+        Parameters
+        ----------
+        bounds : 2 x 3 list of ints, optional
+            A list of a lower bound and upper bound point to bound the cutout in units of voxels in a resolution set by
+            the base_resolution parameter, by default None
+        center : 3 element list of ints, optional
+            Alternative way to specify bounds using a center point and width/depth/height values, by default None
+        width : int, optional
+            [description], by default None
+        height : int, optional
+            [description], by default None
+        depth : int, optional
+            [description], by default None
+        mip : int, optional
+            [description], by default None
+        
+        Returns
+        -------
+        [type]
+            [description]
+        """
         if mip is None:
             mip = self._base_imagery_mip
         bounds = self._process_bounds(bounds, center, width, height, depth)
@@ -142,6 +223,32 @@ class ImageryClient(object):
         return self.image_cv.download(slices, mip=mip)
 
     def split_segmentation_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, root_ids='all', mip=None, split_by_root_id=False):
+        """Generate segmentation cutouts with a single binary mask for each root id, organized as a dict with keys as root ids and masks as values.
+        
+        Parameters
+        ----------
+        bounds : [type], optional
+            [description], by default None
+        center : [type], optional
+            [description], by default None
+        width : [type], optional
+            [description], by default None
+        height : [type], optional
+            [description], by default None
+        depth : [type], optional
+            [description], by default None
+        root_ids : str, optional
+            [description], by default 'all'
+        mip : [type], optional
+            [description], by default None
+        split_by_root_id : bool, optional
+            [description], by default False
+        
+        Returns
+        -------
+        [type]
+            [description]
+        """
         seg_img = self.segmentation_cutout(
             bounds=bounds, center=center, width=width, height=height, depth=depth, root_ids=root_ids, mip=mip)
         split_segmentation = {}
@@ -188,7 +295,7 @@ class ImageryClient(object):
             pbar.update(sum(inds_to_update))
         return sv_to_root_id
 
-    def image_and_segmentation_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, image_mip=None, segmentation_mip=None, root_ids='all', resize=True, split_segmentations=False):
+    def image_and_segmentation_cutout(self, bounds=None, center=None, width=None, height=None, depth=None, image_mip=None, segmentation_mip=None, root_ids='all', allow_resize=True, split_segmentations=False):
 
         bounds = self._process_bounds(bounds, center, width, height, depth)
 
@@ -205,6 +312,10 @@ class ImageryClient(object):
             zoom_to = 'segmentation'
         else:
             zoom_to = 'image'
+
+        if allow_resize is False:
+            if zoom_to is not None:
+                raise DimensionException('Segmentation and imagery are not the same size base image')
 
         print('Downloading images')
         img = self.image_cutout(bounds=bounds,
@@ -260,3 +371,75 @@ class ImageryClient(object):
         for mip in self.segmentation_cv.available_mips:
             segmentation_resolution[tuple(self.segmentation_cv.mip_resolution(mip))] = mip
         return image_resolution, segmentation_resolution
+
+    def save_imagery(self, filename_prefix, bounds=None, center=None, width=None, height=None, depth=None, mip=None, precomputed_image=None, slice_axis=2, verbose=False, **kwargs):
+        """Save queried or precomputed imagery
+        """
+        if precomputed_image is None:
+            img = self.image_cutout(bounds, center, width, height, depth, mip)
+        else:
+            img = precomputed_image
+        _save_image_slices(filename_prefix, 'imagery', img, slice_axis, 'imagery', verbose=verbose)
+        return 
+
+    def save_segmentation_masks(self, filename_prefix, bounds=None, center=None, width=None, height=None, depth=None, mip=None, root_ids='all', precomputed_segmentation=None, slice_axis=2, verbose=False, **kwargs):
+        '''Save queried or precomputed segmentation masks
+        '''
+        if precomputed_segmentation is None:
+            seg_dict = self.segmentation_cutout(bounds=bounds, center=center, width=width, height=height, depth=depth, root_ids=root_ids, mip=None)
+        else:
+            seg_dict = precomputed_segmentation
+        
+        for root_id, seg_mask in seg_dict.items():
+            suffix = f'root_id_{root_id}'
+            _save_image_slices(filename_prefix, suffix, seg_mask, slice_axis, 'segmentation', verbose=verbose)
+        return
+
+
+    def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, center=None, width=None, height=None, depth=None, image_mip=None, segmentation_mip=None,
+                                          root_ids='all', allow_resize=True, imagery=True, segmentation=True, precomputed_images=None, slice_axis=2, verbose=False):
+        """Download and save cutouts plus masks to a stack of files. 
+        """
+        bounds = self._process_bounds(bounds, center, width, height, depth)
+        if precomputed_images is not None:
+            img, seg_dict = precomputed_images
+        else:
+            img, seg_dict = self.image_and_segmentation_cutout(bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, split_segmentations=True)
+        
+        if imagery:
+            self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose) 
+        if segmentation:
+            self.save_segmentation_masks(filename_prefix, precomputed_segmentation=seg_dict, slice_axis=slice_axis, verbose=verbose)
+        return
+
+def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False):
+    if image_type == 'imagery':
+        to_pil = _greyscale_to_pil
+    elif image_type == 'segmentation':
+        to_pil = _binary_mask_to_transparent_pil
+
+    imgs = np.split(img, np.arange(img.shape[slice_axis]), axis=slice_axis)
+    if len(imgs) == 1:
+        fname = f'{filename_prefix}_{filename_suffix}.png'
+        imageio.imwrite(fname, to_pil(imgs[0].squeeze()), **kwargs)
+        if verbose:
+            print(f'Saved {fname}...')
+        else:
+            for ii, img_slice in enumerate(imgs):
+                fname = f'{filename_prefix}_{filename_suffix}_{ii}.png'
+                imageio.imwrite(fname, to_pil(img_slice.squeeze()), **kwargs)
+                if verbose:
+                    print(f'Saved {fname}...')
+    return
+
+def _greyscale_to_pil(img):
+    img = img.astype(np.uint8)
+    pil_img = np.dstack(3*[img.squeeze()[:, :, np.newaxis]])
+    return pil_img
+
+def _binary_mask_to_transparent_pil(img):
+    """Convert a MxN binary array to an MxNx4 PIL image with fully opaque white for 1 and fully transparent black for 0.
+    """
+    img = 255 * img.astype(np.uint8)
+    pil_img = np.dstack(4*[img.squeeze()[:, :, np.newaxis]])
+    return pil_img
