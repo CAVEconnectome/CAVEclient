@@ -599,7 +599,7 @@ def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_
             print(f'Saved {fname}...')
     else:
         for ii, img_slice in enumerate(imgs):
-            fname = f'{filename_prefix}_{filename_suffix}_{ii}.png'
+            fname = f'{filename_prefix}_slice_{ii}_{filename_suffix}.png'
             imageio.imwrite(fname, to_pil(img_slice.squeeze()), **kwargs)
             if verbose:
                 print(f'Saved {fname}...')
@@ -613,7 +613,7 @@ def _greyscale_to_pil(img):
     return pil_img
 
 def _binary_mask_to_transparent_pil(img, color=None):
-    """Convert a binary array to an MxNx4 RGBa image with fully opaque white (or a specified color)
+    """Convert a binary array to an MxNx4 RGBa image with fully opaque white (or a specified RGBa color)
     for 1 and fully transparent black for 0.
     """
     if color is None:
