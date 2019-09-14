@@ -2,11 +2,10 @@ import fastremap
 import numpy as np
 import tqdm
 import imageio
+import cloudvolume as cv
 from scipy import ndimage
-import cloudvolume as cv
-from annotationframeworkclient import infoservice
-import cloudvolume as cv
 from functools import partial
+from annotationframeworkclient import infoservice
 from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from annotationframeworkclient.endpoints import default_server_address
 
@@ -26,10 +25,10 @@ class ImageryClient(object):
         segmentation_source : str, optional
             CloudVolume path to a segmentation source, by default None
         server_address : str, optional
-            Address of an Info Service host, by default None. If none, defaults to
+            Address of an InfoService host, by default None. If none, defaults to
             https://www.dynamicannotationframework.com
         dataset_name : str, optional
-            Dataset name to lookup information for in the Info Service, by default None
+            Dataset name to lookup information for in the InfoService, by default None
         base_resolution : list, optional
             Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
         chunked_graph_server_address : str, optional
