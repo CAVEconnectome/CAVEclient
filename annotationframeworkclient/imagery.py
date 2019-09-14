@@ -6,6 +6,7 @@ from scipy import ndimage
 import cloudvolume as cv
 from annotationframeworkclient import infoservice
 import cloudvolume as cv
+from functools import partial
 from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from annotationframeworkclient.endpoints import default_server_address
 
@@ -30,7 +31,7 @@ class ImageryClient(object):
         dataset_name : str, optional
             Dataset name to lookup information for in the Info Service, by default None
         base_resolution : list, optional
-            Sets the voxel resolution that locations will be entered in, by default [4, 4, 40]
+            Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
         chunked_graph_server_address : str, optional
             Location of a pychunkgraph server, by default None
         chunked_segmentation : bool, optional
@@ -490,7 +491,7 @@ class ImageryClient(object):
         _save_image_slices(filename_prefix, 'imagery', img, slice_axis, 'imagery', verbose=verbose, **kwargs)
         return 
 
-    def save_segmentation_masks(self, filename_prefix, bounds=None, mip=None, root_ids='all', precomputed_masks=None, slice_axis=2, include_null_root=False, verbose=False, **kwargs):
+    def save_segmentation_masks(self, filename_prefix, bounds=None, mip=None, root_ids='all', precomputed_masks=None, slice_axis=2, include_null_root=False, segmentation_colormap={}, verbose=False, **kwargs):
         """Save queried or precomputed segmentation masks to png files. Additional kwargs are passed to imageio.imwrite.
         
         Parameters
@@ -515,24 +516,28 @@ class ImageryClient(object):
             If the image data is truly 3 dimensional, determines which axis to use to save serial images, by default 2 (i.e. z-axis)
         include_null_root : bool, optional
             If True, includes root id of 0, which is usually reserved for a null segmentation value. Default is False.
+        segmentation_colormap : dict, optional
+            A dict of root ids to an uint8 RGB color triplet (0-255) or RGBa quadrooplet to optionally color the mask png. Any root id not specified
+            will be rendered in white. Color triplets default to full opacity. Default is an empty dictionary.
         verbose : bool, optional
             If True, prints the progress, by default False
         """
         if precomputed_masks is None:
-            seg_dict = self.segmentation_cutout(
-                bounds=bounds, root_ids=root_ids, mip=None, split_segmentation=True, include_null_root=include_null_root)
+            seg_dict = self.split_segmentation_cutout(
+                bounds=bounds, root_ids=root_ids, mip=mip, include_null_root=include_null_root)
         else:
             seg_dict = precomputed_masks
         
         for root_id, seg_mask in seg_dict.items():
             suffix = f'root_id_{root_id}'
-            _save_image_slices(filename_prefix, suffix, seg_mask, slice_axis, 'mask', verbose=verbose, **kwargs)
+            _save_image_slices(filename_prefix, suffix, seg_mask, slice_axis, 'mask',
+                               color=segmentation_colormap.get(root_id, None), verbose=verbose, **kwargs)
         return
 
 
     def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, image_mip=None, segmentation_mip=None,
                                           root_ids='all', allow_resize=True, precomputed_data=None, slice_axis=2,
-                                          include_null_root=False, verbose=False, **kwargs):
+                                          segmentation_colormap={}, include_null_root=False, verbose=False, **kwargs):
         """Save aligned and scaled imagery and segmentation mask cutouts as pngs. Kwargs are passed to imageio.imwrite.
         
         Parameters
@@ -560,6 +565,9 @@ class ImageryClient(object):
             cutout data. By default, None.
         slice_axis : int, optional
             If the image data is truly 3 dimensional, determines which axis to use to save serial images, by default 2 (i.e. z-axis)
+        segmentation_colormap : dict, optional
+            A dict of root ids to an uint8 RGB color triplet (0-255) or RGBa quadrooplet to optionally color the mask png. Any root id not specified
+            will be rendered in white. Color triplets default to full opacity. Default is an empty dictionary.
         include_null_root : bool, optional
             If True, includes root id of 0, which is usually reserved for a null segmentation value. By default, False.
         verbose : bool, optional
@@ -568,19 +576,20 @@ class ImageryClient(object):
         if precomputed_data is not None:
             img, seg_dict = precomputed_data
         else:
-            img, seg_dict = self.image_and_segmentation_cutout(bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, include_null_root=include_null_root, split_segmentations=True)
+            img, seg_dict = self.image_and_segmentation_cutout(bounds=bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, include_null_root=include_null_root, split_segmentations=True)
         
         self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose, **kwargs) 
-        self.save_segmentation_masks(filename_prefix, precomputed_segmentation=seg_dict, slice_axis=slice_axis, verbose=verbose, **kwargs)
+        self.save_segmentation_masks(filename_prefix, precomputed_masks=seg_dict, slice_axis=slice_axis,
+                                     segmentation_colormap=segmentation_colormap, verbose=verbose, **kwargs)
         return
 
-def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False, **kwargs):
+def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False, color=None, **kwargs):
     """Helper function for generic image saving
     """
     if image_type == 'imagery':
         to_pil = _greyscale_to_pil
     elif image_type == 'mask':
-        to_pil = _binary_mask_to_transparent_pil
+        to_pil = partial(_binary_mask_to_transparent_pil, color=color)
 
     imgs = np.split(img, img.shape[slice_axis], axis=slice_axis)
     if len(imgs) == 1:
@@ -599,13 +608,22 @@ def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_
 def _greyscale_to_pil(img):
     """Helper function to convert one channel uint8 image data to RGB for saving.
     """
-    img = img.astype(np.uint8)
+    img = img.astype(np.uint8).T
     pil_img = np.dstack(3*[img.squeeze()[:, :, np.newaxis]])
     return pil_img
 
-def _binary_mask_to_transparent_pil(img):
-    """Convert a binary array to an MxNx4 RGBa image with fully opaque white for 1 and fully transparent black for 0.
+def _binary_mask_to_transparent_pil(img, color=None):
+    """Convert a binary array to an MxNx4 RGBa image with fully opaque white (or a specified color)
+    for 1 and fully transparent black for 0.
     """
-    img = 255 * img.astype(np.uint8)
-    pil_img = np.dstack(4*[img.squeeze()[:, :, np.newaxis]])
+    if color is None:
+        color = [255, 255, 255, 255]
+    elif len(color) == 3:
+        color = [*color, 255]
+    base_img = img.astype(np.uint8).T.squeeze()[:, :, np.newaxis]
+    img_r = color[0] * base_img
+    img_g = color[1] * base_img
+    img_b = color[2] * base_img
+    img_a = color[3] * base_img 
+    pil_img = np.dstack([img_r, img_g, img_b, img_a])
     return pil_img
