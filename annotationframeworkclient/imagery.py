@@ -586,7 +586,7 @@ def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_
     """Helper function for generic image saving
     """
     if image_type == 'imagery':
-        to_pil = _greyscale_to_pil
+        to_pil = _grayscale_to_pil
     elif image_type == 'mask':
         to_pil = partial(_binary_mask_to_transparent_pil, color=color)
 
@@ -604,11 +604,15 @@ def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_
                 print(f'Saved {fname}...')
     return
 
-def _greyscale_to_pil(img):
+def _grayscale_to_pil(img, four_channel=False):
     """Helper function to convert one channel uint8 image data to RGB for saving.
     """
     img = img.astype(np.uint8).T
-    pil_img = np.dstack(3*[img.squeeze()[:, :, np.newaxis]])
+    if four_channel is True:
+        sc = 4
+    else:
+        sc = 3
+    pil_img = np.dstack(sc*[img.squeeze()[:, :, np.newaxis]])
     return pil_img
 
 def _binary_mask_to_transparent_pil(img, color=None):
@@ -626,3 +630,40 @@ def _binary_mask_to_transparent_pil(img, color=None):
     img_a = color[3] * base_img 
     pil_img = np.dstack([img_r, img_g, img_b, img_a])
     return pil_img
+
+def grayscale_to_rgba(img):
+    """Convert a 
+    
+    Parameters
+    ----------
+    img : numpy.ndarray
+        NxM array of values beteen 0-255.
+    
+    Returns
+    -------
+    numpy.ndarray
+        NxMx4 numpy array with the same grayscale colors.
+    """
+    return _grayscale_to_pil(img)
+
+def colorize_masks(mask_dict, colormap, default_color=[255, 255, 255, 255]):
+    """Colorize a dict of masks using a dict of RGB (or RGBa) colors.
+    
+    Parameters
+    ----------
+    mask_dict : dict
+        Dict mapping root ids to binary masks.
+    colormap : dict 
+        Dict mapping root ids to a 3 or 4 element RGBa color between 0-255.
+    default_color : list, optional
+        RGBa color value between 0-255, by default [255, 255, 255, 255]
+    
+    Returns
+    -------
+    dict
+        Dict mapping root ids to RGBa color images.
+    """
+    color_images = {}
+    for root_id, mask in mask_dict:
+        color_images[root_id] = _binary_mask_to_transparent_pil(mask, colormap.get(root_id, default_color))
+    return color_images
