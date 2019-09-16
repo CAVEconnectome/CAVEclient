@@ -31,8 +31,6 @@ class ImageryClient(object):
             Dataset name to lookup information for in the InfoService, by default None
         base_resolution : list, optional
             Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
-        chunked_graph_server_address : str, optional
-            Location of a pychunkgraph server, by default None
         chunked_segmentation : bool, optional
             If true, use the chunkedgraph segmentation. If false, use the flat segmentation. By default True.
         table_name : str, optional
@@ -47,10 +45,10 @@ class ImageryClient(object):
         imagery : bool, optional
             If False, no imagery cloudvolume is initialized. By default True
         """
-    def __init__(self, image_source=None, segmentation_source=None,
-                 server_address=None, dataset_name=None, base_resolution=[4, 4, 40],
-                 chunked_graph_server_address=None, chunked_segmentation=True,
-                 table_name=None, image_mip=0, segmentation_mip=0,
+    def __init__(self, image_source=None, segmentation_source=None, server_address=None,
+                 dataset_name=None, base_resolution=[4, 4, 40],
+                 chunked_segmentation=True, table_name=None,
+                 image_mip=0, segmentation_mip=0,
                  segmentation=True, imagery=True):
         self._info = None
         if server_address is None:
@@ -124,8 +122,7 @@ class ImageryClient(object):
             return None
         elif self._segmentation_source is None:
             if self._chunked_segmentation:
-                self._segmentation_source = self.info.pychunkgraph_segmentation_source(
-                    format_for='neuroglancer_pcg')
+                self._segmentation_source = self.info.graphene_source()
             else:
                 self._segmentation_source = self.info.flat_segmentation_source(
                     format_for='cloudvolume')

@@ -1,41 +1,47 @@
 import requests
 from urllib.parse import urlparse
+from warnings import warn
 from annotationframeworkclient.endpoints import infoservice_endpoints as ie
 from annotationframeworkclient import endpoints
 
-def format_neuroglancer_precomputed(objurl):
+def format_precomputed_neuroglancer(objurl):
     qry = urlparse(objurl)
     if qry.scheme == 'gs':
-        objurl_out = 'precomputed://{}'.format(objurl)
+        objurl_out = f'precomputed://{objurl}'
     elif qry.scheme == 'http' or qry.scheme == 'https':
-        objurl_out = 'precomputed://gs://{}'.format(qry.path[1:])
+        objurl_out = f'precomputed://gs://{qry.path[1:]}'
     else:
         objurl_out = None
     return objurl_out
 
+def format_precomputed_https(objurl):
+    qry = urlparse(objurl)
+    if qry.scheme == 'gs':
+        objurl_out = f'precomputed://https://storage.googleapis.com/{qry.path[1:]}'
+    elif qry.scheme == 'http' or qry.scheme == 'https':
+        objurl_out = f'precomputed://{objurl}'
+    else:
+        objurl_out = None
+    return objurl_out
 
-def format_neuroglancer_graphene(objurl):
+def format_graphene(objurl):
     qry = urlparse(objurl)
     if qry.scheme == 'http' or qry.scheme == 'https':
-        objurl_out = 'graphene://{}'.format(objurl)
+        objurl_out = f'graphene://{objurl}'
     elif qry.scheme == 'graphene':
-        objurl_out = objurl_out
-    else:
-        objurl_out = None
-    return objurl_out
-
-
-def format_cloudvolume(objurl):
-    qry = urlparse(objurl)
-    if qry.scheme == 'gs':
-        objurl_out = 'graphene://https://storage.googleapis.com/{}{}'.format(qry.netloc,
-                                                                  qry.path)
-    elif qry.netloc == 'storage.googleapis.com':
         objurl_out = objurl
     else:
         objurl_out = None
     return objurl_out
 
+def format_cloudvolume(objurl):
+    qry = urlparse(objurl)
+    if qry.scheme == 'graphene':
+        return format_graphene(objurl)
+    elif qry.scheme == 'gs' or qry.scheme == 'http' or qry.scheme == 'https':
+        return format_precomputed_https(objurl)
+    else:
+        return None
 
 def format_raw(objurl):
     return objurl
@@ -43,8 +49,9 @@ def format_raw(objurl):
 
 output_map = {'raw': format_raw,
               'cloudvolume': format_cloudvolume,
-              'neuroglancer_flat': format_neuroglancer_precomputed,
-              'neuroglancer_pcg': format_neuroglancer_graphene,
+              'graphene': format_graphene,
+              'neuroglancer_flat': format_precomputed_neuroglancer,
+              'neuroglancer_pcg': format_graphene,
               }
 
 
@@ -116,19 +123,9 @@ class InfoServiceClient(object):
                                  dataset_name=dataset_name,
                                  use_stored=use_stored)
 
-    # def annotation_dataset_name(self, dataset_name=None, use_stored=True):
-    #     return self.get_property('annotation_dataset_name',
-    #                              dataset_name=dataset_name,
-    #                              use_stored=use_stored)
-
-    def pychunkedgraph_viewer_source(self, dataset_name=None, use_stored=True, format_for='raw'):
-        if format_for == 'neuroglancer':
-            format_for = 'neuroglancer_pcg'
-        return self.get_property('pychunkedgraph_viewer_source',
-                                 dataset_name=dataset_name,
-                                 use_stored=use_stored,
-                                 format_for=format_for)
-
+    def pychunkedgraph_viewer_source(self, **kwargs):
+        warn('Use ''graphene_source'' instead', DeprecationWarning)
+        return self.graphene_source(**kwargs)
 
     def flat_segmentation_source(self, dataset_name=None, use_stored=True, format_for='raw'):
         if format_for == 'neuroglancer':
@@ -146,18 +143,43 @@ class InfoServiceClient(object):
                                  use_stored=use_stored,
                                  format_for=format_for)
 
-    def pychunkgraph_endpoint(self, dataset_name=None, use_stored=True):
+    def pychunkedgraph_endpoint(self, dataset_name=None, use_stored=True):
         return self.get_property('pychunkgraph_endpoint',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored)
 
-    def pychunkgraph_segmentation_source(self, dataset_name=None,
-                                         use_stored=True, format_for='raw'):
+    def pychunkgraph_endpoint(self, **kwargs):
+        warn('Please use ''pychunkedgraph_endpoint''', DeprecationWarning)
+        return self.pychunkedgraph_endpoint(**kwargs)
+
+    def pychunkedgraph_segmentation_source(self, dataset_name=None,
+                                        use_stored=True, format_for='graphene'):
         return self.get_property('pychunkgraph_segmentation_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
                                  format_for=format_for)
 
+    def pychunkgraph_segmentation_source(self, **kwargs):
+        warn('Please use ''pychunkedgraph_segmentation_source'' in the future.', DeprecationWarning)
+        return self.pychunkedgraph_segmentation_source(**kwargs)
+
+    def graphene_source(self, dataset_name=None,
+                        use_stored=True, format_for='graphene'):
+        return self.get_property('graphene_source',
+                                 dataset_name=dataset_name,
+                                 use_stored=use_stored,
+                                 format_for=format_for)
+
+    def synapse_segmentation(self, dataset_name=None,
+                            use_stored=True, format_for='raw'):
+        if format_for == 'neuroglancer':
+            format_for = 'neuroglancer_flat'
+        return self.get_property('synapse_segmentation_source',
+                                dataset_name=dataset_name,
+                                use_stored=use_stored,
+                                format_for=format_for)
+
     def refresh_stored_data(self):
         for ds in self.info_cache.keys():
-            self.get_dataset_info(dataset=ds, use_stored=False)
+            self.get_dataset_info(dataset_name=ds, use_stored=False)
+
