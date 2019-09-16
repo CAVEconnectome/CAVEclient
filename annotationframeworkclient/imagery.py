@@ -193,6 +193,9 @@ class ImageryClient(object):
         cloudvolume.VolumeCutout
             An n-d image of the image requested with image intensity values as the elements.
         """
+        if self.image_cv is None:
+            return np.array([])
+            
         if mip is None:
             mip = self._base_imagery_mip
         bounds_vx = self._rescale_for_mip(bounds, mip, use_cv='image')
@@ -223,6 +226,9 @@ class ImageryClient(object):
         numpy.ndarray 
             Array whose elements correspond to the root id (or, if root_ids=None, the supervoxel id) at each voxel.
         """
+        if self.segmentation_cv is None:
+            return np.array([])
+
         if mip is None:
             mip = self._base_segmentation_mip
 
