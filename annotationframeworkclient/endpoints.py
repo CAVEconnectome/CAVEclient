@@ -28,12 +28,6 @@ chunkedgraph_endpoints = {
     "change_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/change_log",
     "contact_sites": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/contact_sites",
     "cloudvolume_path": "graphene://{cg_server_address}/segmentation/1.0/{table_id}",
-    # "handle_merge": "{cg_server_address}/segmentation/1.0/graph/merge",
-    # "handle_split": "{cg_server_address}/segmentation/1.0/graph/split",
-    # "handle_children": "{cg_server_address}/segmentation/1.0/segment/{parent_id}/childen",
-    # "handle_leaves": "{cg_server_address}/segmentation/1.0/segment/{root_id}/leaves",
-    # "handle_leaves_from_leaf": "{cg_server_address}/segmentation/1.0/segment/{atomic_id}/leaves_from_leave",
-    # "handle_subgraph": "{cg_server_address}/segmentation/1.0/segment/{root_id}/subgraph",
 }
 
 schema_endpoints = {
@@ -45,9 +39,4 @@ jsonservice_endpoints = {
     "upload_state" : "{json_server_address}/nglstate/post",
     "get_state": "{json_server_address}/nglstate/{state_id}",
     'get_state_raw': "{json_server_address}/nglstate/raw/{state_id}",
-}
-
-materialization_endpoints = {
-    "datasets": "{m_server_address}/materialize/api/dataset",
-    "get_dataset_version": "{m_server_address}/materialize/api/dataset/{dataset_name}",
 }
