@@ -31,8 +31,8 @@ class ImageryClient(object):
             Dataset name to lookup information for in the InfoService, by default None
         base_resolution : list, optional
             Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
-        chunked_segmentation : bool, optional
-            If true, use the chunkedgraph segmentation. If false, use the flat segmentation. By default True.
+        graphene_segmentation : bool, optional
+            If true, use the graphene segmentation. If false, use the flat segmentation. By default True.
         table_name : str, optional
             Name of the chunkedgraph table (if used), by default None
         image_mip : int, optional
@@ -47,7 +47,7 @@ class ImageryClient(object):
         """
     def __init__(self, image_source=None, segmentation_source=None, server_address=None,
                  dataset_name=None, base_resolution=[4, 4, 40],
-                 chunked_segmentation=True, table_name=None,
+                 graphene_segmentation=True, table_name=None,
                  image_mip=0, segmentation_mip=0,
                  segmentation=True, imagery=True):
         self._info = None
@@ -55,7 +55,7 @@ class ImageryClient(object):
             self._server_address = default_server_address
         self._dataset_name = dataset_name
         self._table_name = table_name
-        self._chunked_segmentation = chunked_segmentation
+        self._chunked_segmentation = graphene_segmentation
         self._base_resolution = np.array(base_resolution)
 
         self._base_imagery_mip = image_mip
@@ -146,7 +146,7 @@ class ImageryClient(object):
     def pcg_client(self):
         """PychunkedGraph client object
         """
-        if self._use_segmentation is False:
+        if self._use_segmentation is False or if self._chunked_segmentation is False:
             return None
         elif self._pcg_client is None:
             self._pcg_client = ChunkedGraphClient(server_address=self._server_address,
@@ -232,9 +232,12 @@ class ImageryClient(object):
         slices = self._bounds_to_slices(bounds_vx)
         if root_ids == 'all':
             seg_cutout = self.segmentation_cv.download(slices, segids=None, mip=mip)
-            root_id_map = self._all_root_id_map_for_cutout(
-                seg_cutout, pcg_bounds=pcg_bounds, mip=mip, verbose=verbose)
-            return fastremap.remap(seg_cutout, root_id_map, preserve_missing_labels=True)
+            if self._chunked_segmentation:
+                root_id_map = self._all_root_id_map_for_cutout(
+                    seg_cutout, pcg_bounds=pcg_bounds, mip=mip, verbose=verbose)
+                return fastremap.remap(seg_cutout, root_id_map, preserve_missing_labels=True)
+            else:
+                return seg_cutout
         else:
             return self.segmentation_cv.download(slices, segids=root_ids, mip=mip)
 

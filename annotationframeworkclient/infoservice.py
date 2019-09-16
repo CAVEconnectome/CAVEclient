@@ -46,14 +46,18 @@ def format_cloudvolume(objurl):
 def format_raw(objurl):
     return objurl
 
+# No reformatting
+output_map_raw = {}
 
-output_map = {'raw': format_raw,
-              'cloudvolume': format_cloudvolume,
-              'graphene': format_graphene,
-              'neuroglancer_flat': format_precomputed_neuroglancer,
-              'neuroglancer_pcg': format_graphene,
-              }
+# Use precomputed://gs:// links for neuroglancer, but use precomputed://https://storage.googleapis.com links in cloudvolume
+output_map_precomputed = {'raw': format_raw,
+                   'cloudvolume': format_precomputed_https,
+                   'neuroglancer': format_precomputed_neuroglancer}
 
+# Use graphene://https:// links for both neuroglancer and cloudvolume
+output_map_graphene = {'raw': format_raw,
+                       'cloudvolume': format_graphene,
+                       'neuroglancer': format_graphene}
 
 class InfoServiceClient(object):
     def __init__(self, server_address=None, dataset_name=None):
@@ -86,6 +90,11 @@ class InfoServiceClient(object):
         return self._default_url_mapping.copy()
 
     def get_datasets(self):
+        """Query which datasets are available at the info service
+        
+        Returns:
+            list: List of dataset names
+        """
         endpoint_mapping = self.default_url_mapping
         url = ie['datasets'].format_map(endpoint_mapping)
 
@@ -110,7 +119,7 @@ class InfoServiceClient(object):
         
         return self.info_cache.get(dataset_name, None)
 
-    def get_property(self, info_property, dataset_name=None, use_stored=True, format_for='raw'):
+    def _get_property(self, info_property, dataset_name=None, use_stored=True, format_for='raw', output_map=output_map_raw):
         if dataset_name is None:
             dataset_name = self.dataset_name
         assert(dataset_name is not None)
@@ -119,65 +128,71 @@ class InfoServiceClient(object):
         return output_map.get(format_for, format_raw)(self.info_cache[dataset_name].get(info_property, None))
 
     def annotation_endpoint(self, dataset_name=None, use_stored=True):
-        return self.get_property('annotation_engine_endpoint',
-                                 dataset_name=dataset_name,
-                                 use_stored=use_stored)
-
-    def pychunkedgraph_viewer_source(self, **kwargs):
-        warn('Use ''graphene_source'' instead', DeprecationWarning)
-        return self.graphene_source(**kwargs)
+        return self._get_property('annotation_engine_endpoint',
+                                  dataset_name=dataset_name,
+                                  use_stored=use_stored,
+                                  output_map=output_map_raw)
 
     def flat_segmentation_source(self, dataset_name=None, use_stored=True, format_for='raw'):
-        if format_for == 'neuroglancer':
-            format_for = 'neuroglancer_flat'
-        return self.get_property('flat_segmentation_source',
+        return self._get_property('flat_segmentation_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
-                                 format_for=format_for)
+                                 format_for=format_for,
+                                 output_map=output_map_precomputed)
 
     def image_source(self, dataset_name=None, use_stored=True, format_for='raw'):
-        if format_for == 'neuroglancer':
-            format_for = 'neuroglancer_flat'
-        return self.get_property('image_source',
+        return self._get_property('image_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
-                                 format_for=format_for)
+                                 format_for=format_for,
+                                 output_map=output_map_precomputed)
+
+    def synapse_segmentation_source(self, dataset_name=None,
+                                        use_stored=True, format_for='raw'):
+        return self._get_property('synapse_segmentation_source',
+                                  dataset_name=dataset_name,
+                                  use_stored=use_stored,
+                                  format_for=format_for,
+                                  output_map=output_map_precomputed)
+
+    def supervoxel_source(self, dataset_name=None, use_stored=True, format_for='raw'):
+        return self._get_property('pychunkedgraph_supervoxel_source',
+                                  dataset_name=dataset_name, use_stored=use_stored,
+                                  format_for=format_for, output_map=output_map_precomputed)
 
     def pychunkedgraph_endpoint(self, dataset_name=None, use_stored=True):
-        return self.get_property('pychunkgraph_endpoint',
-                                 dataset_name=dataset_name,
-                                 use_stored=use_stored)
+        return self._get_property('pychunkgraph_endpoint',
+                                  dataset_name=dataset_name,
+                                  use_stored=use_stored,
+                                  output_map=output_map_raw)
 
     def pychunkgraph_endpoint(self, **kwargs):
         warn('Please use ''pychunkedgraph_endpoint''', DeprecationWarning)
         return self.pychunkedgraph_endpoint(**kwargs)
 
     def pychunkedgraph_segmentation_source(self, dataset_name=None,
-                                        use_stored=True, format_for='graphene'):
-        return self.get_property('pychunkgraph_segmentation_source',
-                                 dataset_name=dataset_name,
-                                 use_stored=use_stored,
-                                 format_for=format_for)
+                                        use_stored=True, format_for='raw'):
+        return self._get_property('pychunkgraph_segmentation_source',
+                                  dataset_name=dataset_name,
+                                  use_stored=use_stored,
+                                  format_for=format_for,
+                                  output_map=output_map_graphene)
 
     def pychunkgraph_segmentation_source(self, **kwargs):
         warn('Please use ''pychunkedgraph_segmentation_source'' in the future.', DeprecationWarning)
         return self.pychunkedgraph_segmentation_source(**kwargs)
 
+    def pychunkedgraph_viewer_source(self, **kwargs):
+        warn('Use ''graphene_source'' instead', DeprecationWarning)
+        return self.graphene_source(**kwargs)
+
     def graphene_source(self, dataset_name=None,
-                        use_stored=True, format_for='graphene'):
-        return self.get_property('graphene_source',
+                        use_stored=True, format_for='raw'):
+        return self._get_property('graphene_source',
                                  dataset_name=dataset_name,
                                  use_stored=use_stored,
-                                 format_for=format_for)
-
-    def synapse_segmentation(self, dataset_name=None,
-                            use_stored=True, format_for='raw'):
-        if format_for == 'neuroglancer':
-            format_for = 'neuroglancer_flat'
-        return self.get_property('synapse_segmentation_source',
-                                dataset_name=dataset_name,
-                                use_stored=use_stored,
-                                format_for=format_for)
+                                 format_for=format_for,
+                                 output_map=output_map_graphene)
 
     def refresh_stored_data(self):
         for ds in self.info_cache.keys():
