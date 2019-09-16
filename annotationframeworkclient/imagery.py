@@ -146,7 +146,7 @@ class ImageryClient(object):
     def pcg_client(self):
         """PychunkedGraph client object
         """
-        if self._use_segmentation is False or if self._chunked_segmentation is False:
+        if self._use_segmentation is False or self._chunked_segmentation is False:
             return None
         elif self._pcg_client is None:
             self._pcg_client = ChunkedGraphClient(server_address=self._server_address,
