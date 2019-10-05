@@ -9,10 +9,6 @@ from annotationframeworkclient import infoservice
 from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from annotationframeworkclient.endpoints import default_server_address
 
-class DimensionException(Exception):
-    """Raised when image dimensions don't match"""
-    pass
-
 class ImageryClient(object):
     """Class to help download imagery and segmentation data. Can either take
        explicit cloudvolume paths for imagery and segmentation or use the Info Service
@@ -307,8 +303,9 @@ class ImageryClient(object):
         else:
             pbar = None
         inds_to_update = supervoxel_ids == 0
-        pbar.update(sum(inds_to_update))
-
+        if verbose:
+            pbar.update(sum(inds_to_update))
+        
         while np.any(supervoxel_ids > 0):
             # Get the first remaining supervoxel id, find its root id and peer supervoxel ids
             sv_id_base = supervoxel_ids[supervoxel_ids > 0][0]
@@ -323,7 +320,7 @@ class ImageryClient(object):
                 pbar.update(sum(inds_to_update))
         return sv_to_root_id
 
-    def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', allow_resize=True, split_segmentations=False, include_null_root=False, verbose=False):
+    def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', resize=True, split_segmentations=False, include_null_root=False, verbose=False):
         """Download aligned and scaled imagery and segmentation data at a given resolution.
         
         Parameters
@@ -339,16 +336,15 @@ class ImageryClient(object):
             If a list, the segmentation cutout only includes voxels for a specified set of root ids.
             If None, default to the supervoxel ids. If 'all', finds all root ids corresponding to the supervoxels
             in the cutout and get all of them. By default 'all'.
-        allow_resize : bool, optional
-            Allow the lower resolution of the imagery and segmentation (typically imagery) to be upscaled to match whichever is higher resolution, by default True.
-            If False, returns an error if the resolutions do not match.
+        resize : bool, optional
+            If True, upscale the lower resolution cutout to the same resolution of the higher one (either imagery or segmentation).
         split_segmentations : bool, optional
             If True, the segmentation is returned as a dict of masks (using split_segmentation_cutout), and if False returned as
             an array with root_ids (using segmentation_cutout), by default False
         include_null_root : bool, optional
             If True, includes root id of 0, which is usually reserved for a null segmentation value. Default is False.
         verbose : bool, optional
-            If true, prints statements about the progress as it goes. By default, False.
+            If True, prints statements about the progress as it goes. By default, False.
  
         Returns
         -------
@@ -372,10 +368,6 @@ class ImageryClient(object):
         else:
             zoom_to = 'image'
 
-        if allow_resize is False:
-            if zoom_to is not None:
-                raise DimensionException('Segmentation and imagery are not the same size base image')
-        
         if verbose:
             print('Downloading images')
         img = self.image_cutout(bounds=bounds,
@@ -387,19 +379,21 @@ class ImageryClient(object):
         if split_segmentations is False:
             seg = self.segmentation_cutout(bounds,
                                            root_ids=root_ids,
-                                           mip=segmentation_mip)
+                                           mip=segmentation_mip,
+                                           verbose=verbose)
             seg_shape = seg.shape
         else:
             seg = self.split_segmentation_cutout(bounds,
                                                  root_ids=root_ids,
                                                  mip=segmentation_mip,
-                                                 include_null_root=include_null_root)
+                                                 include_null_root=include_null_root,
+                                                 verbose=verbose)
             if len(seg) > 0:
                 seg_shape = seg[list(seg.keys())[0]].shape
             else:
                 seg_shape = 1
 
-        if zoom_to is None:
+        if resize is False:
             pass
         elif zoom_to == 'segmentation':
             zoom_scale = np.array(seg_shape) / np.array(img_shape)
@@ -541,7 +535,7 @@ class ImageryClient(object):
 
 
     def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, image_mip=None, segmentation_mip=None,
-                                          root_ids='all', allow_resize=True, precomputed_data=None, slice_axis=2,
+                                          root_ids='all', resize=True, precomputed_data=None, slice_axis=2,
                                           segmentation_colormap={}, include_null_root=False, verbose=False, **kwargs):
         """Save aligned and scaled imagery and segmentation mask cutouts as pngs. Kwargs are passed to imageio.imwrite.
         
@@ -563,8 +557,8 @@ class ImageryClient(object):
             If a list, the segmentation cutout only includes voxels for a specified set of root ids.
             If None, default to the supervoxel ids. If 'all', finds all root ids corresponding to the supervoxels
             in the cutout and get all of them. By default 'all'.
-        allow_resize : bool, optional
-            If False, throws an error if image and segmentation mips don't have the same voxel resolution. By default, False.
+        resize : bool, optional
+            If True, upscale the lower resolution cutout to the same resolution of the higher one (either imagery or segmentation).
         precomputed_data : tuple, optional
             Already computed tuple with imagery and segmentation mask data, in that order. If not provided, bounds must be given to download
             cutout data. By default, None.
@@ -581,7 +575,7 @@ class ImageryClient(object):
         if precomputed_data is not None:
             img, seg_dict = precomputed_data
         else:
-            img, seg_dict = self.image_and_segmentation_cutout(bounds=bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, allow_resize=allow_resize, include_null_root=include_null_root, split_segmentations=True)
+            img, seg_dict = self.image_and_segmentation_cutout(bounds=bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, resize=resize, include_null_root=include_null_root, split_segmentations=True, verbose=verbose)
         
         self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose, **kwargs) 
         self.save_segmentation_masks(filename_prefix, precomputed_masks=seg_dict, slice_axis=slice_axis,
