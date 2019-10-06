@@ -23,11 +23,6 @@ class JSONService(object):
     def server_address(self):
         return self._server_address
     
-    @server_address.setter
-    def server_address(self, val):
-        self._server_address = val
-        self._default_url_mapping['json_server_address'] = value
-
     def get_state_json(self, state_id):
         url_mapping = self.default_url_mapping
         url_mapping['state_id'] = state_id
