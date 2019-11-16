@@ -79,6 +79,23 @@ class ChunkedGraphClient(object):
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
 
+    def get_children(self, node_id):
+        """
+        get the children of any node in the hierarchy
+
+        :param node_id: np.uint64
+        :return: list of np.uint64
+        """
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['node_id'] = node_id
+        url = cg['handle_children'].format_map(endpoint_mapping)
+
+        response = self.session.post(url)
+
+        assert(response.status_code == 200)
+        return np.frombuffer(response.content, dtype=np.uint64)
+
+
     def get_contact_sites(self, root_id, bounds=None, calc_partners=False):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
