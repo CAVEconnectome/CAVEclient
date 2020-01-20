@@ -1,5 +1,8 @@
 import numpy as np
 import requests
+import datetime
+import time
+
 from annotationframeworkclient import endpoints
 from annotationframeworkclient import infoservice
 from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
@@ -33,10 +36,16 @@ class ChunkedGraphClient(object):
     def default_url_mapping(self):
         return self._default_url_mapping.copy()
 
-    def get_root_id(self, supervoxel_id, bounds=None):
+    def get_root_id(self, supervoxel_id, timestamp=None):
+        if timestamp is None:
+            timestamp = datetime.datetime.utcnow()
+
         endpoint_mapping = self.default_url_mapping
         url = cg['handle_root'].format_map(endpoint_mapping)
+        url = f"{url}?timestamp={time.mktime(timestamp.timetuple())}"
+
         response = self.session.post(url, json=[supervoxel_id])
+
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
 
