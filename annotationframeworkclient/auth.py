@@ -34,6 +34,9 @@ class AuthClient(object):
         self._token = self._load_token(self._token_file, self._token_key)
 
     def _load_token(self, token_file, token_key):
+        if token_file is None:
+            return None
+            
         if os.path.exists(token_file):
             with open(token_file, "r") as f:
                 token = json.load(f).get(token_key, None)
