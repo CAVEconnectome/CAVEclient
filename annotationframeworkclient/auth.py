@@ -7,6 +7,7 @@ default_token_location = os.path.expanduser("~/.cloudvolume/secrets")
 default_token_name = "chunkedgraph-secret.json"
 default_token_file = f"{default_token_location}/{default_token_name}"
 
+
 class AuthClient(object):
     def __init__(
         self,
@@ -36,7 +37,7 @@ class AuthClient(object):
     def _load_token(self, token_file, token_key):
         if token_file is None:
             return None
-            
+
         if os.path.exists(token_file):
             with open(token_file, "r") as f:
                 token = json.load(f).get(token_key, None)
@@ -52,7 +53,9 @@ class AuthClient(object):
         print(txt)
         return None
 
-    def save_new_token(self, new_token=None, new_token_key="token", overwrite=False, switch_token=True):
+    def save_new_token(
+        self, new_token=None, new_token_key="token", overwrite=False, switch_token=True
+    ):
         if new_token is None:
             new_token = self.token
 
