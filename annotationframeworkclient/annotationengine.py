@@ -9,12 +9,13 @@ from annotationframeworkclient.endpoints import annotationengine_endpoints as ae
 from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
 from annotationframeworkclient import endpoints
 from annotationframeworkclient import infoservice
+from .auth import AuthClient
 
 from multiwrapper import multiprocessing_utils as mu
 
 
 class AnnotationClient(object):
-    def __init__(self, server_address=None, dataset_name=None, cg_server_address=None):
+    def __init__(self, server_address=None, dataset_name=None, cg_server_address=None, auth_client=None):
         """
         :param server_address: str or None
             server url
@@ -31,7 +32,12 @@ class AnnotationClient(object):
         self._infoserviceclient = None
         self._cg_server_address = cg_server_address 
 
+        if auth_client is None:
+            auth_client = AuthClient()
+
         self.session = requests.Session()
+        self.session.headers.update(auth_client.request_header)
+
         self._default_url_mapping = {"ae_server_address": self._server_address,
                                      'cg_server_address': self._cg_server_address}
         

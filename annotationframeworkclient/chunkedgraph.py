@@ -6,6 +6,7 @@ import time
 from annotationframeworkclient import endpoints
 from annotationframeworkclient import infoservice
 from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
+from .auth import AuthClient
 
 def package_bounds(bounds):
     bounds_str=[]
@@ -16,7 +17,7 @@ def package_bounds(bounds):
 
 class ChunkedGraphClient(object):
     def __init__(self, server_address=None, dataset_name=None,
-                 table_name=None):
+                 table_name=None, auth_client=None):
         if server_address is None:
             self._server_address = endpoints.default_server_address
         else:
@@ -26,7 +27,13 @@ class ChunkedGraphClient(object):
             pcg_vs = info_client.pychunkedgraph_viewer_source(dataset_name=dataset_name)
             table_name = pcg_vs.split('/')[-1]
         self.table_name = table_name
+        
+        if auth_client is None:
+            auth_client = AuthClient()
+
         self.session = requests.Session()
+        self.session.headers.update(auth_client.request_header)
+
         self.info_cache = dict()
 
         self._default_url_mapping = {"cg_server_address": self._server_address,

@@ -41,3 +41,7 @@ jsonservice_endpoints = {
     "get_state": "{json_server_address}/nglstate/{state_id}",
     'get_state_raw': "{json_server_address}/nglstate/raw/{state_id}",
 }
+
+auth_endpoints = {
+    "refresh_token" : "{auth_server_address}/auth/refresh_token"
+}

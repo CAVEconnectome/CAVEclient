@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from warnings import warn
 from annotationframeworkclient.endpoints import infoservice_endpoints as ie
 from annotationframeworkclient import endpoints
+from .auth import AuthClient
 
 def format_precomputed_neuroglancer(objurl):
     qry = urlparse(objurl)
@@ -60,14 +61,20 @@ output_map_graphene = {'raw': format_raw,
                        'neuroglancer': format_graphene}
 
 class InfoServiceClient(object):
-    def __init__(self, server_address=None, dataset_name=None):
+    def __init__(self, server_address=None, dataset_name=None, auth_client=None):
         if server_address is None:
             self._server_address = endpoints.default_server_address
         else:
             self._server_address = server_address
 
         self._dataset_name = dataset_name
+
+        if auth_client is None:
+            auth_client = AuthClient()
+
         self.session = requests.Session()
+        self.session.headers.update(auth_client.request_header)
+
         self.info_cache = dict()
 
         self._default_url_mapping = {"i_server_address": self._server_address}

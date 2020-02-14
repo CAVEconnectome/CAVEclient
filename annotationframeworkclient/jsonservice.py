@@ -3,16 +3,22 @@ from annotationframeworkclient.endpoints import jsonservice_endpoints as jse
 from annotationframeworkclient import endpoints
 import json
 import re
+from .auth import AuthClient
 
 
 class JSONService(object):
-    def __init__(self, server_address=None):
+    def __init__(self, server_address=None, auth_client=None):
         if server_address is None:
             self._server_address = endpoints.default_server_address
         else:
             self._server_address = server_address
 
+        if auth_client is None:
+            auth_client = AuthClient()
+
         self.session = requests.Session()
+        self.session.headers.update(auth_client.request_header)
+
         self._default_url_mapping = {'json_server_address': self._server_address}
 
     @property
