@@ -1,5 +1,6 @@
 import json
 import requests
+import webbrowser
 import os
 from .endpoints import auth_endpoints, default_server_address
 
@@ -30,7 +31,12 @@ class AuthClient(object):
     def token(self):
         return self._token
 
-    def get(self, token_key):
+    @token.setter
+    def token(self, new_token):
+        self._token = new_token
+        self._token_key = None
+
+    def get_token(self, token_key=None, ):
         self._token_key = token_key
         self._token = self._load_token(self._token_file, self._token_key)
 
@@ -45,40 +51,60 @@ class AuthClient(object):
             token = None
         return token
 
-    def get_new_token(self):
+    def get_new_token(self, open=False):
         auth_url = auth_endpoints["refresh_token"].format_map(
             self._default_endpoint_mapping
         )
-        txt = f"New Tokens need to be acquired by hand at {auth_url}\nWarning! Creating a new token will invalidate the previous token!"
+        txt = f"""New Tokens need to be acquired by hand. Please follow the following steps:
+                1) Go to: {auth_url}
+                2) Log in with your Google credentials and copy the token shown afterward.
+                3a) Save it to your computer with: client.auth.save_token(token="PASTE_YOUR_TOKEN_HERE")
+                or
+                3b) Set it for the current session only with client.auth.token = "PASTE_YOUR_TOKEN_HERE"
+                Note: If you need to save or load multiple tokens, please read the documentation for details.
+                Warning! Creating a new token will invalidate the previous token!"""
         print(txt)
+        if open is True:
+            webbrowser.open(auth_url)
         return None
 
-    def save_new_token(
-        self, new_token=None, new_token_key="token", overwrite=False, switch_token=True
+    def save_token(
+        self,
+        token=None,
+        token_key="token",
+        overwrite=False,
+        token_file=None,
+        switch_token=True,
     ):
-        if new_token is None:
-            new_token = self.token
+        if token is None:
+            token = self.token
 
-        if self._token_file is None:
-            raise ValueError("Token file is not set")
+        if token_file is not None:
+            save_token_file = token_file
+        else:
+            save_token_file = self._token_file
 
-        if os.path.exists(self._token_file):
-            with open(self._token_file, "r") as f:
+        if save_token_file is None:
+            raise ValueError("No token file is set")
+
+        if os.path.exists(save_token_file):
+            with open(save_token_file, "r") as f:
                 secrets = json.load(f)
 
-            if overwrite is False:
-                if new_token_key in secrets:
-                    raise ValueError("Token key already exists in token file")
+            if overwrite is False and token_key in secrets:
+                raise ValueError(
+                    f"Key \"{token_key}\" already exists in token file \"{save_token_file}\"")
         else:
             secrets = {}
 
-        secrets[new_token_key] = new_token
-        with open(self._token_file, "w") as f:
+        secrets[token_key] = token
+        with open(save_token_file, "w") as f:
             json.dump(secrets, f)
 
         if switch_token:
-            self._token = new_token
-            self._token_key = new_token_key
+            self._token = token
+            self._token_key = token_key
+            self._token_file = save_token_file
 
     @property
     def request_header(self):
