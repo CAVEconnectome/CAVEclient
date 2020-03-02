@@ -14,16 +14,16 @@ class FrameworkClient(object):
     client = FrameworkClient(dataset_name='my_dataset',
                              server_address='www.myserver.com',
                              auth_token_file='~/.mysecrets/secrets.json')
-    
+
     Then 
         client.info is an InfoService client (see infoservice.InfoServiceClient)
         client.state is a neuroglancer state client (see jsonservice.JSONService)
         client.schema is an EM Annotation Schemas client (see emannotationschemas.SchemaClient)
         client.chunkedgraph is a Chunkedgraph client (see chunkedgraph.ChunkedGraphClient)
         client.annotation is an Annotation DB client (see annotationengine.AnnotationClient)
-    
+
     All subclients are loaded lazily, and share the same dataset name, server address, and auth tokens where used.
-    
+
     Parameters
     ----------
     dataset_name : str
@@ -40,7 +40,7 @@ class FrameworkClient(object):
     auth_token : str or None
         Direct entry of an auth token. If None, uses the file arguments to find the token.
         Optional, default is None.
-    
+
     Returns
     -------
     FrameworkClient
@@ -72,10 +72,11 @@ class FrameworkClient(object):
         self._schema = None
         self._chunkedgraph = None
         self._annotation = None
+        self._imagery = None
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
-        
+
         Parameters
         ----------
         auth_token_file : str, optional
@@ -108,6 +109,7 @@ class FrameworkClient(object):
         self._schema = None
         self._chunkedgraph = None
         self._annotation = None
+        self._imagery = None
 
     @property
     def dataset_name(self):
@@ -168,3 +170,6 @@ class FrameworkClient(object):
                 auth_client=self.auth,
             )
         return self._annotation
+
+    @property
+    def imagery(self)

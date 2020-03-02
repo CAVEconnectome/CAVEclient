@@ -8,12 +8,14 @@ from annotationframeworkclient import infoservice
 from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
 from .auth import AuthClient
 
+
 def package_bounds(bounds):
-    bounds_str=[]
+    bounds_str = []
     for b in bounds:
         bounds_str.append("-".join(str(b2) for b2 in b))
     bounds_str = "_".join(bounds_str)
     return bounds_str
+
 
 class ChunkedGraphClient(object):
     def __init__(self, server_address=None, dataset_name=None,
@@ -27,7 +29,7 @@ class ChunkedGraphClient(object):
             pcg_vs = info_client.pychunkedgraph_viewer_source(dataset_name=dataset_name)
             table_name = pcg_vs.split('/')[-1]
         self.table_name = table_name
-        
+
         if auth_client is None:
             auth_client = AuthClient()
 
@@ -61,7 +63,7 @@ class ChunkedGraphClient(object):
         endpoint_mapping['root_id'] = root_id
         url = cg['merge_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
-     
+
         assert(response.status_code == 200)
         return response.json()
 
@@ -70,7 +72,7 @@ class ChunkedGraphClient(object):
         endpoint_mapping['root_id'] = root_id
         url = cg['change_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
-     
+
         assert(response.status_code == 200)
         return response.json()
 
@@ -91,7 +93,7 @@ class ChunkedGraphClient(object):
             query_d['bounds'] = package_bounds(bounds)
 
         response = self.session.post(url, json=[root_id], params=query_d)
-     
+
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
 
@@ -111,7 +113,6 @@ class ChunkedGraphClient(object):
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
 
-
     def get_contact_sites(self, root_id, bounds=None, calc_partners=False):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
@@ -119,12 +120,11 @@ class ChunkedGraphClient(object):
         query_d = {}
         if bounds is not None:
             query_d['bounds'] = package_bounds(bounds)
-        query_d['partners']=calc_partners
+        query_d['partners'] = calc_partners
         response = self.session.post(url, json=[root_id], params=query_d)
         contact_d = response.json()
-        return {int(k):v for k,v in contact_d.items()}
+        return {int(k): v for k, v in contact_d.items()}
 
     @property
     def cloudvolume_path(self):
         return cg['cloudvolume_path'].format_map(self.default_url_mapping)
-    
