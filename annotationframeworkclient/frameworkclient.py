@@ -13,9 +13,7 @@ class FrameworkClient(object):
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
-    client = FrameworkClient(dataset_name='my_dataset',
-                             server_address='www.myserver.com',
-                             auth_token_file='~/.mysecrets/secrets.json')
+    client = FrameworkClient(dataset_name='my_dataset', server_address='www.myserver.com', auth_token_file='~/.mysecrets/secrets.json')
 
     Then 
     * client.info is an InfoService client (see infoservice.InfoServiceClient)
