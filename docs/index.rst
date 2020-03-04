@@ -6,12 +6,20 @@ Welcome to AnnotationFrameworkClient's documentation!
    :caption: Contents:
 
    guide/intro
+   guide/framework
+   guide/authentication
+   guide/annotation
+   guide/chunkedgraph
+   guide/info
+   guide/schemas
+   guide/state
+
 
 API
 ---
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API:
 
    api/annotationframeworkclient
 
