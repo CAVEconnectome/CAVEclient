@@ -199,7 +199,7 @@ class FrameworkClient(object):
                              auth_client=self.auth,
                              pcg_client=self.chunkedgraph,
                              image_mip=image_mip,
-                             segmentation_mip=segmention_mip,
+                             segmentation_mip=segmentation_mip,
                              segmentation=segmentation,
                              imagery=imagery,
                              )
