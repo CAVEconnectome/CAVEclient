@@ -10,20 +10,22 @@ from annotationframeworkclient.endpoints import default_server_address
 
 class FrameworkClient(object):
     """A manager for all clients sharing common dataset and authentication information.
-    This basically wraps the other clients and keeps track of the things that need to be consistent across them.
+
+    This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
     client = FrameworkClient(dataset_name='my_dataset',
                              server_address='www.myserver.com',
                              auth_token_file='~/.mysecrets/secrets.json')
 
     Then 
-        client.info is an InfoService client (see infoservice.InfoServiceClient)
-        client.state is a neuroglancer state client (see jsonservice.JSONService)
-        client.schema is an EM Annotation Schemas client (see emannotationschemas.SchemaClient)
-        client.chunkedgraph is a Chunkedgraph client (see chunkedgraph.ChunkedGraphClient)
-        client.annotation is an Annotation DB client (see annotationengine.AnnotationClient)
+    * client.info is an InfoService client (see infoservice.InfoServiceClient)
+    * client.state is a neuroglancer state client (see jsonservice.JSONService)
+    * client.schema is an EM Annotation Schemas client (see emannotationschemas.SchemaClient)
+    * client.chunkedgraph is a Chunkedgraph client (see chunkedgraph.ChunkedGraphClient)
+    * client.annotation is an Annotation DB client (see annotationengine.AnnotationClient)
+    * client.imagery_client(...) will generate an imagery client. 
 
-    All subclients are loaded lazily, and share the same dataset name, server address, and auth tokens where used.
+    All subclients are loaded lazily and share the same dataset name, server address, and auth tokens where used.
 
     Parameters
     ----------
@@ -41,11 +43,6 @@ class FrameworkClient(object):
     auth_token : str or None
         Direct entry of an auth token. If None, uses the file arguments to find the token.
         Optional, default is None.
-
-    Returns
-    -------
-    FrameworkClient
-        Client for programmatic handling of the framework endpoint API.
     """
 
     def __init__(
@@ -99,11 +96,9 @@ class FrameworkClient(object):
             auth_token,
             self._server_address,
         )
-        self.reset_services()
+        self._reset_services()
 
-    def reset_services(self):
-        """Reinitializes all subclients
-        """
+    def _reset_services(self):
         self._auth = None
         self._info = None
         self._state = None
@@ -179,6 +174,29 @@ class FrameworkClient(object):
                        segmentation_mip=0,
                        segmentation=True,
                        imagery=True):
+        """Generates an imagery client based on the current framework client.
+
+        Parameters
+        ----------
+        base_resolution : list, optional
+            Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40]
+        graphene_segmentation : bool, optional
+            If True, use the graphene segmentation. If false, use the flat segmentation. By default True.
+        image_mip : int, optional
+            Default mip level to use for imagery lookups, by default 0. Note that the same mip
+            level for imagery and segmentation can correspond to different voxel resolutions.
+        segmentation_mip : int, optional
+            Default mip level to use for segmentation lookups, by default 0.
+        segmentation : bool, optional
+            If False, no segmentation cloudvolume is initialized. By default True
+        imagery : bool, optional
+            If False, no imagery cloudvolume is initialized. By default True
+
+        Returns
+        -------
+        imagery.ImageryClient
+
+        """
         return ImageryClient(dataset_name=self.dataset_name,
                              auth_client=self.auth,
                              pcg_client=self.chunkedgraph,
