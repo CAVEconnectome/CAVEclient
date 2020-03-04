@@ -29,10 +29,6 @@ class AuthClient(object):
 
     server_address : str, optional,
         URL to the auth server. By default, uses a default server address.
-
-    Returns
-    -------
-        AuthClient
     """
 
     def __init__(
@@ -54,6 +50,8 @@ class AuthClient(object):
 
     @property
     def token(self):
+        """Secret token used to authenticate yourself to the Dynamic Annotation Framework services.
+        """
         return self._token
 
     @token.setter
@@ -110,11 +108,35 @@ class AuthClient(object):
     def save_token(
         self,
         token=None,
-        token_key="token",
+        token_key=default_token_key,
         overwrite=False,
         token_file=None,
         switch_token=True,
     ):
+        """Conveniently save a token in the correct format.
+
+        After getting a new token by following the instructions in `authclient.get_new_token()`, you can save it with a fully default configuration by running:
+
+        token = 'my_shiny_new_token'
+
+        authclient.save_token(token=token)
+
+        Now on next load, authclient=AuthClient() will make an authclient instance using this token.
+        If you would like to specify more information about the json file where the token will be stored, see the parameters below.
+
+        Parameters
+        ----------
+        token : str, optional
+            New token to save, by default None
+        token_key : str, optional
+            Key for the token in the token_file json, by default "token"
+        overwrite : bool, optional
+            Allow an existing token to be changed, by default False
+        token_file : str, optional
+            Path to the token file, by default None. If None, uses the default file location specified above.
+        switch_token : bool, optional
+            If True, switch the auth client over into using the new token, by default True
+        """
         if token is None:
             token = self.token
 
@@ -147,6 +169,8 @@ class AuthClient(object):
 
     @property
     def request_header(self):
+        """Formatted request header with the specified token
+        """
         if self.token is not None:
             auth_header = {"Authorization": f"Bearer {self.token}"}
             return auth_header

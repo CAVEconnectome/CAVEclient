@@ -15,6 +15,23 @@ from multiwrapper import multiprocessing_utils as mu
 
 
 class AnnotationClient(object):
+    """Client for interacting with the annotation database
+
+    Parameters
+    ----------
+    server_address : str or None, optional
+        Base URL for the annotation framework service. If None is specified, uses a default server address.
+
+    dataset_name : str or None, optional
+        Name of the dataset on the annotation service. If not specified here, required for any individual transaction.
+
+    cg_server_address : str or None, optional
+        Chunkedgraph server address, if different from the main one. If None, uses the default server address.
+
+    auth_client : auth.AuthClient or None, optional
+        An AuthClient instance with a loaded token for the dataset. If None, does not use a token when interacting with the endpoint, which will not work on services behind any login authorization.
+    """
+
     def __init__(
         self,
         server_address=None,
@@ -22,20 +39,12 @@ class AnnotationClient(object):
         cg_server_address=None,
         auth_client=None,
     ):
-        """
-        :param server_address: str or None
-            server url
-        :param dataset_name: str or None
-            dataset name
-        """
-
         if server_address is None:
             self._server_address = endpoints.default_server_address
         else:
             self._server_address = server_address
         self._dataset_name = dataset_name
 
-        self._infoserviceclient = None
         self._cg_server_address = cg_server_address
 
         if auth_client is None:
@@ -75,18 +84,13 @@ class AnnotationClient(object):
         self._cg_server_address = value
         self._default_url_mapping["cg_server_address"] = value
 
-    def infoserviceclient(self):
-        if self._infoserviceclient is None:
-            self._infoserviceclient = infoservice.InfoServiceClient(
-                server_address=self.server_address, dataset_name=self.dataset_name
-            )
-
-        return self._infoserviceclient
-
     def get_datasets(self):
-        """ Returns existing datasets
+        """ Gets a list of datasets
 
-        :return: list
+        Returns
+        -------
+        list
+            List of dataset names for available datasets on the annotation engine
         """
         url = ae["datasets"].format_map(self.default_url_mapping)
         response = self.session.get(url)
@@ -94,10 +98,17 @@ class AnnotationClient(object):
         return response.json()
 
     def get_tables(self, dataset_name=None):
-        """ Reads table infos
+        """ Gets a list of table names for a dataset
 
-        :param dataset_name: str
-        :return: dict
+        Parameters
+        ----------
+        dataset_name : str or None, optional
+            Name of the dataset, by default None. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        list
+            List of table names
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -110,12 +121,22 @@ class AnnotationClient(object):
         return response.json()
 
     def create_table(self, table_name, schema_name, dataset_name=None):
-        """ Creates a table
+        """ Creates a new data table based on an existing schema
 
-        :param table_name: str
-        :param schema_name: str
-        :param dataset_name: str
-        :return: response
+        Parameters
+        ----------
+        table_name: str
+            Name of the new table. Cannot be the same as an existing table
+        schema_name: str
+            Name of the schema for the new table.
+        dataset_name: str or None, optional,
+            Name of the dataset. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -129,24 +150,22 @@ class AnnotationClient(object):
         assert response.status_code == 200
         return response.json()
 
-    def get_dataset_info(self, dataset_name=None):
-        """ Returns information about a dataset
-
-        Calls get_dataset_info from informationserviceclient
-
-        :param dataset_name: str
-        :return: dict
-        """
-
-        return self.infoserviceclient.get_dataset_info(dataset_name=dataset_name)
-
     def get_annotation(self, table_name, annotation_id, dataset_name=None):
-        """ Returns information about one specific annotation
+        """ Retrieve a single annotation by id and table name.
 
-        :param dataset_name: str
-        :param table_name: str
-        :param annotation_id: np.uint64
-        :return dict
+        Parameters
+        ----------
+        table_name : str
+            Name of the table
+        annotation_id : int
+            ID number of the annotation to retreive (starting from 1)
+        dataset_name : str or None, optional
+            Name of the dataset. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        dict
+            Annotation data
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -162,12 +181,22 @@ class AnnotationClient(object):
         return response.json()
 
     def post_annotation(self, table_name, data, dataset_name=None):
-        """ Post an annotation to the AnnotationEngine
+        """ Post one or more new annotations to a table in the AnnotationEngine
 
-        :param dataset_name: str
-        :param table_name: str
-        :param data: dict
-        :return dict
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        data : dict or list,
+            A list of (or a single) dict of schematized annotation data matching the target table.
+        dataset_name : str or None, optional
+            Name of the dataset. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -181,51 +210,6 @@ class AnnotationClient(object):
         url = ae["new_annotation"].format_map(endpoint_mapping)
 
         response = self.session.post(url, json=data)
-        assert response.status_code == 200
-        return response.json()
-
-    def update_annotation(self, table_name, annotation_id, data, dataset_name=None):
-        """ Updates an existing annotation
-
-        :param table_name: str
-        :param annotation_id: np.uint64
-        :param data: dict
-        :param dataset_name: str
-        :return: dict
-        """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["table_name"] = table_name
-        endpoint_mapping["annotation_id"] = annotation_id
-
-        url = ae["existing_annotation"].format_map(endpoint_mapping)
-
-        response = self.session.put(url, json=data)
-        assert response.status_code == 200
-        return response.json()
-
-    def delete_annotation(self, table_name, annotation_id, dataset_name=None):
-        """ Delete an existing annotation
-
-        :param dataset_name: str
-        :param table_name: str
-        :param annotation_id: int
-        :return dict
-        """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["table_name"] = table_name
-        endpoint_mapping["annotation_id"] = annotation_id
-
-        url = ae["existing_annotation"].format_map(endpoint_mapping)
-
-        response = self.session.delete(url)
         assert response.status_code == 200
         return response.json()
 
@@ -283,7 +267,11 @@ class AnnotationClient(object):
         if dataset_name is None:
             dataset_name = self.dataset_name
 
-        dataset_info = self.get_dataset_info(dataset_name)
+        infoserviceclient = infoserice.InfoServiceClient(
+            server_address=self.server_address,
+            dataset_name=self.dataset_name
+        )
+        dataset_info = infoserviceclient.get_dataset_info(dataset_name)
 
         endpoint_mapping = self.default_url_mapping
         if endpoint_mapping["cg_server_address"] is None:
