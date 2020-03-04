@@ -4,20 +4,45 @@ import webbrowser
 import os
 from .endpoints import auth_endpoints, default_server_address
 
-default_token_location = os.path.expanduser("~/.cloudvolume/secrets")
+default_token_location = "~/.cloudvolume/secrets"
 default_token_name = "chunkedgraph-secret.json"
+default_token_key = 'token'
 default_token_file = f"{default_token_location}/{default_token_name}"
 
 
 class AuthClient(object):
+    """Client to find and use auth tokens to access the dynamic annotation framework services.
+
+    Parameters
+    ----------
+    token_file : str, optional
+        Path to a JSON key:value file holding your auth token.
+        By default, "~/.cloudvolume/secrets/chunkedgraph-secret.json"
+
+    token_key : str, optional
+        Key for the token in the token_file.
+        By default, "token"
+
+    token : str or None, optional
+        Direct entry of the token as a string. If provided, overrides the files.
+        If None, attempts to use the file paths.
+
+    server_address : str, optional,
+        URL to the auth server. By default, uses a default server address.
+
+    Returns
+    -------
+        AuthClient
+    """
+
     def __init__(
         self,
         token_file=default_token_file,
-        token_key="token",
+        token_key=default_token_key,
         token=None,
         server_address=default_server_address,
     ):
-        self._token_file = token_file
+        self._token_file = os.path.expanduser(token_file)
         self._token_key = token_key
 
         if token is None:
@@ -37,6 +62,13 @@ class AuthClient(object):
         self._token_key = None
 
     def get_token(self, token_key=None, ):
+        """Load a token with a given key the specified token file
+
+        Parameters
+        ----------
+        token_key : str or None, optional
+            key in the token file JSON, by default None. If None, uses 'token'.
+        """
         self._token_key = token_key
         self._token = self._load_token(self._token_file, self._token_key)
 
@@ -52,6 +84,13 @@ class AuthClient(object):
         return token
 
     def get_new_token(self, open=False):
+        """Currently, returns instructions for getting a new token based on the current settings and saving it to the local environment. New OAuth tokens are currently not able to be retrieved programmatically.
+
+        Parameters
+        ----------
+        open : bool, optional
+            If True, opens a web browser to the web page where you can generate a new token.
+        """
         auth_url = auth_endpoints["refresh_token"].format_map(
             self._default_endpoint_mapping
         )
