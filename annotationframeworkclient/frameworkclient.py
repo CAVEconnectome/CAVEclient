@@ -4,6 +4,7 @@ from .chunkedgraph import ChunkedGraphClient
 from .emannotationschemas import SchemaClient
 from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
+from .imagery import ImageryClient
 from annotationframeworkclient.endpoints import default_server_address
 
 
@@ -171,5 +172,18 @@ class FrameworkClient(object):
             )
         return self._annotation
 
-    @property
-    def imagery(self)
+    def imagery_client(self,
+                       base_resolution=[4, 4, 40],
+                       graphene_segmentation=True,
+                       image_mip=0,
+                       segmentation_mip=0,
+                       segmentation=True,
+                       imagery=True):
+        return ImageryClient(dataset_name=self.dataset_name,
+                             auth_client=self.auth,
+                             pcg_client=self.chunkedgraph,
+                             image_mip=image_mip,
+                             segmentation_mip=segmention_mip,
+                             segmentation=segmentation,
+                             imagery=imagery,
+                             )
