@@ -18,6 +18,20 @@ def package_bounds(bounds):
 
 
 class ChunkedGraphClient(object):
+    """Client to interface with the PyChunkedGraph service
+
+    Parameters
+    ----------
+    server_address : str or None, optional
+        URL where the PyChunkedGraph service is running. If None, defaults to www.dynamicannotationframework.com
+    dataset_name : str or None, optional
+        Name of the dataset. If None, requires specification of the table name. By default, None.
+    table_name : str or None, optional
+        Name of the chunkedgraph table associated with the dataset. If the dataset_name is specified and table name is not, this can be looked up automatically. By default, None.
+    auth_client : auth.AuthClient or None, optional
+        Instance of an AuthClient with token to handle authorization. If None, does not specify a token.
+    """
+
     def __init__(self, server_address=None, dataset_name=None,
                  table_name=None, auth_client=None):
         if server_address is None:
@@ -46,6 +60,20 @@ class ChunkedGraphClient(object):
         return self._default_url_mapping.copy()
 
     def get_root_id(self, supervoxel_id, timestamp=None):
+        """Get the root id for a specified supervoxel
+
+        Parameters
+        ----------
+        supervoxel_id : np.uint64
+            Supervoxel id value
+        timestamp : datetime.datetime, optional
+            UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
+
+        Returns
+        -------
+        np.uint64
+            Root ID containing the supervoxel.
+        """
         if timestamp is None:
             timestamp = datetime.datetime.utcnow()
 
@@ -59,6 +87,18 @@ class ChunkedGraphClient(object):
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_merge_log(self, root_id):
+        """Returns the merge log for a given object
+
+        Parameters
+        ----------
+        root_id : np.uint64
+            Root id of an object to get merge information.
+
+        Returns
+        -------
+        list
+            List of merge events in the history of the object.
+        """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
         url = cg['merge_log'].format_map(endpoint_mapping)
@@ -68,6 +108,18 @@ class ChunkedGraphClient(object):
         return response.json()
 
     def get_change_log(self, root_id):
+        """Get the change log (splits and merges) for an object
+
+        Parameters
+        ----------
+        root_id : np.uint64
+            Object root id to look up
+
+        Returns
+        -------
+        list
+            List of split and merge events in the object history
+        """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
         url = cg['change_log'].format_map(endpoint_mapping)
@@ -77,13 +129,20 @@ class ChunkedGraphClient(object):
         return response.json()
 
     def get_leaves(self, root_id, bounds=None):
-        """
-        get the supervoxels for this root_id
+        """Get all supervoxels for a root_id
 
-        params
-        ------
-        root_id: uint64 root id to find supervoxels for
-        bounds: 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
+        Parameters
+        ----------
+        root_id : np.uint64
+            Root id to query
+        bounds: np.array or None, optional
+            If specified, returns supervoxels within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
+            If None, finds all supervoxels.
+
+        Returns
+        -------
+        list
+            List of supervoxel ids
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
@@ -98,11 +157,17 @@ class ChunkedGraphClient(object):
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_children(self, node_id):
-        """
-        get the children of any node in the hierarchy
+        """Get the children of a node in the hierarchy
 
-        :param node_id: np.uint64
-        :return: list of np.uint64
+        Parameters
+        ----------
+        node_id : np.uint64
+            Node id to query
+
+        Returns
+        -------
+        list
+            List of np.uint64 ids of child nodes.
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['node_id'] = node_id
@@ -114,6 +179,22 @@ class ChunkedGraphClient(object):
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_contact_sites(self, root_id, bounds=None, calc_partners=False):
+        """Get contacts for a root id
+
+        Parameters
+        ----------
+        root_id : np.uint64
+            Object root id
+        bounds: np.array or None, optional
+            If specified, returns bounds within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
+            By default, None
+        calc_partners : bool, optional
+            If True, get partner root ids. By default, False.
+        Returns
+        -------
+        dict
+            Dict relating ids to contacts
+        """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
         url = cg['contact_sites'].format_map(endpoint_mapping)

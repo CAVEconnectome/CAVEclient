@@ -12,6 +12,14 @@ annotationframeworkclient.annotationengine module
    :undoc-members:
    :show-inheritance:
 
+annotationframeworkclient.auth module
+-------------------------------------
+
+.. automodule:: annotationframeworkclient.auth
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 annotationframeworkclient.chunkedgraph module
 ---------------------------------------------
 
@@ -28,10 +36,10 @@ annotationframeworkclient.emannotationschemas module
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.endpoints module
-------------------------------------------
+annotationframeworkclient.frameworkclient module
+------------------------------------------------
 
-.. automodule:: annotationframeworkclient.endpoints
+.. automodule:: annotationframeworkclient.frameworkclient
    :members:
    :undoc-members:
    :show-inheritance:

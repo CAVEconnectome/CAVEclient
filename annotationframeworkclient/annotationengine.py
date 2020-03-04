@@ -257,21 +257,34 @@ class AnnotationClient(object):
         n_threads=16,
         n_retries=100,
     ):
-        """ Imports all annotations from a single dataframe in one go
+        """ Imports all annotations from a single dataframe in one go, trying to organize points in the same chunk together for faster lookup.
 
-        :param dataset_name: str
-        :param table_name: str
-        :param data_df: pandas DataFrame
-        :return:
+        Parameters
+        ----------
+        table_name : str
+            Target table name for the data
+
+        data_df : pandas.DataFrame
+            DataFrame with column names matching the desired schema
+
+        min_block_size : int, optional
+            Minimum block size, by default, 40.
+
+        dataset_name : str or None, optional
+            Name of the dataset. If None, uses the one specified in the client.
+
+        n_threads : int, optional
+            Number of threads to use, by default 16.
+
+        n_retries : int, optional
+            Number of retry attempts, by default 100
+        Returns
+        -------
+        json
+            Response JSON
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
-
-        infoserviceclient = infoserice.InfoServiceClient(
-            server_address=self.server_address,
-            dataset_name=self.dataset_name
-        )
-        dataset_info = infoserviceclient.get_dataset_info(dataset_name)
 
         endpoint_mapping = self.default_url_mapping
         if endpoint_mapping["cg_server_address"] is None:
