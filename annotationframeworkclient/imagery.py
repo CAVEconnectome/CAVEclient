@@ -13,42 +13,43 @@ from annotationframeworkclient.endpoints import default_server_address
 
 
 def _patch_cloudvolume_auth(token):
+    # This is a a hack at the moment, but we will replace the monkey patching when cloudvolume can properly accept tokens.
     global cv
     cv.datasource.graphene.metadata.chunkedgraph_credentials = {'token': token}
 
 
 class ImageryClient(object):
-    """Class to help download imagery and segmentation data. Can either take
-       explicit cloudvolume paths for imagery and segmentation or use the Info Service
-       to look up the right paths.
+    """Tool to help download imagery and segmentation data.
 
-        Parameters
-        ----------
-        image_source : str, optional
-            CloudVolume path to an imagery source, by default None
-        segmentation_source : str, optional
-            CloudVolume path to a segmentation source, by default None
-        server_address : str, optional
-            Address of an InfoService host, by default None. If none, defaults to
-            https://www.dynamicannotationframework.com
-        dataset_name : str, optional
-            Dataset name to lookup information for in the InfoService, by default None
-        base_resolution : list, optional
-            Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
-        graphene_segmentation : bool, optional
-            If true, use the graphene segmentation. If false, use the flat segmentation. By default True.
-        table_name : str, optional
-            Name of the chunkedgraph table (if used), by default None
-        image_mip : int, optional
-            Default mip level to use for imagery lookups, by default 0. Note that the same mip
-            level for imagery and segmentation can correspond to different voxel resolutions.
-        segmentation_mip : int, optional
-            Default mip level to use for segmentation lookups, by default 0.
-        segmentation : bool, optional
-            If False, no segmentation cloudvolume is initialized. By default True
-        imagery : bool, optional
-            If False, no imagery cloudvolume is initialized. By default True
-        """
+    Can either take explicit cloudvolume paths for imagery and segmentation or use the Info Service to look up the right paths.
+
+    Parameters
+    ----------
+    image_source : str, optional
+        CloudVolume path to an imagery source, by default None
+    segmentation_source : str, optional
+        CloudVolume path to a segmentation source, by default None
+    server_address : str, optional
+        Address of an InfoService host, by default None. If none, defaults to
+        https://www.dynamicannotationframework.com
+    dataset_name : str, optional
+        Dataset name to lookup information for in the InfoService, by default None
+    base_resolution : list, optional
+        Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
+    graphene_segmentation : bool, optional
+        If true, use the graphene segmentation. If false, use the flat segmentation. By default True.
+    table_name : str, optional
+        Name of the chunkedgraph table (if used), by default None
+    image_mip : int, optional
+        Default mip level to use for imagery lookups, by default 0. Note that the same mip
+        level for imagery and segmentation can correspond to different voxel resolutions.
+    segmentation_mip : int, optional
+        Default mip level to use for segmentation lookups, by default 0.
+    segmentation : bool, optional
+        If False, no segmentation cloudvolume is initialized. By default True
+    imagery : bool, optional
+        If False, no imagery cloudvolume is initialized. By default True
+    """
 
     def __init__(self, image_source=None, segmentation_source=None, server_address=None,
                  dataset_name=None, base_resolution=[4, 4, 40],

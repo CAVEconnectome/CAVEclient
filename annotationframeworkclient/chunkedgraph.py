@@ -30,10 +30,12 @@ class ChunkedGraphClient(object):
         Name of the chunkedgraph table associated with the dataset. If the dataset_name is specified and table name is not, this can be looked up automatically. By default, None.
     auth_client : auth.AuthClient or None, optional
         Instance of an AuthClient with token to handle authorization. If None, does not specify a token.
+    timestamp : datetime.datetime or None, optional
+        Default UTC timestamp to use for chunkedgraph queries. 
     """
 
     def __init__(self, server_address=None, dataset_name=None,
-                 table_name=None, auth_client=None):
+                 table_name=None, auth_client=None, timestamp=None):
         if server_address is None:
             self._server_address = endpoints.default_server_address
         else:
@@ -43,6 +45,7 @@ class ChunkedGraphClient(object):
             pcg_vs = info_client.pychunkedgraph_viewer_source(dataset_name=dataset_name)
             table_name = pcg_vs.split('/')[-1]
         self.table_name = table_name
+        self._default_timestamp = timestamp
 
         if auth_client is None:
             auth_client = AuthClient()
@@ -75,7 +78,10 @@ class ChunkedGraphClient(object):
             Root ID containing the supervoxel.
         """
         if timestamp is None:
-            timestamp = datetime.datetime.utcnow()
+            if self._default_timestamp is not None:
+                timestamp = self._default_timestamp
+            else:
+                timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
         url = cg['handle_root'].format_map(endpoint_mapping)
@@ -178,16 +184,15 @@ class ChunkedGraphClient(object):
         assert(response.status_code == 200)
         return np.frombuffer(response.content, dtype=np.uint64)
 
-    def get_contact_sites(self, root_id, bounds=None, calc_partners=False):
+    def get_contact_sites(self, root_id, bounds, calc_partners=False):
         """Get contacts for a root id
 
         Parameters
         ----------
         root_id : np.uint64
             Object root id
-        bounds: np.array or None, optional
-            If specified, returns bounds within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
-            By default, None
+        bounds: np.array
+            Bounds within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]] for which to find contacts. Running this query without bounds is too slow.
         calc_partners : bool, optional
             If True, get partner root ids. By default, False.
         Returns

@@ -5,6 +5,7 @@ from .emannotationschemas import SchemaClient
 from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
 from .imagery import ImageryClient
+from .lookup import LookupClient
 from annotationframeworkclient.endpoints import default_server_address
 
 
@@ -13,15 +14,16 @@ class FrameworkClient(object):
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
-    client = FrameworkClient(dataset_name='my_dataset', server_address='www.myserver.com', auth_token_file='~/.mysecrets/secrets.json')
+    client = FrameworkClient(dataset_name='my_dataset', server_address='www.myserver.com',
+                             auth_token_file='~/.mysecrets/secrets.json')
 
-    Then 
+    Then
     * client.info is an InfoService client (see infoservice.InfoServiceClient)
     * client.state is a neuroglancer state client (see jsonservice.JSONService)
     * client.schema is an EM Annotation Schemas client (see emannotationschemas.SchemaClient)
     * client.chunkedgraph is a Chunkedgraph client (see chunkedgraph.ChunkedGraphClient)
     * client.annotation is an Annotation DB client (see annotationengine.AnnotationClient)
-    * client.imagery_client(...) will generate an imagery client. 
+    * client.imagery_client(...) will generate an imagery client.
 
     All subclients are loaded lazily and share the same dataset name, server address, and auth tokens where used.
 
@@ -68,7 +70,7 @@ class FrameworkClient(object):
         self._schema = None
         self._chunkedgraph = None
         self._annotation = None
-        self._imagery = None
+        self._lookup = None
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
@@ -104,6 +106,7 @@ class FrameworkClient(object):
         self._chunkedgraph = None
         self._annotation = None
         self._imagery = None
+        self._lookup = None
 
     @property
     def dataset_name(self):
@@ -165,13 +168,51 @@ class FrameworkClient(object):
             )
         return self._annotation
 
-    def imagery_client(self,
-                       base_resolution=[4, 4, 40],
-                       graphene_segmentation=True,
-                       image_mip=0,
-                       segmentation_mip=0,
-                       segmentation=True,
-                       imagery=True):
+    def make_lookup_client(self,
+                           timestamp=None,
+                           voxel_resolution=[4, 4, 40],
+                           use_graphene=True):
+        """Generate a lookup client based on the client configuration
+
+        Parameters
+        ----------
+        timestamp : datetime.datetime, optional
+            Time stamp to use for lookups, by default None
+        voxel_resolution : list, optional
+            Resolution of voxels in nm, by default [4, 4, 40]
+        use_graphene : bool, optional
+            Selection to use the graphene_segmentation by default. If False, reverts to the flat segmentation source. By default True
+
+        Returns
+        -------
+        lookuptool.LookupClient
+        """
+        if use_graphene and self.info.graphene_source() is not None:
+            return LookupClient(dataset_name=self.dataset_name,
+                                segmentation_path=self.info.graphene_source(
+                                    format_for='cloudvolume'),
+                                server_address=self.server_address,
+                                auth_client=self.auth,
+                                timestamp=timestamp,
+                                voxel_resolution=voxel_resolution,
+                                )
+        else:
+            # Default to the flat segmentation
+            return LookupClient(dataset_name=self.dataset_name,
+                                segmentation_path=self.info.flat_segmentation_source(
+                                    format_for='cloudvolume'),
+                                server_address=self.server_address,
+                                auth_client=self.auth,
+                                voxel_resolution=voxel_resolution,
+                                )
+
+    def make_imagery_client(self,
+                            base_resolution=[4, 4, 40],
+                            graphene_segmentation=True,
+                            image_mip=0,
+                            segmentation_mip=0,
+                            segmentation=True,
+                            imagery=True):
         """Generates an imagery client based on the current framework client.
 
         Parameters
