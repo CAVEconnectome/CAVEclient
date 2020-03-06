@@ -94,7 +94,7 @@ class AnnotationClient(object):
         """
         url = ae["datasets"].format_map(self.default_url_mapping)
         response = self.session.get(url)
-        assert response.status_code == 200
+        response.raise_for_status()
         return response.json()
 
     def get_tables(self, dataset_name=None):
@@ -117,7 +117,7 @@ class AnnotationClient(object):
         url = ae["table_names"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        assert response.status_code == 200
+        response.raise_for_status()
         return response.json()
 
     def create_table(self, table_name, schema_name, dataset_name=None):
@@ -147,7 +147,7 @@ class AnnotationClient(object):
         data = {"schema_name": schema_name, "table_name": table_name}
 
         response = requests.post(url, json=data)
-        assert response.status_code == 200
+        response.raise_for_status()
         return response.json()
 
     def get_annotation(self, table_name, annotation_id, dataset_name=None):
@@ -177,7 +177,7 @@ class AnnotationClient(object):
 
         url = ae["existing_annotation"].format_map(endpoint_mapping)
         response = self.session.get(url)
-        assert response.status_code == 200
+        response.raise_for_status()
         return response.json()
 
     def post_annotation(self, table_name, data, dataset_name=None):
@@ -210,7 +210,7 @@ class AnnotationClient(object):
         url = ae["new_annotation"].format_map(endpoint_mapping)
 
         response = self.session.post(url, json=data)
-        assert response.status_code == 200
+        response.raise_for_status()
         return response.json()
 
     def _bulk_import_df_thread(self, args):
@@ -302,7 +302,7 @@ class AnnotationClient(object):
         url = cg["info"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        assert response.status_code == 200
+        response.raise_for_status()
         info = response.json()
 
         chunk_size = np.array(info["scales"][0]["chunk_sizes"][0]) * np.array([1, 1, 4])

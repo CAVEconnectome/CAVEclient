@@ -89,7 +89,7 @@ class ChunkedGraphClient(object):
 
         response = self.session.post(url, json=[supervoxel_id])
 
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_merge_log(self, root_id):
@@ -110,7 +110,7 @@ class ChunkedGraphClient(object):
         url = cg['merge_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
 
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
     def get_change_log(self, root_id):
@@ -131,7 +131,7 @@ class ChunkedGraphClient(object):
         url = cg['change_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
 
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
     def get_leaves(self, root_id, bounds=None):
@@ -159,7 +159,7 @@ class ChunkedGraphClient(object):
 
         response = self.session.post(url, json=[root_id], params=query_d)
 
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_children(self, node_id):
@@ -181,7 +181,7 @@ class ChunkedGraphClient(object):
 
         response = self.session.post(url)
 
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_contact_sites(self, root_id, bounds, calc_partners=False):

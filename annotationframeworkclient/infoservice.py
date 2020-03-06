@@ -126,7 +126,7 @@ class InfoServiceClient(object):
         url = ie['datasets'].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
     def get_dataset_info(self, dataset_name=None, use_stored=True):
@@ -146,7 +146,8 @@ class InfoServiceClient(object):
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
-        assert(dataset_name is not None)
+        if dataset_name is None:
+            raise ValueError('No Dataset set')
 
         if (not use_stored) or (dataset_name not in self.info_cache):
             endpoint_mapping = self.default_url_mapping
@@ -154,7 +155,7 @@ class InfoServiceClient(object):
             url = ie['dataset_info'].format_map(endpoint_mapping)
 
             response = self.session.get(url)
-            assert(response.status_code == 200)
+            response.raise_for_status()
 
             self.info_cache[dataset_name] = response.json()
 
@@ -163,7 +164,8 @@ class InfoServiceClient(object):
     def _get_property(self, info_property, dataset_name=None, use_stored=True, format_for='raw', output_map=output_map_raw):
         if dataset_name is None:
             dataset_name = self.dataset_name
-        assert(dataset_name is not None)
+        if dataset_name is None:
+            raise ValueError('No Dataset set')
 
         self.get_dataset_info(dataset_name=dataset_name, use_stored=use_stored)
         return output_map.get(format_for, format_raw)(self.info_cache[dataset_name].get(info_property, None))

@@ -57,7 +57,7 @@ class JSONService(object):
         url_mapping['state_id'] = state_id
         url = jse['get_state'].format_map(url_mapping)
         response = self.session.get(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return json.loads(response.content)
 
     def upload_state_json(self, json_state):
@@ -76,7 +76,7 @@ class JSONService(object):
         url_mapping = self.default_url_mapping
         url = jse['upload_state'].format_map(url_mapping)
         response = self.session.post(url, data=json.dumps(json_state))
-        assert(response.status_code == 200)
+        response.raise_for_status()
         response_re = re.search('.*\/(\d+)', str(response.content))
         return int(response_re.groups()[0])
 

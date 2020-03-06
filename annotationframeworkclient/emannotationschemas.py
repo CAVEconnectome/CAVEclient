@@ -47,7 +47,7 @@ class SchemaClient(object):
         endpoint_mapping = self.default_url_mapping
         url = schema_endpoints['schema'].format_map(endpoint_mapping)
         response = self.session.get(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
     def schema_definition(self, schema_type):
@@ -67,5 +67,5 @@ class SchemaClient(object):
         endpoint_mapping['schema_type'] = schema_type
         url = schema_endpoints['schema_definition'].format_map(endpoint_mapping)
         response = self.session.get(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
