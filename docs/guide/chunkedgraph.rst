@@ -16,7 +16,7 @@ location in space, one needs to use the supervoxel segmentation to get
 the associated supervoxel id. The ChunkedGraph client makes this easy
 using the ``get_root_ids`` method.
 
-.. code:: ipython3
+.. code:: python
 
     sv_id = 104200755619042523
     client.chunkedgraph.get_root_id(supervoxel_id=sv_id)
@@ -28,7 +28,7 @@ particular moment in history. This can be useful for reproducible
 analysis. Note below that the root id for the same supervoxel is
 different than it is now.
 
-.. code:: ipython3
+.. code:: python
 
     import datetime
     
@@ -46,7 +46,7 @@ which can be found with the ``get_leaves`` method. A new root id is
 generated for every new change in the chunkedgraph, so time stamps do
 not apply.
 
-.. code:: ipython3
+.. code:: python
 
     root_id = 648518346349541252
     client.chunkedgraph.get_leaves(root_id)

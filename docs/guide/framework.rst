@@ -19,7 +19,7 @@ and authentication tokens are either not being used or set up with
 default values (see next section), one needs only to specify the dataset
 name.
 
-.. code:: ipython3
+.. code:: python
 
     from annotationframeworkclient import FrameworkClient
     
@@ -30,7 +30,7 @@ Just to confirm that this works, let’s see if we can get the EM image
 source from the InfoService. If you get a reasonable looking path,
 everything is okay.
 
-.. code:: ipython3
+.. code:: python
 
     print(f"The image source is: {client.info.image_source()}")
 
@@ -47,5 +47,5 @@ Each client can be acccessed as a property of the main client. See the documenta
 
 In addition, there are more complex clients that use multiple services together:
 
-* ImageryClient : Uses cloudvolume and the ChunkedGraph to look up segmentations and imagery together.
-* ErstaszMaterialization : Uses cloudvolume and the chunkedgraph to look up segmentations associated with point-like annotations.
+* LookupClient : Uses Cloudvolume and the ChunkedGraph to look up segmentations associated with point-like arrays or dataframes.
+* ImageryClient : Uses Cloudvolume and the ChunkedGraph to look up segmentations and imagery together.

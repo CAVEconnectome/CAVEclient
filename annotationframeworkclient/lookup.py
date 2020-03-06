@@ -7,7 +7,6 @@ from cloudvolume import CloudVolume
 from .chunkedgraph import ChunkedGraphClient
 from .endpoints import default_server_address
 from .auth import AuthClient
-from multiwrapper import multiprocessing_utils as mu
 
 
 def _is_graphene(segmentation_path):
@@ -27,33 +26,33 @@ class LookupClient(object):
         Name of the dataset
     segmentation_path : str or None, optional
         Cloud path to a graphene or precomputed segmentation. If None, requires a specified ChunkedGraph client.
-
-    server_address : str or None, optional
-        Host for the chunkedgraph server. If None, defaults to the default server value. Not used if a a ChunkedGraph client is specified.
-    voxel_resolution : list-like, optional
-        3 element list with the voxel resolution in nm. By default, [4,4,40]
-    auth_client : auth.AuthClient or None, optional
-        Initialized AuthClient. If None, produces an Auth client with default parameters.
+    segmentation_mip : int, optional
+        Mip level of the segmentation to use for lookups. Default is 0 (highest resolution).
     timestamp : datetime.datetime or None, optional
         Sets the timestamp for the state of the ChunkedGraph to query. If None, uses the current time.
+    voxel_resolution : list-like, optional
+        3 element list with the voxel resolution in nm. By default, [4,4,40]
+    server_address : str or None, optional
+        Host for the chunkedgraph server. If None, defaults to the default server value. Not used if a a ChunkedGraph client is specified.
+    auth_client : auth.AuthClient or None, optional
+        Initialized AuthClient. If None, produces an Auth client with default parameters.
     """
 
     def __init__(self,
                  dataset_name,
                  segmentation_path=None,
-                 segmentation_mip=None,
-                 server_address=None,
-                 chunkedgraph_client=None,
-                 voxel_resolution=[4, 4, 40],
-                 auth_client=None,
+                 segmentation_mip=0,
                  timestamp=None,
+                 voxel_resolution=[4, 4, 40],
+                 server_address=None,
+                 auth_client=None,
                  ):
         self._dataset_name = dataset_name
         self._segmentation_path = segmentation_path
         self._voxel_resolution = voxel_resolution
         self._timestamp = timestamp
 
-        self._segmentation_mip = segmentation_mip
+        self._mip = segmentation_mip
 
         if server_address is None:
             server_address = default_server_address
@@ -64,9 +63,7 @@ class LookupClient(object):
         else:
             self._auth_client = auth_client
 
-        if chunkedgraph_client is not None:
-            self._chunkedgraph_client = chunkedgraph_client
-        elif _is_graphene(self._segmentation_path):
+        if _is_graphene(self._segmentation_path):
             self._chunkedgraph_client = ChunkedGraphClient(server_address=self._server_address,
                                                            dataset_name=self._dataset_name,
                                                            timestamp=self._timestamp,
@@ -102,6 +99,7 @@ class LookupClient(object):
         list
             N-length list of supervoxel ids.
         """
+
         if voxel_resolution is None:
             voxel_resolution = self.voxel_resolution
         if mip is None:
@@ -183,9 +181,13 @@ class LookupClient(object):
 
         Every column with spatial points is expanded into three columns (two if a flat segmentation).
         For example, if the original point column is named 'pt', it is replaced by:
-            * 'pt_position' : The original spatial point data
-            * 'pt_supervoxel_id' : The id of the supervoxel holding that point, or 0 if null.
-            * 'pt_root_id' : The root id for the point (at a given timestamp, if specified)
+
+        * 'pt_position' : The original spatial point data
+
+        * 'pt_supervoxel_id' : The id of the supervoxel holding that point, or 0 if null.
+
+        * 'pt_root_id' : The root id for the point (at a given timestamp, if specified)
+
         For a flat segmentation, the supervoxels are the root ids, and the supervoxel_id column is omitted.
 
         Parameters
@@ -210,6 +212,7 @@ class LookupClient(object):
         pd.DataFrame
             A copy of the original DataFrame with each of the point columns replaced by lookups.
         """
+
         if voxel_resolution is None:
             voxel_resolution = self.voxel_resolution
         if isinstance(point_column, str):

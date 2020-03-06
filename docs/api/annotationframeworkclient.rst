@@ -1,6 +1,9 @@
 annotationframeworkclient package
 =================================
 
+Submodules
+----------
+
 annotationengine module
 -----------------------
 
@@ -65,11 +68,11 @@ jsonservice module
    :undoc-members:
    :show-inheritance:
 
+lookup module
+-------------
 
-Module contents
----------------
-
-.. automodule:: annotationframeworkclient
+.. automodule:: annotationframeworkclient.lookup
    :members:
    :undoc-members:
    :show-inheritance:
+

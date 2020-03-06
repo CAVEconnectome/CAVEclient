@@ -13,7 +13,7 @@ One can get the list of all available schema with the ``schema`` method.
 Currently, new schema have to be generated on the server side, although
 we aim to have a generic set available to use.
 
-.. code:: ipython3
+.. code:: python
 
     client.schema.schema()
 
@@ -23,7 +23,7 @@ View a specific schema
 The details of each schema can be viewed with the ``schema_definition``
 method, formatted as per JSONSchema.
 
-.. code:: ipython3
+.. code:: python
 
     example_schema = client.schema.schema_definition('microns_func_coreg')
     example_schema
@@ -32,6 +32,6 @@ This is mostly useful for programmatic interaction between services at
 the moment, but can also be used to inspect the expected form of an
 annotation by digging into the format.
 
-.. code:: ipython3
+.. code:: python
 
     example_schema['definitions']['FunctionalCoregistration']

@@ -14,7 +14,7 @@ Getting existing tables
 A list of the existing tables for the dataset can be found at with
 ``get_tables``.
 
-.. code:: ipython3
+.. code:: python
 
     all_tables = client.annotation.get_tables()
     all_tables[0]
@@ -33,7 +33,7 @@ You can download the JSON representation of a data point through the
 information on unmaterialized data, or to see what a properly templated
 annotation looks like.
 
-.. code:: ipython3
+.. code:: python
 
     table_name = all_tables[0]['table_name']      # 'ais_analysis_soma'
     annotation_id = 100
@@ -45,7 +45,7 @@ Create a new table
 One can create a new table with a specified schema with the
 ``create_table`` method:
 
-.. code:: ipython3
+.. code:: python
 
    client.annotation.create_table(table_name='test_table',
                                   schema_name='microns_func_coreg')
@@ -59,7 +59,7 @@ key and the xyz location as a value. \* ``func_id`` set to an integer.
 
 The following could would create a new annotation and then upload it to the service. Note that you get back the annotation id(s) of what you uploaded.
 
-.. code:: ipython3
+.. code:: python
 
    new_data = {'type': 'microns_func_coreg',
                'pt': {'position': [1,2,3]},

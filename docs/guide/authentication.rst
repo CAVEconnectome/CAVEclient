@@ -11,7 +11,7 @@ a token, you probably won’t interact with this client very often,
 however it has some convenient features for saving new tokens the first
 time. Let’s see if you have a token already. Probably not.
 
-.. code:: ipython3
+.. code:: python
 
     auth = client.auth
     print(f"My current token is: {auth.token}")
@@ -30,11 +30,11 @@ the key ``token``. The following steps will save a token there.
 *Note: I am not sure where the auth server is being hosted right now, so
 we are going to use a fake token for documentation purposes*
 
-.. code:: ipython3
+.. code:: python
 
     auth.get_new_token()
 
-.. code:: ipython3
+.. code:: python
 
     new_token = 'fake_token_123'
     auth.save_token(token=new_token)
@@ -54,7 +54,7 @@ when we intialize a new FrameworkClient. If we wanted to use a different
 token file, token key, or even directly specify a token we could do so
 here.
 
-.. code:: ipython3
+.. code:: python
 
     client = FrameworkClient(dataset_name)
     print(f"Now my basic token is: {client.auth.token}")
