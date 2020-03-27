@@ -155,7 +155,7 @@ class LookupClient(object):
         list
             Root id for each point in xyzs
         list
-            Supervoxel id for each point in xyzs
+            Supervoxel id for each point in xyzs. If a flat segmentation, set to None.
         """
         if voxel_resolution is None:
             voxel_resolution = self.voxel_resolution
@@ -166,6 +166,8 @@ class LookupClient(object):
 
         sv_ids = self.lookup_supervoxels(xyzs, voxel_resolution=voxel_resolution, mip=mip)
         root_ids = self.lookup_root_ids(sv_ids, timestamp=timestamp)
+        if self._chunkedgraph_client is None:
+            sv_ids = None                           # ignore supervoxels for flat segmentations
         return root_ids, sv_ids
 
     def lookup_dataframe(self,
