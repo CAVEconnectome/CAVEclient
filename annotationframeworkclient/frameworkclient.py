@@ -29,8 +29,8 @@ class FrameworkClient(object):
 
     Parameters
     ----------
-    dataset_name : str
-        Dataset name for the services
+    dataset_name : str, optional
+        Dataset name for the services. Almost all services need this and will not work if it is not passed.
     server_address : str or None
         URL of the framework server. If None, chooses the default server www.dynamicannotationframework.com.
         Optional, defaults to None.
@@ -47,7 +47,7 @@ class FrameworkClient(object):
 
     def __init__(
         self,
-        dataset_name,
+        dataset_name=None,
         server_address=None,
         auth_token_file=default_token_file,
         auth_token_key="token",
