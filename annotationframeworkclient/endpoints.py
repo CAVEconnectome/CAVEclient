@@ -8,15 +8,15 @@ default_global_server_address = "https://global.daf-apis.com"
 annotation_common = {}
 
 anno_legacy = "{ae_server_address}/annotation"
-annotationengine_endpoints_legacy = {
+annotation_endpoints_legacy = {
     "datasets": anno_legacy + "/datasets",
     "table_names": anno_legacy + "/dataset/{dataset_name}",
     "existing_annotation": anno_legacy + "/dataset/{dataset_name}/{table_name}/{annotation_id}",
     "new_annotation": anno_legacy + "/dataset/{dataset_name}/{table_name}",
 }
 
-annotationengine_api_versions = {0: annotationengine_endpoints_legacy,
-                                 }
+annotation_api_versions = {0: annotation_endpoints_legacy,
+                           }
 
 # -------------------------------
 # ------ Infoservice endpoints
