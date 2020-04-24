@@ -1,47 +1,125 @@
 
-default_server_address = "https://www.dynamicannotationframework.com"
+default_global_server_address = "https://global.daf-apis.com"
 
+# -------------------------------
+# ------ AnnotationEngine endpoints
+# -------------------------------
 
-annotationengine_endpoints = {
-    "datasets": "{ae_server_address}/annotation/datasets",
-    "table_names": "{ae_server_address}/annotation/dataset/{dataset_name}",
-    "existing_annotation": "{ae_server_address}/annotation/dataset/{dataset_name}/"
-                           "{table_name}/{annotation_id}",
-    "new_annotation": "{ae_server_address}/annotation/dataset/{dataset_name}/"
-                      "{table_name}",
-    "supervoxel": "{ae_server_address}/voxel/dataset/{dataset_name}/{x}_{y}_{z}",
-    "existing_segment_annotation": "{server_address}/chunked_annotation/dataset/{dataset_name}/"
-                                   "rootid/{root_id}/{table_name}",
+annotation_common = {}
+
+anno_legacy = "{ae_server_address}/annotation"
+annotationengine_endpoints_legacy = {
+    "datasets": anno_legacy + "/datasets",
+    "table_names": anno_legacy + "/dataset/{dataset_name}",
+    "existing_annotation": anno_legacy + "/dataset/{dataset_name}/{table_name}/{annotation_id}",
+    "new_annotation": anno_legacy + "/dataset/{dataset_name}/{table_name}",
 }
 
-infoservice_endpoints = {
-    "datasets": "{i_server_address}/info/api/datasets",
-    "dataset_info": "{i_server_address}/info/api/dataset/{dataset_name}",
+annotationengine_api_versions = {0: annotationengine_endpoints_legacy,
+                                 }
+
+# -------------------------------
+# ------ Infoservice endpoints
+# -------------------------------
+
+infoservice_common = {}
+
+info_v1 = "{i_server_address}/info/api"
+infoservice_endpoints_v1 = {
+    "datasets": info_v1 + "/datasets",
+    "dataset_info": info_v1 + "/dataset/{dataset_name}",
 }
 
-chunkedgraph_endpoints = {
+infoservice_api_versions = {1: infoservice_endpoints_v1,
+                            }
+
+# -------------------------------
+# ------ Pychunkedgraph endpoints
+# -------------------------------
+
+pcg_common = "{cg_server_address}/segmentation/api"
+chunkedgraph_endpoints_common = {
+    "get_api_versions": pcg_common + "/versions",
+}
+
+pcg_legacy = "{cg_server_address}/segmentation/1.0"
+chunkedgraph_endpoints_legacy = {
     # "handle_table": "{cg_server_address}/segmentation/1.0/table",
-    "handle_root": "{cg_server_address}/segmentation/1.0/{table_id}/graph/root",
-    "handle_children": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{node_id}/children",
-    "info": "{cg_server_address}/segmentation/1.0/{table_id}/info",
-    "leaves_from_root": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/leaves",
-    "merge_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/merge_log",
-    "change_log":  "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/change_log",
-    "contact_sites": "{cg_server_address}/segmentation/1.0/{table_id}/segment/{root_id}/contact_sites",
-    "cloudvolume_path": "graphene://{cg_server_address}/segmentation/1.0/{table_id}",
+    "handle_root": pcg_legacy + "/{table_id}/graph/root",
+    "handle_children": pcg_legacy + "/segment/{node_id}/children",
+    "info": pcg_legacy + "/{table_id}/info",
+    "leaves_from_root": pcg_legacy + "/{table_id}/segment/{root_id}/leaves",
+    "merge_log": pcg_legacy + "/{table_id}/segment/{root_id}/merge_log",
+    "change_log":  pcg_legacy + "/{table_id}/segment/{root_id}/change_log",
+    "contact_sites": pcg_legacy + "/{table_id}/segment/{root_id}/contact_sites",
+    "cloudvolume_path": "graphene://" + pcg_legacy + "/{table_id}",
 }
 
-schema_endpoints = {
-    "schema" : "{emas_server_address}/schema/type",
-    "schema_definition": "{emas_server_address}/schema/type/{schema_type}",
+pcg_v1 = "{cg_server_address}/segmentation/api/v1"
+chunkedgraph_endpoints_v1 = {
+    'handle_root': pcg_v1 + "/table/{table_id}/node/{supervoxel_id}/root",
+    "handle_roots": pcg_v1 + "/table/{table_id}/roots",
+    'handle_children': pcg_v1 + "table/{table_id}/node/{root_id}/childen",
+    'leaves_from_root': pcg_v1 + "/{table_id}/node/{root_id}/leaves",
+    'merge_log': pcg_v1 + "/table/{table_id}/root/{root_id}/merge_log",
+    'change_log': pcg_v1 + "/table/{table_id}/root/{root_id}/change_log",
+    'contact_sites': pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",
+    'contact_sites_pairwise': pcg_v1 + "/table/{table_id}/contact_sites_pair/{root_id_1}/{root_id_2}",
+    'cloudvolume_path': "graphene://" + pcg_v1 + "/{table_id}",
 }
 
-jsonservice_endpoints = {
-    "upload_state" : "{json_server_address}/nglstate/post",
-    "get_state": "{json_server_address}/nglstate/{state_id}",
-    'get_state_raw': "{json_server_address}/nglstate/raw/{state_id}",
+chunkedgraph_api_versions = {0: chunkedgraph_endpoints_legacy,
+                             1: chunkedgraph_endpoints_v1,
+                             }
+
+# -------------------------------
+# ------ EMAnnotationSchemas endpoints
+# -------------------------------
+
+schema_common = {}
+
+schema_v1 = "{emas_server_address}/schema"
+schema_endpoints_v1 = {
+    "schema": schema_v1 + "/type",
+    "schema_definition": schema_v1 + "/type/{schema_type}",
 }
 
-auth_endpoints = {
-    "refresh_token" : "{auth_server_address}/auth/refresh_token"
+schema_api_versions = {1: schema_endpoints_v1}
+
+# -------------------------------
+# ------ StateServer endpoints
+# -------------------------------
+
+jsonservice_common = {}
+
+json_v1 = "{json_server_address}/nglstate/api/v1"
+jsonservice_endpoints_v1 = {
+    "upload_state": json_v1 + "/post",
+    "get_state": json_v1 + "/{state_id}",
+    'get_state_raw': json_v1 + "/raw/{state_id}",
 }
+
+json_legacy = "{json_server_address}/nglstate"
+jsonservice_endpoints_legacy = {
+    "upload_state": json_legacy + "/post",
+    "get_state": json_legacy + "/{state_id}",
+    'get_state_raw': json_legacy + "/raw/{state_id}",
+}
+
+jsonservice_api_versions = {0: jsonservice_endpoints_legacy,
+                            1: jsonservice_endpoints_v1,
+                            }
+
+# -------------------------------
+# ------ Auth endpoints
+# -------------------------------
+
+auth_common = {}
+
+v1_auth = "{auth_server_address}/auth/api/v1"
+auth_endpoints_v1 = {
+    "refresh_token": v1_auth + "/refresh_token"
+}
+
+auth_api_versions = {1: auth_endpoints_v1,
+                     }
