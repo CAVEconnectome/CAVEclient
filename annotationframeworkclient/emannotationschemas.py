@@ -1,40 +1,32 @@
+from .base import ClientBase, _api_endpoints
+from .endpoints import schema_common, schema_api_versions
+from .auth import AuthClient
 import requests
 
-from annotationframeworkclient.endpoints import schema_endpoints
-from annotationframeworkclient import endpoints
-from .auth import AuthClient
+server_key = "emas_server_address"
 
 
-class SchemaClient(object):
-    """Client to interface with the Schema service
+def SchemaClient(server_address=None,
+                 auth_client=None,
+                 api_version='latest'):
+    if auth_client is None:
+        auth_client = AuthClient()
 
-    Parameters
-    ----------
-    server_address : str or None, optional
-        Server hosting the Schema service. If None, use the default server address. By default, None.
-    auth_client : auth.AuthClient or None, optional
-        AuthClient with a token to use authenticated endpoints. If None, use no token. By default, None.
-    """
+    auth_header = auth_client.request_header
+    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
+                                            schema_common, schema_api_versions, auth_header)
+    SchemaClient = client_mapping[api_version]
+    return SchemaClient(server_address=server_address,
+                        auth_header=auth_header,
+                        api_version=api_version,
+                        endpoints=endpoints,
+                        server_name=server_key)
 
-    def __init__(self, server_address=None, auth_client=None):
-        if server_address is None:
-            self._server_address = endpoints.default_server_address
-        else:
-            self._server_address = server_address
 
-        if auth_client is None:
-            auth_client = AuthClient()
-
-        self.session = requests.Session()
-        self.session.headers.update(auth_client.request_header)
-
-        self._default_url_mapping = {
-            'emas_server_address': self._server_address
-        }
-
-    @property
-    def default_url_mapping(self):
-        return self._default_url_mapping.copy()
+class SchemaClientLegacy(ClientBase):
+    def __init__(self, server_address, auth_header, api_version, endpoints, server_name):
+        super(SchemaClientLegacy, self).__init__(server_address,
+                                                 auth_header, api_version, endpoints, server_name)
 
     def schema(self):
         """Get the available schema types
@@ -45,7 +37,7 @@ class SchemaClient(object):
             List of schema types available on the Schema service.
         """
         endpoint_mapping = self.default_url_mapping
-        url = schema_endpoints['schema'].format_map(endpoint_mapping)
+        url = self._endpoints['schema'].format_map(endpoint_mapping)
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()
@@ -65,7 +57,7 @@ class SchemaClient(object):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['schema_type'] = schema_type
-        url = schema_endpoints['schema_definition'].format_map(endpoint_mapping)
+        url = self._endpoints['schema_definition'].format_map(endpoint_mapping)
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()

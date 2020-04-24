@@ -1,4 +1,4 @@
-from .base import ClientBase, _api_verisons, _api_endpoints
+from .base import ClientBaseWithDataset, _api_verisons, _api_endpoints
 from .auth import AuthClient
 from .endpoints import annotation_common, annotation_api_versions
 import requests
@@ -18,25 +18,16 @@ def AnnotationClient(server_address=None,
 
     auth_header = auth_client.request_header
 
-    endpoints = _api_endpoints(api_version, server_key, server_address,
-                               annotation_common, annotation_api_versions)
+    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
+                                            annotation_common, annotation_api_versions)
     AnnoClient = client_mapping[api_version]
     return AnnoClient(server_address, auth_header, api_version, endpoints, server_name, dataset_name)
 
 
-class AnnotationClientLegacy(ClientBase):
+class AnnotationClientLegacy(ClientBaseWithDataset):
     def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name):
         super(AnnotationClient, self).__init__(server_address,
-                                               auth_header, api_version, endpoints, server_name):
-        self._dataset_name = dataset_name
-
-    @property
-    def dataset_name(self):
-        return self._dataset_name
-
-    @property
-    def default_url_mapping(self):
-        return self._default_url_mapping
+                                               auth_header, api_version, endpoints, server_name, dataset_name):
 
     def get_datasets(self):
         """ Gets a list of datasets

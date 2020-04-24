@@ -35,8 +35,8 @@ def JSONService(server_address=None,
 
     auth_header = auth_client.request_header
 
-    endpoints = _api_endpoints(api_version, server_key, server_address,
-                               jsonservice_common, jsonservice_api_versions, auth_header)
+    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
+                                            jsonservice_common, jsonservice_api_versions, auth_header)
 
     JSONClient = client_mapping[api_version]
     return JSONClient(server_address=server_address,

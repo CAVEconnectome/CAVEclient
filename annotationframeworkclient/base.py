@@ -37,8 +37,11 @@ def _api_endpoints(api_version, server_name, server_address, endpoints_common, e
             api_version = max(avail_vs_client.intersection(avail_vs_server))
 
     endpoints = endpoints_common.copy()
-    endpoints.update(endpoint_versions[api_version])
-    return endpoints
+    ep_to_add = endpoint_versions.get(api_version, None)
+    if ep_to_add is None:
+        raise ValueError('No corresponding API version')
+    endpoints.update(ep_to_add)
+    return endpoints, api_version
 
 
 class ClientBase(object):
@@ -69,3 +72,26 @@ class ClientBase(object):
     @property
     def api_version(self):
         return self._api_version
+
+
+class ClientBaseWithDataset(ClientBase):
+    def __init__(self,
+                 server_address,
+                 auth_header,
+                 api_version,
+                 endpoints,
+                 server_name,
+                 dataset_name
+                 ):
+
+        super(ClientBaseWithDataset, self).__init__(server_address,
+                                                    auth_header,
+                                                    api_version,
+                                                    endpoints,
+                                                    server_name,
+                                                    )
+        self._dataset_name = dataset_name
+
+    @property
+    def dataset_name(self):
+        return self._dataset_name

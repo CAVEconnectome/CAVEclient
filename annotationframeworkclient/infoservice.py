@@ -1,118 +1,53 @@
-import requests
-from urllib.parse import urlparse
-from warnings import warn
-from annotationframeworkclient.endpoints import infoservice_endpoints as ie
-from annotationframeworkclient import endpoints
+from .base import ClientBaseWithDataset, _api_versions, _api_endpoints
 from .auth import AuthClient
+from .endpoints import infoservice_common, infoservice_api_versions, default_global_server_address
+from .format_utils import output_map_raw, output_map_precomputed, output_map_graphene
+import requests
+from warnings import warn
+
+server_key = "i_server_address"
 
 
-def format_precomputed_neuroglancer(objurl):
-    qry = urlparse(objurl)
-    if qry.scheme == 'gs':
-        objurl_out = f'precomputed://{objurl}'
-    elif qry.scheme == 'http' or qry.scheme == 'https':
-        objurl_out = f'precomputed://gs://{qry.path[1:]}'
-    else:
-        objurl_out = None
-    return objurl_out
+def InfoServiceClient(server_address=None,
+                      dataset_name=None,
+                      auth_client=None,
+                      api_version='latest',
+                      ):
+    if server_address is None:
+        server_address = default_global_server_address
+
+    if auth_client is None:
+        auth_client = AuthClient()
+
+    auth_header = auth_client.request_header
+    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
+                                            infoservice_common, infoservice_api_versions, auth_header)
+
+    InfoClient = client_mapping[api_version]
+    return InfoClient(server_address=server_address,
+                      auth_header=auth_header,
+                      api_version=api_version,
+                      endpoints=endpoints,
+                      server_name=server_key,
+                      dataset_name=dataset_name,
+                      )
 
 
-def format_precomputed_https(objurl):
-    qry = urlparse(objurl)
-    if qry.scheme == 'gs':
-        objurl_out = f'precomputed://https://storage.googleapis.com/{qry.path[1:]}'
-    elif qry.scheme == 'http' or qry.scheme == 'https':
-        objurl_out = f'precomputed://{objurl}'
-    else:
-        objurl_out = None
-    return objurl_out
-
-
-def format_graphene(objurl):
-    qry = urlparse(objurl)
-    if qry.scheme == 'http' or qry.scheme == 'https':
-        objurl_out = f'graphene://{objurl}'
-    elif qry.scheme == 'graphene':
-        objurl_out = objurl
-    else:
-        objurl_out = None
-    return objurl_out
-
-
-def format_cloudvolume(objurl):
-    qry = urlparse(objurl)
-    if qry.scheme == 'graphene':
-        return format_graphene(objurl)
-    elif qry.scheme == 'gs' or qry.scheme == 'http' or qry.scheme == 'https':
-        return format_precomputed_https(objurl)
-    else:
-        return None
-
-
-def format_raw(objurl):
-    return objurl
-
-
-# No reformatting
-output_map_raw = {}
-
-# Use precomputed://gs:// links for neuroglancer, but use precomputed://https://storage.googleapis.com links in cloudvolume
-output_map_precomputed = {'raw': format_raw,
-                          'cloudvolume': format_precomputed_https,
-                          'neuroglancer': format_precomputed_neuroglancer}
-
-# Use graphene://https:// links for both neuroglancer and cloudvolume
-output_map_graphene = {'raw': format_raw,
-                       'cloudvolume': format_graphene,
-                       'neuroglancer': format_graphene}
-
-
-class InfoServiceClient(object):
-    """Client for interacting with the Info Service
-
-    Parameters
-    ----------
-    server_address : str or None, optional
-        Address of the Info Service. If None, defaults to www.dynamicannotationframework.com
-    dataset_name : str or None,
-        Name of the dataset to query. If None, the dataset must be specified for every query.
-    auth_client : auth.AuthClient or None, optional
-        Instance of an AuthClient with token to handle authorization. If None, does not specify a token.    """
-
-    def __init__(self, server_address=None, dataset_name=None, auth_client=None):
-        if server_address is None:
-            self._server_address = endpoints.default_server_address
-        else:
-            self._server_address = server_address
-
-        self._dataset_name = dataset_name
-
-        if auth_client is None:
-            auth_client = AuthClient()
-
-        self.session = requests.Session()
-        self.session.headers.update(auth_client.request_header)
-
+class InfoServiceClientLegacy(ClientBaseWithDataset):
+    def __init__(self,
+                 server_address,
+                 auth_header,
+                 api_version,
+                 endpoints,
+                 server_name,
+                 dataset_name):
+        super(InfoServiceClientLegacy, self).__init__(server_address,
+                                                      auth_header,
+                                                      api_version,
+                                                      endpoints,
+                                                      server_name,
+                                                      dataset_name)
         self.info_cache = dict()
-
-        self._default_url_mapping = {"i_server_address": self._server_address}
-
-    @property
-    def dataset_name(self):
-        return self._dataset_name
-
-    @property
-    def server_address(self):
-        return self._server_address
-
-    @server_address.setter
-    def server_address(self, value):
-        self._server_address = value
-        self._default_url_mapping['i_server_address'] = value
-
-    @property
-    def default_url_mapping(self):
-        return self._default_url_mapping.copy()
 
     def get_datasets(self):
         """Query which datasets are available at the info service
@@ -123,7 +58,7 @@ class InfoServiceClient(object):
             List of dataset names
         """
         endpoint_mapping = self.default_url_mapping
-        url = ie['datasets'].format_map(endpoint_mapping)
+        url = self._endpoints['datasets'].format_map(endpoint_mapping)
 
         response = self.session.get(url)
         response.raise_for_status()
@@ -152,7 +87,7 @@ class InfoServiceClient(object):
         if (not use_stored) or (dataset_name not in self.info_cache):
             endpoint_mapping = self.default_url_mapping
             endpoint_mapping['dataset_name'] = dataset_name
-            url = ie['dataset_info'].format_map(endpoint_mapping)
+            url = self._endpoints['dataset_info'].format_map(endpoint_mapping)
 
             response = self.session.get(url)
             response.raise_for_status()
@@ -351,3 +286,6 @@ class InfoServiceClient(object):
         """
         for ds in self.info_cache.keys():
             self.get_dataset_info(dataset_name=ds, use_stored=False)
+
+
+client_mapping = {0: InfoServiceClientLegacy}
