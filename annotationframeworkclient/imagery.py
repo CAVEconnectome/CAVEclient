@@ -9,6 +9,7 @@ from annotationframeworkclient import infoservice
 from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
 from annotationframeworkclient.endpoints import default_server_address
 
+
 class ImageryClient(object):
     """Class to help download imagery and segmentation data. Can either take
        explicit cloudvolume paths for imagery and segmentation or use the Info Service
@@ -41,6 +42,7 @@ class ImageryClient(object):
         imagery : bool, optional
             If False, no imagery cloudvolume is initialized. By default True
         """
+
     def __init__(self, image_source=None, segmentation_source=None, server_address=None,
                  dataset_name=None, base_resolution=[4, 4, 40],
                  graphene_segmentation=True, table_name=None,
@@ -68,7 +70,7 @@ class ImageryClient(object):
     @property
     def base_resolution(self):
         """The voxel resolution assumed when locations are used for the client.
-        
+
         Returns
         -------
         list
@@ -82,7 +84,7 @@ class ImageryClient(object):
         """
         if self._server_address is None or self._dataset_name is None:
             return None
-        
+
         if self._info is None:
             self._info = infoservice.InfoServiceClient(self._server_address,
                                                        self._dataset_name)
@@ -106,6 +108,7 @@ class ImageryClient(object):
         if self._img_cv is None:
             self._img_cv = cv.CloudVolume(self.image_source,
                                           mip=self._base_imagery_mip,
+                                          use_https=True,
                                           bounded=False,
                                           progress=False)
         return self._img_cv
@@ -175,7 +178,7 @@ class ImageryClient(object):
 
     def image_cutout(self, bounds, mip=None):
         """Get an image cutout for a certain location or set of bounds and a mip level.
-        
+
         Parameters
         ----------
         bounds : 2 x 3 list of ints
@@ -183,7 +186,7 @@ class ImageryClient(object):
             the base_resolution parameter
         mip : int, optional
             Mip level of imagery to get if something other than the default is wanted, by default None
-        
+
         Returns
         -------
         cloudvolume.VolumeCutout
@@ -191,19 +194,18 @@ class ImageryClient(object):
         """
         if self.image_cv is None:
             return np.array([])
-            
+
         if mip is None:
             mip = self._base_imagery_mip
         bounds_vx = self._rescale_for_mip(bounds, mip, use_cv='image')
         slices = self._bounds_to_slices(bounds_vx)
         return self.image_cv.download(slices, mip=mip)
 
-
     def segmentation_cutout(self, bounds, root_ids='all', mip=None, verbose=False):
         """Get a cutout of the segmentation imagery for some or all root ids between set bounds.
         Note that if all root ids are requested in a large region, it could take a long time to query
         all supervoxels.
-        
+
         Parameters
         ----------
         bounds : 2x3 list of ints
@@ -216,7 +218,7 @@ class ImageryClient(object):
             Mip level of the segmentation if something other than the defualt is wanted, by default None
         verbose : bool, optional
             If true, prints statements about the progress as it goes. By default, False.
-        
+
         Returns
         -------
         numpy.ndarray 
@@ -245,7 +247,7 @@ class ImageryClient(object):
 
     def split_segmentation_cutout(self, bounds, root_ids='all', mip=None, include_null_root=False, verbose=False):
         """Generate segmentation cutouts with a single binary mask for each root id, organized as a dict with keys as root ids and masks as values.
-        
+
         Parameters
         ----------
         bounds : 2x3 list of ints
@@ -266,19 +268,20 @@ class ImageryClient(object):
         dict
             Dict whose keys are root ids and whose values are the binary mask for that root id, with a 1 where the object contains the voxel.
         """
-        seg_img = self.segmentation_cutout(bounds=bounds, root_ids=root_ids, mip=mip, verbose=verbose)
+        seg_img = self.segmentation_cutout(
+            bounds=bounds, root_ids=root_ids, mip=mip, verbose=verbose)
         return self.segmentation_masks(seg_img, include_null_root)
 
     def segmentation_masks(self, seg_img, include_null_root=False):
         """Convert a segmentation array into a dict of binary masks for each root id.
-        
+
         Parameters
         ----------
         seg_img : numpy.ndarray
             Array with voxel values corresponding to the object id at that voxel
         include_null_root : bool, optional
             Create a mask for 0 id, which usually denotes no object, by default False
-        
+
         Returns
         -------
         dict
@@ -290,7 +293,7 @@ class ImageryClient(object):
                 if root_id == 0:
                     continue
             split_segmentation[root_id] = (seg_img == root_id).astype(int)
-        return split_segmentation 
+        return split_segmentation
 
     def _all_root_id_map_for_cutout(self, seg_cutout, pcg_bounds=None, mip=None, verbose=False):
         """Helper function to query root ids for all supervoxels in a cutout
@@ -305,7 +308,7 @@ class ImageryClient(object):
         inds_to_update = supervoxel_ids == 0
         if verbose:
             pbar.update(sum(inds_to_update))
-        
+
         while np.any(supervoxel_ids > 0):
             # Get the first remaining supervoxel id, find its root id and peer supervoxel ids
             sv_id_base = supervoxel_ids[supervoxel_ids > 0][0]
@@ -322,7 +325,7 @@ class ImageryClient(object):
 
     def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', resize=True, split_segmentations=False, include_null_root=False, verbose=False):
         """Download aligned and scaled imagery and segmentation data at a given resolution.
-        
+
         Parameters
         ----------
         bounds : 2x3 list of ints
@@ -345,15 +348,15 @@ class ImageryClient(object):
             If True, includes root id of 0, which is usually reserved for a null segmentation value. Default is False.
         verbose : bool, optional
             If True, prints statements about the progress as it goes. By default, False.
- 
+
         Returns
         -------
         cloudvolume.VolumeCutout 
             Imagery volume cutout
-        
+
         numpy.ndarray or dict
             Segmentation volume cutout as either an ndarray or dict of masks depending on the split_segmentations flag.
-        """        
+        """
         if image_mip is None:
             image_mip = self._base_imagery_mip
         if segmentation_mip is None:
@@ -410,12 +413,12 @@ class ImageryClient(object):
 
     def image_resolution_to_mip(self, resolution):
         """Gets the image mip level for a specified voxel resolution, if it exists
-        
+
         Parameters
         ----------
         resolution : 3 element array-like
             x, y, and z resolution per voxel.
-        
+
         Returns
         -------
         int or None
@@ -444,12 +447,12 @@ class ImageryClient(object):
 
     def mip_resolutions(self):
         """Gets a dict of resolutions and mip levels available for the imagery and segmentation volumes
-        
+
         Returns
         -------
         dict
             Keys are voxel resolution tuples, values are mip levels in the imagery volume as integers
-        
+
         dict
             Keys are voxel resolution tuples, values are mip levels in the segmentation volume as integers
         """
@@ -464,7 +467,7 @@ class ImageryClient(object):
 
     def save_imagery(self, filename_prefix, bounds=None, mip=None, precomputed_image=None, slice_axis=2, verbose=False, **kwargs):
         """Save queried or precomputed imagery to png files.
-        
+
         Parameters
         ----------
         filename_prefix : str
@@ -487,12 +490,13 @@ class ImageryClient(object):
             img = self.image_cutout(bounds, mip)
         else:
             img = precomputed_image
-        _save_image_slices(filename_prefix, 'imagery', img, slice_axis, 'imagery', verbose=verbose, **kwargs)
-        return 
+        _save_image_slices(filename_prefix, 'imagery', img, slice_axis,
+                           'imagery', verbose=verbose, **kwargs)
+        return
 
     def save_segmentation_masks(self, filename_prefix, bounds=None, mip=None, root_ids='all', precomputed_masks=None, slice_axis=2, include_null_root=False, segmentation_colormap={}, verbose=False, **kwargs):
         """Save queried or precomputed segmentation masks to png files. Additional kwargs are passed to imageio.imwrite.
-        
+
         Parameters
         ----------
         filename_prefix : str
@@ -526,19 +530,18 @@ class ImageryClient(object):
                 bounds=bounds, root_ids=root_ids, mip=mip, include_null_root=include_null_root)
         else:
             seg_dict = precomputed_masks
-        
+
         for root_id, seg_mask in seg_dict.items():
             suffix = f'root_id_{root_id}'
             _save_image_slices(filename_prefix, suffix, seg_mask, slice_axis, 'mask',
                                color=segmentation_colormap.get(root_id, None), verbose=verbose, **kwargs)
         return
 
-
     def save_image_and_segmentation_masks(self, filename_prefix, bounds=None, image_mip=None, segmentation_mip=None,
                                           root_ids='all', resize=True, precomputed_data=None, slice_axis=2,
                                           segmentation_colormap={}, include_null_root=False, verbose=False, **kwargs):
         """Save aligned and scaled imagery and segmentation mask cutouts as pngs. Kwargs are passed to imageio.imwrite.
-        
+
         Parameters
         ----------
         filename_prefix : str
@@ -571,16 +574,19 @@ class ImageryClient(object):
             If True, includes root id of 0, which is usually reserved for a null segmentation value. By default, False.
         verbose : bool, optional
             If True, prints the progress, by default False
-        """ 
+        """
         if precomputed_data is not None:
             img, seg_dict = precomputed_data
         else:
-            img, seg_dict = self.image_and_segmentation_cutout(bounds=bounds, image_mip=image_mip, segmentation_mip=segmentation_mip, root_ids=root_ids, resize=resize, include_null_root=include_null_root, split_segmentations=True, verbose=verbose)
-        
-        self.save_imagery(filename_prefix, precomputed_image=img, slice_axis=slice_axis, verbose=verbose, **kwargs) 
+            img, seg_dict = self.image_and_segmentation_cutout(bounds=bounds, image_mip=image_mip, segmentation_mip=segmentation_mip,
+                                                               root_ids=root_ids, resize=resize, include_null_root=include_null_root, split_segmentations=True, verbose=verbose)
+
+        self.save_imagery(filename_prefix, precomputed_image=img,
+                          slice_axis=slice_axis, verbose=verbose, **kwargs)
         self.save_segmentation_masks(filename_prefix, precomputed_masks=seg_dict, slice_axis=slice_axis,
                                      segmentation_colormap=segmentation_colormap, verbose=verbose, **kwargs)
         return
+
 
 def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_type, verbose=False, color=None, **kwargs):
     """Helper function for generic image saving
@@ -604,6 +610,7 @@ def _save_image_slices(filename_prefix, filename_suffix, img, slice_axis, image_
                 print(f'Saved {fname}...')
     return
 
+
 def _grayscale_to_pil(img, four_channel=False):
     """Helper function to convert one channel uint8 image data to RGB for saving.
     """
@@ -614,6 +621,7 @@ def _grayscale_to_pil(img, four_channel=False):
         sc = 3
     pil_img = np.dstack(sc*[img.squeeze()[:, :, np.newaxis]])
     return pil_img
+
 
 def _binary_mask_to_transparent_pil(img, color=None):
     """Convert a binary array to an MxNx4 RGBa image with fully opaque white (or a specified RGBa color)
@@ -627,18 +635,19 @@ def _binary_mask_to_transparent_pil(img, color=None):
     img_r = color[0] * base_img
     img_g = color[1] * base_img
     img_b = color[2] * base_img
-    img_a = color[3] * base_img 
+    img_a = color[3] * base_img
     pil_img = np.dstack([img_r, img_g, img_b, img_a])
     return pil_img
 
+
 def grayscale_to_rgba(img):
     """Convert a 
-    
+
     Parameters
     ----------
     img : numpy.ndarray
         NxM array of values beteen 0-255.
-    
+
     Returns
     -------
     numpy.ndarray
@@ -646,9 +655,10 @@ def grayscale_to_rgba(img):
     """
     return _grayscale_to_pil(img)
 
+
 def colorize_masks(mask_dict, colormap, default_color=[255, 255, 255, 255]):
     """Colorize a dict of masks using a dict of RGB (or RGBa) colors.
-    
+
     Parameters
     ----------
     mask_dict : dict
@@ -657,7 +667,7 @@ def colorize_masks(mask_dict, colormap, default_color=[255, 255, 255, 255]):
         Dict mapping root ids to a 3 or 4 element RGBa color between 0-255.
     default_color : list, optional
         RGBa color value between 0-255, by default [255, 255, 255, 255]
-    
+
     Returns
     -------
     dict
@@ -665,5 +675,6 @@ def colorize_masks(mask_dict, colormap, default_color=[255, 255, 255, 255]):
     """
     color_images = {}
     for root_id, mask in mask_dict:
-        color_images[root_id] = _binary_mask_to_transparent_pil(mask, colormap.get(root_id, default_color))
+        color_images[root_id] = _binary_mask_to_transparent_pil(
+            mask, colormap.get(root_id, default_color))
     return color_images
