@@ -53,7 +53,7 @@ class JSONServiceV1(ClientBase):
                  api_version,
                  endpoints,
                  server_name):
-        super(JSONServiceV1. self).__init__(server_address,
+        super(JSONServiceV1, self).__init__(server_address,
                                             auth_header, api_version, endpoints, server_name)
 
     def get_state_json(self, state_id):

@@ -2,7 +2,7 @@ import json
 import requests
 import webbrowser
 import os
-from .endpoints import auth_endpoints, default_server_address
+from .endpoints import auth_endpoints_v1, default_global_server_address
 
 default_token_location = "~/.cloudvolume/secrets"
 default_token_name = "chunkedgraph-secret.json"
@@ -36,7 +36,7 @@ class AuthClient(object):
         token_file=default_token_file,
         token_key=default_token_key,
         token=None,
-        server_address=default_server_address,
+        server_address=default_global_server_address,
     ):
         self._token_file = os.path.expanduser(token_file)
         self._token_key = token_key
@@ -89,7 +89,7 @@ class AuthClient(object):
         open : bool, optional
             If True, opens a web browser to the web page where you can generate a new token.
         """
-        auth_url = auth_endpoints["refresh_token"].format_map(
+        auth_url = auth_endpoints_v1["refresh_token"].format_map(
             self._default_endpoint_mapping
         )
         txt = f"""New Tokens need to be acquired by hand. Please follow the following steps:
