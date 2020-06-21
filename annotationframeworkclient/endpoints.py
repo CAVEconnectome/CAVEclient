@@ -15,8 +15,15 @@ annotation_endpoints_legacy = {
     "new_annotation": anno_legacy + "/dataset/{dataset_name}/{table_name}",
 }
 
+anno_v2 = "{ae_server_address}/annotation/api/v2"
+annotation_endpoints_v2 = {
+    "tables": anno_v2 + "/dataset/{dataset_name}/table",
+    "annotations": anno_v2 + "/dataset/{dataset_name}/table/{table_name}/annotations",
+    "table_count": anno_v2 + "/dataset/{dataset_name}/table/{table_name}/count",
+}
+
 annotation_api_versions = {0: annotation_endpoints_legacy,
-                           }
+                           2: annotation_endpoints_v2}
 
 # -------------------------------
 # ------ Infoservice endpoints
