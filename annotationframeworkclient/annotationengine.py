@@ -1,6 +1,7 @@
-from .base import ClientBaseWithDataset, _api_verisons, _api_endpoints
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_verisons, _api_endpoints
 from .auth import AuthClient
 from .endpoints import annotation_common, annotation_api_versions
+from .infoservice import InfoServiceClientV2
 import requests
 import time
 
@@ -8,7 +9,7 @@ server_key = "ae_server_address"
 
 
 def AnnotationClient(server_address,
-                     dataset_name,
+                     datastack_name,
                      auth_client=None,
                      api_version='latest'):
     """ Factory for returning AnnotationClient
@@ -16,8 +17,8 @@ def AnnotationClient(server_address,
     ----------
     server_address : str 
         server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    dataset_name : str
-        Name of the dataset, by default None. If None, uses the one specified in the client.
+    datastack_name : str
+        Name of the datastack.
     auth_client : AuthClient or None, optional
         Authentication client to use to connect to server. If None, do not use authentication.
     api_version : str or int (default: latest)
@@ -27,8 +28,8 @@ def AnnotationClient(server_address,
 
     Returns
     -------
-    ClientBaseWithDataset
-        List of dataset names for available datasets on the annotation engine
+    ClientBaseWithDatastack
+        List of datastack names for available datastacks on the annotation engine
     """
 
     if auth_client is None:
@@ -39,7 +40,7 @@ def AnnotationClient(server_address,
     endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
                                             annotation_common, annotation_api_versions)
     AnnoClient = client_mapping[api_version]
-    return AnnoClient(server_address, auth_header, api_version, endpoints, server_name, dataset_name)
+    return AnnoClient(server_address, auth_header, api_version, endpoints, server_name, datastack_name)
 
 
 class AnnotationClientLegacy(ClientBaseWithDataset):
@@ -177,28 +178,37 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         return response.json()
 
 
-class AnnotationClientV2(ClientBaseWithDataset):
-    def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name):
-        super(AnnotationClient, self).__init__(server_address,
-                                               auth_header, api_version, endpoints, server_name, dataset_name):
+class AnnotationClientV2(ClientBase):
+    def __init__(self, server_address, auth_header, api_version,
+                 endpoints, server_name, aligned_volume_name):
+        super(AnnotationClientV2, self).__init__(server_address,
+                                               auth_header, api_version, endpoints, server_name):
+                                         
+        self._aligned_volume_name = self._aligned_volume_name
 
-    def get_tables(self, dataset_name=None):
-        """ Gets a list of table names for a dataset
+    @property
+    def aligned_volume_name(self):
+        return self._aligned_volume_name
+
+    def get_tables(self, aligned_volume_name=None):
+        """ Gets a list of table names for a aligned_volume_name
 
         Parameters
         ----------
-        dataset_name : str or None, optional
-            Name of the dataset, by default None. If None, uses the one specified in the client.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume, by default None.
+            If None, uses the one specified in the client.
+            Will be set correctly if you are using the framework_client
 
         Returns
         -------
         list
             List of table names
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
@@ -208,7 +218,7 @@ class AnnotationClientV2(ClientBaseWithDataset):
     def create_table(self, table_name, schema_name, 
         description, reference_table=None,
         user_id=None,
-        dataset_name=None):
+        aligned_volume_name=None):
         """ Creates a new data table based on an existing schema
 
         Parameters
@@ -234,8 +244,8 @@ class AnnotationClientV2(ClientBaseWithDataset):
             If you are uploading this schema on someone else's behalf
             and you want to link this table with their ID, you can specify it here
             Otherwise, the table will be created with your userID in the user_id column.
-        dataset_name: str or None, optional,
-            Name of the dataset. If None, uses the one specified in the client.
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
 
         Returns
         -------
@@ -243,11 +253,11 @@ class AnnotationClientV2(ClientBaseWithDataset):
             Response JSON
 
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
 
         url = self._endpoints["tables"].format_map(endpoint_mapping)
         metadata={'description: description'}
@@ -264,7 +274,7 @@ class AnnotationClientV2(ClientBaseWithDataset):
         response.raise_for_status()
         return response.json()
 
-    def get_annotation(self, table_name, annotation_ids, dataset_name=None):
+    def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """ Retrieve an annotation or annotations by id(s) and table name.
 
         Parameters
@@ -273,19 +283,19 @@ class AnnotationClientV2(ClientBaseWithDataset):
             Name of the table
         annotation_ids : int or iterable
             ID or IDS of the annotation to retreive
-        dataset_name : str or None, optional
-            Name of the dataset. If None, uses the one specified in the client.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
 
         Returns
         -------
         list
             Annotation data
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
         try:
@@ -300,7 +310,7 @@ class AnnotationClientV2(ClientBaseWithDataset):
         response.raise_for_status()
         return response.json()
 
-    def post_annotation(self, table_name, data, dataset_name=None):
+    def post_annotation(self, table_name, data, aligned_volume_name=None):
         """ Post one or more new annotations to a table in the AnnotationEngine
 
         Parameters
@@ -309,8 +319,8 @@ class AnnotationClientV2(ClientBaseWithDataset):
             Name of the table where annotations will be added
         data : dict or list,
             A list of (or a single) dict of schematized annotation data matching the target table.
-        dataset_name : str or None, optional
-            Name of the dataset. If None, uses the one specified in the client.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
 
         Returns
         -------
@@ -318,13 +328,13 @@ class AnnotationClientV2(ClientBaseWithDataset):
             Response JSON
 
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
         if isinstance(data, dict):
             data = [data]
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
         
@@ -341,7 +351,7 @@ class AnnotationClientV2(ClientBaseWithDataset):
         response.raise_for_status()
         return response.json()
 
-    def update_annotation(self, table_name, data, dataset_name=None):
+    def update_annotation(self, table_name, data, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
         Note update is implemented by deleting the old annotation
         and inserting a new annotation, which will receive a new ID.
@@ -353,8 +363,8 @@ class AnnotationClientV2(ClientBaseWithDataset):
         data : dict or list,
             A list of (or a single) dict of schematized annotation data matching the target table.
             each dict must contain an "id" field which is the ID of the annotation to update
-        dataset_name : str or None, optional
-            Name of the dataset. If None, uses the one specified in the client.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
 
         Returns
         -------
@@ -362,13 +372,13 @@ class AnnotationClientV2(ClientBaseWithDataset):
             Response JSON: a list of new annotation IDs.
 
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
         if isinstance(data, dict):
             data = [data]
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
         
@@ -385,7 +395,7 @@ class AnnotationClientV2(ClientBaseWithDataset):
         response.raise_for_status()
         return response.json()
 
-    def delete_annotation(self, table_name, annotation_ids, dataset_name=None):
+    def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
         Note update is implemented by deleting the old annotation
         and inserting a new annotation, which will receive a new ID.
@@ -397,8 +407,8 @@ class AnnotationClientV2(ClientBaseWithDataset):
         data : dict or list,
             A list of (or a single) dict of schematized annotation data matching the target table.
             each dict must contain an "id" field which is the ID of the annotation to update
-        dataset_name : str or None, optional
-            Name of the dataset. If None, uses the one specified in the client.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
 
         Returns
         -------
@@ -406,13 +416,13 @@ class AnnotationClientV2(ClientBaseWithDataset):
             Response JSON: a list of new annotation IDs.
 
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
         if isinstance(data, dict):
             data = [data]
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
         
@@ -428,6 +438,7 @@ class AnnotationClientV2(ClientBaseWithDataset):
         response = self.session.delete(url, json=data)
         response.raise_for_status()
         return response.json()
+
 client_mapping = {0: AnnotationClientLegacy,
                   2: AnnotationClientV2,
                   'latest': AnnotationClientV2}
