@@ -10,11 +10,11 @@ from annotationframeworkclient.endpoints import default_server_address
 
 
 class FrameworkClient(object):
-    """A manager for all clients sharing common dataset and authentication information.
+    """A manager for all clients sharing common datastack and authentication information.
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
-    client = FrameworkClient(dataset_name='my_dataset', server_address='www.myserver.com',
+    client = FrameworkClient(datastack_name='my_datastack', server_address='www.myserver.com',
                              auth_token_file='~/.mysecrets/secrets.json')
 
     Then
@@ -25,12 +25,12 @@ class FrameworkClient(object):
     * client.annotation is an Annotation DB client (see annotationengine.AnnotationClient)
     * client.imagery_client(...) will generate an imagery client.
 
-    All subclients are loaded lazily and share the same dataset name, server address, and auth tokens where used.
+    All subclients are loaded lazily and share the same datastack name, server address, and auth tokens where used.
 
     Parameters
     ----------
-    dataset_name : str, optional
-        Dataset name for the services. Almost all services need this and will not work if it is not passed.
+    datastack_name : str, optional
+        Datastack name for the services. Almost all services need this and will not work if it is not passed.
     server_address : str or None
         URL of the framework server. If None, chooses the default server www.dynamicannotationframework.com.
         Optional, defaults to None.
@@ -47,13 +47,13 @@ class FrameworkClient(object):
 
     def __init__(
         self,
-        dataset_name=None,
+        datastack_name=None,
         server_address=None,
         auth_token_file=default_token_file,
         auth_token_key="token",
         auth_token=None,
     ):
-        self._dataset_name = dataset_name
+        self._datastack_name = datastack_name
         if server_address is None:
             server_address = default_server_address
         self._server_address = server_address
@@ -71,6 +71,10 @@ class FrameworkClient(object):
         self._chunkedgraph = None
         self._annotation = None
         self._lookup = None
+        self.local_server = self.info.local_server
+        av_info = self.info.get_aligned_volume_info()
+        self._aligned_volume_name = av_info['name']
+
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
@@ -109,8 +113,8 @@ class FrameworkClient(object):
         self._lookup = None
 
     @property
-    def dataset_name(self):
-        return self._dataset_name
+    def datastack_name(self):
+        return self._datastack_name
 
     @property
     def server_address(self):
@@ -123,11 +127,11 @@ class FrameworkClient(object):
         return self._auth
 
     @property
-    def info(self):
+    def info(self)->InfoServiceClient:
         if self._info is None:
             self._info = InfoServiceClient(
                 server_address=self.server_address,
-                dataset_name=self.dataset_name,
+                datastack_name=self.datastack_name,
                 auth_client=self.auth,
             )
         return self._info
@@ -152,8 +156,8 @@ class FrameworkClient(object):
     def chunkedgraph(self):
         if self._chunkedgraph is None:
             self._chunkedgraph = ChunkedGraphClient(
-                server_address=self.server_address,
-                dataset_name=self.dataset_name,
+                server_address=self.local_server,
+                datastack_name=self.datastack_name,
                 auth_client=self.auth,
             )
         return self._chunkedgraph
@@ -162,8 +166,8 @@ class FrameworkClient(object):
     def annotation(self):
         if self._annotation is None:
             self._annotation = AnnotationClient(
-                server_address=self.server_address,
-                dataset_name=self.dataset_name,
+                server_address=self.local_server,
+                aligned_volume_name=self._aligned_volume_name,
                 auth_client=self.auth,
             )
         return self._annotation
@@ -188,20 +192,20 @@ class FrameworkClient(object):
         lookuptool.LookupClient
         """
         if use_graphene and self.info.graphene_source() is not None:
-            return LookupClient(dataset_name=self.dataset_name,
-                                segmentation_path=self.info.graphene_source(
+            return LookupClient(datastack_name=self.datastack_name,
+                                segmentation_path=self.info.segmentation_source(
                                     format_for='cloudvolume'),
-                                server_address=self.server_address,
+                                server_address=self.local_server,
                                 auth_client=self.auth,
                                 timestamp=timestamp,
                                 voxel_resolution=voxel_resolution,
                                 )
         else:
             # Default to the flat segmentation
-            return LookupClient(dataset_name=self.dataset_name,
-                                segmentation_path=self.info.flat_segmentation_source(
+            return LookupClient(datastack_name=self.datastack_name,
+                                segmentation_path=self.info.segmentation_source(
                                     format_for='cloudvolume'),
-                                server_address=self.server_address,
+                                server_address=self.local_server,
                                 auth_client=self.auth,
                                 voxel_resolution=voxel_resolution,
                                 )
@@ -236,7 +240,7 @@ class FrameworkClient(object):
         imagery.ImageryClient
 
         """
-        return ImageryClient(dataset_name=self.dataset_name,
+        return ImageryClient(datastack_name=self.datastack_name,
                              auth_client=self.auth,
                              pcg_client=self.chunkedgraph,
                              image_mip=image_mip,

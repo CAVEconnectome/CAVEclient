@@ -56,10 +56,10 @@ here.
 
 .. code:: python
 
-    client = FrameworkClient(dataset_name)
+    client = FrameworkClient(datastack_name)
     print(f"Now my basic token is: {client.auth.token}")
     
-    client_direct = FrameworkClient(dataset_name, auth_token='another_fake_token_678')
+    client_direct = FrameworkClient(datastack_name, auth_token='another_fake_token_678')
     print(f"A directly specified token is: {client_direct.auth.token}")
 
 If you use a FrameworkClient, the AuthClient and its token will be

@@ -6,7 +6,7 @@ services, each with a specific set of tasks that it can perform through
 REST endpoints. This module is designed to ease programmatic interaction
 with all of the various endpoints. Going forward, we also will be
 increasingly using authentication tokens for programmatic access to most
-if not all of the services. In order to collect a given server, dataset
+if not all of the services. In order to collect a given server, datastack
 name, and user token together into a coherent package that can be used
 on multiple endpoints, we will use a FrameworkClient that can build
 appropriately configured clients for each of the specific services. Each of the individual services has their own specific documentation as well.
@@ -16,15 +16,15 @@ Initializing a FrameworkClient
 
 Assuming that the services are on ``www.dynamicannotationframework.com``
 and authentication tokens are either not being used or set up with
-default values (see next section), one needs only to specify the dataset
+default values (see next section), one needs only to specify the datastack
 name.
 
 .. code:: python
 
     from annotationframeworkclient import FrameworkClient
     
-    dataset_name = 'pinky100'
-    client = FrameworkClient(dataset_name)
+    datastack_name = 'pinky100'
+    client = FrameworkClient(datastack_name)
 
 Just to confirm that this works, let’s see if we can get the EM image
 source from the InfoService. If you get a reasonable looking path,

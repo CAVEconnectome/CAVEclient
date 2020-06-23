@@ -2,8 +2,8 @@
 Info Service
 ============
 
-A dataset has a number of complex paths to various data sources that
-together comprise a dataset. Rather than hardcode these paths, the
+A datastack has a number of complex paths to various data sources that
+together comprise a datastack. Rather than hardcode these paths, the
 InfoService allows one to query the location of each data source. This
 is also convenient in case data sources change.
 
@@ -11,18 +11,18 @@ An InfoClient is accessed at ``client.info``.
 
 .. code:: python
 
-    client = FrameworkClient(dataset_name)
-    print(f"This is an info client for {client.info.dataset_name} on {client.info.server_address}")
+    client = FrameworkClient(datastack_name)
+    print(f"This is an info client for {client.info.datastack_name} on {client.info.server_address}")
 
-Accessing dataset information
+Accessing datastack information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All of the information accessible for the dataset can be seen as a dict
-using ``get_dataset_info()``.
+All of the information accessible for the datastack can be seen as a dict
+using ``get_datastack_info()``.
 
 .. code:: python
 
-    info.get_dataset_info()
+    info.get_datastack_info()
 
 Individual entries can be found as well. Use tab autocomplete to see the
 various possibilities.

@@ -95,3 +95,25 @@ class ClientBaseWithDataset(ClientBase):
     @property
     def dataset_name(self):
         return self._dataset_name
+
+class ClientBaseWithDatastack(ClientBase):
+    def __init__(self,
+                 server_address,
+                 auth_header,
+                 api_version,
+                 endpoints,
+                 server_name,
+                 datastack_name
+                 ):
+
+        super(ClientBaseWithDataset, self).__init__(server_address,
+                                                    auth_header,
+                                                    api_version,
+                                                    endpoints,
+                                                    server_name,
+                                                    )
+        self._dataset_name = dataset_name
+
+    @property
+    def datastack_name(self):
+        return self._dataset_name

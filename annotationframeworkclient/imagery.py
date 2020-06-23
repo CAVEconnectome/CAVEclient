@@ -32,8 +32,8 @@ class ImageryClient(object):
     server_address : str, optional
         Address of an InfoService host, by default None. If none, defaults to
         https://www.dynamicannotationframework.com
-    dataset_name : str, optional
-        Dataset name to lookup information for in the InfoService, by default None
+    datastack_name : str, optional
+        Datastack name to lookup information for in the InfoService, by default None
     base_resolution : list, optional
         Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40].
     graphene_segmentation : bool, optional
@@ -52,7 +52,7 @@ class ImageryClient(object):
     """
 
     def __init__(self, image_source=None, segmentation_source=None, server_address=None,
-                 dataset_name=None, base_resolution=[4, 4, 40],
+                 datastack_name=None, base_resolution=[4, 4, 40],
                  graphene_segmentation=True, table_name=None,
                  image_mip=0, segmentation_mip=0,
                  segmentation=True, imagery=True,
@@ -60,7 +60,7 @@ class ImageryClient(object):
         self._info = None
         if server_address is None:
             self._server_address = default_server_address
-        self._dataset_name = dataset_name
+        self._datastack_name = datastack_name
         self._table_name = table_name
         self._chunked_segmentation = graphene_segmentation
         self._base_resolution = np.array(base_resolution)
@@ -93,14 +93,14 @@ class ImageryClient(object):
 
     @property
     def info(self):
-        """InfoClient for the imagery dataset (if set)
+        """InfoClient for the imagery datastack (if set)
         """
-        if self._server_address is None or self._dataset_name is None:
+        if self._server_address is None or self._datastack_name is None:
             return None
 
         if self._info is None:
             self._info = infoservice.InfoServiceClient(self._server_address,
-                                                       self._dataset_name)
+                                                       self._datastack_name)
         return self._info
 
     @property
@@ -162,7 +162,7 @@ class ImageryClient(object):
             return None
         elif self._pcg_client is None:
             self._pcg_client = ChunkedGraphClient(server_address=self._server_address,
-                                                  dataset_name=self._dataset_name,
+                                                  datastack_name=self._datastack_name,
                                                   table_name=self._table_name,
                                                   auth_client=self._auth_client)
         return self._pcg_client

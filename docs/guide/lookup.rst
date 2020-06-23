@@ -7,7 +7,7 @@ While this is less efficient than using the materialized database, it can be use
 Initializing a LookupClient
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The LookupClient combines multiple services and can't be created from a server address and dataset name alone, unlike the single service clients.
+The LookupClient combines multiple services and can't be created from a server address and datastack name alone, unlike the single service clients.
 Thus instead of being part of a FrameworkClient object, we instead use a ``client`` to initialize a LookupClient. To generate a default client, you don't need any arguments.
 
 .. code:: python

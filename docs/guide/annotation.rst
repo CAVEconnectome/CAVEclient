@@ -11,7 +11,7 @@ do not include any root ids. An annotation client is accessed with
 Getting existing tables
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-A list of the existing tables for the dataset can be found at with
+A list of the existing tables for the datastack can be found at with
 ``get_tables``.
 
 .. code:: python

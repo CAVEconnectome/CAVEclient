@@ -22,8 +22,8 @@ class LookupClient(object):
 
     Parameters
     ----------
-    dataset_name : str
-        Name of the dataset
+    datastack_name : str
+        Name of the datastack
     segmentation_path : str or None, optional
         Cloud path to a graphene or precomputed segmentation. If None, requires a specified ChunkedGraph client.
     segmentation_mip : int, optional
@@ -39,7 +39,7 @@ class LookupClient(object):
     """
 
     def __init__(self,
-                 dataset_name,
+                 datastack_name,
                  segmentation_path=None,
                  segmentation_mip=0,
                  timestamp=None,
@@ -47,7 +47,7 @@ class LookupClient(object):
                  server_address=None,
                  auth_client=None,
                  ):
-        self._dataset_name = dataset_name
+        self._datastack_name = datastack_name
         self._segmentation_path = segmentation_path
         self._voxel_resolution = voxel_resolution
         self._timestamp = timestamp
@@ -65,7 +65,7 @@ class LookupClient(object):
 
         if _is_graphene(self._segmentation_path):
             self._chunkedgraph_client = ChunkedGraphClient(server_address=self._server_address,
-                                                           dataset_name=self._dataset_name,
+                                                           datastack_name=self._datastack_name,
                                                            timestamp=self._timestamp,
                                                            auth_client=self._auth_client)
         else:

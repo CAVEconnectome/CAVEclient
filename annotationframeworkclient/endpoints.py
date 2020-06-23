@@ -17,9 +17,9 @@ annotation_endpoints_legacy = {
 
 anno_v2 = "{ae_server_address}/annotation/api/v2"
 annotation_endpoints_v2 = {
-    "tables": anno_v2 + "/dataset/{dataset_name}/table",
-    "annotations": anno_v2 + "/dataset/{dataset_name}/table/{table_name}/annotations",
-    "table_count": anno_v2 + "/dataset/{dataset_name}/table/{table_name}/count",
+    "tables": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table",
+    "annotations": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table/{table_name}/annotations",
+    "table_count": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table/{table_name}/count",
 }
 
 annotation_api_versions = {0: annotation_endpoints_legacy,
@@ -37,8 +37,17 @@ infoservice_endpoints_v1 = {
     "dataset_info": info_v1 + "/dataset/{dataset_name}",
 }
 
+info_v2 = "{i_server_address}/info/api/v2"
+infoservice_endpoints_v2 = {
+    "aligned_volumes": info_v2 + "/aligned_volume",
+    "aligned_volume_info": info_v2 + "/aligned_volume/{aligned_volume_name}",
+    "aligned_volume_by_id": info_v2 + "/aligned_volume/id/{aligned_volume_id}",
+    "datastacks": info_v2 + "/datastacks",
+    "datastack_info": info_v2 + "/datastack/full/{datastack_name}",
+}
+
 infoservice_api_versions = {1: infoservice_endpoints_v1,
-                            }
+                            2: infoservice_endpoints_v2}
 
 # -------------------------------
 # ------ Pychunkedgraph endpoints
