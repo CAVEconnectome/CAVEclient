@@ -1,15 +1,16 @@
-from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_verisons, _api_endpoints
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints
 from .auth import AuthClient
 from .endpoints import annotation_common, annotation_api_versions
 from .infoservice import InfoServiceClientV2
 import requests
 import time
 
-server_key = "ae_server_address"
+SERVER_KEY = "ae_server_address"
 
 
 def AnnotationClient(server_address,
-                     datastack_name,
+                     dataset_name=None,
+                     aligned_volume_name=None,
                      auth_client=None,
                      api_version='latest'):
     """ Factory for returning AnnotationClient
@@ -36,17 +37,24 @@ def AnnotationClient(server_address,
         auth_client = AuthClient()
 
     auth_header = auth_client.request_header
+    endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
+                                            annotation_common, annotation_api_versions, auth_header)
+    
 
-    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
-                                            annotation_common, annotation_api_versions)
     AnnoClient = client_mapping[api_version]
-    return AnnoClient(server_address, auth_header, api_version, endpoints, server_name, datastack_name)
+    if api_version>1:
+        return AnnoClient(server_address, auth_header, api_version,
+                          endpoints, SERVER_KEY, aligned_volume_name)
+    else:
+        return AnnoClient(server_address, auth_header, api_version,
+                          endpoints, SERVER_KEY, dataset_name)
 
 
 class AnnotationClientLegacy(ClientBaseWithDataset):
     def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name):
-        super(AnnotationClient, self).__init__(server_address,
-                                               auth_header, api_version, endpoints, server_name, dataset_name):
+        super(AnnotationClientLegacy, self).__init__(server_address,
+                                               auth_header, api_version, endpoints,
+                                               server_name, dataset_name)
 
     def get_datasets(self):
         """ Gets a list of datasets
@@ -182,7 +190,7 @@ class AnnotationClientV2(ClientBase):
     def __init__(self, server_address, auth_header, api_version,
                  endpoints, server_name, aligned_volume_name):
         super(AnnotationClientV2, self).__init__(server_address,
-                                               auth_header, api_version, endpoints, server_name):
+                                               auth_header, api_version, endpoints, server_name)
                                          
         self._aligned_volume_name = self._aligned_volume_name
 
@@ -260,7 +268,7 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
 
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-        metadata={'description: description'}
+        metadata={'description': description}
         if user_id is not None:
             metadata['user_id']=user_id
         if reference_table is not None:
@@ -306,7 +314,7 @@ class AnnotationClientV2(ClientBase):
         params = {
             'annotations': annotation_ids
         }
-        response = self.session.get(url, params=query_d)
+        response = self.session.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
