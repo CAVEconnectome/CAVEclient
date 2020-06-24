@@ -9,8 +9,7 @@ from scipy import ndimage
 from functools import partial
 from annotationframeworkclient import infoservice
 from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
-from annotationframeworkclient.endpoints import default_server_address
-
+from annotationframeworkclient.endpoints import default_global_server_address
 
 def _patch_cloudvolume_auth(token):
     # This is a a hack at the moment, but we will replace the monkey patching when cloudvolume can properly accept tokens.
@@ -59,7 +58,7 @@ class ImageryClient(object):
                  pcg_client=None, auth_client=None):
         self._info = None
         if server_address is None:
-            self._server_address = default_server_address
+            self._server_address = default_global_server_address
         self._datastack_name = datastack_name
         self._table_name = table_name
         self._chunked_segmentation = graphene_segmentation
