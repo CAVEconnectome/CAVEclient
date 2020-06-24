@@ -3,7 +3,10 @@ import pandas as pd
 import numpy as np
 import datetime
 import re
-from cloudvolume import CloudVolume
+try:
+    import cloudvolume as cv
+except ImportError:
+    logging.warning('Warning: Need to install cloudvolume to use Lookup client')
 from .chunkedgraph import ChunkedGraphClient
 from .endpoints import default_global_server_address
 from .auth import AuthClient
