@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import re
+import logging
 try:
     import cloudvolume as cv
 except ImportError:
