@@ -6,8 +6,7 @@ from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
 from .imagery import ImageryClient
 from .lookup import LookupClient
-from annotationframeworkclient.endpoints import default_server_address
-
+from annotationframeworkclient.endpoints import default_global_server_address
 
 class FrameworkClient(object):
     """A manager for all clients sharing common datastack and authentication information.
@@ -55,7 +54,7 @@ class FrameworkClient(object):
     ):
         self._datastack_name = datastack_name
         if server_address is None:
-            server_address = default_server_address
+            server_address = default_global_server_address
         self._server_address = server_address
         self._auth_config = (
             auth_token_file,
@@ -71,7 +70,7 @@ class FrameworkClient(object):
         self._chunkedgraph = None
         self._annotation = None
         self._lookup = None
-        self.local_server = self.info.local_server
+        self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info['name']
 
@@ -154,14 +153,17 @@ class FrameworkClient(object):
 
     @property
     def chunkedgraph(self):
+        seg_source = self.info.segmentation_source()
+        table_name = seg_source.split('/')[-1]
+
         if self._chunkedgraph is None:
             self._chunkedgraph = ChunkedGraphClient(
+                table_name=table_name,
                 server_address=self.local_server,
-                datastack_name=self.datastack_name,
-                auth_client=self.auth,
+                auth_client=self.auth
             )
         return self._chunkedgraph
-
+        
     @property
     def annotation(self):
         if self._annotation is None:
@@ -174,8 +176,7 @@ class FrameworkClient(object):
 
     def make_lookup_client(self,
                            timestamp=None,
-                           voxel_resolution=[4, 4, 40],
-                           use_graphene=True):
+                           voxel_resolution=[4, 4, 40]):
         """Generate a lookup client based on the client configuration
 
         Parameters
@@ -184,35 +185,23 @@ class FrameworkClient(object):
             Time stamp to use for lookups, by default None
         voxel_resolution : list, optional
             Resolution of voxels in nm, by default [4, 4, 40]
-        use_graphene : bool, optional
-            Selection to use the graphene_segmentation by default. If False, reverts to the flat segmentation source. By default True
-
+       
         Returns
         -------
         lookuptool.LookupClient
         """
-        if use_graphene and self.info.graphene_source() is not None:
-            return LookupClient(datastack_name=self.datastack_name,
-                                segmentation_path=self.info.segmentation_source(
-                                    format_for='cloudvolume'),
-                                server_address=self.local_server,
-                                auth_client=self.auth,
-                                timestamp=timestamp,
-                                voxel_resolution=voxel_resolution,
-                                )
-        else:
-            # Default to the flat segmentation
-            return LookupClient(datastack_name=self.datastack_name,
-                                segmentation_path=self.info.segmentation_source(
-                                    format_for='cloudvolume'),
-                                server_address=self.local_server,
-                                auth_client=self.auth,
-                                voxel_resolution=voxel_resolution,
-                                )
+        return LookupClient(datastack_name=self.datastack_name,
+                            segmentation_path=self.info.segmentation_source(
+                            format_for='cloudvolume'),
+                            server_address=self.local_server,
+                            auth_client=self.auth,
+                            timestamp=timestamp,
+                            voxel_resolution=voxel_resolution,
+                            )
+    
 
     def make_imagery_client(self,
                             base_resolution=[4, 4, 40],
-                            graphene_segmentation=True,
                             image_mip=0,
                             segmentation_mip=0,
                             segmentation=True,
@@ -223,8 +212,6 @@ class FrameworkClient(object):
         ----------
         base_resolution : list, optional
             Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40]
-        graphene_segmentation : bool, optional
-            If True, use the graphene segmentation. If false, use the flat segmentation. By default True.
         image_mip : int, optional
             Default mip level to use for imagery lookups, by default 0. Note that the same mip
             level for imagery and segmentation can correspond to different voxel resolutions.
