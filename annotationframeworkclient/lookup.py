@@ -5,7 +5,7 @@ import datetime
 import re
 from cloudvolume import CloudVolume
 from .chunkedgraph import ChunkedGraphClient
-from .endpoints import default_server_address
+from .endpoints import default_global_server_address
 from .auth import AuthClient
 
 
@@ -39,7 +39,6 @@ class LookupClient(object):
     """
 
     def __init__(self,
-                 datastack_name,
                  segmentation_path=None,
                  segmentation_mip=0,
                  timestamp=None,
@@ -47,7 +46,6 @@ class LookupClient(object):
                  server_address=None,
                  auth_client=None,
                  ):
-        self._datastack_name = datastack_name
         self._segmentation_path = segmentation_path
         self._voxel_resolution = voxel_resolution
         self._timestamp = timestamp
@@ -55,7 +53,7 @@ class LookupClient(object):
         self._mip = segmentation_mip
 
         if server_address is None:
-            server_address = default_server_address
+            server_address = default_global_server_address
         self._server_address = server_address
 
         if auth_client is None:
@@ -64,8 +62,9 @@ class LookupClient(object):
             self._auth_client = auth_client
 
         if _is_graphene(self._segmentation_path):
+            table_name = self._segmentation_path.split('/')[-1]
             self._chunkedgraph_client = ChunkedGraphClient(server_address=self._server_address,
-                                                           datastack_name=self._datastack_name,
+                                                           table_name=table_name,
                                                            timestamp=self._timestamp,
                                                            auth_client=self._auth_client)
         else:
