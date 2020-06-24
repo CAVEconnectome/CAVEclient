@@ -1,5 +1,5 @@
 
-default_global_server_address = "https://global.daf-apis.com"
+default_global_server_address = "https://globalv1.daf-apis.com"
 
 # -------------------------------
 # ------ AnnotationEngine endpoints
@@ -75,8 +75,8 @@ pcg_v1 = "{cg_server_address}/segmentation/api/v1"
 chunkedgraph_endpoints_v1 = {
     'handle_root': pcg_v1 + "/table/{table_id}/node/{supervoxel_id}/root",
     "handle_roots": pcg_v1 + "/table/{table_id}/roots",
-    'handle_children': pcg_v1 + "table/{table_id}/node/{root_id}/childen",
-    'leaves_from_root': pcg_v1 + "/{table_id}/node/{root_id}/leaves",
+    'handle_children': pcg_v1 + "/table/{table_id}/node/{root_id}/childen",
+    'leaves_from_root': pcg_v1 + "/table/{table_id}/node/{root_id}/leaves",
     'merge_log': pcg_v1 + "/table/{table_id}/root/{root_id}/merge_log",
     'change_log': pcg_v1 + "/table/{table_id}/root/{root_id}/change_log",
     'contact_sites': pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",
