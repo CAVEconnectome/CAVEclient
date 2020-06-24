@@ -56,6 +56,12 @@ class ClientBase(object):
         self._default_url_mapping = {server_name: self._server_address}
 
         self.session = requests.Session()
+        head_val = auth_header.get('Authorization', None)
+        if head_val is not None:
+            token=head_val.split(' ')[1]
+            cookie_obj = requests.cookies.create_cookie(name='middle_auth_token',
+                                                        value=token)
+            self.session.cookies.set_cookie(cookie_obj)
         self.session.headers.update(auth_header)
 
         self._api_version = api_version
@@ -106,14 +112,14 @@ class ClientBaseWithDatastack(ClientBase):
                  datastack_name
                  ):
 
-        super(ClientBaseWithDataset, self).__init__(server_address,
+        super(ClientBaseWithDatastack, self).__init__(server_address,
                                                     auth_header,
                                                     api_version,
                                                     endpoints,
                                                     server_name,
                                                     )
-        self._dataset_name = dataset_name
+        self._datastack_name = datastack_name
 
     @property
     def datastack_name(self):
-        return self._dataset_name
+        return self._datastack_name
