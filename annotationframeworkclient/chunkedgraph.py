@@ -3,11 +3,14 @@ import requests
 import datetime
 import time
 
-from annotationframeworkclient import endpoints
-from annotationframeworkclient import infoservice
-from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
+from . import endpoints
+from . import infoservice
+from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common, default_global_server_address
+from .base import _api_endpoints, _api_versions, ClientBase
 from .auth import AuthClient
+import requests
 
+SERVER_KEY = 'cg_server_address'
 
 def package_bounds(bounds):
     bounds_str = []
@@ -17,50 +20,72 @@ def package_bounds(bounds):
     return bounds_str
 
 
-class ChunkedGraphClient(object):
+def ChunkedGraphClient(server_address=None,
+                       table_name=None,
+                       auth_client=None,
+                       api_version='latest',
+                       timestamp=None
+                      ):
+    if server_address is None:
+        server_address = default_global_server_address
+
+    if auth_client is None:
+        auth_client = AuthClient()
+
+    auth_header = auth_client.request_header
+    
+    endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
+                                            chunkedgraph_endpoints_common, chunkedgraph_api_versions, auth_header)
+
+    ChunkedClient = client_mapping[api_version]
+    return ChunkedClient(server_address,
+                      auth_header,
+                      api_version,
+                      endpoints,
+                      SERVER_KEY,
+                      timestamp=timestamp,
+                      table_name=table_name)
+
+class ChunkedGraphClientLegacy(ClientBase):
     """Client to interface with the PyChunkedGraph service
 
     Parameters
     ----------
     server_address : str or None, optional
         URL where the PyChunkedGraph service is running. If None, defaults to www.dynamicannotationframework.com
-    dataset_name : str or None, optional
-        Name of the dataset. If None, requires specification of the table name. By default, None.
     table_name : str or None, optional
-        Name of the chunkedgraph table associated with the dataset. If the dataset_name is specified and table name is not, this can be looked up automatically. By default, None.
+        Name of the chunkedgraph table associated with the dataset. If the datastack_name is specified and table name is not, this can be looked up automatically. By default, None.
     auth_client : auth.AuthClient or None, optional
         Instance of an AuthClient with token to handle authorization. If None, does not specify a token.
     timestamp : datetime.datetime or None, optional
         Default UTC timestamp to use for chunkedgraph queries. 
     """
+    def __init__(self,
+                 server_address,
+                 auth_header,
+                 api_version,
+                 endpoints,
+                 server_key=SERVER_KEY,
+                 timestamp=None,
+                 table_name=None):
+        super(ChunkedGraphClientLegacy, self).__init__(server_address,
+                                                      auth_header,
+                                                      api_version,
+                                                      endpoints,
+                                                      server_key)
 
-    def __init__(self, server_address=None, dataset_name=None,
-                 table_name=None, auth_client=None, timestamp=None):
-        if server_address is None:
-            self._server_address = endpoints.default_server_address
-        else:
-            self._server_address = server_address
-        if table_name is None:
-            info_client = infoservice.InfoServiceClient(server_address=self._server_address)
-            pcg_vs = info_client.pychunkedgraph_viewer_source(dataset_name=dataset_name)
-            table_name = pcg_vs.split('/')[-1]
-        self.table_name = table_name
-        self._default_timestamp = timestamp
-
-        if auth_client is None:
-            auth_client = AuthClient()
-
-        self.session = requests.Session()
-        self.session.headers.update(auth_client.request_header)
-
-        self.info_cache = dict()
-
-        self._default_url_mapping = {"cg_server_address": self._server_address,
-                                     "table_id": self.table_name}
+        self._default_url_mapping['table_id']=table_name
+        self._default_timestamp=timestamp
+        self._table_name = table_name
+        self._default_timestamp=timestamp
 
     @property
     def default_url_mapping(self):
         return self._default_url_mapping.copy()
+
+    @property
+    def table_name(self):
+        return self._table_name
 
     def get_root_id(self, supervoxel_id, timestamp=None):
         """Get the root id for a specified supervoxel
@@ -84,13 +109,21 @@ class ChunkedGraphClient(object):
                 timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
-        url = cg['handle_root'].format_map(endpoint_mapping)
-        url = f"{url}?timestamp={time.mktime(timestamp.timetuple())}"
+        endpoint_mapping['supervoxel_id']=supervoxel_id
+        url = self._endpoints['handle_root'].format_map(endpoint_mapping)
 
-        response = self.session.post(url, json=[supervoxel_id])
+        if timestamp is None:
+            timestamp=self._default_timestamp
+        if timestamp is not None:
+            query_d ={
+                'timestamp': time.mktime(timestamp.timetuple())
+            }
+        else:
+            query_d = None
+        response = self.session.get(url, params=query_d)
 
         response.raise_for_status()
-        return np.frombuffer(response.content, dtype=np.uint64)
+        return np.int64(response.json()['root_id'])
 
     def get_merge_log(self, root_id):
         """Returns the merge log for a given object
@@ -107,7 +140,7 @@ class ChunkedGraphClient(object):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
-        url = cg['merge_log'].format_map(endpoint_mapping)
+        url = self._endpoints['merge_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
 
         response.raise_for_status()
@@ -128,7 +161,7 @@ class ChunkedGraphClient(object):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
-        url = cg['change_log'].format_map(endpoint_mapping)
+        url = self._endpoints['change_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
 
         response.raise_for_status()
@@ -152,15 +185,15 @@ class ChunkedGraphClient(object):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
-        url = cg['leaves_from_root'].format_map(endpoint_mapping)
+        url = self._endpoints['leaves_from_root'].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
             query_d['bounds'] = package_bounds(bounds)
 
-        response = self.session.post(url, json=[root_id], params=query_d)
+        response = self.session.get(url, params=query_d)
 
         response.raise_for_status()
-        return np.frombuffer(response.content, dtype=np.uint64)
+        return np.int64(response.json()['leaf_ids'], dtype=np.int64)
 
     def get_children(self, node_id):
         """Get the children of a node in the hierarchy
@@ -177,7 +210,7 @@ class ChunkedGraphClient(object):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['node_id'] = node_id
-        url = cg['handle_children'].format_map(endpoint_mapping)
+        url = self._endpoints['handle_children'].format_map(endpoint_mapping)
 
         response = self.session.post(url)
 
@@ -202,7 +235,7 @@ class ChunkedGraphClient(object):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
-        url = cg['contact_sites'].format_map(endpoint_mapping)
+        url = self._endpoints['contact_sites'].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
             query_d['bounds'] = package_bounds(bounds)
@@ -213,4 +246,8 @@ class ChunkedGraphClient(object):
 
     @property
     def cloudvolume_path(self):
-        return cg['cloudvolume_path'].format_map(self.default_url_mapping)
+        return self._endpoints['cloudvolume_path'].format_map(self.default_url_mapping)
+
+client_mapping = {0: ChunkedGraphClientLegacy,
+                  1: ChunkedGraphClientLegacy,
+                  'latest': ChunkedGraphClientLegacy}
