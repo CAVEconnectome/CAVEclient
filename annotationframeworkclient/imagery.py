@@ -2,7 +2,11 @@ import fastremap
 import numpy as np
 import tqdm
 import imageio
-import cloudvolume as cv
+import logging
+try:
+    import cloudvolume as cv
+except ImportError:
+    logging.warning('Warning: Need to install cloudvolume to use Imagery client')
 from .auth import AuthClient
 
 from scipy import ndimage

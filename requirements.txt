@@ -4,7 +4,6 @@ multiwrapper
 fastremap
 tqdm
 imageio
-cloud-volume
 pandas
 numpy
 scipy
