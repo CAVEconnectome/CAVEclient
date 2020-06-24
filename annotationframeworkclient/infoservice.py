@@ -5,7 +5,7 @@ from .format_utils import output_map_raw, output_map_precomputed, output_map_gra
 import requests
 from warnings import warn
 
-server_key = "i_server_address"
+SERVER_KEY = "i_server_address"
 
 
 def InfoServiceClient(server_address=None,
@@ -20,7 +20,7 @@ def InfoServiceClient(server_address=None,
         auth_client = AuthClient()
 
     auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
+    endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
                                             infoservice_common, infoservice_api_versions, auth_header)
 
     InfoClient = client_mapping[api_version]
@@ -28,7 +28,7 @@ def InfoServiceClient(server_address=None,
                       auth_header,
                       api_version,
                       endpoints,
-                      server_key,
+                      SERVER_KEY,
                       datastack_name,
                       )
 
@@ -304,6 +304,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
                                                       endpoints,
                                                       server_name,
                                                       datastack_name)
+        self.info_cache = dict()
         if datastack_name is not None:
             ds_info = self.get_datastack_info(datastack_name=datastack_name)
             self._aligned_volume_name = ds_info['aligned_volume']['id']
@@ -311,7 +312,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         else:
             self._aligned_volume_name = None
             self._aligned_volume_id = None
-        self.info_cache = dict()
+        
 
     @property
     def aligned_volume_name(self):
@@ -374,7 +375,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         if datastack_name is None:
             raise ValueError('No Dataset set')
 
-        self.get_dataset_info(datastack_name=datastack_name, use_stored=use_stored)
+        self.get_datastack_info(datastack_name=datastack_name, use_stored=use_stored)
         value = self.info_cache[datastack_name].get(info_property, None)
         return output_map.get(format_for, format_raw)(value)
 
@@ -411,19 +412,20 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             aligned_volume_id=self._aligned_volume_id
         if aligned_volume_id is None:
             raise ValueError("Must specify aligned_volume_id or provide datastack_name in init")
-        if (not use_stored) or (aligned_volume_name not in self.aligned_vol_cache):
-            endpoint_mapping = self.default_url_mapping
-            endpoint_mapping['aligned_volume_id']=aligned_volume_id
-            url = self._endpoints['aligned_volume_by_id'].format_map(endpoint_mapping)
+       
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['aligned_volume_id']=aligned_volume_id
+        url = self._endpoints['aligned_volume_by_id'].format_map(endpoint_mapping)
 
-            response = self.session.get(url)
-            response.raise_for_status()
-            self.aligned_vol_cache[aligned_volume_id] = response.json()
-        return self.aligned_vol_cache[aligned_volume_id]
+        response = self.session.get(url)
+        response.raise_for_status()
+
+        return response.json()
+       
 
     def local_server(self, datastack_name=None, use_stored=True):
         return self._get_property('local_server',
-                            info_property=datastack_name,
+                            datastack_name=datastack_name,
                             use_stored=use_stored,
                             output_map=output_map_raw)
 
@@ -493,13 +495,13 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             Formatted cloud path to the synapse segmentation
         """
         return self._get_property('synapse_segmentation_source',
-                                  info_property=datastack_name,
+                                  datastack_name=datastack_name,
                                   use_stored=use_stored,
                                   format_for=format_for,
                                   output_map=output_map_precomputed)
 
     def segmentation_source(self, datastack_name=None, format_for='raw', use_stored=True):
-         """Cloud path to the chunkgraph-backed Graphene segmentation for a dataset
+        """Cloud path to the chunkgraph-backed Graphene segmentation for a dataset
 
         Parameters
         ----------
@@ -519,7 +521,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             Formatted cloud path to the Graphene segmentation
         """
         return self._get_property('segmentation_source',
-                                  info_property=datastack_name,
+                                  datastack_name=datastack_name,
                                   use_stored=use_stored,
                                   output_map=output_map_raw)
 
