@@ -192,7 +192,7 @@ class AnnotationClientV2(ClientBase):
         super(AnnotationClientV2, self).__init__(server_address,
                                                auth_header, api_version, endpoints, server_name)
                                          
-        self._aligned_volume_name = self._aligned_volume_name
+        self._aligned_volume_name = aligned_volume_name
 
     @property
     def aligned_volume_name(self):
@@ -220,6 +220,94 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
+
+    def get_annotation_count(self, table_name:str, aligned_volume_name=None):
+        """ Get number of annotations in a table
+
+        Parameters
+        ----------
+        table_name (str): 
+            name of table to mark for deletion
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+
+        Returns
+        -------
+        int
+            number of annotations
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["table_count"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
+
+    def get_table_metadata(self, table_name:str, aligned_volume_name=None):
+        """ Get metadata about a table
+
+        Parameters
+        ----------
+        table_name (str): 
+            name of table to mark for deletion
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+
+        Returns
+        -------
+        json
+            metadata about table
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["table_info"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
+
+    def delete_table(self, table_name:str, aligned_volume_name=None):
+        """ Marks a table for deletion
+        requires super admin priviledges
+
+        Parameters
+        ----------
+        table_name (str): 
+            name of table to mark for deletion
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+
+        Returns
+        -------
+        json
+            Response JSON
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["table_info"].format_map(endpoint_mapping)
+
+        response = self.session.delete(url)
         response.raise_for_status()
         return response.json()
 
@@ -266,7 +354,7 @@ class AnnotationClientV2(ClientBase):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
-
+        
         url = self._endpoints["tables"].format_map(endpoint_mapping)
         metadata={'description': description}
         if user_id is not None:
@@ -278,7 +366,7 @@ class AnnotationClientV2(ClientBase):
                 "table_name": table_name,
                 "metadata": metadata}
                   
-        response = requests.post(url, json=data)
+        response = self.sesion.post(url, json=data)
         response.raise_for_status()
         return response.json()
 

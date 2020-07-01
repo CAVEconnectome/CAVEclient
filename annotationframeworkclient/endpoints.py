@@ -17,7 +17,8 @@ annotation_endpoints_legacy = {
 
 anno_v2 = "{ae_server_address}/annotation/api/v2"
 annotation_endpoints_v2 = {
-    "tables": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table",
+    "tables": anno_v2 + "/aligned_volume/{aligned_volume_name}/table",
+    "table_info": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table/{table_name}",
     "annotations": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table/{table_name}/annotations",
     "table_count": anno_v2 + "/aligned_volume_name/{aligned_volume_name}/table/{table_name}/count",
 }
