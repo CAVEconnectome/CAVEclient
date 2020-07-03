@@ -532,8 +532,6 @@ class AnnotationClientV2(ClientBase):
         """
         if aligned_volume_name is None:
             aligned_volume_name = self.aligned_volume_name
-        if isinstance(data, dict):
-            data = [data]
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
@@ -549,7 +547,8 @@ class AnnotationClientV2(ClientBase):
             "annotation_ids": annotation_ids
         }
 
-        response = self.session.delete(url, json=data)
+        response = self.session.delete(url, data = json.dumps(data, cls=AEEncoder),
+                                       headers={'Content-Type': 'application/json'})
         response.raise_for_status()
         return response.json()
 
