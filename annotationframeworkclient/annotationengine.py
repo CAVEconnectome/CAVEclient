@@ -417,7 +417,7 @@ class AnnotationClientV2(ClientBase):
             annotation_ids = [annotation_ids]
 
         params = {
-            'annotations': annotation_ids
+            'annotation_ids': ",".join([str(a) for a in annotation_ids])
         }
         response = self.session.get(url, params=params)
         response.raise_for_status()
