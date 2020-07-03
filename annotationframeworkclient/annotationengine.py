@@ -4,9 +4,20 @@ from .endpoints import annotation_common, annotation_api_versions
 from .infoservice import InfoServiceClientV2
 import requests
 import time
+import json 
+import numpy as np
 
 SERVER_KEY = "ae_server_address"
 
+class AEEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.uint64):
+            return int(obj)
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
 def AnnotationClient(server_address,
                      dataset_name=None,
@@ -181,7 +192,8 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
 
         url = self._endpoints["new_annotation"].format_map(endpoint_mapping)
 
-        response = self.session.post(url, json=data)
+        response = self.session.post(url, data = json.dumps(data, cls=AEEncoder),
+                                    headers={'Content-Type': 'application/json'})
         response.raise_for_status()
         return response.json()
 
@@ -313,6 +325,7 @@ class AnnotationClientV2(ClientBase):
 
     def create_table(self, table_name, schema_name, 
         description, reference_table=None,
+        flat_segmentation_source=None,
         user_id=None,
         aligned_volume_name=None):
         """ Creates a new data table based on an existing schema
@@ -336,6 +349,9 @@ class AnnotationClientV2(ClientBase):
             If the schema you are using is a reference schema
             Meaning it is an annotation of another annotation.
             Then you need to specify what table those annotations are in.
+        flat_segmentation_source: str or None
+            the source to a flat segmentation that corresponds to this table
+            i.e. precomputed:\\gs:\\mybucket\this_tables_annotation
         user_id: int
             If you are uploading this schema on someone else's behalf
             and you want to link this table with their ID, you can specify it here
@@ -361,12 +377,13 @@ class AnnotationClientV2(ClientBase):
             metadata['user_id']=user_id
         if reference_table is not None:
             metadata['reference_table']=reference_table
-
-        data = {"schema_name": schema_name,
+        if flat_segmentation_source is not None:
+            metadata['flat_segmentation_source']=flat_segmentation_source
+        data = {"schema_type": schema_name,
                 "table_name": table_name,
                 "metadata": metadata}
                   
-        response = self.sesion.post(url, json=data)
+        response = self.session.post(url, json=data)
         response.raise_for_status()
         return response.json()
 
@@ -442,8 +459,9 @@ class AnnotationClientV2(ClientBase):
         data = {
             "annotations": data
         }
-
-        response = self.session.post(url, json=data)
+        
+        response = self.session.post(url, data = json.dumps(data, cls=AEEncoder),
+                                    headers={'Content-Type': 'application/json'})
         response.raise_for_status()
         return response.json()
 
