@@ -136,9 +136,9 @@ class ImageryClient(object):
             return None
         elif self._segmentation_source is None:
             if self._chunked_segmentation:
-                self._segmentation_source = self.info.graphene_source()
+                self._segmentation_source = self.info.segmentation_source()
             else:
-                self._segmentation_source = self.info.flat_segmentation_source(
+                self._segmentation_source = self.info.segmentation_source(
                     format_for='cloudvolume')
         return self._segmentation_source
 
