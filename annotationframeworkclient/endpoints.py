@@ -78,6 +78,8 @@ chunkedgraph_endpoints_v1 = {
     "handle_roots": pcg_v1 + "/table/{table_id}/roots",
     'handle_children': pcg_v1 + "/table/{table_id}/node/{root_id}/childen",
     'leaves_from_root': pcg_v1 + "/table/{table_id}/node/{root_id}/leaves",
+    'do_merge': pcg_v1 + "/table/{table_id}/merge",
+    'get_roots': pcg_v1 +  "/table/{table_id}/roots_binary",
     'merge_log': pcg_v1 + "/table/{table_id}/root/{root_id}/merge_log",
     'change_log': pcg_v1 + "/table/{table_id}/root/{root_id}/change_log",
     'contact_sites': pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",

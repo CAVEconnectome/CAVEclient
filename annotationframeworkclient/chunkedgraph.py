@@ -9,8 +9,19 @@ from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common,
 from .base import _api_endpoints, _api_versions, ClientBase
 from .auth import AuthClient
 import requests
+import json 
 
 SERVER_KEY = 'cg_server_address'
+
+class CGEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.uint64):
+            return int(obj)
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
 def package_bounds(bounds):
     bounds_str = []
@@ -86,6 +97,45 @@ class ChunkedGraphClientLegacy(ClientBase):
     @property
     def table_name(self):
         return self._table_name
+
+    def get_roots(self, supervoxel_ids, timestamp=None):
+        """Get the root id for a specified supervoxel
+
+        Parameters
+        ----------
+        supervoxel_ids : np.array(np.uint64)
+            Supervoxel ids values
+        timestamp : datetime.datetime, optional
+            UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
+
+        Returns
+        -------
+        np.array(np.uint64)
+            Root IDs containing each supervoxel.
+        """
+        if timestamp is None:
+            if self._default_timestamp is not None:
+                timestamp = self._default_timestamp
+            else:
+                timestamp = datetime.datetime.utcnow()
+
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['get_roots'].format_map(endpoint_mapping)
+
+        if timestamp is None:
+            timestamp=self._default_timestamp
+        if timestamp is not None:
+            query_d ={
+                'timestamp': time.mktime(timestamp.timetuple())
+            }
+        else:
+            query_d = None
+        data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
+
+        response = self.session.post(url, data = data, params=query_d)
+
+        response.raise_for_status()
+        return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_root_id(self, supervoxel_id, timestamp=None):
         """Get the root id for a specified supervoxel
@@ -194,6 +244,26 @@ class ChunkedGraphClientLegacy(ClientBase):
 
         response.raise_for_status()
         return np.int64(response.json()['leaf_ids'], dtype=np.int64)
+
+    def do_merge(self, supervoxels, coords, resolution=(4,4,40)):
+        """Perform a merge on the chunkeded graph
+
+        Args:
+            supervoxels (iterable): a N long list of supervoxels to merge
+            coords (np.array): a Nx3 array of coordinates of the supervoxels in units of resolution
+            resolution (tuple, optional): what to multiple the coords by to get nm. Defaults to (4,4,40).
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['do_merge'].format_map(endpoint_mapping)
+
+        data = []
+        for svid, coor in zip(supervoxels, coords):
+            row=np.concatenate([[svid], np.array(coor)*(4,4,40)])
+            data.append(row)
+        response = self.session.post(url, data = json.dumps(data, cls=CGEncoder),
+                                    headers={'Content-Type': 'application/json'})
+        response.raise_for_status()
+        return response.json()
 
     def get_children(self, node_id):
         """Get the children of a node in the hierarchy
