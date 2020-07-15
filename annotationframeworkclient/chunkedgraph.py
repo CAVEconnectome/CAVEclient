@@ -258,7 +258,7 @@ class ChunkedGraphClientLegacy(ClientBase):
 
         data = []
         for svid, coor in zip(supervoxels, coords):
-            row=np.concatenate([[svid], np.array(coor)*(4,4,40)])
+            row=np.concatenate([[svid], np.array(coor)*resolution])
             data.append(row)
         response = self.session.post(url, data = json.dumps(data, cls=CGEncoder),
                                     headers={'Content-Type': 'application/json'})
