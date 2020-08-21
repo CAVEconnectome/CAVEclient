@@ -85,6 +85,7 @@ chunkedgraph_endpoints_v1 = {
     'contact_sites': pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",
     'contact_sites_pairwise': pcg_v1 + "/table/{table_id}/contact_sites_pair/{root_id_1}/{root_id_2}",
     'cloudvolume_path': "graphene://" + pcg_v1 + "/{table_id}",
+    'find_path': pcg_v1 + "/table/{table_id}/graph/find_path"
 }
 
 chunkedgraph_api_versions = {0: chunkedgraph_endpoints_legacy,
