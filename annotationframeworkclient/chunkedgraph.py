@@ -9,9 +9,10 @@ from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common,
 from .base import _api_endpoints, _api_versions, ClientBase
 from .auth import AuthClient
 import requests
-import json 
+import json
 
 SERVER_KEY = 'cg_server_address'
+
 
 class CGEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -19,9 +20,10 @@ class CGEncoder(json.JSONEncoder):
             return obj.tolist()
         if isinstance(obj, np.uint64):
             return int(obj)
-        if isinstance(obj, (datetime, date)):
+        if isinstance(obj, (datetime.datetime, datetime.date)):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
+
 
 def package_bounds(bounds):
     bounds_str = []
@@ -36,7 +38,7 @@ def ChunkedGraphClient(server_address=None,
                        auth_client=None,
                        api_version='latest',
                        timestamp=None
-                      ):
+                       ):
     if server_address is None:
         server_address = default_global_server_address
 
@@ -44,18 +46,19 @@ def ChunkedGraphClient(server_address=None,
         auth_client = AuthClient()
 
     auth_header = auth_client.request_header
-    
+
     endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
                                             chunkedgraph_endpoints_common, chunkedgraph_api_versions, auth_header)
 
     ChunkedClient = client_mapping[api_version]
     return ChunkedClient(server_address,
-                      auth_header,
-                      api_version,
-                      endpoints,
-                      SERVER_KEY,
-                      timestamp=timestamp,
-                      table_name=table_name)
+                         auth_header,
+                         api_version,
+                         endpoints,
+                         SERVER_KEY,
+                         timestamp=timestamp,
+                         table_name=table_name)
+
 
 class ChunkedGraphClientLegacy(ClientBase):
     """Client to interface with the PyChunkedGraph service
@@ -71,6 +74,7 @@ class ChunkedGraphClientLegacy(ClientBase):
     timestamp : datetime.datetime or None, optional
         Default UTC timestamp to use for chunkedgraph queries. 
     """
+
     def __init__(self,
                  server_address,
                  auth_header,
@@ -80,15 +84,15 @@ class ChunkedGraphClientLegacy(ClientBase):
                  timestamp=None,
                  table_name=None):
         super(ChunkedGraphClientLegacy, self).__init__(server_address,
-                                                      auth_header,
-                                                      api_version,
-                                                      endpoints,
-                                                      server_key)
+                                                       auth_header,
+                                                       api_version,
+                                                       endpoints,
+                                                       server_key)
 
-        self._default_url_mapping['table_id']=table_name
-        self._default_timestamp=timestamp
+        self._default_url_mapping['table_id'] = table_name
+        self._default_timestamp = timestamp
         self._table_name = table_name
-        self._default_timestamp=timestamp
+        self._default_timestamp = timestamp
 
     @property
     def default_url_mapping(self):
@@ -123,16 +127,16 @@ class ChunkedGraphClientLegacy(ClientBase):
         url = self._endpoints['get_roots'].format_map(endpoint_mapping)
 
         if timestamp is None:
-            timestamp=self._default_timestamp
+            timestamp = self._default_timestamp
         if timestamp is not None:
-            query_d ={
+            query_d = {
                 'timestamp': time.mktime(timestamp.timetuple())
             }
         else:
             query_d = None
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
 
-        response = self.session.post(url, data = data, params=query_d)
+        response = self.session.post(url, data=data, params=query_d)
 
         response.raise_for_status()
         return np.frombuffer(response.content, dtype=np.uint64)
@@ -159,13 +163,13 @@ class ChunkedGraphClientLegacy(ClientBase):
                 timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['supervoxel_id']=supervoxel_id
+        endpoint_mapping['supervoxel_id'] = supervoxel_id
         url = self._endpoints['handle_root'].format_map(endpoint_mapping)
 
         if timestamp is None:
-            timestamp=self._default_timestamp
+            timestamp = self._default_timestamp
         if timestamp is not None:
-            query_d ={
+            query_d = {
                 'timestamp': time.mktime(timestamp.timetuple())
             }
         else:
@@ -243,9 +247,9 @@ class ChunkedGraphClientLegacy(ClientBase):
         response = self.session.get(url, params=query_d)
 
         response.raise_for_status()
-        return np.int64(response.json()['leaf_ids'], dtype=np.int64)
+        return np.int64(response.json()['leaf_ids'])
 
-    def do_merge(self, supervoxels, coords, resolution=(4,4,40)):
+    def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
         """Perform a merge on the chunkeded graph
 
         Args:
@@ -258,10 +262,12 @@ class ChunkedGraphClientLegacy(ClientBase):
 
         data = []
         for svid, coor in zip(supervoxels, coords):
-            row=np.concatenate([[svid], np.array(coor)*resolution])
+            row = np.concatenate([[svid], np.array(coor)*resolution])
             data.append(row)
-        response = self.session.post(url, data = json.dumps(data, cls=CGEncoder),
-                                    headers={'Content-Type': 'application/json'})
+        params = {"priority": False}
+        response = self.session.post(url, data=json.dumps(data, cls=CGEncoder),
+                                     params=params,
+                                     headers={'Content-Type': 'application/json'})
         response.raise_for_status()
         return response.json()
 
@@ -317,6 +323,7 @@ class ChunkedGraphClientLegacy(ClientBase):
     @property
     def cloudvolume_path(self):
         return self._endpoints['cloudvolume_path'].format_map(self.default_url_mapping)
+
 
 client_mapping = {0: ChunkedGraphClientLegacy,
                   1: ChunkedGraphClientLegacy,
