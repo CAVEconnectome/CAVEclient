@@ -54,9 +54,10 @@ infoservice_api_versions = {1: infoservice_endpoints_v1,
 # ------ Pychunkedgraph endpoints
 # -------------------------------
 
-pcg_common = "{cg_server_address}/segmentation/api"
+pcg_common = "{cg_server_address}/segmentation"
 chunkedgraph_endpoints_common = {
-    "get_api_versions": pcg_common + "/versions",
+    "get_api_versions": pcg_common + "/api/versions",
+    'info': pcg_common + "/table/{table_id}/info",
 }
 
 pcg_legacy = "{cg_server_address}/segmentation/1.0"
@@ -64,7 +65,7 @@ chunkedgraph_endpoints_legacy = {
     # "handle_table": "{cg_server_address}/segmentation/1.0/table",
     "handle_root": pcg_legacy + "/{table_id}/graph/root",
     "handle_children": pcg_legacy + "/segment/{node_id}/children",
-    "info": pcg_legacy + "/{table_id}/info",
+    # "info": pcg_legacy + "/{table_id}/info",
     "leaves_from_root": pcg_legacy + "/{table_id}/segment/{root_id}/leaves",
     "merge_log": pcg_legacy + "/{table_id}/segment/{root_id}/merge_log",
     "change_log":  pcg_legacy + "/{table_id}/segment/{root_id}/change_log",
@@ -79,7 +80,7 @@ chunkedgraph_endpoints_v1 = {
     'handle_children': pcg_v1 + "/table/{table_id}/node/{root_id}/childen",
     'leaves_from_root': pcg_v1 + "/table/{table_id}/node/{root_id}/leaves",
     'do_merge': pcg_v1 + "/table/{table_id}/merge",
-    'get_roots': pcg_v1 +  "/table/{table_id}/roots_binary",
+    'get_roots': pcg_v1 + "/table/{table_id}/roots_binary",
     'merge_log': pcg_v1 + "/table/{table_id}/root/{root_id}/merge_log",
     'change_log': pcg_v1 + "/table/{table_id}/root/{root_id}/change_log",
     'contact_sites': pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",

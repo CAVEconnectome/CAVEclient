@@ -2,26 +2,31 @@ import fastremap
 import numpy as np
 import tqdm
 import imageio
-import logging
+from annotationframeworkclient import FrameworkClient
 try:
     import cloudvolume as cv
 except ImportError:
     logging.warning(
         'Warning: Need to install cloudvolume to use Imagery client')
-from .auth import AuthClient
 
 from scipy import ndimage
 from functools import partial
-from annotationframeworkclient import infoservice
-from annotationframeworkclient.chunkedgraph import ChunkedGraphClient
-from annotationframeworkclient.endpoints import default_global_server_address
+from .endpoints import default_global_server_address
 import datetime
+import re
 
 
 def _patch_cloudvolume_auth(token):
     # This is a a hack at the moment, but we will replace the monkey patching when cloudvolume can properly accept tokens.
     global cv
     cv.datasource.graphene.metadata.chunkedgraph_credentials = {'token': token}
+
+
+def _is_precomputed(path):
+    if re.search(r'^precomputed://', path) is None:
+        return False
+    else:
+        return True
 
 
 class ImageryClient(object):
@@ -59,19 +64,40 @@ class ImageryClient(object):
         If False, no imagery cloudvolume is initialized. By default True
     """
 
-    def __init__(self, image_source=None, segmentation_source=None, server_address=None,
-                 datastack_name=None, base_resolution=[4, 4, 40],
-                 graphene_segmentation=True, table_name=None,
-                 image_mip=0, segmentation_mip=0,
-                 segmentation=True, imagery=True,
-                 pcg_client=None, auth_client=None,
+    def __init__(self,
+                 image_source=None,
+                 segmentation_source=None,
+                 datastack_name=None,
+                 server_address=None,
+                 base_resolution=[4, 4, 40],
+                 table_name=None,
+                 image_mip=0,
+                 segmentation_mip=0,
+                 segmentation=True,
+                 imagery=True,
+                 framework_client=None,
+                 auth_token=None,
                  timestamp=None):
-        self._info = None
+
+        self._image_source = image_source
+        self._segmentation_source = segmentation_source
+
         if server_address is None:
-            self._server_address = default_global_server_address
-        self._datastack_name = datastack_name
-        self._table_name = table_name
-        self._chunked_segmentation = graphene_segmentation
+            server_address = default_global_server_address
+        self._server_address = server_address
+
+        if framework_client is not None:
+            self._client = framework_client
+        elif datastack_name is not None:
+            self._client = FrameworkClient(
+                datastack_name, server_address=server_address)
+        else:
+            self._client = None
+
+        if self.client is not None:
+            auth_token = self.client.auth.token
+        _patch_cloudvolume_auth(auth_token)
+
         if isinstance(base_resolution, str):
             if base_resolution in ['image', 'segmentation']:
                 self._base_resolution = base_resolution
@@ -80,21 +106,19 @@ class ImageryClient(object):
                     'Base resolution must be array-like, "image" or "segmentation"')
         else:
             self._base_resolution = np.array(base_resolution)
+
         self._timestamp = timestamp
         self._base_imagery_mip = image_mip
         self._base_segmentation_mip = segmentation_mip
-        self._image_source = image_source
-        self._segmentation_source = segmentation_source
 
         self._use_segmentation = segmentation
         self._use_imagery = imagery
         self._img_cv = None
         self._seg_cv = None
-        self._pcg_client = pcg_client
 
-        if auth_client is None:
-            auth_client = AuthClient()
-        self._auth_client = auth_client
+    @property
+    def client(self):
+        return self._client
 
     @property
     def timestamp(self):
@@ -120,25 +144,22 @@ class ImageryClient(object):
         return self._base_resolution
 
     @property
-    def info(self):
-        """InfoClient for the imagery datastack (if set)
-        """
-        if self._server_address is None or self._datastack_name is None:
-            return None
-
-        if self._info is None:
-            self._info = infoservice.InfoServiceClient(self._server_address,
-                                                       self._datastack_name)
-        return self._info
-
-    @property
     def image_source(self):
-        """Image Cloudvolume path
+        """Image cloudpath
         """
-        if self._image_source is None and self.info is not None:
-            self._image_source = self.info.image_source(
+        if self._image_source is None and self.client is not None:
+            self._image_source = self.client.info.image_source(
                 format_for='cloudvolume')
         return self._image_source
+
+    @property
+    def segmentation_source(self):
+        """Segmentation cloudpath
+        """
+        if self._segmentation_source is None and self.client is not None:
+            self._segmentation_source = self.client.info.segmentation_source(
+                format_for='cloudvolume')
+        return self._segmentation_source
 
     @property
     def image_cv(self):
@@ -151,22 +172,9 @@ class ImageryClient(object):
             self._img_cv = cv.CloudVolume(self.image_source,
                                           mip=self._base_imagery_mip,
                                           bounded=False,
-                                          progress=False)
+                                          progress=False,
+                                          use_https=True)
         return self._img_cv
-
-    @property
-    def segmentation_source(self):
-        """Segmentation CloudVolume path
-        """
-        if self._use_segmentation is False:
-            return None
-        elif self._segmentation_source is None:
-            if self._chunked_segmentation:
-                self._segmentation_source = self.info.segmentation_source()
-            else:
-                self._segmentation_source = self.info.segmentation_source(
-                    format_for='cloudvolume')
-        return self._segmentation_source
 
     @property
     def segmentation_cv(self):
@@ -174,27 +182,14 @@ class ImageryClient(object):
         """
         if self._use_segmentation is False:
             return None
+
         elif self._seg_cv is None:
-            _patch_cloudvolume_auth(self._auth_client.token)
             self._seg_cv = cv.CloudVolume(self.segmentation_source,
                                           mip=self._base_segmentation_mip,
                                           use_https=True,
                                           bounded=False,
                                           progress=False)
         return self._seg_cv
-
-    @property
-    def pcg_client(self):
-        """PychunkedGraph client object
-        """
-        if self._use_segmentation is False or self._chunked_segmentation is False:
-            return None
-        elif self._pcg_client is None:
-            self._pcg_client = ChunkedGraphClient(server_address=self._server_address,
-                                                  datastack_name=self._datastack_name,
-                                                  table_name=self._table_name,
-                                                  auth_client=self._auth_client)
-        return self._pcg_client
 
     def _scale_nm_to_voxel(self, xyz_nm, mip, use_cv):
         if use_cv == 'image':
@@ -242,7 +237,7 @@ class ImageryClient(object):
             mip = self._base_imagery_mip
         bounds_vx = self._rescale_for_mip(bounds, mip, use_cv='image')
         slices = self._bounds_to_slices(bounds_vx)
-        return self.image_cv.download(slices, mip=mip)
+        return np.array(np.squeeze(self.image_cv.download(slices, mip=mip)))
 
     def segmentation_cutout(self, bounds, root_ids='all', mip=None, verbose=False):
         """Get a cutout of the segmentation imagery for some or all root ids between set bounds.
@@ -273,20 +268,17 @@ class ImageryClient(object):
         if mip is None:
             mip = self._base_segmentation_mip
 
-        pcg_bounds = self._rescale_for_mip(bounds, 0, use_cv='segmentation')
-
         bounds_vx = self._rescale_for_mip(bounds, mip, use_cv='segmentation')
         slices = self._bounds_to_slices(bounds_vx)
         if isinstance(root_ids, str):
             if root_ids == 'all':
                 seg_cutout = self.segmentation_cv.download(
                     slices, agglomerate=True, mip=mip, timestamp=self.timestamp)
-                # if self._chunked_segmentation:
-                # root_id_map = self._all_root_id_map_for_cutout(
-                # seg_cutout, pcg_bounds=pcg_bounds, mip=mip, verbose=verbose)
-                return seg_cutout
+                return np.array(np.squeeze(seg_cutout))
+            else:
+                raise ValueError('root_ids must be None, list, or "all')
         else:
-            return self.segmentation_cv.download(slices, segids=root_ids, mip=mip, timestamp=self.timestamp)
+            return np.array(np.squeeze(self.segmentation_cv.download(slices, segids=root_ids, mip=mip, timestamp=self.timestamp)))
 
     def split_segmentation_cutout(self, bounds, root_ids='all', mip=None, include_null_root=False, verbose=False):
         """Generate segmentation cutouts with a single binary mask for each root id, organized as a dict with keys as root ids and masks as values.
@@ -337,35 +329,6 @@ class ImageryClient(object):
                     continue
             split_segmentation[root_id] = (seg_img == root_id).astype(int)
         return split_segmentation
-
-    def _all_root_id_map_for_cutout(self, seg_cutout, pcg_bounds=None, mip=None, verbose=False):
-        """Helper function to query root ids for all supervoxels in a cutout
-        """
-        sv_to_root_id = {}
-
-        supervoxel_ids = np.unique(seg_cutout)
-        if verbose:
-            pbar = tqdm.tqdm(desc='Finding root ids', total=len(
-                supervoxel_ids), unit='supervoxel')
-        else:
-            pbar = None
-        inds_to_update = supervoxel_ids == 0
-        if verbose:
-            pbar.update(sum(inds_to_update))
-
-        while np.any(supervoxel_ids > 0):
-            # Get the first remaining supervoxel id, find its root id and peer supervoxel ids
-            sv_id_base = supervoxel_ids[supervoxel_ids > 0][0]
-            root_id = int(self.pcg_client.get_root_id(int(sv_id_base)))
-            sv_ids_for_root = self.pcg_client.get_leaves(
-                root_id, bounds=np.array(pcg_bounds).T.tolist())
-            inds_to_update = np.isin(supervoxel_ids, sv_ids_for_root)
-            for sv_id in supervoxel_ids[inds_to_update]:
-                sv_to_root_id[sv_id] = root_id
-            supervoxel_ids[inds_to_update] = 0
-            if pbar is not None:
-                pbar.update(sum(inds_to_update))
-        return sv_to_root_id
 
     def image_and_segmentation_cutout(self, bounds, image_mip=None, segmentation_mip=None, root_ids='all', resize=True, split_segmentations=False, include_null_root=False, verbose=False):
         """Download aligned and scaled imagery and segmentation data at a given resolution.
