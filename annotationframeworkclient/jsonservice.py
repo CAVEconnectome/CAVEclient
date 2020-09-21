@@ -56,6 +56,12 @@ class JSONServiceV1(ClientBase):
         super(JSONServiceV1, self).__init__(server_address,
                                             auth_header, api_version, endpoints, server_name)
 
+    @property
+    def state_service_endpoint(self):
+        """Endpoint URL for posting JSON state
+        """
+        return self._endpoints['upload_state']
+
     def get_state_json(self, state_id):
         """Download a Neuroglancer JSON state
 
@@ -127,6 +133,12 @@ class JSONServiceLegacy(ClientBase):
                  server_name):
         super(JSONServiceLegacy, self).__init__(server_address,
                                                 auth_header, api_version, endpoints, server_name)
+
+    @property
+    def state_service_endpoint(self):
+        """Endpoint URL for posting JSON state
+        """
+        return self._endpoints['upload_state']
 
     def get_state_json(self, state_id):
         """Download a Neuroglancer JSON state

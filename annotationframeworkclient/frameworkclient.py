@@ -4,8 +4,6 @@ from .chunkedgraph import ChunkedGraphClient
 from .emannotationschemas import SchemaClient
 from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
-# from .imagery import ImageryClient
-# from .lookup import LookupClient
 from annotationframeworkclient.endpoints import default_global_server_address
 
 
@@ -50,10 +48,11 @@ class FrameworkClientGlobal(object):
 
     Then
     * client.info is an InfoService client (see infoservice.InfoServiceClient)
+    * client.auth handles authentication
     * client.state is a neuroglancer state client (see jsonservice.JSONService)
     * client.schema is an EM Annotation Schemas client (see emannotationschemas.SchemaClient)
 
-    All subclients are loaded lazily and share the same datastack name, server address, and auth tokens where used.
+    All subclients are loaded lazily and share the same datastack name, server address, and auth tokens (where used).
 
     Parameters
     ----------
@@ -174,12 +173,6 @@ class FrameworkClientGlobal(object):
     def chunkedgraph(self):
         self._no_local_functionality()
 
-    # def make_lookup_client(self, *args, **kwargs):
-        # self._no_local_functionality()
-
-    # def make_imagery_client(self, *args, **kwargs):
-        # self._no_local_functionality()
-
     @property
     def datastack_name(self):
         return None
@@ -281,65 +274,3 @@ class FrameworkClientFull(FrameworkClientGlobal):
                 auth_client=self.auth,
             )
         return self._annotation
-
-    # def make_lookup_client(self, timestamp=None, voxel_resolution=[4, 4, 40]):
-    #     """Generate a lookup client based on the client configuration
-
-    #     Parameters
-    #     ----------
-    #     timestamp : datetime.datetime, optional
-    #         Time stamp to use for lookups, by default None
-    #     voxel_resolution : list, optional
-    #         Resolution of voxels in nm, by default [4, 4, 40]
-
-    #     Returns
-    #     -------
-    #     lookuptool.LookupClient
-    #     """
-    #     return LookupClient(
-    #         datastack_name=self.datastack_name,
-    #         segmentation_path=self.info.segmentation_source(format_for="cloudvolume"),
-    #         server_address=self.local_server,
-    #         auth_client=self.auth,
-    #         timestamp=timestamp,
-    #         voxel_resolution=voxel_resolution,
-    #     )
-
-    # def make_imagery_client(
-    #     self,
-    #     base_resolution=[4, 4, 40],
-    #     image_mip=0,
-    #     segmentation_mip=0,
-    #     segmentation=True,
-    #     imagery=True,
-    # ):
-    #     """Generates an imagery client based on the current framework client.
-
-    #     Parameters
-    #     ----------
-    #     base_resolution : list, optional
-    #         Sets the voxel resolution that bounds will be entered in, by default [4, 4, 40]
-    #     image_mip : int, optional
-    #         Default mip level to use for imagery lookups, by default 0. Note that the same mip
-    #         level for imagery and segmentation can correspond to different voxel resolutions.
-    #     segmentation_mip : int, optional
-    #         Default mip level to use for segmentation lookups, by default 0.
-    #     segmentation : bool, optional
-    #         If False, no segmentation cloudvolume is initialized. By default True
-    #     imagery : bool, optional
-    #         If False, no imagery cloudvolume is initialized. By default True
-
-    #     Returns
-    #     -------
-    #     imagery.ImageryClient
-
-    #     """
-    #     return ImageryClient(
-    #         datastack_name=self.datastack_name,
-    #         auth_client=self.auth,
-    #         pcg_client=self.chunkedgraph,
-    #         image_mip=image_mip,
-    #         segmentation_mip=segmentation_mip,
-    #         segmentation=segmentation,
-    #         imagery=imagery,
-    #     )

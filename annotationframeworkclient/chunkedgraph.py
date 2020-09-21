@@ -33,7 +33,7 @@ def package_bounds(bounds):
     return bounds_str
 
 
-def package_timestamp(self, timestamp):
+def package_timestamp(timestamp):
     if timestamp is None:
         query_d = None
     else:
@@ -119,7 +119,7 @@ class ChunkedGraphClientV1(ClientBase):
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['get_roots'].format_map(endpoint_mapping)
-        query_d = package_timestamp(self._timestamp(timestamp))
+        query_d = package_timestamp(self._process_timestamp(timestamp))
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
 
         response = self.session.post(url, data=data, params=query_d)
@@ -145,7 +145,7 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping['supervoxel_id'] = supervoxel_id
 
         url = self._endpoints['handle_root'].format_map(endpoint_mapping)
-        query_d = package_timestamp(self._timestamp(timestamp))
+        query_d = package_timestamp(self._process_timestamp(timestamp))
 
         response = self.session.get(url, params=query_d)
         response.raise_for_status()
