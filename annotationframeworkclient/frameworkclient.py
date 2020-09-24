@@ -232,7 +232,6 @@ class FrameworkClientFull(FrameworkClientGlobal):
 
         self._chunkedgraph = None
         self._annotation = None
-        self._lookup = None
 
         self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
@@ -245,8 +244,6 @@ class FrameworkClientFull(FrameworkClientGlobal):
         self._schema = None
         self._chunkedgraph = None
         self._annotation = None
-        # self._imagery = None
-        # self._lookup = None
 
     @property
     def datastack_name(self):
