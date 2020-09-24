@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-AnnotationFramework client is a package for simplifying interactions with HTML services associated with the DynamicAnnoationFramework.  Including
+AnnotationFramework client is a package for simplifying interactions with HTML services associated with the DynamicAnnotationFramework, which includes:
 
 - `pychunkedgraph <https://www.github.com/seung-lab/pychunkedgraph>`_ (For tracking dynamic segmentations)
 - `NeuroglancerJsonServer <https://www.github.com/seung-lab/NeuroglancerJsonServer>`_ (For posting/getting neuroglancer json states)
@@ -21,6 +21,6 @@ The AnnotationFrameworkClient can be installed with pip:
 Assumptions
 ~~~~~~~~~~~
 
-the code is setup to work flexibly with any deployment of these services, but you need to specify the server_address if that address is not 
-https://www.dynamicannotationframework.com/ for each client when initializing it.  similarly, the clients can query the info service for metadata
-to simplify the interaction with a datastack, but you have to specify a datastack name.
+The code is setup to work flexibly with any deployment of these services, but you need to specify the server_address if that address is not 
+https://globalv1.daf-apis.com/ for each client when initializing it.
+Similarly, the clients can query the info service for metadata to simplify the interaction with a datastack, but you have to specify a datastack name.

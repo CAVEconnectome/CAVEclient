@@ -15,7 +15,7 @@ An InfoClient is accessed at ``client.info``.
     print(f"This is an info client for {client.info.datastack_name} on {client.info.server_address}")
 
 Accessing datastack information
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 All of the information accessible for the datastack can be seen as a dict
 using ``get_datastack_info()``.

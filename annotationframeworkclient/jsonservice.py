@@ -198,6 +198,10 @@ class JSONServiceLegacy(ClientBase):
         url_mapping = self.default_url_mapping
         url_mapping['state_id'] = state_id
         get_state_url = self._endpoints['get_state'].format_map(url_mapping)
+        if ngl_url[-1] == '/':
+            spacer = '?json_url='
+        else:
+            spacer = '/?json_url='
         url = ngl_url + '/?json_url=' + get_state_url
         return url
 

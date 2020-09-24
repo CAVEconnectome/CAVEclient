@@ -43,3 +43,16 @@ representation.*
 
     test_state = client.state.get_state_json(new_id)
     test_state['layers'][0]['name']
+
+Generating a Neuroglancer URL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once you have a state ID, you want to turn it into a well-formatted link.
+So you don't have to remember all the endpoints, we can do this from the state client.
+
+.. code:: python
+
+    ngl_base = 'neuromancer-seung-import.appspot.com'
+    client.state.build_neuroglancer_url(new_id, ngl_base)
+
+Note that the neuroglancer base can be found in the info service under ``client.info.viewer_site()``.

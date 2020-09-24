@@ -1,78 +1,82 @@
 annotationframeworkclient package
 =================================
 
-Submodules
-----------
-
-annotationengine module
------------------------
+annotationframeworkclient.annotationengine module
+-------------------------------------------------
 
 .. automodule:: annotationframeworkclient.annotationengine
    :members:
    :undoc-members:
    :show-inheritance:
 
-auth module
------------
+annotationframeworkclient.auth module
+-------------------------------------
 
 .. automodule:: annotationframeworkclient.auth
    :members:
    :undoc-members:
    :show-inheritance:
 
-chunkedgraph module
--------------------
+annotationframeworkclient.base module
+-------------------------------------
+
+.. automodule:: annotationframeworkclient.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+annotationframeworkclient.chunkedgraph module
+---------------------------------------------
 
 .. automodule:: annotationframeworkclient.chunkedgraph
    :members:
    :undoc-members:
    :show-inheritance:
 
-emannotationschemas module
---------------------------
+annotationframeworkclient.emannotationschemas module
+----------------------------------------------------
 
 .. automodule:: annotationframeworkclient.emannotationschemas
    :members:
    :undoc-members:
    :show-inheritance:
 
-frameworkclient module
-----------------------
+annotationframeworkclient.endpoints module
+------------------------------------------
+
+.. automodule:: annotationframeworkclient.endpoints
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+annotationframeworkclient.format\_utils module
+----------------------------------------------
+
+.. automodule:: annotationframeworkclient.format_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+annotationframeworkclient.frameworkclient module
+------------------------------------------------
 
 .. automodule:: annotationframeworkclient.frameworkclient
    :members:
    :undoc-members:
    :show-inheritance:
 
-imagery module
---------------
-
-.. automodule:: annotationframeworkclient.imagery
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-infoservice module
-------------------
+annotationframeworkclient.infoservice module
+--------------------------------------------
 
 .. automodule:: annotationframeworkclient.infoservice
    :members:
    :undoc-members:
    :show-inheritance:
 
-jsonservice module
-------------------
+annotationframeworkclient.jsonservice module
+--------------------------------------------
 
 .. automodule:: annotationframeworkclient.jsonservice
    :members:
    :undoc-members:
    :show-inheritance:
-
-lookup module
--------------
-
-.. automodule:: annotationframeworkclient.lookup
-   :members:
-   :undoc-members:
-   :show-inheritance:
-

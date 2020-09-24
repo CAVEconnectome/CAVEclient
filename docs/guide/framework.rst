@@ -1,38 +1,61 @@
-Framework Client: one client for all services
+Framework Client: One client for all services
 =============================================
 
 The Dynamic Annotation Framework consists of a number of different
 services, each with a specific set of tasks that it can perform through
-REST endpoints. This module is designed to ease programmatic interaction
-with all of the various endpoints. Going forward, we also will be
-increasingly using authentication tokens for programmatic access to most
-if not all of the services. In order to collect a given server, datastack
-name, and user token together into a coherent package that can be used
-on multiple endpoints, we will use a FrameworkClient that can build
-appropriately configured clients for each of the specific services. Each of the individual services has their own specific documentation as well.
+REST endpoints.
+The FrameworkCleint is designed to ease programmatic interaction
+with all of the various endpoints.
+In addition, most programmatic access requires the use of authentication tokens.
+In order to collect a given server, datastack name, and user token together into a coherent package that can be used
+on multiple endpoints, the FrameworkClient builds
+appropriately configured clients for each of the specific services.
+Each of the individual services has their own specific documentation as well.
+
+Global and Local Services
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are two categories of data in the Dynamic Annotation Framework: Global and local.
+Local services are associated with a single so-called "datastack", which refers to a precise collection of imagery and segmentation data that function together.
+For example, EM imagery and a specific pychunkedgraph segmentation would be one datastack, while the same EM imagery but an initial static segmentation would be another.
+Datastacks are refered to by a short name, for instance ``pinky100_public_flat_v185``.
+
+Global services are those that are potentially shared across multiple different specific datastacks.
+These include the info service, which can describe the properties of all available datastacks,
+the authentication service, and the state service that hosts neuroglancer states.
+Global services are associated with a particular URL (by default ``http://globalv1.daf-apis.com``),
+but not a single datastack.
 
 Initializing a FrameworkClient
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Assuming that the services are on ``www.dynamicannotationframework.com``
+Assuming that the services are on ``http://globalv1.daf-apis.com``
 and authentication tokens are either not being used or set up with
-default values (see next section), one needs only to specify the datastack
-name.
+default values (see next section), a simple FrameworkClient that can
+only access global services can be initialized:
 
 .. code:: python
 
     from annotationframeworkclient import FrameworkClient
     
-    datastack_name = 'pinky100'
-    client = FrameworkClient(datastack_name)
+    client = FrameworkClient()
 
 Just to confirm that this works, let’s see if we can get the EM image
-source from the InfoService. If you get a reasonable looking path,
-everything is okay.
+source from the InfoService.
+If you get a list of names of datastacks, all is good. If you get an authentication error,
+look at the authentication section for information about how to set up your auth token.
 
 .. code:: python
 
-    print(f"The image source is: {client.info.image_source()}")
+    client.info.get_datastacks()
+
+If you have a specific datastack you want to use, you can inititialize your FrameworkClient with it.
+This gives you access to the full range of client functions.
+
+.. code:: python
+
+    client = FrameworkClient(datastack_name='my_datastack')
+    
 
 Accessing specific clients
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,8 +67,3 @@ Each client can be acccessed as a property of the main client. See the documenta
 * InfoService : ``client.info``
 * EM Annotation Schemas : ``client.schemas``
 * JSON Neuroglancer State Service : ``client.state``
-
-In addition, there are more complex clients that use multiple services together:
-
-* LookupClient : Uses Cloudvolume and the ChunkedGraph to look up segmentations associated with point-like arrays or dataframes.
-* ImageryClient : Uses Cloudvolume and the ChunkedGraph to look up segmentations and imagery together.
