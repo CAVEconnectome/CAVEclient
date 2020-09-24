@@ -1,6 +1,6 @@
 import numpy as np
 import requests
-import datetime
+from datetime import date, datetime
 import time
 
 from . import endpoints
@@ -378,7 +378,7 @@ class ChunkedGraphClientLegacy(ClientBase):
             if self._default_timestamp is not None:
                 timestamp = self._default_timestamp
             else:
-                timestamp = datetime.datetime.utcnow()
+                timestamp = datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['get_roots'].format_map(endpoint_mapping)
@@ -417,7 +417,7 @@ class ChunkedGraphClientLegacy(ClientBase):
             if self._default_timestamp is not None:
                 timestamp = self._default_timestamp
             else:
-                timestamp = datetime.datetime.utcnow()
+                timestamp = datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['supervoxel_id'] = supervoxel_id
@@ -576,6 +576,42 @@ class ChunkedGraphClientLegacy(ClientBase):
         response = self.session.post(url, json=[root_id], params=query_d)
         contact_d = response.json()
         return {int(k): v for k, v in contact_d.items()}
+    
+    def find_path(self, root_id, src_pt, dst_pt, precision_mode=False):
+        """find a path between two locations on a root_id using the supervoxel lvl2 graph.
+
+        Args:
+            root_id (np.int64): the root id to search on
+            src_pt (np.array): len(3) xyz location of the start location in nm
+            dst_pt ([type]): len(3) xyz location of the end location in nm
+            precision_mode (bool, optional): Whether to perform the search in precision mode. Defaults to False.
+
+        Returns:
+            centroids_list: centroids
+            l2_path: l2_path
+            failed_l2_ids: failed_l2_ids
+        """
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['root_id'] = root_id
+        url = self._endpoints['find_path'].format_map(endpoint_mapping)
+        query_d = {}
+        query_d['precision_mode'] = precision_mode
+        
+        nodes = [[root_id] + src_pt.tolist(),
+                 [root_id]+ dst_pt.tolist()]
+
+        response = self.session.post(url,
+                                    data = json.dumps(nodes, cls=CGEncoder),
+                                    params=query_d,
+                                    headers={'Content-Type': 'application/json'})
+        response.raise_for_status()
+
+        resp_d=response.json()
+        centroids = np.array(resp_d['centroids_list'])
+        failed_l2_ids = np.array(resp_d['failed_l2_ids'], dtype=np.uint64)
+        l2_path = np.array(resp_d['l2_path'])
+
+        return centroids, l2_path, failed_l2_ids
 
 
 client_mapping = {0: ChunkedGraphClientLegacy,
