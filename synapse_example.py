@@ -31,8 +31,8 @@ def load_synapses(path=HOME + "/Downloads/pinky100_final.df",
     return df
 
 
-def insert_synapses(syn_df, dataset_name='pinky100', annotation_type="synapse"):
-    ac = ae.AnnotationClient(dataset_name=dataset_name)
+def insert_synapses(syn_df, datastack_name='pinky100', annotation_type="synapse"):
+    ac = ae.AnnotationClient(datastack_name=datastack_name)
     ac.bulk_import_df(annotation_type, syn_df)
 
 

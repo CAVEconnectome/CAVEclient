@@ -1,139 +1,155 @@
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints
+from .auth import AuthClient
+from .endpoints import annotation_common, annotation_api_versions
+from .infoservice import InfoServiceClientV2
 import requests
-import numpy as np
 import time
+import json 
+import numpy as np
+from datetime import date, datetime
 
-from emannotationschemas.utils import get_flattened_bsp_keys_from_schema
-from emannotationschemas import get_schema
+SERVER_KEY = "ae_server_address"
 
-from annotationframeworkclient.endpoints import annotationengine_endpoints as ae
-from annotationframeworkclient.endpoints import chunkedgraph_endpoints as cg
-from annotationframeworkclient import endpoints
-from annotationframeworkclient import infoservice
+class AEEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.uint64):
+            return int(obj)
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
-from multiwrapper import multiprocessing_utils as mu
+def AnnotationClient(server_address,
+                     dataset_name=None,
+                     aligned_volume_name=None,
+                     auth_client=None,
+                     api_version='latest'):
+    """ Factory for returning AnnotationClient
+    Parameters
+    ----------
+    server_address : str 
+        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+    datastack_name : str
+        Name of the datastack.
+    auth_client : AuthClient or None, optional
+        Authentication client to use to connect to server. If None, do not use authentication.
+    api_version : str or int (default: latest)
+        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
+        2: new api version, (i.e. minniev1.microns-daf.com)
+        'latest': default to the most recent (current 2)
+
+    Returns
+    -------
+    ClientBaseWithDatastack
+        List of datastack names for available datastacks on the annotation engine
+    """
+
+    if auth_client is None:
+        auth_client = AuthClient()
+
+    auth_header = auth_client.request_header
+    endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
+                                            annotation_common, annotation_api_versions, auth_header)
+    
+
+    AnnoClient = client_mapping[api_version]
+    if api_version>1:
+        return AnnoClient(server_address, auth_header, api_version,
+                          endpoints, SERVER_KEY, aligned_volume_name)
+    else:
+        return AnnoClient(server_address, auth_header, api_version,
+                          endpoints, SERVER_KEY, dataset_name)
 
 
-class AnnotationClient(object):
-    def __init__(self, server_address=None, dataset_name=None, cg_server_address=None):
-        """
-        :param server_address: str or None
-            server url
-        :param dataset_name: str or None
-            dataset name
-        """
-
-        if server_address is None:
-            self._server_address = endpoints.default_server_address
-        else:
-            self._server_address = server_address
-        self._dataset_name = dataset_name
-
-        self._infoserviceclient = None
-        self._cg_server_address = cg_server_address 
-
-        self.session = requests.Session()
-        self._default_url_mapping = {"ae_server_address": self._server_address,
-                                     'cg_server_address': self._cg_server_address}
-        
-    @property
-    def dataset_name(self):
-        return self._dataset_name
-
-    @property
-    def server_address(self):
-        return self._server_address
-
-    @server_address.setter
-    def server_address(self, value):
-        self._server_address = value
-        self._default_url_mapping['ae_server_address'] = value
-
-
-    @property
-    def default_url_mapping(self):
-        return self._default_url_mapping.copy()
-
-
-    @property
-    def cg_server_address(self):        
-        return self._server_address
-
-    @cg_server_address.setter
-    def cg_server_address(self, value):
-        self._cg_server_address = value
-        self._default_url_mapping['cg_server_address'] = value
-
-    def infoserviceclient(self):
-        if self._infoserviceclient is None:
-            self._infoserviceclient = infoservice.InfoServiceClient(server_address=self.server_address, dataset_name=self.dataset_name)
-
-        return self._infoserviceclient
+class AnnotationClientLegacy(ClientBaseWithDataset):
+    def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name):
+        super(AnnotationClientLegacy, self).__init__(server_address,
+                                               auth_header, api_version, endpoints,
+                                               server_name, dataset_name)
 
     def get_datasets(self):
-        """ Returns existing datasets
+        """ Gets a list of datasets
 
-        :return: list
+        Returns
+        -------
+        list
+            List of dataset names for available datasets on the annotation engine
         """
-        url = ae["datasets"].format_map(self.default_url_mapping)
+        url = self._endpoints["datasets"].format_map(self.default_url_mapping)
         response = self.session.get(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
     def get_tables(self, dataset_name=None):
-        """ Reads table infos
+        """ Gets a list of table names for a dataset
 
-        :param dataset_name: str
-        :return: dict
+        Parameters
+        ----------
+        dataset_name : str or None, optional
+            Name of the dataset, by default None. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        list
+            List of table names
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['dataset_name'] = dataset_name
-        url = ae["table_names"].format_map(endpoint_mapping)
+        endpoint_mapping["dataset_name"] = dataset_name
+        url = self._endpoints["table_names"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        assert(response.status_code==200)
+        response.raise_for_status()
         return response.json()
 
     def create_table(self, table_name, schema_name, dataset_name=None):
-        """ Creates a table
+        """ Creates a new data table based on an existing schema
 
-        :param table_name: str
-        :param schema_name: str
-        :param dataset_name: str
-        :return: response
+        Parameters
+        ----------
+        table_name: str
+            Name of the new table. Cannot be the same as an existing table
+        schema_name: str
+            Name of the schema for the new table.
+        dataset_name: str or None, optional,
+            Name of the dataset. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['dataset_name'] = dataset_name
-        url = ae["table_names"].format_map(endpoint_mapping)
-        data = {'schema_name': schema_name,
-                'table_name': table_name}
+        endpoint_mapping["dataset_name"] = dataset_name
+        url = self._endpoints["table_names"].format_map(endpoint_mapping)
+        data = {"schema_name": schema_name, "table_name": table_name}
 
         response = requests.post(url, json=data)
-        assert(response.status_code==200)
+        response.raise_for_status()
         return response.json()
 
-    def get_dataset_info(self, dataset_name=None):
-        """ Returns information about a dataset
-
-        Calls get_dataset_info from informationserviceclient
-
-        :param dataset_name: str
-        :return: dict
-        """
-
-        return self.infoserviceclient.get_dataset_info(dataset_name=dataset_name)
-
     def get_annotation(self, table_name, annotation_id, dataset_name=None):
-        """ Returns information about one specific annotation
+        """ Retrieve a single annotation by id and table name.
 
-        :param dataset_name: str
-        :param table_name: str
-        :param annotation_id: np.uint64
-        :return dict
+        Parameters
+        ----------
+        table_name : str
+            Name of the table
+        annotation_id : int
+            ID number of the annotation to retreive (starting from 1)
+        dataset_name : str or None, optional
+            Name of the dataset. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        dict
+            Annotation data
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -143,18 +159,28 @@ class AnnotationClient(object):
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["annotation_id"] = annotation_id
 
-        url = ae["existing_annotation"].format_map(endpoint_mapping)
+        url = self._endpoints["existing_annotation"].format_map(endpoint_mapping)
         response = self.session.get(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
     def post_annotation(self, table_name, data, dataset_name=None):
-        """ Post an annotation to the AnnotationEngine
+        """ Post one or more new annotations to a table in the AnnotationEngine
 
-        :param dataset_name: str
-        :param table_name: str
-        :param data: dict
-        :return dict
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        data : dict or list,
+            A list of (or a single) dict of schematized annotation data matching the target table.
+        dataset_name : str or None, optional
+            Name of the dataset. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
         """
         if dataset_name is None:
             dataset_name = self.dataset_name
@@ -165,241 +191,368 @@ class AnnotationClient(object):
         endpoint_mapping["dataset_name"] = dataset_name
         endpoint_mapping["table_name"] = table_name
 
-        url = ae["new_annotation"].format_map(endpoint_mapping)
+        url = self._endpoints["new_annotation"].format_map(endpoint_mapping)
 
-        response = self.session.post(url, json=data)
-        assert(response.status_code == 200)
+        response = self.session.post(url, data = json.dumps(data, cls=AEEncoder),
+                                    headers={'Content-Type': 'application/json'})
+        response.raise_for_status()
         return response.json()
 
-    def update_annotation(self, table_name, annotation_id, data,
-                          dataset_name=None):
-        """ Updates an existing annotation
 
-        :param table_name: str
-        :param annotation_id: np.uint64
-        :param data: dict
-        :param dataset_name: str
-        :return: dict
+class AnnotationClientV2(ClientBase):
+    def __init__(self, server_address, auth_header, api_version,
+                 endpoints, server_name, aligned_volume_name):
+        super(AnnotationClientV2, self).__init__(server_address,
+                                               auth_header, api_version, endpoints, server_name)
+                                         
+        self._aligned_volume_name = aligned_volume_name
+
+    @property
+    def aligned_volume_name(self):
+        return self._aligned_volume_name
+
+    def get_tables(self, aligned_volume_name=None):
+        """ Gets a list of table names for a aligned_volume_name
+
+        Parameters
+        ----------
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume, by default None.
+            If None, uses the one specified in the client.
+            Will be set correctly if you are using the framework_client
+
+        Returns
+        -------
+        list
+            List of table names
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["table_name"] = table_name
-        endpoint_mapping["annotation_id"] = annotation_id
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        url = self._endpoints["tables"].format_map(endpoint_mapping)
 
-        url = ae["existing_annotation"].format_map(endpoint_mapping)
-
-        response = self.session.put(url, json=data)
-        assert(response.status_code == 200)
+        response = self.session.get(url)
+        response.raise_for_status()
         return response.json()
 
-    def delete_annotation(self, table_name, annotation_id,
-                          dataset_name=None):
-        """ Delete an existing annotation
+    def get_annotation_count(self, table_name:str, aligned_volume_name=None):
+        """ Get number of annotations in a table
 
-        :param dataset_name: str
-        :param table_name: str
-        :param annotation_id: int
-        :return dict
+        Parameters
+        ----------
+        table_name (str): 
+            name of table to mark for deletion
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+
+        Returns
+        -------
+        int
+            number of annotations
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
-        endpoint_mapping["annotation_id"] = annotation_id
 
-        url = ae["existing_annotation"].format_map(endpoint_mapping)
+        url = self._endpoints["table_count"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
+
+    def get_table_metadata(self, table_name:str, aligned_volume_name=None):
+        """ Get metadata about a table
+
+        Parameters
+        ----------
+        table_name (str): 
+            name of table to mark for deletion
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+
+        Returns
+        -------
+        json
+            metadata about table
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["table_info"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
+
+    def delete_table(self, table_name:str, aligned_volume_name=None):
+        """ Marks a table for deletion
+        requires super admin priviledges
+
+        Parameters
+        ----------
+        table_name (str): 
+            name of table to mark for deletion
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+
+        Returns
+        -------
+        json
+            Response JSON
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
         response = self.session.delete(url)
-        assert(response.status_code == 200)
+        response.raise_for_status()
         return response.json()
 
-    def _bulk_import_df_thread(self, args):
-        """ bulk_import_df helper """
+    def create_table(self, table_name, schema_name, 
+        description, reference_table=None,
+        flat_segmentation_source=None,
+        user_id=None,
+        aligned_volume_name=None):
+        """ Creates a new data table based on an existing schema
 
-        data_df_cs, url, n_retries = args
+        Parameters
+        ----------
+        table_name: str
+            Name of the new table. Cannot be the same as an existing table
+        schema_name: str
+            Name of the schema for the new table.
+        descrption: str
+            Human readable description for what is in the table.
+            Should include information about who generated the table
+            What data it covers, and how it should be interpreted.
+            And who should you talk to if you want to use it.
+            An Example:
+            a manual synapse table to detect chandelier synapses
+            on 81 PyC cells with complete AISs 
+            [created by Agnes - agnesb@alleninstitute.org, uploaded by Forrest]
+        reference_table: str or None
+            If the schema you are using is a reference schema
+            Meaning it is an annotation of another annotation.
+            Then you need to specify what table those annotations are in.
+        flat_segmentation_source: str or None
+            the source to a flat segmentation that corresponds to this table
+            i.e. precomputed:\\gs:\\mybucket\this_tables_annotation
+        user_id: int
+            If you are uploading this schema on someone else's behalf
+            and you want to link this table with their ID, you can specify it here
+            Otherwise, the table will be created with your userID in the user_id column.
+        aligned_volume_name: str or None, optional,
+            Name of the aligned_volume. If None, uses the one specified in the client.
 
-        print("Number of blocks: %d" % (len(data_df_cs)))
+        Returns
+        -------
+        json
+            Response JSON
 
-        time_start = time.time()
-        responses = []
-        for i_block, data_df in enumerate(data_df_cs):
-            if i_block > 0:
-                dt = time.time() - time_start
-                eta = dt / i_block * len(data_df_cs) - dt
-                eta /= 3600
-                print("%d / %d - dt = %.2fs - eta = %.2fh" %
-                      (i_block, len(data_df_cs), dt, eta))
-
-            data_df_json = data_df.to_json()
-
-            response = 0
-
-            for i_try in range(n_retries):
-                response = self.session.post(url, json=data_df_json, timeout=300)
-
-                print(i_try, response.status_code)
-
-                if response.status_code == 200:
-                    break
-
-            responses.append(response.json)
-
-        return responses
-
-    def bulk_import_df(self, table_name, data_df,
-                       min_block_size=40, dataset_name=None,
-                       n_threads=16, n_retries=100):
-        """ Imports all annotations from a single dataframe in one go
-
-        :param dataset_name: str
-        :param table_name: str
-        :param data_df: pandas DataFrame
-        :return:
         """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-
-        dataset_info = self.get_dataset_info(dataset_name)
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
 
         endpoint_mapping = self.default_url_mapping
-        if endpoint_mapping['cg_server_address'] is None:
-            self.cg_server_address = self.infoserviceclient.pychunkgraph_endpoint(dataset_name=dataset_name)
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         
-        if endpoint_mapping['table_id'] is None:
-            pcg_seg_endpoint = self.infoserviceclient.pychunkedgraph_viewer_source(dataset_name=dataset_name)
-            pcg_table = pcg_seg_endpoint.split('/')[-1]
-            endpoint_mapping['table_id'] = pcg_table
-
-        url = cg['info'].format_map(endpoint_mapping)
-        
-        response = self.session.get(url)
-        assert(response.status_code == 200)
-        info = response.json()
-
-        chunk_size = np.array(info["scales"][0]["chunk_sizes"][0]) * np.array([1, 1, 4])
-        offset = np.array(info['scales'][0]['voxel_offset'])
-
-        Schema = get_schema(table_name)
-        schema = Schema()
-
-        rel_column_keys = get_flattened_bsp_keys_from_schema(schema)
-
-        data_df = data_df.reset_index(drop=True)
-
-        bspf_coords = []
-        for rel_column_key in rel_column_keys:
-            bspf_coords.append(
-                np.array(data_df[rel_column_key].values.tolist())[:, None, :])
-
-        bspf_coords = np.concatenate(bspf_coords, axis=1)
-        bspf_coords -= offset
-        bspf_coords = (bspf_coords / chunk_size).astype(np.int)
-
-        if len(rel_column_keys) > 1:
-            f_shape = np.array(list(bspf_coords.shape))[[0, 2]]
-            bspf_coords_f = np.zeros(f_shape, dtype=np.int)
-
-            selector = np.argmin(bspf_coords, axis=1)[:, 2]
-
-            for i_k in range(len(rel_column_keys)):
-                m = selector == i_k
-                bspf_coords_f[m] = bspf_coords[m][:, i_k]
-        else:
-            bspf_coords_f = bspf_coords[:, 0]
-
-        bspf_coords = None
-
-        ind = np.lexsort((bspf_coords_f[:, 0], bspf_coords_f[:, 1], bspf_coords_f[:, 2]))
-
-        # bspf_coords = None
-
-        data_df = data_df.reindex(ind)
-        bspf_coords_f = bspf_coords_f[ind]
-
-        data_df_chunks = []
-        range_start = 0
-        range_end = 1
-
-        for i_row in range(1, len(data_df)):
-            if np.sum(bspf_coords_f[i_row] - bspf_coords_f[i_row - 1]) == 0:
-                range_end += 1
-            elif (range_end - range_start) < min_block_size:
-                range_end += 1
-            else:
-                data_df_chunks.append(data_df[range_start: range_end])
-                range_start = i_row
-                range_end = i_row + 1
-
-        data_df_chunks.append(data_df[range_start: range_end])
-
-        url = "{}/annotation/dataset/{}/{}?bulk=true".format(self.server_address,
-                                                             dataset_name,
-                                                             table_name)
-
-        print(url)
-
-        multi_args = []
-        arg = []
-        for data_df_chunk in data_df_chunks:
-            arg.append(data_df_chunk)
-
-            if len(arg) > 1000:
-                multi_args.append([arg, url, n_retries])
-                arg = []
-
-        if len(arg) > 0:
-            multi_args.append([arg, url, n_retries])
-
-        print(len(multi_args))
-
-        results = mu.multithread_func(self._bulk_import_df_thread, multi_args,
-                                      n_threads=n_threads)
-
-        responses = []
-        for result in results:
-            responses.extend(result)
-
-
-        return responses
-
-        # return data_df_chunks
-
-    def get_supervoxel(self, xyz, dataset_name=None):
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-        
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['dataset_name'] = dataset_name
-        endpoint_mapping['x'] = int(xyz[0])
-        endpoint_mapping['y'] = int(xyz[1])
-        endpoint_mapping['z'] = int(xyz[2])
-
-        url = ae['supervoxel'].format_map(endpoint_mapping)
-        response = self.session.get(url)
-        assert(response.status_code == 200)
+        url = self._endpoints["tables"].format_map(endpoint_mapping)
+        metadata={'description': description}
+        if user_id is not None:
+            metadata['user_id']=user_id
+        if reference_table is not None:
+            metadata['reference_table']=reference_table
+        if flat_segmentation_source is not None:
+            metadata['flat_segmentation_source']=flat_segmentation_source
+        data = {"schema_type": schema_name,
+                "table_name": table_name,
+                "metadata": metadata}
+                  
+        response = self.session.post(url, json=data)
+        response.raise_for_status()
         return response.json()
 
-    def get_root_id(self, supervoxel_id, dataset_name=None):
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+    def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
+        """ Retrieve an annotation or annotations by id(s) and table name.
+
+        Parameters
+        ----------
+        table_name : str
+            Name of the table
+        annotation_ids : int or iterable
+            ID or IDS of the annotation to retreive
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        list
+            Annotation data
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
 
         endpoint_mapping = self.default_url_mapping
-        if endpoint_mapping['cg_server_address'] is None:
-            self.cg_server_address = self.infoserviceclient.pychunkgraph_endpoint(dataset_name=dataset_name)
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["annotations"].format_map(endpoint_mapping)
+        try:
+            iter(annotation_ids)
+        except TypeError:
+            annotation_ids = [annotation_ids]
 
-        url = cg['handle_root'].format_map(endpoint_mapping)
-        response = self.session.post(url, json=[supervoxel_id])
-        assert(response.status_code == 200)
-        return np.squeeze(np.frombuffer(response.content, dtype=np.uint64)).tolist()
+        params = {
+            'annotation_ids': ",".join([str(a) for a in annotation_ids])
+        }
+        response = self.session.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
 
-    def get_root_id_under_point(self, xyz, dataset_name=None):
-        if dataset_name is None:
-            dataset_name = self.dataset_name
+    def post_annotation(self, table_name, data, aligned_volume_name=None):
+        """ Post one or more new annotations to a table in the AnnotationEngine
 
-        svid = self.get_supervoxel(xyz, dataset_name=dataset_name)
-        return self.get_root_id(svid)
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        data : dict or list,
+            A list of (or a single) dict of schematized annotation data matching the target table.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+        if isinstance(data, dict):
+            data = [data]
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["annotations"].format_map(endpoint_mapping)
+        
+        try:
+            iter(data)
+        except TypeError:
+            annotation_ids = [data]
+
+        data = {
+            "annotations": data
+        }
+        
+        response = self.session.post(url, data = json.dumps(data, cls=AEEncoder),
+                                    headers={'Content-Type': 'application/json'})
+        response.raise_for_status()
+        return response.json()
+
+    def update_annotation(self, table_name, data, aligned_volume_name=None):
+        """Update one or more new annotations to a table in the AnnotationEngine
+        Note update is implemented by deleting the old annotation
+        and inserting a new annotation, which will receive a new ID.
+
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        data : dict or list,
+            A list of (or a single) dict of schematized annotation data matching the target table.
+            each dict must contain an "id" field which is the ID of the annotation to update
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON: a list of new annotation IDs.
+
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+        if isinstance(data, dict):
+            data = [data]
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["annotations"].format_map(endpoint_mapping)
+        
+        try:
+            iter(data)
+        except TypeError:
+            annotation_ids = [data]
+
+        data = {
+            "annotations": data
+        }
+
+        response = self.session.put(url, json=data)
+        response.raise_for_status()
+        return response.json()
+
+    def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
+        """Update one or more new annotations to a table in the AnnotationEngine
+        Note update is implemented by deleting the old annotation
+        and inserting a new annotation, which will receive a new ID.
+
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        data : dict or list,
+            A list of (or a single) dict of schematized annotation data matching the target table.
+            each dict must contain an "id" field which is the ID of the annotation to update
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON: a list of new annotation IDs.
+
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["annotations"].format_map(endpoint_mapping)
+        
+        try:
+            iter(annotation_ids)
+        except TypeError:
+            annotation_ids = [annotation_ids]
+
+        data = {
+            "annotation_ids": annotation_ids
+        }
+
+        response = self.session.delete(url, data = json.dumps(data, cls=AEEncoder),
+                                       headers={'Content-Type': 'application/json'})
+        response.raise_for_status()
+        return response.json()
+
+client_mapping = {0: AnnotationClientLegacy,
+                  2: AnnotationClientV2,
+                  'latest': AnnotationClientV2}
