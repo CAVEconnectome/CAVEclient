@@ -80,17 +80,10 @@ class FrameworkClientGlobal(object):
         if server_address is None:
             server_address = default_global_server_address
         self._server_address = server_address
-        self._auth_config = (
-            auth_token_file,
-            auth_token_key,
-            auth_token,
-            server_address,
-        )
-
-        self._auth = None
-        self._info = None
-        self._state = None
-        self._schema = None
+        self._auth_config = {}
+        self.change_auth(auth_token_file=auth_token_file,
+                         auth_token_key=auth_token_key,
+                         auth_token=auth_token)
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
@@ -106,16 +99,16 @@ class FrameworkClientGlobal(object):
             Direct entry of a new token, by default None.
         """
         if auth_token_file is None:
-            auth_token_file = self._auth_config[0]
+            auth_token_file = self._auth_config.get('auth_token_file', None)
         if auth_token_key is None:
-            auth_token_key = self._auth_config[1]
+            auth_token_key = self._auth_config.get('auth_token_key', None)
 
-        self._auth_config = (
-            auth_token_file,
-            auth_token_key,
-            auth_token,
-            self._server_address,
-        )
+        self._auth_config = {
+            'token_file': auth_token_file,
+            'token_key': auth_token_key,
+            'token': auth_token,
+            'server_address': self._server_address,
+        }
         self._reset_services()
 
     def _reset_services(self):
@@ -131,7 +124,7 @@ class FrameworkClientGlobal(object):
     @property
     def auth(self):
         if self._auth is None:
-            self._auth = AuthClient(*self._auth_config)
+            self._auth = AuthClient(**self._auth_config)
         return self._auth
 
     @property
@@ -223,9 +216,9 @@ class FrameworkClientFull(FrameworkClientGlobal):
     ):
         super(FrameworkClientFull, self).__init__(
             server_address=server_address,
-            auth_token_file=default_token_file,
-            auth_token_key="token",
-            auth_token=None,
+            auth_token_file=auth_token_file,
+            auth_token_key=auth_token_key,
+            auth_token=auth_token,
         )
 
         self._datastack_name = datastack_name

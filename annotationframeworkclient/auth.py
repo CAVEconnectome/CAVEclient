@@ -100,7 +100,7 @@ class AuthClient(object):
                 or
                 3b) Set it for the current session only with client.auth.token = "PASTE_YOUR_TOKEN_HERE"
                 Note: If you need to save or load multiple tokens, please read the documentation for details.
-                Warning! Creating a new token will invalidate the previous token!"""
+                Warning! Creating a new token by finishing step 2 will invalidate the previous token!"""
         print(txt)
         if open is True:
             webbrowser.open(auth_url)
