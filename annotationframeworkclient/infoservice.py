@@ -1,8 +1,7 @@
-from .base import ClientBaseWithDataset, ClientBaseWithDatastack, _api_versions, _api_endpoints
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, _api_versions, _api_endpoints, handle_response
 from .auth import AuthClient
 from .endpoints import infoservice_common, infoservice_api_versions, default_global_server_address
 from .format_utils import output_map_raw, output_map_precomputed, output_map_graphene, format_raw
-from .utils import handle_response
 import requests
 from warnings import warn
 

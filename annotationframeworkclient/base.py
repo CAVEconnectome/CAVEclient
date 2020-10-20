@@ -2,6 +2,28 @@ import requests
 import json
 
 
+class AuthException(Exception):
+    pass
+
+
+def handle_response(response, as_json=True):
+    '''Deal with potential errors in endpoint response and return json for default case'''
+    response.raise_for_status()
+    _check_authorization_redirect(response)
+    if as_json:
+        return response.json()
+    else:
+        return response
+
+
+def _check_authorization_redirect(response):
+    if len(response.history) == 0:
+        pass
+    else:
+        raise AuthException(
+            f"""You do not have permission to use the endpoint {response.history[0].url} with the current auth configuration.\nRead the documentation or follow instructions under client.auth.get_new_token() for how to set a valid API token.""")
+
+
 def _api_versions(server_name, server_address, endpoints_common, auth_header):
     """Asks a server what API versions are available, if possible
     """
@@ -58,7 +80,7 @@ class ClientBase(object):
         self.session = requests.Session()
         head_val = auth_header.get('Authorization', None)
         if head_val is not None:
-            token=head_val.split(' ')[1]
+            token = head_val.split(' ')[1]
             cookie_obj = requests.cookies.create_cookie(name='middle_auth_token',
                                                         value=token)
             self.session.cookies.set_cookie(cookie_obj)
@@ -102,6 +124,7 @@ class ClientBaseWithDataset(ClientBase):
     def dataset_name(self):
         return self._dataset_name
 
+
 class ClientBaseWithDatastack(ClientBase):
     def __init__(self,
                  server_address,
@@ -113,11 +136,11 @@ class ClientBaseWithDatastack(ClientBase):
                  ):
 
         super(ClientBaseWithDatastack, self).__init__(server_address,
-                                                    auth_header,
-                                                    api_version,
-                                                    endpoints,
-                                                    server_name,
-                                                    )
+                                                      auth_header,
+                                                      api_version,
+                                                      endpoints,
+                                                      server_name,
+                                                      )
         self._datastack_name = datastack_name
 
     @property

@@ -33,12 +33,17 @@ class AuthClient(object):
 
     def __init__(
         self,
-        token_file=default_token_file,
-        token_key=default_token_key,
+        token_file=None,
+        token_key=None,
         token=None,
         server_address=default_global_server_address,
     ):
+        if token_file is None:
+            token_file = default_token_file
         self._token_file = os.path.expanduser(token_file)
+
+        if token_key is None:
+            token_key = default_token_key
         self._token_key = token_key
 
         if token is None:

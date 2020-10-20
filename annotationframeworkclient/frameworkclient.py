@@ -16,8 +16,8 @@ class FrameworkClient(object):
         cls,
         datastack_name=None,
         server_address=None,
-        auth_token_file=default_token_file,
-        auth_token_key="token",
+        auth_token_file=None,
+        auth_token_key=None,
         auth_token=None,
         global_only=False,
     ):
@@ -73,8 +73,8 @@ class FrameworkClientGlobal(object):
     def __init__(
         self,
         server_address=None,
-        auth_token_file=default_token_file,
-        auth_token_key="token",
+        auth_token_file=None,
+        auth_token_key=None,
         auth_token=None,
     ):
         if server_address is None:

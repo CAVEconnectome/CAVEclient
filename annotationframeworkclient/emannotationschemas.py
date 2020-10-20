@@ -1,4 +1,4 @@
-from .base import ClientBase, _api_endpoints
+from .base import ClientBase, _api_endpoints, handle_response
 from .endpoints import schema_common, schema_api_versions
 from .auth import AuthClient
 import requests
@@ -39,8 +39,7 @@ class SchemaClientLegacy(ClientBase):
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['schema'].format_map(endpoint_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def schema_definition(self, schema_type):
         """Get the definition of a specified schema_type
@@ -59,5 +58,4 @@ class SchemaClientLegacy(ClientBase):
         endpoint_mapping['schema_type'] = schema_type
         url = self._endpoints['schema_definition'].format_map(endpoint_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)

@@ -1,14 +1,15 @@
-from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints, handle_response
 from .auth import AuthClient
 from .endpoints import annotation_common, annotation_api_versions
 from .infoservice import InfoServiceClientV2
 import requests
 import time
-import json 
+import json
 import numpy as np
 from datetime import date, datetime
 
 SERVER_KEY = "ae_server_address"
+
 
 class AEEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -19,6 +20,7 @@ class AEEncoder(json.JSONEncoder):
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
+
 
 def AnnotationClient(server_address,
                      dataset_name=None,
@@ -51,10 +53,9 @@ def AnnotationClient(server_address,
     auth_header = auth_client.request_header
     endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
                                             annotation_common, annotation_api_versions, auth_header)
-    
 
     AnnoClient = client_mapping[api_version]
-    if api_version>1:
+    if api_version > 1:
         return AnnoClient(server_address, auth_header, api_version,
                           endpoints, SERVER_KEY, aligned_volume_name)
     else:
@@ -65,8 +66,8 @@ def AnnotationClient(server_address,
 class AnnotationClientLegacy(ClientBaseWithDataset):
     def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name):
         super(AnnotationClientLegacy, self).__init__(server_address,
-                                               auth_header, api_version, endpoints,
-                                               server_name, dataset_name)
+                                                     auth_header, api_version, endpoints,
+                                                     server_name, dataset_name)
 
     def get_datasets(self):
         """ Gets a list of datasets
@@ -78,8 +79,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         """
         url = self._endpoints["datasets"].format_map(self.default_url_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_tables(self, dataset_name=None):
         """ Gets a list of table names for a dataset
@@ -101,8 +101,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         url = self._endpoints["table_names"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def create_table(self, table_name, schema_name, dataset_name=None):
         """ Creates a new data table based on an existing schema
@@ -131,8 +130,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         data = {"schema_name": schema_name, "table_name": table_name}
 
         response = requests.post(url, json=data)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_annotation(self, table_name, annotation_id, dataset_name=None):
         """ Retrieve a single annotation by id and table name.
@@ -159,10 +157,10 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["annotation_id"] = annotation_id
 
-        url = self._endpoints["existing_annotation"].format_map(endpoint_mapping)
+        url = self._endpoints["existing_annotation"].format_map(
+            endpoint_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def post_annotation(self, table_name, data, dataset_name=None):
         """ Post one or more new annotations to a table in the AnnotationEngine
@@ -193,18 +191,17 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
 
         url = self._endpoints["new_annotation"].format_map(endpoint_mapping)
 
-        response = self.session.post(url, data = json.dumps(data, cls=AEEncoder),
-                                    headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-        return response.json()
+        response = self.session.post(url, data=json.dumps(data, cls=AEEncoder),
+                                     headers={'Content-Type': 'application/json'})
+        return handle_response(response)
 
 
 class AnnotationClientV2(ClientBase):
     def __init__(self, server_address, auth_header, api_version,
                  endpoints, server_name, aligned_volume_name):
         super(AnnotationClientV2, self).__init__(server_address,
-                                               auth_header, api_version, endpoints, server_name)
-                                         
+                                                 auth_header, api_version, endpoints, server_name)
+
         self._aligned_volume_name = aligned_volume_name
 
     @property
@@ -233,10 +230,9 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
-    def get_annotation_count(self, table_name:str, aligned_volume_name=None):
+    def get_annotation_count(self, table_name: str, aligned_volume_name=None):
         """ Get number of annotations in a table
 
         Parameters
@@ -262,10 +258,9 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
-    def get_table_metadata(self, table_name:str, aligned_volume_name=None):
+    def get_table_metadata(self, table_name: str, aligned_volume_name=None):
         """ Get metadata about a table
 
         Parameters
@@ -291,10 +286,9 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
-    def delete_table(self, table_name:str, aligned_volume_name=None):
+    def delete_table(self, table_name: str, aligned_volume_name=None):
         """ Marks a table for deletion
         requires super admin priviledges
 
@@ -321,14 +315,13 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
         response = self.session.delete(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
-    def create_table(self, table_name, schema_name, 
-        description, reference_table=None,
-        flat_segmentation_source=None,
-        user_id=None,
-        aligned_volume_name=None):
+    def create_table(self, table_name, schema_name,
+                     description, reference_table=None,
+                     flat_segmentation_source=None,
+                     user_id=None,
+                     aligned_volume_name=None):
         """ Creates a new data table based on an existing schema
 
         Parameters
@@ -371,22 +364,21 @@ class AnnotationClientV2(ClientBase):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
-        
+
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-        metadata={'description': description}
+        metadata = {'description': description}
         if user_id is not None:
-            metadata['user_id']=user_id
+            metadata['user_id'] = user_id
         if reference_table is not None:
-            metadata['reference_table']=reference_table
+            metadata['reference_table'] = reference_table
         if flat_segmentation_source is not None:
-            metadata['flat_segmentation_source']=flat_segmentation_source
+            metadata['flat_segmentation_source'] = flat_segmentation_source
         data = {"schema_type": schema_name,
                 "table_name": table_name,
                 "metadata": metadata}
-                  
+
         response = self.session.post(url, json=data)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """ Retrieve an annotation or annotations by id(s) and table name.
@@ -421,8 +413,7 @@ class AnnotationClientV2(ClientBase):
             'annotation_ids': ",".join([str(a) for a in annotation_ids])
         }
         response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def post_annotation(self, table_name, data, aligned_volume_name=None):
         """ Post one or more new annotations to a table in the AnnotationEngine
@@ -451,7 +442,7 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
-        
+
         try:
             iter(data)
         except TypeError:
@@ -460,11 +451,10 @@ class AnnotationClientV2(ClientBase):
         data = {
             "annotations": data
         }
-        
-        response = self.session.post(url, data = json.dumps(data, cls=AEEncoder),
-                                    headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-        return response.json()
+
+        response = self.session.post(url, data=json.dumps(data, cls=AEEncoder),
+                                     headers={'Content-Type': 'application/json'})
+        return handle_response(response)
 
     def update_annotation(self, table_name, data, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
@@ -496,7 +486,7 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
-        
+
         try:
             iter(data)
         except TypeError:
@@ -507,8 +497,7 @@ class AnnotationClientV2(ClientBase):
         }
 
         response = self.session.put(url, json=data)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
@@ -538,7 +527,7 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["annotations"].format_map(endpoint_mapping)
-        
+
         try:
             iter(annotation_ids)
         except TypeError:
@@ -548,10 +537,10 @@ class AnnotationClientV2(ClientBase):
             "annotation_ids": annotation_ids
         }
 
-        response = self.session.delete(url, data = json.dumps(data, cls=AEEncoder),
+        response = self.session.delete(url, data=json.dumps(data, cls=AEEncoder),
                                        headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
+
 
 client_mapping = {0: AnnotationClientLegacy,
                   2: AnnotationClientV2,
