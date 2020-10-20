@@ -1,6 +1,6 @@
 import numpy as np
 import requests
-from datetime import date, datetime
+import datetime
 import time
 
 from . import endpoints
