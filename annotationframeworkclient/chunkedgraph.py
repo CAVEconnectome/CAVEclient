@@ -1,12 +1,12 @@
 import numpy as np
 import requests
-from datetime import date, datetime
+import datetime
 import time
 
 from . import endpoints
 from . import infoservice
 from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common, default_global_server_address
-from .base import _api_endpoints, _api_versions, ClientBase
+from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
 import requests
 import json
@@ -123,7 +123,7 @@ class ChunkedGraphClientV1(ClientBase):
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
 
         response = self.session.post(url, data=data, params=query_d)
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_root_id(self, supervoxel_id, timestamp=None):
@@ -148,7 +148,7 @@ class ChunkedGraphClientV1(ClientBase):
         query_d = package_timestamp(self._process_timestamp(timestamp))
 
         response = self.session.get(url, params=query_d)
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return np.int64(response.json()['root_id'])
 
     def get_merge_log(self, root_id):
@@ -169,8 +169,7 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints['merge_log'].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_change_log(self, root_id):
         """Get the change log (splits and merges) for an object
@@ -189,8 +188,7 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping['root_id'] = root_id
         url = self._endpoints['change_log'].format_map(endpoint_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_leaves(self, root_id, bounds=None):
         """Get all supervoxels for a root_id
@@ -216,8 +214,7 @@ class ChunkedGraphClientV1(ClientBase):
             query_d['bounds'] = package_bounds(bounds)
 
         response = self.session.get(url, params=query_d)
-
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return np.int64(response.json()['leaf_ids'])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
@@ -239,8 +236,7 @@ class ChunkedGraphClientV1(ClientBase):
         response = self.session.post(url, data=json.dumps(data, cls=CGEncoder),
                                      params=params,
                                      headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-        return response.json()
+        handle_response(response)
 
     def get_children(self, node_id):
         """Get the children of a node in the hierarchy
@@ -260,8 +256,7 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints['handle_children'].format_map(endpoint_mapping)
 
         response = self.session.post(url)
-
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_contact_sites(self, root_id, bounds, calc_partners=False):
@@ -288,7 +283,7 @@ class ChunkedGraphClientV1(ClientBase):
             query_d['bounds'] = package_bounds(bounds)
         query_d['partners'] = calc_partners
         response = self.session.post(url, json=[root_id], params=query_d)
-        contact_d = response.json()
+        contact_d = handle_response(response)
         return {int(k): v for k, v in contact_d.items()}
 
     def find_path(self, root_id, src_pt, dst_pt, precision_mode=False):
@@ -318,9 +313,7 @@ class ChunkedGraphClientV1(ClientBase):
                                      data=json.dumps(nodes, cls=CGEncoder),
                                      params=query_d,
                                      headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-
-        resp_d = response.json()
+        resp_d = handle_response(response)
         centroids = np.array(resp_d['centroids_list'])
         failed_l2_ids = np.array(resp_d['failed_l2_ids'], dtype=np.uint64)
         l2_path = np.array(resp_d['l2_path'])
@@ -338,8 +331,7 @@ class ChunkedGraphClientV1(ClientBase):
         if self._segmentation_info is None:
             url = self._endpoints['info'].format_map(self.default_url_mapping)
             response = self.session.get(url)
-            response.raise_for_status()
-            self._segmentation_info = response.json()
+            self._segmentation_info = handle_response(response)
         return self._segmentation_info
 
     @property
@@ -430,8 +422,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
 
         response = self.session.post(url, data=data, params=query_d)
-
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_root_id(self, supervoxel_id, timestamp=None):
@@ -468,9 +459,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         else:
             query_d = None
         response = self.session.get(url, params=query_d)
-
-        response.raise_for_status()
-        return np.int64(response.json()['root_id'])
+        return np.int64(handle_response(response)['root_id'])
 
     def get_merge_log(self, root_id):
         """Returns the merge log for a given object
@@ -489,9 +478,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         endpoint_mapping['root_id'] = root_id
         url = self._endpoints['merge_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
-
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_change_log(self, root_id):
         """Get the change log (splits and merges) for an object
@@ -510,9 +497,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         endpoint_mapping['root_id'] = root_id
         url = self._endpoints['change_log'].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
-
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_leaves(self, root_id, bounds=None):
         """Get all supervoxels for a root_id
@@ -538,9 +523,7 @@ class ChunkedGraphClientLegacy(ClientBase):
             query_d['bounds'] = package_bounds(bounds)
 
         response = self.session.get(url, params=query_d)
-
-        response.raise_for_status()
-        return np.int64(response.json()['leaf_ids'])
+        return np.int64(handle_response(response)['leaf_ids'])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
         """Perform a merge on the chunkeded graph
@@ -561,8 +544,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         response = self.session.post(url, data=json.dumps(data, cls=CGEncoder),
                                      params=params,
                                      headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_children(self, node_id):
         """Get the children of a node in the hierarchy
@@ -582,8 +564,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         url = self._endpoints['handle_children'].format_map(endpoint_mapping)
 
         response = self.session.post(url)
-
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
     def get_contact_sites(self, root_id, bounds, calc_partners=False):
@@ -610,7 +591,7 @@ class ChunkedGraphClientLegacy(ClientBase):
             query_d['bounds'] = package_bounds(bounds)
         query_d['partners'] = calc_partners
         response = self.session.post(url, json=[root_id], params=query_d)
-        contact_d = response.json()
+        contact_d = handle_response(response)
         return {int(k): v for k, v in contact_d.items()}
 
     def find_path(self, root_id, src_pt, dst_pt, precision_mode=False):
@@ -640,9 +621,7 @@ class ChunkedGraphClientLegacy(ClientBase):
                                      data=json.dumps(nodes, cls=CGEncoder),
                                      params=query_d,
                                      headers={'Content-Type': 'application/json'})
-        response.raise_for_status()
-
-        resp_d = response.json()
+        resp_d = handle_response(response)
         centroids = np.array(resp_d['centroids_list'])
         failed_l2_ids = np.array(resp_d['failed_l2_ids'], dtype=np.uint64)
         l2_path = np.array(resp_d['l2_path'])

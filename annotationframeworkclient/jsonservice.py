@@ -1,4 +1,4 @@
-from .base import ClientBase, _api_versions, _api_endpoints
+from .base import ClientBase, _api_versions, _api_endpoints, handle_response
 from .auth import AuthClient
 from .endpoints import jsonservice_common, jsonservice_api_versions, default_global_server_address
 import requests
@@ -79,7 +79,7 @@ class JSONServiceV1(ClientBase):
         url_mapping['state_id'] = state_id
         url = self._endpoints['get_state'].format_map(url_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return json.loads(response.content)
 
     def upload_state_json(self, json_state):
@@ -98,7 +98,7 @@ class JSONServiceV1(ClientBase):
         url_mapping = self.default_url_mapping
         url = self._endpoints['upload_state'].format_map(url_mapping)
         response = self.session.post(url, data=json.dumps(json_state))
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         response_re = re.search('.*\/(\d+)', str(response.content))
         return int(response_re.groups()[0])
 
@@ -157,7 +157,7 @@ class JSONServiceLegacy(ClientBase):
         url_mapping['state_id'] = state_id
         url = self._endpoints['get_state'].format_map(url_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         return json.loads(response.content)
 
     def upload_state_json(self, json_state):
@@ -176,7 +176,7 @@ class JSONServiceLegacy(ClientBase):
         url_mapping = self.default_url_mapping
         url = self._endpoints['upload_state'].format_map(url_mapping)
         response = self.session.post(url, data=json.dumps(json_state))
-        response.raise_for_status()
+        handle_response(response, as_json=False)
         response_re = re.search('.*\/(\d+)', str(response.content))
         return int(response_re.groups()[0])
 
