@@ -46,7 +46,8 @@ class AuthClient(object):
         self._token = token
 
         self._server_address = server_address
-        self._default_endpoint_mapping = {"auth_server_address": self._server_address}
+        self._default_endpoint_mapping = {
+            "auth_server_address": self._server_address}
 
     @property
     def token(self):
@@ -159,6 +160,12 @@ class AuthClient(object):
             secrets = {}
 
         secrets[token_key] = token
+
+        secret_dir, _ = os.path.split(save_token_file)
+        if not os.path.exists(secret_dir):
+            full_dir = os.path.expanduser(secret_dir)
+            os.makedirs(full_dir)
+
         with open(save_token_file, "w") as f:
             json.dump(secrets, f)
 
