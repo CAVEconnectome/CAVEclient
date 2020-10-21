@@ -1,8 +1,8 @@
-.. image:: https://readthedocs.org/projects/annotationframeworkclient/badge/?version=docs
-    :target: https://meshparty.readthedocs.io/en/latest/?badge=docs
+.. image:: https://readthedocs.org/projects/annotationframeworkclient/badge/?version=latest
+    :target: https://annotationframeworkclient.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 AnnotationFrameworkClient
 ###########################
-This repository supplies client side code to interact with _all_ microservices 
+This repository supplies client side code to interact with all microservices 
 in the AnnotationFramework.
