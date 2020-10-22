@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/annotationframeworkclient/badge/?version=docs
-    :target: https://meshparty.readthedocs.io/en/latest/?badge=docs
+.. image:: https://readthedocs.org/projects/annotationframeworkclient/badge/?version=latest
+    :target: https://annotationframeworkclient.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
 AnnotationFrameworkClient
