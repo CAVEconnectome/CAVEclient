@@ -264,3 +264,11 @@ class FrameworkClientFull(FrameworkClientGlobal):
                 auth_client=self.auth,
             )
         return self._annotation
+
+    @property
+    def state(self):
+        if self._state is None:
+            self._state = JSONService(
+                server_address=self.server_address, auth_client=self.auth, ngl_url=self.info.viewer_site(),
+            )
+        return self._state
