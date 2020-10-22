@@ -27,6 +27,8 @@ def JSONService(server_address=None,
         Which endpoint API version to use or 'latest'. By default, 'latest' tries to ask
         the server for which versions are available, if such functionality exists, or if not
         it defaults to the latest version for which there is a client. By default 'latest'
+    ngl_url : str or None, optional
+        Default neuroglancer deployment URL. Only used for V1 and later.
     """
     if server_address is None:
         server_address = default_global_server_address
