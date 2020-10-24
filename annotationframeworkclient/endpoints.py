@@ -25,13 +25,13 @@ annotation_endpoints_v2 = {
 
 mat_engine = "me_service_address/materialization"
 materialization_endpoints = {
-    "simple_query": mat_engine + "/datastack_name/{datastack_name}/version/{version}/table/{table_name}/query",
-    "join_query": mat_engine + "/datastack_name/{datastack_name}/version/{version}/join_query,
-    "annotations": mat_engine + "/datastack_name/{datastack_name}/version/{version}/table/{table_name}",
-    "table_count": mat_engine + "/datastack_name/{datastack_name}/version/{version}/table/{table_name}/count",
-    "versions": mat_engine + "/datastack_name/{datastack_name}/versions",
-    "tables": mat_engine + "/datastack_name/{datastack_name}/version/{version}/tables",
-    "metadata": mat_engine + "/datastack_name/{datastack_name}/version/{version}/table/{table_name}/metadata",
+    "simple_query": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}/query",
+    "join_query": mat_engine + "/datastack/{datastack_name}/version/{version}/join_query",
+    "annotations": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}",
+    "table_count": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
+    "versions": mat_engine + "/datastack/{datastack_name}/versions",
+    "tables": mat_engine + "/datastack/{datastack_name}/version/{version}/tables",
+    "metadata": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
 }
 annotation_api_versions = {0: annotation_endpoints_legacy,
                            2: annotation_endpoints_v2}
