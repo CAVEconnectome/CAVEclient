@@ -85,7 +85,7 @@ class ChunkedGraphClientV1(ClientBase):
 
     @property
     def default_url_mapping(self):
-        return self._default_url_mapping
+        return self._default_url_mapping.copy()
 
     @property
     def table_name(self):
@@ -320,6 +320,41 @@ class ChunkedGraphClientV1(ClientBase):
 
         return centroids, l2_path, failed_l2_ids
 
+    def level2_chunk_graph(self, root_id):
+        """Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
+
+        Parameters
+        ----------
+        root_id : int
+            Root id of object
+
+        Returns
+        -------
+        edge_list : list
+            Edge array of level 2 ids
+        """
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['root_id'] = root_id
+        url = self._endpoints['lvl2_graph'].format_map(endpoint_mapping)
+        r = handle_response(self.session.get(url))
+        return r['edge_graph']
+
+    def remesh_level2_chunks(self, chunk_ids):
+        """Submit specific level 2 chunks to be remeshed in case of a problem.
+
+        Parameters
+        ----------
+        chunk_ids : list
+            List of level 2 chunk ids.
+        """
+
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['remesh_level2_chunks'].format_map(
+            endpoint_mapping)
+        data = {'new_lvl2_ids': [int(x) for x in chunk_ids]}
+        r = self.session.post(url, data=data)
+        r.raise_for_status()
+
     @property
     def cloudvolume_path(self):
         return self._endpoints['cloudvolume_path'].format_map(self.default_url_mapping)
@@ -381,7 +416,7 @@ class ChunkedGraphClientLegacy(ClientBase):
 
     @ property
     def default_url_mapping(self):
-        return self._default_url_mapping
+        return self._default_url_mapping.copy()
 
     @ property
     def table_name(self):
