@@ -1,9 +1,2 @@
 numpy
-emannotationschemas
-multiwrapper
-fastremap
-tqdm
-imageio
-pandas
-numpy
-scipy
+requests

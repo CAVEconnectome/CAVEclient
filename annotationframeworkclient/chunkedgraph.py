@@ -2,14 +2,12 @@ import numpy as np
 import requests
 import datetime
 import time
-
+import json
 from . import endpoints
 from . import infoservice
 from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common, default_global_server_address
 from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
-import requests
-import json
 
 SERVER_KEY = 'cg_server_address'
 

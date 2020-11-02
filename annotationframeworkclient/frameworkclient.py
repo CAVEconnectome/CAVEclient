@@ -4,7 +4,7 @@ from .chunkedgraph import ChunkedGraphClient
 from .emannotationschemas import SchemaClient
 from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
-from annotationframeworkclient.endpoints import default_global_server_address
+from .endpoints import default_global_server_address
 
 
 class GlobalClientError(Exception):
