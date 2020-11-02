@@ -85,7 +85,7 @@ class ChunkedGraphClientV1(ClientBase):
 
     @property
     def default_url_mapping(self):
-        return self._default_url_mapping
+        return self._default_url_mapping.copy()
 
     @property
     def table_name(self):
@@ -126,7 +126,7 @@ class ChunkedGraphClientV1(ClientBase):
         handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
-    def get_root_id(self, supervoxel_id, timestamp=None):
+    def get_root_id(self, supervoxel_id, timestamp=None, level2=False):
         """Get the root id for a specified supervoxel
 
         Parameters
@@ -146,6 +146,8 @@ class ChunkedGraphClientV1(ClientBase):
 
         url = self._endpoints['handle_root'].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
+        if level2:
+            query_d['stop_layer'] = 2
 
         response = self.session.get(url, params=query_d)
         handle_response(response, as_json=False)
@@ -320,6 +322,41 @@ class ChunkedGraphClientV1(ClientBase):
 
         return centroids, l2_path, failed_l2_ids
 
+    def level2_chunk_graph(self, root_id):
+        """Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
+
+        Parameters
+        ----------
+        root_id : int
+            Root id of object
+
+        Returns
+        -------
+        edge_list : list
+            Edge array of level 2 ids
+        """
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['root_id'] = root_id
+        url = self._endpoints['lvl2_graph'].format_map(endpoint_mapping)
+        r = handle_response(self.session.get(url))
+        return r['edge_graph']
+
+    def remesh_level2_chunks(self, chunk_ids):
+        """Submit specific level 2 chunks to be remeshed in case of a problem.
+
+        Parameters
+        ----------
+        chunk_ids : list
+            List of level 2 chunk ids.
+        """
+
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['remesh_level2_chunks'].format_map(
+            endpoint_mapping)
+        data = {'new_lvl2_ids': [int(x) for x in chunk_ids]}
+        r = self.session.post(url, json=data)
+        r.raise_for_status()
+
     @property
     def cloudvolume_path(self):
         return self._endpoints['cloudvolume_path'].format_map(self.default_url_mapping)
@@ -381,7 +418,7 @@ class ChunkedGraphClientLegacy(ClientBase):
 
     @ property
     def default_url_mapping(self):
-        return self._default_url_mapping
+        return self._default_url_mapping.copy()
 
     @ property
     def table_name(self):
@@ -425,7 +462,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
-    def get_root_id(self, supervoxel_id, timestamp=None):
+    def get_root_id(self, supervoxel_id, timestamp=None, level2=False):
         """Get the root id for a specified supervoxel
 
         Parameters
@@ -434,11 +471,13 @@ class ChunkedGraphClientLegacy(ClientBase):
             Supervoxel id value
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
+        level2 : bool, optional
+            Return true to get the level 2 id of a supervoxel.
 
         Returns
         -------
         np.uint64
-            Root ID containing the supervoxel.
+            Root ID containing the supervoxel (or level 2 id if requested)
         """
         if timestamp is None:
             if self._default_timestamp is not None:
@@ -452,12 +491,13 @@ class ChunkedGraphClientLegacy(ClientBase):
 
         if timestamp is None:
             timestamp = self._default_timestamp
+
+        query_d = {}
         if timestamp is not None:
-            query_d = {
-                'timestamp': time.mktime(timestamp.timetuple())
-            }
-        else:
-            query_d = None
+            query_d['timestamp'] = time.mktime(timestamp.timetuple())
+        if level2:
+            query_d['stop_layer'] = 2
+
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response)['root_id'])
 

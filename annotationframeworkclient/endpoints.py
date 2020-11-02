@@ -74,6 +74,7 @@ chunkedgraph_endpoints_legacy = {
 }
 
 pcg_v1 = "{cg_server_address}/segmentation/api/v1"
+pcg_meshing_v1 = "{cg_server_address}/meshing/api/v1"
 chunkedgraph_endpoints_v1 = {
     'handle_root': pcg_v1 + "/table/{table_id}/node/{supervoxel_id}/root",
     "handle_roots": pcg_v1 + "/table/{table_id}/roots",
@@ -86,7 +87,9 @@ chunkedgraph_endpoints_v1 = {
     'contact_sites': pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",
     'contact_sites_pairwise': pcg_v1 + "/table/{table_id}/contact_sites_pair/{root_id_1}/{root_id_2}",
     'cloudvolume_path': "graphene://" + pcg_v1 + "/{table_id}",
-    'find_path': pcg_v1 + "/table/{table_id}/graph/find_path"
+    'find_path': pcg_v1 + "/table/{table_id}/graph/find_path",
+    'lvl2_graph': pcg_v1 + "/table/{table_id}/node/{root_id}/lvl2_graph",
+    'remesh_level2_chunks': pcg_meshing_v1 + "/table/{table_id}/remeshing",
 }
 
 chunkedgraph_api_versions = {0: chunkedgraph_endpoints_legacy,
