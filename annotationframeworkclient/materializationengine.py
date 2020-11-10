@@ -24,7 +24,8 @@ def MaterializationClient(server_address,
                           datastack_name=None,
                           auth_client=None,
                           api_version='latest',
-                          version=None):
+                          version=None,
+                          verify=True):
     """ Factory for returning AnnotationClient
     Parameters
     ----------
@@ -55,13 +56,14 @@ def MaterializationClient(server_address,
     
     MatClient = client_mapping[api_version]
     return MatClient(server_address, auth_header, api_version,
-                     endpoints, SERVER_KEY, datastack_name, version=version)
+                     endpoints, SERVER_KEY, datastack_name,
+                     version=version, verify=verify)
 
 
 class MaterializatonClientV2(ClientBase):
     def __init__(self, server_address, auth_header, api_version,
                  endpoints, server_name, datastack_name, version=None,
-                 verify=False):
+                 verify=True):
         super(MaterializatonClientV2, self).__init__(server_address,
                                                auth_header, api_version, endpoints, server_name)
                                          
