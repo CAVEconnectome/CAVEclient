@@ -66,10 +66,11 @@ class MaterializatonClientV2(ClientBase):
                                                auth_header, api_version, endpoints, server_name)
                                          
         self._datastack_name = datastack_name
+        self._verify=verify
         if version is None:
             version = self.most_recent_version()
         self._version = version
-        self._verify=verify
+        
 
     @property
     def datastack_name(self):
@@ -167,7 +168,7 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()
-        
+
     def get_version_metadata(self, version:int=None, datastack_name:str=None):
         """get metadata about a version
 
