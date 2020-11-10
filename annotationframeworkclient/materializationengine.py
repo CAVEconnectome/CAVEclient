@@ -167,6 +167,26 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()
+        
+    def get_version_metadata(self, version:int=None, datastack_name:str=None):
+        """get metadata about a version
+
+        Args:
+            version (int, optional): version number to get metadata about. Defaults to client default version.
+            datastack_name (str, optional): datastack to query. Defaults to client default datastack.
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if version is None:
+            version = self.version
+        
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = version
+        url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
 
     def get_table_metadata(self, table_name:str, datastack_name=None):
         """ Get metadata about a table
@@ -198,49 +218,49 @@ class MaterializatonClientV2(ClientBase):
         response.raise_for_status()
         return response.json()
 
-    def get_annotation(self, table_name, annotation_ids,
-                       materialization_version=None,
-                       datastack_name=None):
-        """ Retrieve an annotation or annotations by id(s) and table name.
+    # def get_annotation(self, table_name, annotation_ids,
+    #                    materialization_version=None,
+    #                    datastack_name=None):
+    #     """ Retrieve an annotation or annotations by id(s) and table name.
 
-        Parameters
-        ----------
-        table_name : str
-            Name of the table
-        annotation_ids : int or iterable
-            ID or IDS of the annotation to retreive
-        materialization_version: int or None
-            materialization version to use
-            If None, uses the one specified in the client
-        datastack_name : str or None, optional
-            Name of the datastack_name.
-            If None, uses the one specified in the client.
-        Returns
-        -------
-        list
-            Annotation data
-        """
-        if materialization_version is None:
-            materialization_version = self.version
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+    #     Parameters
+    #     ----------
+    #     table_name : str
+    #         Name of the table
+    #     annotation_ids : int or iterable
+    #         ID or IDS of the annotation to retreive
+    #     materialization_version: int or None
+    #         materialization version to use
+    #         If None, uses the one specified in the client
+    #     datastack_name : str or None, optional
+    #         Name of the datastack_name.
+    #         If None, uses the one specified in the client.
+    #     Returns
+    #     -------
+    #     list
+    #         Annotation data
+    #     """
+    #     if materialization_version is None:
+    #         materialization_version = self.version
+    #     if datastack_name is None:
+    #         datastack_name = self.datastack_name
 
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["table_name"] = table_name
-        endpoint_mapping["version"] = materialization_version
-        url = self._endpoints["annotations"].format_map(endpoint_mapping)
-        try:
-            iter(annotation_ids)
-        except TypeError:
-            annotation_ids = [annotation_ids]
+    #     endpoint_mapping = self.default_url_mapping
+    #     endpoint_mapping["datastack_name"] = datastack_name
+    #     endpoint_mapping["table_name"] = table_name
+    #     endpoint_mapping["version"] = materialization_version
+    #     url = self._endpoints["annotations"].format_map(endpoint_mapping)
+    #     try:
+    #         iter(annotation_ids)
+    #     except TypeError:
+    #         annotation_ids = [annotation_ids]
 
-        params = {
-            'annotation_ids': ",".join([str(a) for a in annotation_ids])
-        }
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+    #     params = {
+    #         'annotation_ids': ",".join([str(a) for a in annotation_ids])
+    #     }
+    #     response = self.session.get(url, params=params)
+    #     response.raise_for_status()
+    #     return response.json()
 
     def query_table(self, 
                     tables,

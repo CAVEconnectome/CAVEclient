@@ -32,6 +32,7 @@ materialization_endpoints_v2 = {
     "annotations": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}",
     "table_count": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
     "versions": mat_v2_api + "/datastack/{datastack_name}/versions",
+    "version_metadata": mat_v2_api + "/datastack/{datastack_name}/version/{version}",
     "tables": mat_v2_api + "/datastack/{datastack_name}/version/{version}/tables",
     "metadata": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
 }
