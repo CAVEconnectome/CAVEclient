@@ -23,16 +23,19 @@ annotation_endpoints_v2 = {
     "table_count": anno_v2 + "/aligned_volume/{aligned_volume_name}/table/{table_name}/count",
 }
 
-mat_engine = "me_service_address/materialization"
-materialization_endpoints = {
-    "simple_query": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}/query",
-    "join_query": mat_engine + "/datastack/{datastack_name}/version/{version}/join_query",
-    "annotations": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}",
-    "table_count": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
-    "versions": mat_engine + "/datastack/{datastack_name}/versions",
-    "tables": mat_engine + "/datastack/{datastack_name}/version/{version}/tables",
-    "metadata": mat_engine + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
+
+materialization_common = {}
+mat_v2_api = "{me_server_address}/materialize/api/v2"
+materialization_endpoints_v2 = {
+    "simple_query": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}/query",
+    "join_query": mat_v2_api + "/datastack/{datastack_name}/version/{version}/join_query",
+    "annotations": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}",
+    "table_count": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
+    "versions": mat_v2_api + "/datastack/{datastack_name}/versions",
+    "tables": mat_v2_api + "/datastack/{datastack_name}/version/{version}/tables",
+    "metadata": mat_v2_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
 }
+materialization_api_versions = {2: materialization_endpoints_v2}
 annotation_api_versions = {0: annotation_endpoints_legacy,
                            2: annotation_endpoints_v2}
 
