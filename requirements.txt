@@ -7,3 +7,4 @@ imageio
 pandas
 numpy
 scipy
+pyarrow>=2
