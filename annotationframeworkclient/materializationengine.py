@@ -273,9 +273,10 @@ class MaterializatonClientV2(ClientBase):
                     filter_spatial=None,
                     join_args=None,
                     select_columns=None,
-                    offset = None,
-                    datastack_name=None,
-                    materialization_version=None):
+                    offset:int = None,
+                    limit:int = None,
+                    datastack_name:str =None,
+                    materialization_version:int =None):
         """generic query on materialization tables
 
         Args:
@@ -290,6 +291,8 @@ class MaterializatonClientV2(ClientBase):
             filter_equal_dict (dict, optional): 
                 inner layer: keys are column names, values are specified entry.
                 Defaults to None.
+            offset (int, optional): offset in query result
+            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
             offset (int, optional): result offset to use. Defaults to None.
                 will only return top K results. 
@@ -333,32 +336,33 @@ class MaterializatonClientV2(ClientBase):
             data['select_columns']=select_columns
         if offset is not None:
             data['offset']=offset
-        print(data)
+        if limit is not None:
+            assert(limit>0)
+            data['limit']=limit
         r = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
                               headers={'Content-Type': 'application/json'},
                               verify=self._verify)
         r.raise_for_status()
         return pa.deserialize(r.content)
 
-    def complex_query_tables(self, 
-                    tables,
-                    filter_in_dict=None,
-                    filter_out_dict=None,
-                    filter_equal_dict=None,
-                    filter_spatial=None,
-                    join_args=None,
-                    select_columns=None,
-                    offset = None,
-                    datastack_name=None,
-                    materialization_version=None):
+    def join_query(self, 
+                   tables,
+                   filter_in_dict = None,
+                   filter_out_dict = None,
+                   filter_equal_dict = None,
+                   filter_spatial = None,
+                   join_args = None,
+                   select_columns = None,
+                   offset:int = None,
+                   limit:int = None,
+                   datastack_name:str = None,
+                   materialization_version:int = None):
         """generic query on materialization tables
 
         Args:
-            tables: list of lists or 'str'
-                standard: list of one entry: table_name of table that one wants to
-                        query (if 'str' will convert to this)
-                join: list of two lists: first entries are table names, second
-                                        entries are the columns used for the join
+            tables: list of lists with length 2 or 'str'
+                list of two lists: first entries are table names, second
+                                   entries are the columns used for the join
             filter_in_dict (dict of dicts, optional): 
                 outer layer: keys are table names
                 inner layer: keys are column names, values are allowed entries.
@@ -374,6 +378,7 @@ class MaterializatonClientV2(ClientBase):
             select_columns (list of str, optional): columns to select. Defaults to None.
             offset (int, optional): result offset to use. Defaults to None.
                 will only return top K results. 
+            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             datastack_name (str, optional): datastack to query. 
                 If None defaults to one specified in client. 
             materialization_version (int, optional): version to query. 
@@ -381,6 +386,39 @@ class MaterializatonClientV2(ClientBase):
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
-        """                        
+        """  
+        if materialization_version is None:
+            materialization_version = self.version
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = materialization_version
+        data = {}
+        query_args = {}
+       
+        data['tables']=tables
+        url = self._endpoints["join_query"].format_map(endpoint_mapping)
+        
+        if filter_in_dict is not None:
+            data['filter_in_dict']={filter_in_dict}
+        if filter_out_dict is not None:
+            data['filter_out_dict']={filter_out_dict}
+        if filter_equal_dict is not None:
+            data['filter_equal_dict']={filter_equal_dict}
+        if select_columns is not None:
+            data['select_columns']=select_columns
+        if offset is not None:
+            data['offset']=offset
+        if limit is not None:
+            assert(limit>0)
+            data['limit']=limit
+        r = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
+                              headers={'Content-Type': 'application/json'},
+                              verify=self._verify)
+        r.raise_for_status()
+        return pa.deserialize(r.content)
+
 client_mapping = {2: MaterializatonClientV2,
                   'latest': MaterializatonClientV2}
