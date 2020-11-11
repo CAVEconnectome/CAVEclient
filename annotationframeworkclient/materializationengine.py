@@ -266,6 +266,81 @@ class MaterializatonClientV2(ClientBase):
     #     return response.json()
 
     def query_table(self, 
+                    table:str,
+                    filter_in_dict=None,
+                    filter_out_dict=None,
+                    filter_equal_dict=None,
+                    filter_spatial=None,
+                    join_args=None,
+                    select_columns=None,
+                    offset = None,
+                    datastack_name=None,
+                    materialization_version=None):
+        """generic query on materialization tables
+
+        Args:
+            table: 'str'
+
+            filter_in_dict (dict , optional): 
+                keys are column names, values are allowed entries.
+                Defaults to None.
+            filter_out_dict (dict, optional): 
+                keys are column names, values are not allowed entries.
+                Defaults to None.
+            filter_equal_dict (dict, optional): 
+                inner layer: keys are column names, values are specified entry.
+                Defaults to None.
+            select_columns (list of str, optional): columns to select. Defaults to None.
+            offset (int, optional): result offset to use. Defaults to None.
+                will only return top K results. 
+            datastack_name (str, optional): datastack to query. 
+                If None defaults to one specified in client. 
+            materialization_version (int, optional): version to query. 
+                If None defaults to one specified in client.
+        Returns:
+        pd.DataFrame: a pandas dataframe of results of query
+
+        """
+        if materialization_version is None:
+            materialization_version = self.version
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = materialization_version
+        data = {}
+        query_args = {}
+        if type(table)==str:
+            tables=[table]
+        if len(tables)==1:
+            assert(type(tables[0])==str)
+            endpoint_mapping["table_name"] = tables[0]
+            single_table=True
+            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
+        else:
+            single_table=False
+            data['tables']=tables
+            url = self._endpoints["join_query"].format_map(endpoint_mapping)
+        
+        if filter_in_dict is not None:
+            data['filter_in_dict']={table:filter_in_dict}
+        if filter_out_dict is not None:
+            data['filter_out_dict']={table:filter_out_dict}
+        if filter_equal_dict is not None:
+            data['filter_equal_dict']={table:filter_equal_dict}
+        if select_columns is not None:
+            data['select_columns']=select_columns
+        if offset is not None:
+            data['offset']=offset
+        print(data)
+        r = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
+                              headers={'Content-Type': 'application/json'},
+                              verify=self._verify)
+        r.raise_for_status()
+        return pa.deserialize(r.content)
+
+    def complex_query_tables(self, 
                     tables,
                     filter_in_dict=None,
                     filter_out_dict=None,
@@ -306,45 +381,6 @@ class MaterializatonClientV2(ClientBase):
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
-        """
-        if materialization_version is None:
-            materialization_version = self.version
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["version"] = materialization_version
-        data = {}
-        query_args = {}
-        if type(tables)==str:
-            tables=[tables]
-        if len(tables)==1:
-            assert(type(tables[0])==str)
-            endpoint_mapping["table_name"] = tables[0]
-            single_table=True
-            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
-        else:
-            single_table=False
-            data['tables']=tables
-            url = self._endpoints["join_query"].format_map(endpoint_mapping)
-        
-        if filter_in_dict is not None:
-            data['filter_in_dict']=filter_in_dict
-        if filter_out_dict is not None:
-            data['filter_out_dict']=filter_out_dict
-        if filter_equal_dict is not None:
-            data['filter_equal_dict']=filter_equal_dict
-        if select_columns is not None:
-            data['select_columns']=select_columns
-        if offset is not None:
-            data['offset']=offset
-
-        r = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
-                              headers={'Content-Type': 'application/json'},
-                              verify=self._verify)
-        r.raise_for_status()
-        return pa.deserialize(r.content)
-                              
+        """                        
 client_mapping = {2: MaterializatonClientV2,
                   'latest': MaterializatonClientV2}
