@@ -42,8 +42,9 @@ only access global services can be initialized:
 
 Just to confirm that this works, let’s see if we can get the EM image
 source from the InfoService.
-If you get a list of names of datastacks, all is good. If you get an authentication error,
-look at the authentication section for information about how to set up your auth token.
+If you get a list of names of datastacks, all is good. If you have not yet set up an
+authentication token or you get an authentication error, look at :ref:`new-token`
+for information about how to set up your auth token.
 
 .. code:: python
 

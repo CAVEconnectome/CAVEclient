@@ -1,4 +1,4 @@
-from .base import ClientBaseWithDataset, ClientBaseWithDatastack, _api_versions, _api_endpoints
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, _api_versions, _api_endpoints, handle_response
 from .auth import AuthClient
 from .endpoints import infoservice_common, infoservice_api_versions, default_global_server_address
 from .format_utils import output_map_raw, output_map_precomputed, output_map_graphene, format_raw
@@ -61,8 +61,7 @@ class InfoServiceClientLegacy(ClientBaseWithDataset):
         url = self._endpoints['datasets'].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_dataset_info(self, dataset_name=None, use_stored=True):
         """Gets the info record for a dataset
@@ -90,9 +89,7 @@ class InfoServiceClientLegacy(ClientBaseWithDataset):
             url = self._endpoints['dataset_info'].format_map(endpoint_mapping)
 
             response = self.session.get(url)
-            response.raise_for_status()
-
-            self.info_cache[dataset_name] = response.json()
+            self.info_cache[dataset_name] = handle_response(response)
 
         return self.info_cache.get(dataset_name, None)
 
@@ -332,8 +329,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         url = self._endpoints['datastacks'].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_datastack_info(self, datastack_name=None, use_stored=True):
         """Gets the info record for a datastack
@@ -364,7 +360,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             response = self.session.get(url)
             response.raise_for_status()
 
-            self.info_cache[datastack_name] = response.json()
+            self.info_cache[datastack_name] = handle_response(response)
 
         return self.info_cache.get(datastack_name, None)
 
@@ -383,8 +379,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['aligned_volumes'].format_map(endpoint_mapping)
         response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+        return handle_response(response)
 
     def get_aligned_volume_info(self, datastack_name: str = None, use_stored=True):
         """Gets the info record for a aligned_volume
@@ -418,9 +413,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             endpoint_mapping)
 
         response = self.session.get(url)
-        response.raise_for_status()
-
-        return response.json()
+        return handle_response(response)
 
     def local_server(self, datastack_name=None, use_stored=True):
         return self._get_property('local_server',

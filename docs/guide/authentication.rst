@@ -1,8 +1,8 @@
 Authentication Service
 ======================
 
-Going forward, we’re going to need authentication tokens for
-programmatic access to our services. The AuthClient handles storing and
+Authentication tokens are generally needed for programmatic access to
+our services. The AuthClient handles storing and
 loading your token or tokens and inserting it into requests in other
 clients.
 
@@ -16,19 +16,21 @@ time. Let’s see if you have a token already. Probably not.
     auth = client.auth
     print(f"My current token is: {auth.token}")
 
+.. _new-token:
+
 Getting a new token
 ^^^^^^^^^^^^^^^^^^^
 
-It is not yet possible to get a new token programmatically, but the
-function ``get_new_token()`` provides instructions for how to get and
-save it.
+To get a new token, you will need to manually aquire it. For convenience,
+the function ``get_new_token()`` provides instructions for how to get and
+save the token.
 
 By default, the token is saved to
 ``~/.cloudvolume/secrets/chunkedgraph-secret.json`` as a string under
-the key ``token``. The following steps will save a token there.
-
-*Note: I am not sure where the auth server is being hosted right now, so
-we are going to use a fake token for documentation purposes*
+the key ``token``. This makes it compatible by default with
+`Cloudvolume <https://github.com/seung-lab/cloud-volume>`_ projects, which
+can come in handy. The following steps will save a token to the default
+location.
 
 .. code:: python
 
@@ -36,9 +38,13 @@ we are going to use a fake token for documentation purposes*
 
 .. code:: python
 
-    new_token = 'fake_token_123'
+    new_token = 'abcdef1234567890' #This is the text you see after you visit the website.
     auth.save_token(token=new_token)
     print(f"My token is now: {auth.token}")
+
+Note that requesting a new token will invalidate your previous token on the
+same project. If you want to use the same token across different computers,
+you will need to share the same token information.
 
 Loading saved tokens
 ^^^^^^^^^^^^^^^^^^^^
