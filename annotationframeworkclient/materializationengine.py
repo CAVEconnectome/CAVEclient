@@ -167,7 +167,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self._verify)
         response.raise_for_status()
         return response.json()
 
@@ -187,7 +187,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self._verify)
         response.raise_for_status()
         return response.json()
 
@@ -217,7 +217,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self._verify)
         response.raise_for_status()
         return response.json()
 
@@ -294,6 +294,7 @@ class MaterializatonClientV2(ClientBase):
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
+            suffixes: (list[str], optional): suffixes to use on duplicate columns
             offset (int, optional): result offset to use. Defaults to None.
                 will only return top K results. 
             datastack_name (str, optional): datastack to query. 
@@ -329,7 +330,7 @@ class MaterializatonClientV2(ClientBase):
         if filter_in_dict is not None:
             data['filter_in_dict']={table:filter_in_dict}
         if filter_out_dict is not None:
-            data['filter_out_dict']={table:filter_out_dict}
+            data['filter_notin_dict']={table:filter_out_dict}
         if filter_equal_dict is not None:
             data['filter_equal_dict']={table:filter_equal_dict}
         if select_columns is not None:
@@ -355,6 +356,7 @@ class MaterializatonClientV2(ClientBase):
                    select_columns = None,
                    offset:int = None,
                    limit:int = None,
+                   suffixes:list = None,
                    datastack_name:str = None,
                    materialization_version:int = None):
         """generic query on materialization tables
@@ -379,6 +381,7 @@ class MaterializatonClientV2(ClientBase):
             offset (int, optional): result offset to use. Defaults to None.
                 will only return top K results. 
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
+            suffixes (list[str], optional): suffixes to use for duplicate columns same order as tables 
             datastack_name (str, optional): datastack to query. 
                 If None defaults to one specified in client. 
             materialization_version (int, optional): version to query. 
@@ -402,15 +405,17 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["join_query"].format_map(endpoint_mapping)
         
         if filter_in_dict is not None:
-            data['filter_in_dict']={filter_in_dict}
+            data['filter_in_dict']=filter_in_dict
         if filter_out_dict is not None:
-            data['filter_out_dict']={filter_out_dict}
+            data['filter_notin_dict']=filter_out_dict
         if filter_equal_dict is not None:
-            data['filter_equal_dict']={filter_equal_dict}
+            data['filter_equal_dict']=filter_equal_dict
         if select_columns is not None:
             data['select_columns']=select_columns
         if offset is not None:
             data['offset']=offset
+        if suffixes is not None:
+            data['suffixes']=suffixes
         if limit is not None:
             assert(limit>0)
             data['limit']=limit
