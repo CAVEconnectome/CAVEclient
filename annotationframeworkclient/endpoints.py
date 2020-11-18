@@ -113,16 +113,24 @@ chunkedgraph_api_versions = {0: chunkedgraph_endpoints_legacy,
 # -------------------------------
 # ------ EMAnnotationSchemas endpoints
 # -------------------------------
-
-schema_common = {}
+schema_common = "{emas_server_address}/schema"
+schema_endpoints_common = {
+     "get_api_versions": schema_common + "/versions",
+}
 
 schema_v1 = "{emas_server_address}/schema"
 schema_endpoints_v1 = {
     "schema": schema_v1 + "/type",
-    "schema_definition": schema_v1 + "/type/{schema_type}",
+    "schema_definition": schema_v1 + "/type/{schema_type}"
+}
+schema_v2 = "{emas_server_address}/schema/api/v2"
+schema_endpoints_v2 = {
+    "schema": schema_v2 + "/type",
+    "schema_definition": schema_v2 + "/type/{schema_type}"
 }
 
-schema_api_versions = {1: schema_endpoints_v1}
+schema_api_versions = {1: schema_endpoints_v1,
+                       2: schema_endpoints_v2}
 
 # -------------------------------
 # ------ StateServer endpoints
