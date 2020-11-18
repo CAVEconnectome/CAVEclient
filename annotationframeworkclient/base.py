@@ -8,7 +8,7 @@ class AuthException(Exception):
 
 def handle_response(response, as_json=True):
     '''Deal with potential errors in endpoint response and return json for default case'''
-    self.raise_for_status(response)
+    response.raise_for_status()
     _check_authorization_redirect(response)
     if as_json:
         return response.json()
