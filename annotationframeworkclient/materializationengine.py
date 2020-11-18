@@ -344,7 +344,7 @@ class MaterializatonClientV2(ClientBase):
                               headers={'Content-Type': 'application/json'},
                               verify=self._verify)
         self.raise_for_status(response)
-        return pa.deserialize(r.content)
+        return pa.deserialize(response.content)
 
     def join_query(self, 
                    tables,
