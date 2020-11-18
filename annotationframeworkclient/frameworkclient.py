@@ -4,6 +4,7 @@ from .chunkedgraph import ChunkedGraphClient
 from .emannotationschemas import SchemaClient
 from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
+from .materializationengine import MaterializationClient
 from .endpoints import default_global_server_address
 
 
@@ -225,6 +226,7 @@ class FrameworkClientFull(FrameworkClientGlobal):
 
         self._chunkedgraph = None
         self._annotation = None
+        self._materialize = None
 
         self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
@@ -237,6 +239,7 @@ class FrameworkClientFull(FrameworkClientGlobal):
         self._schema = None
         self._chunkedgraph = None
         self._annotation = None
+        self._materialize = None
 
     @property
     def datastack_name(self):
@@ -265,6 +268,14 @@ class FrameworkClientFull(FrameworkClientGlobal):
             )
         return self._annotation
 
+    @property
+    def materialize(self):
+        if self._materialize is None:
+            self._materialize = MaterializationClient(server_address=self.local_server,
+                                                      auth_client=self.auth,
+                                                      datastack_name=self._datastack_name)
+        return self._materialize
+        
     @property
     def state(self):
         if self._state is None:
