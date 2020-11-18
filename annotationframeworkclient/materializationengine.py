@@ -423,7 +423,7 @@ class MaterializatonClientV2(ClientBase):
                               headers={'Content-Type': 'application/json'},
                               verify=self._verify)
         self.raise_for_status(response)
-        return pa.deserialize(r.content)
+        return pa.deserialize(response.content)
 
 client_mapping = {2: MaterializatonClientV2,
                   'latest': MaterializatonClientV2}

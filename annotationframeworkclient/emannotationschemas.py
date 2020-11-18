@@ -61,5 +61,5 @@ class SchemaClientLegacy(ClientBase):
         return handle_response(response)
 
 
-client_mapping = {0: SchemaClientLegacy,
+client_mapping = {1: SchemaClientLegacy,
                   'latest': SchemaClientLegacy}
