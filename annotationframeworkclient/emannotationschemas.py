@@ -59,3 +59,7 @@ class SchemaClientLegacy(ClientBase):
         url = self._endpoints['schema_definition'].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
+
+
+client_mapping = {0: SchemaClientLegacy,
+                  'latest': SchemaClientLegacy}

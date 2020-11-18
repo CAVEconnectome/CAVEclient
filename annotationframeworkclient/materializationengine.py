@@ -106,7 +106,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self._verify)
-        self.raise_for_status(response)()
+        self.raise_for_status(response)
         return response.json()
 
 
@@ -137,7 +137,7 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url, verify=self._verify)
-        self.raise_for_status(response)()
+        self.raise_for_status(response)
         return response.json()
 
     def get_annotation_count(self, table_name:str,
@@ -168,7 +168,7 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
         response = self.session.get(url, verify=self._verify)
-        self.raise_for_status(response)()
+        self.raise_for_status(response)
         return response.json()
 
     def get_version_metadata(self, version:int=None, datastack_name:str=None):
@@ -188,7 +188,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self._verify)
-        self.raise_for_status(response)()
+        self.raise_for_status(response)
         return response.json()
 
     def get_table_metadata(self, table_name:str, datastack_name=None):
@@ -218,7 +218,7 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
         response = self.session.get(url, verify=self._verify)
-        self.raise_for_status(response)()
+        self.raise_for_status(response)
         return response.json()
 
     # def get_annotation(self, table_name, annotation_ids,
@@ -262,7 +262,7 @@ class MaterializatonClientV2(ClientBase):
     #         'annotation_ids': ",".join([str(a) for a in annotation_ids])
     #     }
     #     response = self.session.get(url, params=params)
-    #     self.raise_for_status(response)()
+    #     self.raise_for_status(response)
     #     return response.json()
 
     def query_table(self, 
