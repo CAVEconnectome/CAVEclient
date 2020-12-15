@@ -100,7 +100,7 @@ class ChunkedGraphClientV1(ClientBase):
         else:
             return timestamp
 
-    def get_roots(self, supervoxel_ids, timestamp=None):
+    def get_roots(self, supervoxel_ids, timestamp=None, level2=False):
         """Get the root id for a specified supervoxel
 
         Parameters
@@ -109,12 +109,17 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel ids values
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
+        level2 : bool, optional
+            If True, looks up level 2 ids only. Default is False.
 
         Returns
         -------
         np.array(np.uint64)
             Root IDs containing each supervoxel.
         """
+        if level2:
+            return self._get_level2_roots(supervoxel_ids, timestamp)
+
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['get_roots'].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
@@ -150,6 +155,31 @@ class ChunkedGraphClientV1(ClientBase):
         response = self.session.get(url, params=query_d)
         handle_response(response, as_json=False)
         return np.int64(response.json()['root_id'])
+
+    def _get_level2_roots(self, supervoxel_ids, timestamp=None):
+        """Get the root id for a specified supervoxel
+
+        Parameters
+        ----------
+        supervoxel_id : np.uint64
+            Supervoxel id value
+        timestamp : datetime.datetime, optional
+            UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
+
+        Returns
+        -------
+        np.uint64
+            Root ID containing the supervoxel.
+        """
+        endpoint_mapping = self.default_url_mapping
+
+        url = self._endpoints['handle_roots'].format_map(endpoint_mapping)
+        query_d = package_timestamp(self._process_timestamp(timestamp))
+        query_d['stop_layer'] = 2
+        data = {'node_ids': supervoxel_ids}
+        response = self.session.post(
+            url, data=json.dumps(data, cls=CGEncoder), params=query_d)
+        return handle_response(response, as_json=True).get('root_ids', None)
 
     def get_merge_log(self, root_id):
         """Get the merge log (splits and merges) for an object
