@@ -4,11 +4,12 @@ from .endpoints import materialization_api_versions, materialization_common
 from .infoservice import InfoServiceClientV2
 import requests
 import time
-import json 
+import json
 import numpy as np
 from datetime import date, datetime
 import pyarrow as pa
 SERVER_KEY = "me_server_address"
+
 
 class MEEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -19,6 +20,7 @@ class MEEncoder(json.JSONEncoder):
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
+
 
 def MaterializationClient(server_address,
                           datastack_name=None,
@@ -53,7 +55,7 @@ def MaterializationClient(server_address,
     auth_header = auth_client.request_header
     endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
                                             materialization_common, materialization_api_versions, auth_header)
-    
+
     MatClient = client_mapping[api_version]
     return MatClient(server_address, auth_header, api_version,
                      endpoints, SERVER_KEY, datastack_name,
@@ -65,14 +67,13 @@ class MaterializatonClientV2(ClientBase):
                  endpoints, server_name, datastack_name, version=None,
                  verify=True):
         super(MaterializatonClientV2, self).__init__(server_address,
-                                               auth_header, api_version, endpoints, server_name)
-                                         
+                                                     auth_header, api_version, endpoints, server_name)
+
         self._datastack_name = datastack_name
-        self._verify=verify
+        self._verify = verify
         if version is None:
             version = self.most_recent_version()
         self._version = version
-        
 
     @property
     def datastack_name(self):
@@ -81,7 +82,14 @@ class MaterializatonClientV2(ClientBase):
     @property
     def version(self):
         return self._version
-    
+
+    @version.setter
+    def version(self, x):
+        if int(x) in self.get_versions():
+            self._version = int(x)
+        else:
+            raise ValueError('Version not in materialized database')
+
     def most_recent_version(self, datastack_name=None):
         """get the most recent version of materialization 
         for this datastack name
@@ -109,7 +117,6 @@ class MaterializatonClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-
     def get_tables(self, datastack_name=None, version=None):
         """ Gets a list of table names for a datastack
 
@@ -132,7 +139,7 @@ class MaterializatonClientV2(ClientBase):
             version = self.version
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["version"]=version
+        endpoint_mapping["version"] = version
         # TODO fix up latest version
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
@@ -140,7 +147,7 @@ class MaterializatonClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    def get_annotation_count(self, table_name:str,
+    def get_annotation_count(self, table_name: str,
                              datastack_name=None,
                              version=None):
         """ Get number of annotations in a table
@@ -171,7 +178,7 @@ class MaterializatonClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    def get_version_metadata(self, version:int=None, datastack_name:str=None):
+    def get_version_metadata(self, version: int = None, datastack_name: str = None):
         """get metadata about a version
 
         Args:
@@ -182,7 +189,7 @@ class MaterializatonClientV2(ClientBase):
             datastack_name = self.datastack_name
         if version is None:
             version = self.version
-        
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
@@ -191,7 +198,26 @@ class MaterializatonClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    def get_table_metadata(self, table_name:str, datastack_name=None):
+    def get_timestamp(self, version: int = None, datastack_name: str = None):
+        """Get datetime.datetime timestamp for a materialization version.
+
+        Parameters
+        ----------
+        version : int or None, optional
+            Materialization version, by default None. If None, defaults to the value set in the client.
+        datastack_name : str or None, optional
+            Datastack name, by default None. If None, defaults to the value set in the client.
+
+        Returns
+        -------
+        datetime.datetime
+            Datetime when the materialization version was frozen.
+        """
+        meta = self.get_version_metadata(
+            version=version, datastack_name=datastack_name)
+        return datetime.strptime(meta['time_stamp'], '%Y-%m-%dT%H:%M:%S.%f')
+
+    def get_table_metadata(self, table_name: str, datastack_name=None):
         """ Get metadata about a table
 
         Parameters
@@ -265,18 +291,18 @@ class MaterializatonClientV2(ClientBase):
     #     self.raise_for_status(response)
     #     return response.json()
 
-    def query_table(self, 
-                    table:str,
+    def query_table(self,
+                    table: str,
                     filter_in_dict=None,
                     filter_out_dict=None,
                     filter_equal_dict=None,
                     filter_spatial=None,
                     join_args=None,
                     select_columns=None,
-                    offset:int = None,
-                    limit:int = None,
-                    datastack_name:str =None,
-                    materialization_version:int =None):
+                    offset: int = None,
+                    limit: int = None,
+                    datastack_name: str = None,
+                    materialization_version: int = None):
         """generic query on materialization tables
 
         Args:
@@ -315,50 +341,51 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["version"] = materialization_version
         data = {}
         query_args = {}
-        if type(table)==str:
-            tables=[table]
-        if len(tables)==1:
-            assert(type(tables[0])==str)
+        if type(table) == str:
+            tables = [table]
+        if len(tables) == 1:
+            assert(type(tables[0]) == str)
             endpoint_mapping["table_name"] = tables[0]
-            single_table=True
+            single_table = True
             url = self._endpoints["simple_query"].format_map(endpoint_mapping)
         else:
-            single_table=False
-            data['tables']=tables
+            single_table = False
+            data['tables'] = tables
             url = self._endpoints["join_query"].format_map(endpoint_mapping)
-        
+
         if filter_in_dict is not None:
-            data['filter_in_dict']={table:filter_in_dict}
+            data['filter_in_dict'] = {table: filter_in_dict}
         if filter_out_dict is not None:
-            data['filter_notin_dict']={table:filter_out_dict}
+            data['filter_notin_dict'] = {table: filter_out_dict}
         if filter_equal_dict is not None:
-            data['filter_equal_dict']={table:filter_equal_dict}
+            data['filter_equal_dict'] = {table: filter_equal_dict}
         if select_columns is not None:
-            data['select_columns']=select_columns
+            data['select_columns'] = select_columns
         if offset is not None:
-            data['offset']=offset
+            data['offset'] = offset
         if limit is not None:
-            assert(limit>0)
-            data['limit']=limit
-        response = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
-                              headers={'Content-Type': 'application/json'},
-                              verify=self._verify)
+            assert(limit > 0)
+            data['limit'] = limit
+        response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
+                                     headers={
+                                         'Content-Type': 'application/json'},
+                                     verify=self._verify)
         self.raise_for_status(response)
         return pa.deserialize(response.content)
 
-    def join_query(self, 
+    def join_query(self,
                    tables,
-                   filter_in_dict = None,
-                   filter_out_dict = None,
-                   filter_equal_dict = None,
-                   filter_spatial = None,
-                   join_args = None,
-                   select_columns = None,
-                   offset:int = None,
-                   limit:int = None,
-                   suffixes:list = None,
-                   datastack_name:str = None,
-                   materialization_version:int = None):
+                   filter_in_dict=None,
+                   filter_out_dict=None,
+                   filter_equal_dict=None,
+                   filter_spatial=None,
+                   join_args=None,
+                   select_columns=None,
+                   offset: int = None,
+                   limit: int = None,
+                   suffixes: list = None,
+                   datastack_name: str = None,
+                   materialization_version: int = None):
         """generic query on materialization tables
 
         Args:
@@ -389,7 +416,7 @@ class MaterializatonClientV2(ClientBase):
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
-        """  
+        """
         if materialization_version is None:
             materialization_version = self.version
         if datastack_name is None:
@@ -400,30 +427,32 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["version"] = materialization_version
         data = {}
         query_args = {}
-       
-        data['tables']=tables
+
+        data['tables'] = tables
         url = self._endpoints["join_query"].format_map(endpoint_mapping)
-        
+
         if filter_in_dict is not None:
-            data['filter_in_dict']=filter_in_dict
+            data['filter_in_dict'] = filter_in_dict
         if filter_out_dict is not None:
-            data['filter_notin_dict']=filter_out_dict
+            data['filter_notin_dict'] = filter_out_dict
         if filter_equal_dict is not None:
-            data['filter_equal_dict']=filter_equal_dict
+            data['filter_equal_dict'] = filter_equal_dict
         if select_columns is not None:
-            data['select_columns']=select_columns
+            data['select_columns'] = select_columns
         if offset is not None:
-            data['offset']=offset
+            data['offset'] = offset
         if suffixes is not None:
-            data['suffixes']=suffixes
+            data['suffixes'] = suffixes
         if limit is not None:
-            assert(limit>0)
-            data['limit']=limit
-        response = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
-                              headers={'Content-Type': 'application/json'},
-                              verify=self._verify)
+            assert(limit > 0)
+            data['limit'] = limit
+        response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
+                                     headers={
+                                         'Content-Type': 'application/json'},
+                                     verify=self._verify)
         self.raise_for_status(response)
         return pa.deserialize(response.content)
+
 
 client_mapping = {2: MaterializatonClientV2,
                   'latest': MaterializatonClientV2}
