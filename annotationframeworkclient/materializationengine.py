@@ -83,6 +83,13 @@ class MaterializatonClientV2(ClientBase):
     def version(self):
         return self._version
 
+    @version.setter
+    def version(self, x):
+        if int(x) in self.get_versions():
+            self._version = int(x)
+        else:
+            raise ValueError('Version not in materialized database')
+
     def most_recent_version(self, datastack_name=None):
         """get the most recent version of materialization 
         for this datastack name
@@ -349,7 +356,7 @@ class MaterializatonClientV2(ClientBase):
         if filter_in_dict is not None:
             data['filter_in_dict'] = {table: filter_in_dict}
         if filter_out_dict is not None:
-            data['filter_notin_dict']={table:filter_out_dict}
+            data['filter_notin_dict'] = {table: filter_out_dict}
         if filter_equal_dict is not None:
             data['filter_equal_dict'] = {table: filter_equal_dict}
         if select_columns is not None:
@@ -357,27 +364,28 @@ class MaterializatonClientV2(ClientBase):
         if offset is not None:
             data['offset'] = offset
         if limit is not None:
-            assert(limit>0)
-            data['limit']=limit
-        response = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
-                              headers={'Content-Type': 'application/json'},
-                              verify=self._verify)
+            assert(limit > 0)
+            data['limit'] = limit
+        response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
+                                     headers={
+                                         'Content-Type': 'application/json'},
+                                     verify=self._verify)
         self.raise_for_status(response)
         return pa.deserialize(response.content)
 
     def join_query(self,
                    tables,
-                   filter_in_dict = None,
-                   filter_out_dict = None,
-                   filter_equal_dict = None,
-                   filter_spatial = None,
-                   join_args = None,
-                   select_columns = None,
-                   offset:int = None,
-                   limit:int = None,
-                   suffixes:list = None,
-                   datastack_name:str = None,
-                   materialization_version:int = None):
+                   filter_in_dict=None,
+                   filter_out_dict=None,
+                   filter_equal_dict=None,
+                   filter_spatial=None,
+                   join_args=None,
+                   select_columns=None,
+                   offset: int = None,
+                   limit: int = None,
+                   suffixes: list = None,
+                   datastack_name: str = None,
+                   materialization_version: int = None):
         """generic query on materialization tables
 
         Args:
@@ -424,23 +432,24 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["join_query"].format_map(endpoint_mapping)
 
         if filter_in_dict is not None:
-            data['filter_in_dict']=filter_in_dict
+            data['filter_in_dict'] = filter_in_dict
         if filter_out_dict is not None:
-            data['filter_notin_dict']=filter_out_dict
+            data['filter_notin_dict'] = filter_out_dict
         if filter_equal_dict is not None:
-            data['filter_equal_dict']=filter_equal_dict
+            data['filter_equal_dict'] = filter_equal_dict
         if select_columns is not None:
             data['select_columns'] = select_columns
         if offset is not None:
-            data['offset']=offset
+            data['offset'] = offset
         if suffixes is not None:
-            data['suffixes']=suffixes
+            data['suffixes'] = suffixes
         if limit is not None:
-            assert(limit>0)
-            data['limit']=limit
-        response = self.session.post(url, data = json.dumps(data, cls=MEEncoder),
-                              headers={'Content-Type': 'application/json'},
-                              verify=self._verify)
+            assert(limit > 0)
+            data['limit'] = limit
+        response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
+                                     headers={
+                                         'Content-Type': 'application/json'},
+                                     verify=self._verify)
         self.raise_for_status(response)
         return pa.deserialize(response.content)
 

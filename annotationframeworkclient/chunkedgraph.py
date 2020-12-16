@@ -100,7 +100,7 @@ class ChunkedGraphClientV1(ClientBase):
         else:
             return timestamp
 
-    def get_roots(self, supervoxel_ids, timestamp=None, level2=False):
+    def get_roots(self, supervoxel_ids, timestamp=None, stop_level=None):
         """Get the root id for a specified supervoxel
 
         Parameters
@@ -109,16 +109,16 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel ids values
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
-        level2 : bool, optional
-            If True, looks up level 2 ids only. Default is False.
+        stop_level : int or None, optional
+            If True, looks up ids only up to a given stop level. Default is None.
 
         Returns
         -------
         np.array(np.uint64)
             Root IDs containing each supervoxel.
         """
-        if level2:
-            return self._get_level2_roots(supervoxel_ids, timestamp)
+        if stop_level is not None:
+            return self._get_level_roots(supervoxel_ids, stop_level=stop_level, timestamp=timestamp)
 
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['get_roots'].format_map(endpoint_mapping)
@@ -156,7 +156,7 @@ class ChunkedGraphClientV1(ClientBase):
         handle_response(response, as_json=False)
         return np.int64(response.json()['root_id'])
 
-    def _get_level2_roots(self, supervoxel_ids, timestamp=None):
+    def _get_level_roots(self, supervoxel_ids, stop_level, timestamp=None):
         """Get the root id for a specified supervoxel
 
         Parameters
@@ -175,7 +175,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         url = self._endpoints['handle_roots'].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
-        query_d['stop_layer'] = 2
+        query_d['stop_layer'] = stop_level
         data = {'node_ids': supervoxel_ids}
         response = self.session.post(
             url, data=json.dumps(data, cls=CGEncoder), params=query_d)
@@ -471,7 +471,7 @@ class ChunkedGraphClientLegacy(ClientBase):
             if self._default_timestamp is not None:
                 timestamp = self._default_timestamp
             else:
-                timestamp = datetime.utcnow()
+                timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['get_roots'].format_map(endpoint_mapping)
@@ -511,7 +511,7 @@ class ChunkedGraphClientLegacy(ClientBase):
             if self._default_timestamp is not None:
                 timestamp = self._default_timestamp
             else:
-                timestamp = datetime.utcnow()
+                timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['supervoxel_id'] = supervoxel_id
