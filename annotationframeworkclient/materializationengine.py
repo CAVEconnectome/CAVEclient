@@ -17,6 +17,8 @@ class MEEncoder(json.JSONEncoder):
             return obj.tolist()
         if isinstance(obj, np.uint64):
             return int(obj)
+        if isinstance(obj, np.int64):
+            return int(obj)
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
