@@ -24,6 +24,9 @@ class CGEncoder(json.JSONEncoder):
 
 
 def package_bounds(bounds):
+    if (bounds.shape != (3,2)):
+        raise ValueError('Bounds must be a 2x3 matrix (min,max) x (x,y,z) in chunkedgraph resolution voxel units')
+    
     bounds_str = []
     for b in bounds:
         bounds_str.append("-".join(str(b2) for b2 in b))
@@ -349,6 +352,23 @@ class ChunkedGraphClientV1(ClientBase):
         l2_path = np.array(resp_d['l2_path'])
 
         return centroids, l2_path, failed_l2_ids
+    
+    def get_subgraph(self, root_id, bounds):
+        """Get subgraph of root id within a bounding box
+
+        Args:
+            root_id ([type]): [description]
+            bounds ([type]): [description]
+        """
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping['root_id'] = root_id
+        url = self._endpoints['get_subgraph'].format_map(endpoint_mapping)
+        query_d = {}
+        if bounds is not None:
+            query_d['bounds'] = package_bounds(bounds)
+
+        response = self.session.get(url, params=query_d)
+        return np.int64(handle_response(response)['atomic_edges'])
 
     def level2_chunk_graph(self, root_id):
         """Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
