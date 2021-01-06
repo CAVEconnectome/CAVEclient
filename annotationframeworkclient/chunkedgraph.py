@@ -25,7 +25,7 @@ class CGEncoder(json.JSONEncoder):
 
 def package_bounds(bounds):
     if (bounds.shape != (3,2)):
-        raise ValueError('Bounds must be a 3x2 matrix (min,max) x (x,y,z) in chunkedgraph resolution voxel units')
+        raise ValueError('Bounds must be a 3x2 matrix (x,y,z) x (min,max) in chunkedgraph resolution voxel units')
     
     bounds_str = []
     for b in bounds:
@@ -358,7 +358,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         Args:
             root_id ([int64]): root (or seg_id/node_id) of chunkedgraph to query
-            bounds ([type]): boundsing
+            bounds ([np.array]): 3x2 bounding box (x,y,z)x (min,max) in chunkedgraph coordinates
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping['root_id'] = root_id
