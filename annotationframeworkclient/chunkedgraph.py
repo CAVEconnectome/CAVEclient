@@ -369,7 +369,7 @@ class ChunkedGraphClientV1(ClientBase):
         
         response = self.session.get(url, params=query_d)
         rd = handle_response(response)
-        return np.int64(rd['nodes']), np.double(rd['affinities']), np.double(rd['areas'])
+        return np.int64(rd['nodes']), np.double(rd['affinities']), np.int32(rd['areas'])
 
     def level2_chunk_graph(self, root_id):
         """Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
