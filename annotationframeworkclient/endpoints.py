@@ -1,5 +1,5 @@
 
-default_global_server_address = "https://authsl1.daf-apis.com"
+default_global_server_address = "https://globalv1.daf-apis.com"
 
 # -------------------------------
 # ------ AnnotationEngine endpoints
