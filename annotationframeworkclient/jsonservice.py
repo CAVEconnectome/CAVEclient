@@ -97,13 +97,19 @@ class JSONServiceV1(ClientBase):
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
-    def upload_state_json(self, json_state):
+    def upload_state_json(self, json_state, state_id=None, 
+                          timestamp=None):
         """Upload a Neuroglancer JSON state
 
         Parameters
         ----------
         json_state : dict
             JSON-formatted Neuroglancer state
+        state_id : int 
+            ID of a JSON state uploaded to the state service.
+            Using a state_id is an admin feature.
+        timestamp: time.time
+            Timestamp for json state date. Requires state_id.
 
         Returns
         -------
@@ -111,7 +117,14 @@ class JSONServiceV1(ClientBase):
             state_id of the uploaded JSON state
         """
         url_mapping = self.default_url_mapping
-        url = self._endpoints['upload_state'].format_map(url_mapping)
+
+        if state_id is None:
+            url = self._endpoints['upload_state'].format_map(url_mapping)
+        else:
+            url_mapping = self.default_url_mapping
+            url_mapping['state_id'] = state_id
+            url = self._endpoints['upload_state_w_id'].format_map(url_mapping)
+
         response = self.session.post(url, data=json.dumps(json_state))
         handle_response(response, as_json=False)
         response_re = re.search('.*\/(\d+)', str(response.content))

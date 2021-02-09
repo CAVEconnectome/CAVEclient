@@ -1,5 +1,5 @@
 
-default_global_server_address = "https://globalv1.daf-apis.com"
+default_global_server_address = "https://authsl1.daf-apis.com"
 
 # -------------------------------
 # ------ AnnotationEngine endpoints
@@ -142,6 +142,7 @@ jsonservice_common = {}
 json_v1 = "{json_server_address}/nglstate/api/v1"
 jsonservice_endpoints_v1 = {
     "upload_state": json_v1 + "/post",
+    "upload_state_w_id": json_v1 + "/post/{state_id}",
     "get_state": json_v1 + "/{state_id}",
     'get_state_raw': json_v1 + "/raw/{state_id}",
 }
