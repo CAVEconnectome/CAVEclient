@@ -303,8 +303,8 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         self.info_cache = dict()
         if datastack_name is not None:
             ds_info = self.get_datastack_info(datastack_name=datastack_name)
-            self._aligned_volume_name = ds_info['aligned_volume']['id']
-            self._aligned_volume_id = ds_info['aligned_volume']['name']
+            self._aligned_volume_name = ds_info['aligned_volume']['name']
+            self._aligned_volume_id = ds_info['aligned_volume']['id']
         else:
             self._aligned_volume_name = None
             self._aligned_volume_id = None
