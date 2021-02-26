@@ -73,10 +73,11 @@ class ClientBase(object):
                  api_version,
                  endpoints,
                  server_name,
+                 verify=True
                  ):
         self._server_address = server_address
         self._default_url_mapping = {server_name: self._server_address}
-
+        self.verify=verify
         self.session = requests.Session()
         head_val = auth_header.get('Authorization', None)
         if head_val is not None:
@@ -135,7 +136,8 @@ class ClientBaseWithDataset(ClientBase):
                  api_version,
                  endpoints,
                  server_name,
-                 dataset_name
+                 dataset_name,
+                 verify=True
                  ):
 
         super(ClientBaseWithDataset, self).__init__(server_address,
@@ -143,8 +145,10 @@ class ClientBaseWithDataset(ClientBase):
                                                     api_version,
                                                     endpoints,
                                                     server_name,
+                                                    verify=verify
                                                     )
         self._dataset_name = dataset_name
+
 
     @property
     def dataset_name(self):

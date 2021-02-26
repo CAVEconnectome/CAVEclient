@@ -26,7 +26,8 @@ def AnnotationClient(server_address,
                      dataset_name=None,
                      aligned_volume_name=None,
                      auth_client=None,
-                     api_version='latest'):
+                     api_version='latest',
+                     verify=True):
     """ Factory for returning AnnotationClient
     Parameters
     ----------
@@ -40,6 +41,8 @@ def AnnotationClient(server_address,
         What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
         2: new api version, (i.e. minniev1.microns-daf.com)
         'latest': default to the most recent (current 2)
+    verify : str (default : True)
+        whether to verify https
 
     Returns
     -------
@@ -57,18 +60,17 @@ def AnnotationClient(server_address,
     AnnoClient = client_mapping[api_version]
     if api_version > 1:
         return AnnoClient(server_address, auth_header, api_version,
-                          endpoints, SERVER_KEY, aligned_volume_name)
+                          endpoints, SERVER_KEY, aligned_volume_name, verify=verify)
     else:
         return AnnoClient(server_address, auth_header, api_version,
-                          endpoints, SERVER_KEY, dataset_name)
+                          endpoints, SERVER_KEY, dataset_name,  verify=verify)
 
 
 class AnnotationClientLegacy(ClientBaseWithDataset):
-    def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name):
+    def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name, verify=True):
         super(AnnotationClientLegacy, self).__init__(server_address,
                                                      auth_header, api_version, endpoints,
-                                                     server_name, dataset_name)
-
+                                                     server_name, dataset_name, verify=verify)
     def get_datasets(self):
         """ Gets a list of datasets
 
@@ -78,7 +80,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
             List of dataset names for available datasets on the annotation engine
         """
         url = self._endpoints["datasets"].format_map(self.default_url_mapping)
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self.verify)
         return handle_response(response)
 
     def get_tables(self, dataset_name=None):
@@ -100,7 +102,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         endpoint_mapping["dataset_name"] = dataset_name
         url = self._endpoints["table_names"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self.verify)
         return handle_response(response)
 
     def create_table(self, table_name, schema_name, dataset_name=None):
@@ -129,7 +131,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         url = self._endpoints["table_names"].format_map(endpoint_mapping)
         data = {"schema_name": schema_name, "table_name": table_name}
 
-        response = requests.post(url, json=data)
+        response = requests.post(url, json=data, verify=self.verify)
         return handle_response(response)
 
     def get_annotation(self, table_name, annotation_id, dataset_name=None):
@@ -159,7 +161,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
 
         url = self._endpoints["existing_annotation"].format_map(
             endpoint_mapping)
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self.verifys)
         return handle_response(response)
 
     def post_annotation(self, table_name, data, dataset_name=None):
@@ -192,15 +194,15 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         url = self._endpoints["new_annotation"].format_map(endpoint_mapping)
 
         response = self.session.post(url, data=json.dumps(data, cls=AEEncoder),
-                                     headers={'Content-Type': 'application/json'})
+                                     headers={'Content-Type': 'application/json'}, verify=self.verify)
         return handle_response(response)
 
 
 class AnnotationClientV2(ClientBase):
     def __init__(self, server_address, auth_header, api_version,
-                 endpoints, server_name, aligned_volume_name):
+                 endpoints, server_name, aligned_volume_name, verify=True):
         super(AnnotationClientV2, self).__init__(server_address,
-                                                 auth_header, api_version, endpoints, server_name)
+                                                 auth_header, api_version, endpoints, server_name, verify=verify)
 
         self._aligned_volume_name = aligned_volume_name
 
@@ -228,8 +230,8 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-
-        response = self.session.get(url)
+        print(url)
+        response = self.session.get(url, verify=self.verify)
         return handle_response(response)
 
     def get_annotation_count(self, table_name: str, aligned_volume_name=None):
@@ -257,7 +259,7 @@ class AnnotationClientV2(ClientBase):
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self.verify)
         return handle_response(response)
 
     def get_table_metadata(self, table_name: str, aligned_volume_name=None):
@@ -285,7 +287,7 @@ class AnnotationClientV2(ClientBase):
 
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
+        response = self.session.get(url, verify=self.verify)
         return handle_response(response)
 
     def delete_table(self, table_name: str, aligned_volume_name=None):
@@ -314,7 +316,7 @@ class AnnotationClientV2(ClientBase):
 
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
-        response = self.session.delete(url)
+        response = self.session.delete(url, verify=self.verify)
         return handle_response(response)
 
     def create_table(self, table_name, schema_name,
@@ -377,7 +379,7 @@ class AnnotationClientV2(ClientBase):
                 "table_name": table_name,
                 "metadata": metadata}
 
-        response = self.session.post(url, json=data)
+        response = self.session.post(url, json=data, verify=self.verify)
         return handle_response(response)
 
     def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
@@ -412,7 +414,7 @@ class AnnotationClientV2(ClientBase):
         params = {
             'annotation_ids': ",".join([str(a) for a in annotation_ids])
         }
-        response = self.session.get(url, params=params)
+        response = self.session.get(url, params=params, verify=self.verify)
         return handle_response(response)
 
     def post_annotation(self, table_name, data, aligned_volume_name=None):
@@ -453,7 +455,7 @@ class AnnotationClientV2(ClientBase):
         }
 
         response = self.session.post(url, data=json.dumps(data, cls=AEEncoder),
-                                     headers={'Content-Type': 'application/json'})
+                                     headers={'Content-Type': 'application/json'}, verify=self.verify)
         return handle_response(response)
 
     def update_annotation(self, table_name, data, aligned_volume_name=None):
@@ -496,7 +498,7 @@ class AnnotationClientV2(ClientBase):
             "annotations": data
         }
 
-        response = self.session.put(url, json=data)
+        response = self.session.put(url, json=data, verify=self.verify)
         return handle_response(response)
 
     def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
@@ -538,7 +540,7 @@ class AnnotationClientV2(ClientBase):
         }
 
         response = self.session.delete(url, data=json.dumps(data, cls=AEEncoder),
-                                       headers={'Content-Type': 'application/json'})
+                                       headers={'Content-Type': 'application/json'}, verify=self.verify)
         return handle_response(response)
 
 
