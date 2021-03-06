@@ -1,3 +1,5 @@
 numpy
 pyarrow>=2
 requests
+sqlalchemy
+pandas
