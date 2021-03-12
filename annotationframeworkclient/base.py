@@ -1,6 +1,6 @@
 import requests
 import json
-
+import logging
 
 class AuthException(Exception):
     pass
@@ -127,7 +127,9 @@ class ClientBase(object):
 
         if http_error_msg:
             raise requests.HTTPError(http_error_msg, response=r)
-
+        warning = r.headers.get('Warning')
+        if warning:
+            logging.warning(warning)
 
 class ClientBaseWithDataset(ClientBase):
     def __init__(self,
