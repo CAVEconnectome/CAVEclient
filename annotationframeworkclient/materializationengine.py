@@ -69,10 +69,10 @@ class MaterializatonClientV2(ClientBase):
                  endpoints, server_name, datastack_name, version=None,
                  verify=True):
         super(MaterializatonClientV2, self).__init__(server_address,
-                                                     auth_header, api_version, endpoints, server_name)
+                                                     auth_header, api_version, endpoints, server_name,
+                                                     verify=verify)
 
         self._datastack_name = datastack_name
-        self._verify = verify
         if version is None:
             version = self.most_recent_version()
         self._version = version
@@ -115,7 +115,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self._verify)
+        response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
 
@@ -145,7 +145,7 @@ class MaterializatonClientV2(ClientBase):
         # TODO fix up latest version
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self._verify)
+        response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
 
@@ -176,7 +176,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self._verify)
+        response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
 
@@ -196,7 +196,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self._verify)
+        response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
 
@@ -245,7 +245,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self._verify)
+        response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
 
@@ -371,7 +371,7 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json'},
-                                     verify=self._verify)
+                                     verify=self.verify)
         self.raise_for_status(response)
         return pa.deserialize(response.content)
 
@@ -451,7 +451,7 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json'},
-                                     verify=self._verify)
+                                     verify=self.verify)
         self.raise_for_status(response)
         return pa.deserialize(response.content)
 
