@@ -376,10 +376,14 @@ class MaterializatonClientV2(ClientBase):
             data['limit'] = limit
         query_args['return_pyarrow']=return_df
         query_args['expand_positions']=expand_positions
+        if ~return_df:
+            encoding = ''
+        else:
+            encoding = 'gzip'
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json',
-                                         'Accept-Encoding': 'gzip'},
+                                         'Accept-Encoding': encoding},
                                      params=query_args,
                                      stream=~return_df,
                                      verify=self.verify)                         
@@ -469,9 +473,14 @@ class MaterializatonClientV2(ClientBase):
         if limit is not None:
             assert(limit > 0)
             data['limit'] = limit
+        if ~return_df:
+            encoding = ''
+        else:
+            encoding = 'gzip'
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
-                                         'Content-Type': 'application/json'},
+                                         'Content-Type': 'application/json',
+                                         'Accept-Encoding': encoding},
                                      params=query_args,
                                      verify=self.verify)
         self.raise_for_status(response)
