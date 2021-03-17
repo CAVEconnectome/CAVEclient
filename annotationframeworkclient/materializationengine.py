@@ -305,7 +305,7 @@ class MaterializatonClientV2(ClientBase):
                     limit: int = None,
                     datastack_name: str = None,
                     return_df: bool = True,
-                    expand_positions: bool = True,
+                    split_positions: bool = False,
                     materialization_version: int = None):
         """generic query on materialization tables
 
@@ -331,8 +331,8 @@ class MaterializatonClientV2(ClientBase):
                 If None defaults to one specified in client. 
             return_df (bool, optional): whether to return as a dataframe
                 default True, if False, data is returned as json (slower)
-            expand_positions (bool, optional): whether to break position columns into x,y,z columns
-                default True, if False data is returned as [x,y,z] column (slower)
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query. 
                 If None defaults to one specified in client.
         Returns:
@@ -375,7 +375,7 @@ class MaterializatonClientV2(ClientBase):
             assert(limit > 0)
             data['limit'] = limit
         query_args['return_pyarrow']=return_df
-        query_args['expand_positions']=expand_positions
+        query_args['split_positions']=split_positions
         if ~return_df:
             encoding = ''
         else:
@@ -406,7 +406,7 @@ class MaterializatonClientV2(ClientBase):
                    suffixes: list = None,
                    datastack_name: str = None,
                    return_df: bool = True,
-                   expand_positions: bool =True,
+                   split_positions: bool =True,
                    materialization_version: int = None):
         """generic query on materialization tables
 
@@ -435,8 +435,8 @@ class MaterializatonClientV2(ClientBase):
                 If None defaults to one specified in client. 
             return_df (bool, optional): whether to return as a dataframe
                 default True, if False, data is returned as json (slower)
-            expand_positions (bool, optional): whether to break position columns into x,y,z columns
-                default True, if False data is returned as [x,y,z] column (slower)
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query. 
                 If None defaults to one specified in client.
         Returns:
@@ -454,7 +454,7 @@ class MaterializatonClientV2(ClientBase):
         data = {}
         query_args = {}
         query_args['return_pyarrow']=return_df
-        query_args['expand_positions']=expand_positions
+        query_args['split_positions']=split_positions
         data['tables'] = tables
         url = self._endpoints["join_query"].format_map(endpoint_mapping)
 
