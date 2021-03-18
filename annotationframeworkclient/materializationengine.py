@@ -8,8 +8,35 @@ import json
 import numpy as np
 from datetime import date, datetime
 import pyarrow as pa
+import itertools
 SERVER_KEY = "me_server_address"
 
+
+def concatenate_position_columns(df, inplace=False):
+    """function to take a dataframe with xyz position columns and replace them
+    with one column per position with an xyz numpy array.  Edits occur 
+
+    Args:
+        df (pd.DataFrame): dataframe to alter
+        inplace (bool): whether to perform edits in place
+
+    Returns:
+        pd.DataFrame: [description]
+    """
+    if inplace:
+        df2 = df
+    else:
+        df2 = df.copy()
+    grps=itertools.groupby(df2.columns, key=lambda x: x[:-2])
+    for base,g in grps:
+        gl = list(g)
+        t=''.join([k[-1:] for k in gl])
+        if t=='xyz':  
+            A=df2[gl].values
+            df2[base]=np.split( A, len(A) )
+            df2=df2.drop(gl,axis=1,inplace=inplace)
+
+    return df2
 
 class MEEncoder(json.JSONEncoder):
     def default(self, obj):
