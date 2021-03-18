@@ -8,8 +8,35 @@ import json
 import numpy as np
 from datetime import date, datetime
 import pyarrow as pa
+import itertools
 SERVER_KEY = "me_server_address"
 
+
+def concatenate_position_columns(df, inplace=False):
+    """function to take a dataframe with xyz position columns and replace them
+    with one column per position with an xyz numpy array.  Edits occur 
+
+    Args:
+        df (pd.DataFrame): dataframe to alter
+        inplace (bool): whether to perform edits in place
+
+    Returns:
+        pd.DataFrame: [description]
+    """
+    if inplace:
+        df2 = df
+    else:
+        df2 = df.copy()
+    grps=itertools.groupby(df2.columns, key=lambda x: x[:-2])
+    for base,g in grps:
+        gl = list(g)
+        t=''.join([k[-1:] for k in gl])
+        if t=='xyz':  
+            A=df2[gl].values
+            df2[base]=np.split( A, len(A) )
+            df2=df2.drop(gl,axis=1,inplace=inplace)
+
+    return df2
 
 class MEEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -304,6 +331,8 @@ class MaterializatonClientV2(ClientBase):
                     offset: int = None,
                     limit: int = None,
                     datastack_name: str = None,
+                    return_df: bool = True,
+                    split_positions: bool = False,
                     materialization_version: int = None):
         """generic query on materialization tables
 
@@ -327,6 +356,10 @@ class MaterializatonClientV2(ClientBase):
                 will only return top K results. 
             datastack_name (str, optional): datastack to query. 
                 If None defaults to one specified in client. 
+            return_df (bool, optional): whether to return as a dataframe
+                default True, if False, data is returned as json (slower)
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query. 
                 If None defaults to one specified in client.
         Returns:
@@ -348,10 +381,8 @@ class MaterializatonClientV2(ClientBase):
         if len(tables) == 1:
             assert(type(tables[0]) == str)
             endpoint_mapping["table_name"] = tables[0]
-            single_table = True
             url = self._endpoints["simple_query"].format_map(endpoint_mapping)
         else:
-            single_table = False
             data['tables'] = tables
             url = self._endpoints["join_query"].format_map(endpoint_mapping)
 
@@ -368,12 +399,25 @@ class MaterializatonClientV2(ClientBase):
         if limit is not None:
             assert(limit > 0)
             data['limit'] = limit
+        query_args['return_pyarrow']=return_df
+        query_args['split_positions']=split_positions
+        if return_df:
+            encoding = ''
+        else:
+            encoding = 'gzip'
+            
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
-                                         'Content-Type': 'application/json'},
-                                     verify=self.verify)
+                                         'Content-Type': 'application/json',
+                                         'Accept-Encoding': encoding},
+                                     params=query_args,
+                                     stream=~return_df,
+                                     verify=self.verify)                         
         self.raise_for_status(response)
-        return pa.deserialize(response.content)
+        if return_df:
+            return pa.deserialize(response.content)
+        else:
+            return response.json()
 
     def join_query(self,
                    tables,
@@ -387,6 +431,8 @@ class MaterializatonClientV2(ClientBase):
                    limit: int = None,
                    suffixes: list = None,
                    datastack_name: str = None,
+                   return_df: bool = True,
+                   split_positions: bool =False,
                    materialization_version: int = None):
         """generic query on materialization tables
 
@@ -413,6 +459,10 @@ class MaterializatonClientV2(ClientBase):
             suffixes (list[str], optional): suffixes to use for duplicate columns same order as tables 
             datastack_name (str, optional): datastack to query. 
                 If None defaults to one specified in client. 
+            return_df (bool, optional): whether to return as a dataframe
+                default True, if False, data is returned as json (slower)
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query. 
                 If None defaults to one specified in client.
         Returns:
@@ -429,7 +479,8 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["version"] = materialization_version
         data = {}
         query_args = {}
-
+        query_args['return_pyarrow']=return_df
+        query_args['split_positions']=split_positions
         data['tables'] = tables
         url = self._endpoints["join_query"].format_map(endpoint_mapping)
 
@@ -448,12 +499,21 @@ class MaterializatonClientV2(ClientBase):
         if limit is not None:
             assert(limit > 0)
             data['limit'] = limit
+        if return_df:
+            encoding = ''
+        else:
+            encoding = 'gzip'
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
-                                         'Content-Type': 'application/json'},
+                                         'Content-Type': 'application/json',
+                                         'Accept-Encoding': encoding},
+                                     params=query_args,
                                      verify=self.verify)
         self.raise_for_status(response)
-        return pa.deserialize(response.content)
+        if return_df:
+            return pa.deserialize(response.content)
+        else:
+            return response.json()
 
 
 client_mapping = {2: MaterializatonClientV2,
