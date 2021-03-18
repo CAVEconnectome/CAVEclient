@@ -406,7 +406,7 @@ class MaterializatonClientV2(ClientBase):
                    suffixes: list = None,
                    datastack_name: str = None,
                    return_df: bool = True,
-                   split_positions: bool =True,
+                   split_positions: bool =False,
                    materialization_version: int = None):
         """generic query on materialization tables
 
