@@ -381,10 +381,8 @@ class MaterializatonClientV2(ClientBase):
         if len(tables) == 1:
             assert(type(tables[0]) == str)
             endpoint_mapping["table_name"] = tables[0]
-            single_table = True
             url = self._endpoints["simple_query"].format_map(endpoint_mapping)
         else:
-            single_table = False
             data['tables'] = tables
             url = self._endpoints["join_query"].format_map(endpoint_mapping)
 
