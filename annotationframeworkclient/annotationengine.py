@@ -475,14 +475,16 @@ class AnnotationClientV2(ClientBase):
         if position_columns is None:
             position_columns = [c for c in df.columns if c.endswith('_position')]
         if isinstance(position_columns, (list, np.ndarray, pd.Index)):
-            position_columns = {c:c.rsplitr('_',1)[0] for c in position_columns}
+            position_columns = {c:c.rsplit('_',1)[0] for c in position_columns}
         if type(position_columns)!=dict:
             raise ValueError('position_columns must be a list, dict or None')
 
         data=df.to_dict(orient='records')
         for d in data:
-            for k,v in position_columns:
-                d[k]={'position':v}
+            for k,v in position_columns.items():
+                pos = d.pop(k)
+                d[v]={'position':pos}
+        print(data)
         return data
 
     def post_annotation_df(self, table_name: str, df: pd.DataFrame,
