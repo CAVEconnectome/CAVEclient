@@ -484,7 +484,6 @@ class AnnotationClientV2(ClientBase):
             for k,v in position_columns.items():
                 pos = d.pop(k)
                 d[v]={'position':pos}
-        print(data)
         return data
 
     def post_annotation_df(self, table_name: str, df: pd.DataFrame,
