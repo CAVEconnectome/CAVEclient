@@ -105,8 +105,7 @@ chunkedgraph_endpoints_v1 = {
     'lvl2_graph': pcg_v1 + "/table/{table_id}/node/{root_id}/lvl2_graph",
     'remesh_level2_chunks': pcg_meshing_v1 + "/table/{table_id}/remeshing",
     'get_subgraph': pcg_v1 + "/table/{table_id}/node/{root_id}/subgraph",
-    'operation_details': pcg_v1 + "/table/{table_id}/operation_details",
-    'undo': pcg_v1 + "/table/{table_id}/undo",
+    'operation_details': pcg_v1 + "/table/{table_id}/operation_details"
 }
 
 chunkedgraph_api_versions = {0: chunkedgraph_endpoints_legacy,

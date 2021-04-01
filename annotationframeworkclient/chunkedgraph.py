@@ -429,23 +429,6 @@ class ChunkedGraphClientV1(ClientBase):
         r.raise_for_status()
         return r.json()
 
-    def undo(self, operation_id:int):
-        """execute an undo of a specific operation
-
-        Args:
-            operation_id (int): operation_id to undo
-        """
-        endpoint_mapping = self.default_url_mapping
-        url = self._endpoints['undo'].format_map(
-            endpoint_mapping)
-        data = {
-            'operation_id': operation_id
-        }
-        r = self.session.post(url, data=data)
-        r.raise_for_status()
-        return r.json()
-        
-
     @property
     def cloudvolume_path(self):
         return self._endpoints['cloudvolume_path'].format_map(self.default_url_mapping)
