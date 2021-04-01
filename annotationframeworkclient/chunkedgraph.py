@@ -8,6 +8,9 @@ from . import infoservice
 from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common, default_global_server_address
 from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
+from typing import Iterable
+from urllib.parse import urlencode
+
 
 SERVER_KEY = 'cg_server_address'
 
@@ -405,6 +408,43 @@ class ChunkedGraphClientV1(ClientBase):
         data = {'new_lvl2_ids': [int(x) for x in chunk_ids]}
         r = self.session.post(url, json=data)
         r.raise_for_status()
+
+    def get_operation_details(self, operation_ids: Iterable[int]):
+        """get the details of a list of operations
+
+        Args:
+            operation_ids (Iterable[int]): list of operation IDss
+
+        Returns:
+            dict: a dict of dictss of operation info, keys are operationids
+            values are a dictionary of operation info for the operation
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['operation_details'].format_map(
+            endpoint_mapping)
+        query_d = {'operation_ids':operation_ids}
+        query_str = urlencode(query_d)
+        url = url + "?" + query_str
+        r = self.session.get(url)
+        r.raise_for_status()
+        return r.json()
+
+    def undo(self, operation_id:int):
+        """execute an undo of a specific operation
+
+        Args:
+            operation_id (int): operation_id to undo
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['undo'].format_map(
+            endpoint_mapping)
+        data = {
+            'operation_id': operation_id
+        }
+        r = self.session.post(url, data=data)
+        r.raise_for_status()
+        return r.json()
+        
 
     @property
     def cloudvolume_path(self):
