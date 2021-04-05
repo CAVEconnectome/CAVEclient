@@ -448,7 +448,7 @@ class ChunkedGraphClientV1(ClientBase):
         Returns
         -------
         dict
-            Dictionary with keys describing the lineage graph and operations for the root id.
+            Dictionary describing the lineage graph and operations for the root id.
         """
 
         endpoint_mapping = self.default_url_mapping
