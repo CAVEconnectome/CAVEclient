@@ -32,8 +32,7 @@ def concatenate_position_columns(df, inplace=False):
         gl = list(g)
         t=''.join([k[-1:] for k in gl])
         if t=='xyz':  
-            A=df2[gl].values
-            df2[base]=np.split( A, len(A) )
+            df2[base]=[np.array(x) for x in df2[gl].values.tolist()]
             df2=df2.drop(gl,axis=1,inplace=inplace)
 
     return df2
