@@ -12,6 +12,9 @@ from .endpoints import (
 )
 from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
+from typing import Iterable
+from urllib.parse import urlencode
+
 
 SERVER_KEY = "cg_server_address"
 
@@ -433,6 +436,25 @@ class ChunkedGraphClientV1(ClientBase):
         r = self.session.post(url, json=data)
         r.raise_for_status()
 
+    def get_operation_details(self, operation_ids: Iterable[int]):
+        """get the details of a list of operations
+
+        Args:
+            operation_ids (Iterable[int]): list of operation IDss
+
+        Returns:
+            dict: a dict of dictss of operation info, keys are operationids
+            values are a dictionary of operation info for the operation
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints['operation_details'].format_map(
+            endpoint_mapping)
+        query_d = {'operation_ids':operation_ids}
+        query_str = urlencode(query_d)
+        url = url + "?" + query_str
+        r = self.session.get(url)
+        r.raise_for_status()
+        return r.json()
     def get_lineage_graph(self, root_id, timestamp_past=None, timestamp_future=None):
         """Returns the lineage graph for a root id, optionally cut off in the past or the future.
 

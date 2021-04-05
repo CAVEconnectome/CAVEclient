@@ -112,6 +112,7 @@ chunkedgraph_endpoints_v1 = {
     "get_subgraph": pcg_v1 + "/table/{table_id}/node/{root_id}/subgraph",
     "handle_lineage_graph": pcg_v1 + "/table/{table_id}/root/{root_id}/lineage_graph",
     "past_id_mapping": pcg_v1 + "/table/{table_id}/past_id_mapping",
+    "operation_details": pcg_v1 + "/table/{table_id}/operation_details"
 }
 
 chunkedgraph_api_versions = {
