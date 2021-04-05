@@ -5,14 +5,18 @@ import time
 import json
 from . import endpoints
 from . import infoservice
-from .endpoints import chunkedgraph_api_versions, chunkedgraph_endpoints_common, default_global_server_address
+from .endpoints import (
+    chunkedgraph_api_versions,
+    chunkedgraph_endpoints_common,
+    default_global_server_address,
+)
 from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
 from typing import Iterable
 from urllib.parse import urlencode
 
 
-SERVER_KEY = 'cg_server_address'
+SERVER_KEY = "cg_server_address"
 
 
 class CGEncoder(json.JSONEncoder):
@@ -27,9 +31,11 @@ class CGEncoder(json.JSONEncoder):
 
 
 def package_bounds(bounds):
-    if (bounds.shape != (3,2)):
-        raise ValueError('Bounds must be a 3x2 matrix (x,y,z) x (min,max) in chunkedgraph resolution voxel units')
-    
+    if bounds.shape != (3, 2):
+        raise ValueError(
+            "Bounds must be a 3x2 matrix (x,y,z) x (min,max) in chunkedgraph resolution voxel units"
+        )
+
     bounds_str = []
     for b in bounds:
         bounds_str.append("-".join(str(b2) for b2 in b))
@@ -41,16 +47,17 @@ def package_timestamp(timestamp):
     if timestamp is None:
         query_d = None
     else:
-        query_d = {'timestamp': time.mktime(timestamp.timetuple())}
+        query_d = {"timestamp": time.mktime(timestamp.timetuple())}
     return query_d
 
 
-def ChunkedGraphClient(server_address=None,
-                       table_name=None,
-                       auth_client=None,
-                       api_version='latest',
-                       timestamp=None
-                       ):
+def ChunkedGraphClient(
+    server_address=None,
+    table_name=None,
+    auth_client=None,
+    api_version="latest",
+    timestamp=None,
+):
     if server_address is None:
         server_address = default_global_server_address
 
@@ -59,30 +66,44 @@ def ChunkedGraphClient(server_address=None,
 
     auth_header = auth_client.request_header
 
-    endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
-                                            chunkedgraph_endpoints_common, chunkedgraph_api_versions, auth_header)
+    endpoints, api_version = _api_endpoints(
+        api_version,
+        SERVER_KEY,
+        server_address,
+        chunkedgraph_endpoints_common,
+        chunkedgraph_api_versions,
+        auth_header,
+    )
 
     ChunkedClient = client_mapping[api_version]
-    return ChunkedClient(server_address,
-                         auth_header,
-                         api_version,
-                         endpoints,
-                         SERVER_KEY,
-                         timestamp=timestamp,
-                         table_name=table_name)
+    return ChunkedClient(
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        SERVER_KEY,
+        timestamp=timestamp,
+        table_name=table_name,
+    )
 
 
 class ChunkedGraphClientV1(ClientBase):
-    """ ChunkedGraph Client for the v1 API
-    """
+    """ChunkedGraph Client for the v1 API"""
 
-    def __init__(self, server_address, auth_header, api_version, endpoints, server_key=SERVER_KEY, timestamp=None, table_name=None):
-        super(ChunkedGraphClientV1, self).__init__(server_address,
-                                                   auth_header,
-                                                   api_version,
-                                                   endpoints,
-                                                   server_key)
-        self._default_url_mapping['table_id'] = table_name
+    def __init__(
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_key=SERVER_KEY,
+        timestamp=None,
+        table_name=None,
+    ):
+        super(ChunkedGraphClientV1, self).__init__(
+            server_address, auth_header, api_version, endpoints, server_key
+        )
+        self._default_url_mapping["table_id"] = table_name
         self._default_timestamp = timestamp
         self._table_name = table_name
         self._segmentation_info = None
@@ -96,8 +117,7 @@ class ChunkedGraphClientV1(ClientBase):
         return self._table_name
 
     def _process_timestamp(self, timestamp):
-        """Process timestamp with default logic
-        """
+        """Process timestamp with default logic"""
         if timestamp is None:
             if self._default_timestamp is not None:
                 return self._default_timestamp
@@ -124,10 +144,12 @@ class ChunkedGraphClientV1(ClientBase):
             Root IDs containing each supervoxel.
         """
         if stop_level is not None:
-            return self._get_level_roots(supervoxel_ids, stop_level=stop_level, timestamp=timestamp)
+            return self._get_level_roots(
+                supervoxel_ids, stop_level=stop_level, timestamp=timestamp
+            )
 
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints['get_roots'].format_map(endpoint_mapping)
+        url = self._endpoints["get_roots"].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
 
@@ -151,16 +173,16 @@ class ChunkedGraphClientV1(ClientBase):
             Root ID containing the supervoxel.
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['supervoxel_id'] = supervoxel_id
+        endpoint_mapping["supervoxel_id"] = supervoxel_id
 
-        url = self._endpoints['handle_root'].format_map(endpoint_mapping)
+        url = self._endpoints["handle_root"].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
         if level2:
-            query_d['stop_layer'] = 2
+            query_d["stop_layer"] = 2
 
         response = self.session.get(url, params=query_d)
         handle_response(response, as_json=False)
-        return np.int64(response.json()['root_id'])
+        return np.int64(response.json()["root_id"])
 
     def _get_level_roots(self, supervoxel_ids, stop_level, timestamp=None):
         """Get the root id for a specified supervoxel
@@ -179,13 +201,14 @@ class ChunkedGraphClientV1(ClientBase):
         """
         endpoint_mapping = self.default_url_mapping
 
-        url = self._endpoints['handle_roots'].format_map(endpoint_mapping)
+        url = self._endpoints["handle_roots"].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
-        query_d['stop_layer'] = stop_level
-        data = {'node_ids': supervoxel_ids}
+        query_d["stop_layer"] = stop_level
+        data = {"node_ids": supervoxel_ids}
         response = self.session.post(
-            url, data=json.dumps(data, cls=CGEncoder), params=query_d)
-        return handle_response(response, as_json=True).get('root_ids', None)
+            url, data=json.dumps(data, cls=CGEncoder), params=query_d
+        )
+        return handle_response(response, as_json=True).get("root_ids", None)
 
     def get_merge_log(self, root_id):
         """Get the merge log (splits and merges) for an object
@@ -201,13 +224,13 @@ class ChunkedGraphClientV1(ClientBase):
             List of merge events in the history of the object.
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['merge_log'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["merge_log"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_change_log(self, root_id):
+    def get_change_log(self, root_id, filtered=True):
         """Get the change log (splits and merges) for an object
 
         Parameters
@@ -221,9 +244,10 @@ class ChunkedGraphClientV1(ClientBase):
             List of split and merge events in the object history
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['change_log'].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["change_log"].format_map(endpoint_mapping)
+        params = {"filtered": filtered}
+        response = self.session.get(url, params=params)
         return handle_response(response)
 
     def get_leaves(self, root_id, bounds=None):
@@ -243,15 +267,15 @@ class ChunkedGraphClientV1(ClientBase):
             List of supervoxel ids
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['leaves_from_root'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["leaves_from_root"].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
-            query_d['bounds'] = package_bounds(bounds)
+            query_d["bounds"] = package_bounds(bounds)
 
         response = self.session.get(url, params=query_d)
         handle_response(response, as_json=False)
-        return np.int64(response.json()['leaf_ids'])
+        return np.int64(response.json()["leaf_ids"])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
         """Perform a merge on the chunkeded graph
@@ -262,16 +286,19 @@ class ChunkedGraphClientV1(ClientBase):
             resolution (tuple, optional): what to multiple the coords by to get nm. Defaults to (4,4,40).
         """
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints['do_merge'].format_map(endpoint_mapping)
+        url = self._endpoints["do_merge"].format_map(endpoint_mapping)
 
         data = []
         for svid, coor in zip(supervoxels, coords):
-            row = np.concatenate([[svid], np.array(coor)*resolution])
+            row = np.concatenate([[svid], np.array(coor) * resolution])
             data.append(row)
         params = {"priority": False}
-        response = self.session.post(url, data=json.dumps(data, cls=CGEncoder),
-                                     params=params,
-                                     headers={'Content-Type': 'application/json'})
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=CGEncoder),
+            params=params,
+            headers={"Content-Type": "application/json"},
+        )
         handle_response(response)
 
     def get_children(self, node_id):
@@ -288,8 +315,8 @@ class ChunkedGraphClientV1(ClientBase):
             List of np.uint64 ids of child nodes.
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['node_id'] = node_id
-        url = self._endpoints['handle_children'].format_map(endpoint_mapping)
+        endpoint_mapping["node_id"] = node_id
+        url = self._endpoints["handle_children"].format_map(endpoint_mapping)
 
         response = self.session.post(url)
         handle_response(response, as_json=False)
@@ -312,12 +339,12 @@ class ChunkedGraphClientV1(ClientBase):
             Dict relating ids to contacts
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['contact_sites'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["contact_sites"].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
-            query_d['bounds'] = package_bounds(bounds)
-        query_d['partners'] = calc_partners
+            query_d["bounds"] = package_bounds(bounds)
+        query_d["partners"] = calc_partners
         response = self.session.post(url, json=[root_id], params=query_d)
         contact_d = handle_response(response)
         return {int(k): v for k, v in contact_d.items()}
@@ -337,25 +364,26 @@ class ChunkedGraphClientV1(ClientBase):
             failed_l2_ids: failed_l2_ids
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['find_path'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["find_path"].format_map(endpoint_mapping)
         query_d = {}
-        query_d['precision_mode'] = precision_mode
+        query_d["precision_mode"] = precision_mode
 
-        nodes = [[root_id] + src_pt.tolist(),
-                 [root_id] + dst_pt.tolist()]
+        nodes = [[root_id] + src_pt.tolist(), [root_id] + dst_pt.tolist()]
 
-        response = self.session.post(url,
-                                     data=json.dumps(nodes, cls=CGEncoder),
-                                     params=query_d,
-                                     headers={'Content-Type': 'application/json'})
+        response = self.session.post(
+            url,
+            data=json.dumps(nodes, cls=CGEncoder),
+            params=query_d,
+            headers={"Content-Type": "application/json"},
+        )
         resp_d = handle_response(response)
-        centroids = np.array(resp_d['centroids_list'])
-        failed_l2_ids = np.array(resp_d['failed_l2_ids'], dtype=np.uint64)
-        l2_path = np.array(resp_d['l2_path'])
+        centroids = np.array(resp_d["centroids_list"])
+        failed_l2_ids = np.array(resp_d["failed_l2_ids"], dtype=np.uint64)
+        l2_path = np.array(resp_d["l2_path"])
 
         return centroids, l2_path, failed_l2_ids
-    
+
     def get_subgraph(self, root_id, bounds):
         """Get subgraph of root id within a bounding box
 
@@ -364,15 +392,15 @@ class ChunkedGraphClientV1(ClientBase):
             bounds ([np.array]): 3x2 bounding box (x,y,z)x (min,max) in chunkedgraph coordinates
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['get_subgraph'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["get_subgraph"].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
-            query_d['bounds'] = package_bounds(bounds)
-        
+            query_d["bounds"] = package_bounds(bounds)
+
         response = self.session.get(url, params=query_d)
         rd = handle_response(response)
-        return np.int64(rd['nodes']), np.double(rd['affinities']), np.int32(rd['areas'])
+        return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
     def level2_chunk_graph(self, root_id):
         """Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
@@ -388,10 +416,10 @@ class ChunkedGraphClientV1(ClientBase):
             Edge array of level 2 ids
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['lvl2_graph'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
         r = handle_response(self.session.get(url))
-        return r['edge_graph']
+        return r["edge_graph"]
 
     def remesh_level2_chunks(self, chunk_ids):
         """Submit specific level 2 chunks to be remeshed in case of a problem.
@@ -403,9 +431,8 @@ class ChunkedGraphClientV1(ClientBase):
         """
 
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints['remesh_level2_chunks'].format_map(
-            endpoint_mapping)
-        data = {'new_lvl2_ids': [int(x) for x in chunk_ids]}
+        url = self._endpoints["remesh_level2_chunks"].format_map(endpoint_mapping)
+        data = {"new_lvl2_ids": [int(x) for x in chunk_ids]}
         r = self.session.post(url, json=data)
         r.raise_for_status()
 
@@ -428,17 +455,90 @@ class ChunkedGraphClientV1(ClientBase):
         r = self.session.get(url)
         r.raise_for_status()
         return r.json()
+    def get_lineage_graph(self, root_id, timestamp_past=None, timestamp_future=None):
+        """Returns the lineage graph for a root id, optionally cut off in the past or the future.
+
+        Parameters
+        ----------
+        root_id : int
+            Object root id
+        timestamp_past : datetime.datetime or None, optional
+            Cutoff for the lineage graph backwards in time. By default, None.
+        timestamp_future : datetime.datetime or None, optional
+            Cutoff for the lineage graph going forwards in time. By default, None.
+
+        Returns
+        -------
+        dict
+            Dictionary describing the lineage graph and operations for the root id.
+        """
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["root_id"] = root_id
+
+        data = {}
+        if timestamp_past is not None:
+            data["timestamp_past"] = time.mktime(timestamp_past.timetuple())
+        if timestamp_future is not None:
+            data["timestamp_future"] = time.mktime(timestamp_future.timetuple())
+
+        url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
+        r = handle_response(self.session.get(url, params=data))
+        return r
+
+    def get_past_ids(self, root_ids, timestamp_past=None, timestamp_future=None):
+        """For a set of root ids, get the list of ids at a past or future time point that could contain parts of the same object.
+
+        Parameters
+        ----------
+        root_ids: Iterable,
+            Iterable of seed root ids.
+        timestamp_past : datetime.datetime or None, optional
+            Time of a point in the past for which to look up root ids. Default is None.
+        timestamp_future : datetime.datetime or None, optional
+            Time of a poitn in the future for which to look up root ids. Not implemented on the server currently. Default is None.
+
+        Returns
+        -------
+        dict
+            Dict with keys `future_id_map` and `past_id_map`. Each is a dict whose keys are the supplied root ids and whose values
+            are the list of related root ids at the past/future time stamp.
+        """
+        endpoint_mapping = self.default_url_mapping
+
+        params = {}
+        if timestamp_past is not None:
+            params["timestamp_past"] = time.mktime(timestamp_past.timetuple())
+        if timestamp_future is not None:
+            params["timestamp_future"] = time.mktime(timestamp_future.timetuple())
+
+        data = {"root_ids": np.array(root_ids, dtype=np.uint64)}
+        url = self._endpoints["past_id_mapping"].format_map(endpoint_mapping)
+        r = handle_response(
+            self.session.get(url, data=json.dumps(data, cls=CGEncoder), params=params)
+        )
+
+        # Convert id keys as strings to ints
+        past_keys = list(r["past_id_map"].keys())
+        for k in past_keys:
+            dat = r["past_id_map"].pop(k)
+            r["past_id_map"][int(k)] = dat
+
+        fut_keys = list(r["future_id_map"].keys())
+        for k in fut_keys:
+            dat = r["future_id_map"].pop(k)
+            r["future_id_map"][int(k)] = dat
+        return r
 
     @property
     def cloudvolume_path(self):
-        return self._endpoints['cloudvolume_path'].format_map(self.default_url_mapping)
+        return self._endpoints["cloudvolume_path"].format_map(self.default_url_mapping)
 
     @property
     def segmentation_info(self):
-        """Complete segmentation metadata
-        """
+        """Complete segmentation metadata"""
         if self._segmentation_info is None:
-            url = self._endpoints['info'].format_map(self.default_url_mapping)
+            url = self._endpoints["info"].format_map(self.default_url_mapping)
             response = self.session.get(url)
             self._segmentation_info = handle_response(response)
         return self._segmentation_info
@@ -452,7 +552,7 @@ class ChunkedGraphClientV1(ClientBase):
         list
             3-long list of x/y/z voxel dimensions in nm
         """
-        return self.segmentation_info['scales'][0].get('resolution')
+        return self.segmentation_info["scales"][0].get("resolution")
 
 
 class ChunkedGraphClientLegacy(ClientBase):
@@ -470,29 +570,29 @@ class ChunkedGraphClientLegacy(ClientBase):
         Default UTC timestamp to use for chunkedgraph queries.
     """
 
-    def __init__(self,
-                 server_address,
-                 auth_header,
-                 api_version,
-                 endpoints,
-                 server_key=SERVER_KEY,
-                 timestamp=None,
-                 table_name=None):
-        super(ChunkedGraphClientLegacy, self).__init__(server_address,
-                                                       auth_header,
-                                                       api_version,
-                                                       endpoints,
-                                                       server_key)
+    def __init__(
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_key=SERVER_KEY,
+        timestamp=None,
+        table_name=None,
+    ):
+        super(ChunkedGraphClientLegacy, self).__init__(
+            server_address, auth_header, api_version, endpoints, server_key
+        )
 
-        self._default_url_mapping['table_id'] = table_name
+        self._default_url_mapping["table_id"] = table_name
         self._default_timestamp = timestamp
         self._table_name = table_name
 
-    @ property
+    @property
     def default_url_mapping(self):
         return self._default_url_mapping.copy()
 
-    @ property
+    @property
     def table_name(self):
         return self._table_name
 
@@ -518,14 +618,12 @@ class ChunkedGraphClientLegacy(ClientBase):
                 timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints['get_roots'].format_map(endpoint_mapping)
+        url = self._endpoints["get_roots"].format_map(endpoint_mapping)
 
         if timestamp is None:
             timestamp = self._default_timestamp
         if timestamp is not None:
-            query_d = {
-                'timestamp': time.mktime(timestamp.timetuple())
-            }
+            query_d = {"timestamp": time.mktime(timestamp.timetuple())}
         else:
             query_d = None
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
@@ -558,20 +656,20 @@ class ChunkedGraphClientLegacy(ClientBase):
                 timestamp = datetime.datetime.utcnow()
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['supervoxel_id'] = supervoxel_id
-        url = self._endpoints['handle_root'].format_map(endpoint_mapping)
+        endpoint_mapping["supervoxel_id"] = supervoxel_id
+        url = self._endpoints["handle_root"].format_map(endpoint_mapping)
 
         if timestamp is None:
             timestamp = self._default_timestamp
 
         query_d = {}
         if timestamp is not None:
-            query_d['timestamp'] = time.mktime(timestamp.timetuple())
+            query_d["timestamp"] = time.mktime(timestamp.timetuple())
         if level2:
-            query_d['stop_layer'] = 2
+            query_d["stop_layer"] = 2
 
         response = self.session.get(url, params=query_d)
-        return np.int64(handle_response(response)['root_id'])
+        return np.int64(handle_response(response)["root_id"])
 
     def get_merge_log(self, root_id):
         """Returns the merge log for a given object
@@ -587,8 +685,8 @@ class ChunkedGraphClientLegacy(ClientBase):
             List of merge events in the history of the object.
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['merge_log'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["merge_log"].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
         return handle_response(response)
 
@@ -606,8 +704,8 @@ class ChunkedGraphClientLegacy(ClientBase):
             List of split and merge events in the object history
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['change_log'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["change_log"].format_map(endpoint_mapping)
         response = self.session.post(url, json=[root_id])
         return handle_response(response)
 
@@ -628,14 +726,14 @@ class ChunkedGraphClientLegacy(ClientBase):
             List of supervoxel ids
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['leaves_from_root'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["leaves_from_root"].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
-            query_d['bounds'] = package_bounds(bounds)
+            query_d["bounds"] = package_bounds(bounds)
 
         response = self.session.get(url, params=query_d)
-        return np.int64(handle_response(response)['leaf_ids'])
+        return np.int64(handle_response(response)["leaf_ids"])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
         """Perform a merge on the chunkeded graph
@@ -646,16 +744,19 @@ class ChunkedGraphClientLegacy(ClientBase):
             resolution (tuple, optional): what to multiple the coords by to get nm. Defaults to (4,4,40).
         """
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints['do_merge'].format_map(endpoint_mapping)
+        url = self._endpoints["do_merge"].format_map(endpoint_mapping)
 
         data = []
         for svid, coor in zip(supervoxels, coords):
-            row = np.concatenate([[svid], np.array(coor)*resolution])
+            row = np.concatenate([[svid], np.array(coor) * resolution])
             data.append(row)
         params = {"priority": False}
-        response = self.session.post(url, data=json.dumps(data, cls=CGEncoder),
-                                     params=params,
-                                     headers={'Content-Type': 'application/json'})
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=CGEncoder),
+            params=params,
+            headers={"Content-Type": "application/json"},
+        )
         return handle_response(response)
 
     def get_children(self, node_id):
@@ -672,8 +773,8 @@ class ChunkedGraphClientLegacy(ClientBase):
             List of np.uint64 ids of child nodes.
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['node_id'] = node_id
-        url = self._endpoints['handle_children'].format_map(endpoint_mapping)
+        endpoint_mapping["node_id"] = node_id
+        url = self._endpoints["handle_children"].format_map(endpoint_mapping)
 
         response = self.session.post(url)
         handle_response(response, as_json=False)
@@ -696,12 +797,12 @@ class ChunkedGraphClientLegacy(ClientBase):
             Dict relating ids to contacts
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['contact_sites'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["contact_sites"].format_map(endpoint_mapping)
         query_d = {}
         if bounds is not None:
-            query_d['bounds'] = package_bounds(bounds)
-        query_d['partners'] = calc_partners
+            query_d["bounds"] = package_bounds(bounds)
+        query_d["partners"] = calc_partners
         response = self.session.post(url, json=[root_id], params=query_d)
         contact_d = handle_response(response)
         return {int(k): v for k, v in contact_d.items()}
@@ -721,26 +822,29 @@ class ChunkedGraphClientLegacy(ClientBase):
             failed_l2_ids: failed_l2_ids
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping['root_id'] = root_id
-        url = self._endpoints['find_path'].format_map(endpoint_mapping)
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["find_path"].format_map(endpoint_mapping)
         query_d = {}
-        query_d['precision_mode'] = precision_mode
+        query_d["precision_mode"] = precision_mode
 
-        nodes = [[root_id] + src_pt.tolist(),
-                 [root_id] + dst_pt.tolist()]
+        nodes = [[root_id] + src_pt.tolist(), [root_id] + dst_pt.tolist()]
 
-        response = self.session.post(url,
-                                     data=json.dumps(nodes, cls=CGEncoder),
-                                     params=query_d,
-                                     headers={'Content-Type': 'application/json'})
+        response = self.session.post(
+            url,
+            data=json.dumps(nodes, cls=CGEncoder),
+            params=query_d,
+            headers={"Content-Type": "application/json"},
+        )
         resp_d = handle_response(response)
-        centroids = np.array(resp_d['centroids_list'])
-        failed_l2_ids = np.array(resp_d['failed_l2_ids'], dtype=np.uint64)
-        l2_path = np.array(resp_d['l2_path'])
+        centroids = np.array(resp_d["centroids_list"])
+        failed_l2_ids = np.array(resp_d["failed_l2_ids"], dtype=np.uint64)
+        l2_path = np.array(resp_d["l2_path"])
 
         return centroids, l2_path, failed_l2_ids
 
 
-client_mapping = {0: ChunkedGraphClientLegacy,
-                  1: ChunkedGraphClientV1,
-                  'latest': ChunkedGraphClientV1}
+client_mapping = {
+    0: ChunkedGraphClientLegacy,
+    1: ChunkedGraphClientV1,
+    "latest": ChunkedGraphClientV1,
+}
