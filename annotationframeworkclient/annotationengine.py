@@ -7,6 +7,8 @@ import time
 import json
 import numpy as np
 from datetime import date, datetime
+import pandas as pd
+from typing import Iterable, Mapping
 
 SERVER_KEY = "ae_server_address"
 
@@ -458,6 +460,69 @@ class AnnotationClientV2(ClientBase):
                                      headers={'Content-Type': 'application/json'}, verify=self.verify)
         return handle_response(response)
 
+    @staticmethod
+    def process_position_columns(df: pd.DataFrame,
+                                 position_columns: (Iterable[str] or Mapping[str, str] or None)):
+        """process a dataframe into a list of dictionaries, nesting thing
+
+        Args:
+            df (pd.DataFrame): dataframe to process
+            position_columns (Iterable[str] or Mapping[str, str] or None): see post_annotation_df
+        Returns:
+            json list of annotations ready for posting
+
+        """
+        if position_columns is None:
+            position_columns = [c for c in df.columns if c.endswith('_position')]
+        if isinstance(position_columns, (list, np.ndarray, pd.Index)):
+            position_columns = {c:c.rsplit('_',1)[0] for c in position_columns}
+        if type(position_columns)!=dict:
+            raise ValueError('position_columns must be a list, dict or None')
+
+        data=df.to_dict(orient='records')
+        for d in data:
+            for k,v in position_columns.items():
+                pos = d.pop(k)
+                d[v]={'position':pos}
+        return data
+
+    def post_annotation_df(self, table_name: str, df: pd.DataFrame,
+                           position_columns: (Iterable[str] or Mapping[str, str] or None),
+                           aligned_volume_name=None):
+        """ Post one or more new annotations to a table in the AnnotationEngine
+
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        df : pd.DataFrame
+            A pandas dataframe containing the annotations. Columns should be fields in schema,
+            position columns need to be called out in position_columns argument.
+        position_columns: dict or (list or np.array or pd.Index) or None
+            if None, will look for all columns with 'X_position' in the name and assume they go
+            in fields called "X". 
+            if Iterable assumes each column given ends in _position.
+            (i.e. ['pt_position'] if 'pt' is the name of the position field in schema) 
+            if Mapping, keys are names of columns in dataframe, values are the names of the fields
+            (i.e. {'pt_column': 'pt'} would be correct if you had one column named 'pt_column'
+            which needed to go into a schema with a position column called 'pt')
+            
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+        
+        data = self.process_position_columns(df, position_columns)
+
+        return self.post_annotation(table_name, data, aligned_volume_name=aligned_volume_name)
+
     def update_annotation(self, table_name, data, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
         Note update is implemented by deleting the old annotation
@@ -501,6 +566,43 @@ class AnnotationClientV2(ClientBase):
         response = self.session.put(url, json=data, verify=self.verify)
         return handle_response(response)
 
+    def update_annotation_df(self, table_name: str, df: pd.DataFrame,
+                           position_columns: (Iterable[str] or Mapping[str, str] or None),
+                           aligned_volume_name=None):
+        """ Update one or more  annotations to a table in the AnnotationEngine using a dataframe as format
+
+        Parameters
+        ----------
+        table_name : str
+            Name of the table where annotations will be added
+        df : pd.DataFrame
+            A pandas dataframe containing the annotations. Columns should be fields in schema,
+            position columns need to be called out in position_columns argument.
+        position_columns: dict or (list or np.array or pd.Index) or None
+            if None, will look for all columns with 'X_position' in the name and assume they go
+            in fields called "X". 
+            if Iterable assumes each column given ends in _position.
+            (i.e. ['pt_position'] if 'pt' is the name of the position field in schema) 
+            if Mapping, keys are names of columns in dataframe, values are the names of the fields
+            (i.e. {'pt_column': 'pt'} would be correct if you had one column named 'pt_column'
+            which needed to go into a schema with a position column called 'pt')
+            
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        json
+            Response JSON
+
+        """
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+        
+        data = self.process_position_columns(df, position_columns)
+
+        return self.update_annotation(table_name, data, aligned_volume_name=aligned_volume_name)
+        
     def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
         Note update is implemented by deleting the old annotation
