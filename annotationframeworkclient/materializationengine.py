@@ -602,8 +602,8 @@ class MaterializatonClientV2(ClientBase):
 
         Args:
             table: 'str'
-            timestamp (datetime.datetime): time to materialize (as utc timestamp)
-                If None defaults to now
+            timestamp (datetime.datetime): time to materialize (in utc)
+                pass datetime.datetime.utcnow() for present time
             filter_in_dict (dict , optional): 
                 keys are column names, values are allowed entries.
                 Defaults to None.
@@ -637,11 +637,13 @@ class MaterializatonClientV2(ClientBase):
         return_df = True
         if self.cg_client is None:
             raise ValueError('You must have a cg_client to run live_query')
+        
+        starttime = time.time()
+        time_d ={}
 
         if datastack_name is None:
             datastack_name = self.datastack_name
-        if timestamp is None:
-            timestamp = datetime.utcnow()
+
         mds = self.get_versions_metadata()
         materialization_version=None
         for md in mds:
@@ -651,7 +653,10 @@ class MaterializatonClientV2(ClientBase):
                 timestamp_start = ts
         if materialization_version is None:
             raise(ValueError('The timestamp you passed is not recent enough for the materialization versions that are available'))
-        
+       
+        time_d['mat_version']=time.time()-starttime
+        starttime=time.time()
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = materialization_version
@@ -666,12 +671,18 @@ class MaterializatonClientV2(ClientBase):
         else:
             data['tables'] = tables
             url = self._endpoints["join_query"].format_map(endpoint_mapping)
+        time_d['endpoint_mapping']=time.time()-starttime
+        starttime=time.time()
 
         past_filters = self.map_filters([filter_in_dict,
                                         filter_out_dict,
                                         filter_equal_dict],
                                         timestamp, timestamp_start)
         past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
+        
+        time_d['map_filters']=time.time()-starttime
+        starttime=time.time()
+
         if filter_in_dict is not None:
             data['filter_in_dict'] = {table: past_filter_in_dict}
         if filter_out_dict is not None:
@@ -697,7 +708,10 @@ class MaterializatonClientV2(ClientBase):
             encoding = ''
         else:
             encoding = 'gzip'
-        print(data)
+        
+        time_d['package_data']=time.time()-starttime
+        starttime=time.time()
+        
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json',
@@ -707,7 +721,14 @@ class MaterializatonClientV2(ClientBase):
                                      verify=self.verify)                         
         self.raise_for_status(response)
         
+        time_d['query materialize']=time.time()-starttime
+        starttime=time.time()
+        
         df= pa.deserialize(response.content)
+        
+        time_d['deserialize']=time.time()-starttime
+        starttime=time.time()
+        
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
         sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
@@ -716,7 +737,8 @@ class MaterializatonClientV2(ClientBase):
             svids = df[sv_col].values
             root_ids = self.cg_client.get_roots(svids, timestamp=timestamp)
             df[root_id_col]=root_ids
-
+            time_d[f'get_roots {sv_col}']=time.time()-starttime
+            starttime=time.time()
         # apply the original filters to remove rows
         # from this result which are not relevant
         if post_filter:
@@ -729,6 +751,11 @@ class MaterializatonClientV2(ClientBase):
             if filter_equal_dict is not None:
                 for col, val in filter_equal_dict.items():
                     df[df[col]==val]
+        
+        time_d['post_filter']=time.time()-starttime
+        starttime=time.time()
+        logging.info(time_d)
+        
         return df
  
 
