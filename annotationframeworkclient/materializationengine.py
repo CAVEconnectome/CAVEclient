@@ -563,7 +563,7 @@ class MaterializatonClientV2(ClientBase):
         for filter_dict in filters:
             if filter_dict is not None:      
                 for col, val in filter_dict.items():
-                    if ~isinstance(val, Iterable):
+                    if ~isinstance(val, (Iterable, np.ndarray)):
                         vals.append([val])
                     else:
                         vals.append(val)
@@ -577,7 +577,7 @@ class MaterializatonClientV2(ClientBase):
             else:
                 new_dict={}
                 for col, vals in filter_dict.items():
-                    if ~isinstance(vals, Iterable):
+                    if ~isinstance(vals, (Iterable, np.ndarray)):
                         new_dict[col]=id_mapping['past_id_map'][vals]
                     else:
                         new_dict[col]=np.concatenate([id_mapping['past_id_map'][v] for v in vals ])
@@ -711,7 +711,6 @@ class MaterializatonClientV2(ClientBase):
         
         time_d['package_data']=time.time()-starttime
         starttime=time.time()
-        
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json',
