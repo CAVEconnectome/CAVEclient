@@ -273,7 +273,8 @@ class FrameworkClientFull(FrameworkClientGlobal):
         if self._materialize is None:
             self._materialize = MaterializationClient(server_address=self.local_server,
                                                       auth_client=self.auth,
-                                                      datastack_name=self._datastack_name)
+                                                      datastack_name=self._datastack_name,
+                                                      cg_client=self.chunkedgraph)
         return self._materialize
         
     @property

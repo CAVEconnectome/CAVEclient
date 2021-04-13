@@ -1,5 +1,5 @@
 numpy
 pyarrow>=2
 requests
-sqlalchemy
 pandas
+cachetools>=4.2.1

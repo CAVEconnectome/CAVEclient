@@ -41,6 +41,9 @@ materialization_endpoints_v2 = {
     "tables": mat_v2_api + "/datastack/{datastack_name}/version/{version}/tables",
     "metadata": mat_v2_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
+    "versions_metadata": mat_v2_api
+    + "/datastack/{datastack_name}/metadata",
+    
 }
 materialization_api_versions = {2: materialization_endpoints_v2}
 annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}
@@ -112,7 +115,8 @@ chunkedgraph_endpoints_v1 = {
     "get_subgraph": pcg_v1 + "/table/{table_id}/node/{root_id}/subgraph",
     "handle_lineage_graph": pcg_v1 + "/table/{table_id}/root/{root_id}/lineage_graph",
     "past_id_mapping": pcg_v1 + "/table/{table_id}/past_id_mapping",
-    "operation_details": pcg_v1 + "/table/{table_id}/operation_details"
+    "operation_details": pcg_v1 + "/table/{table_id}/operation_details",
+    "is_latest_roots": pcg_v1 + "/table/{table_id}/is_latest_roots"
 }
 
 chunkedgraph_api_versions = {

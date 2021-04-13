@@ -1,4 +1,10 @@
-from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints
+import logging
+from cachetools import cached, TTLCache
+from typing import ValuesView
+
+from numpy.lib.function_base import iterable
+import annotationframeworkclient
+from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints, handle_response
 from .auth import AuthClient
 from .endpoints import materialization_api_versions, materialization_common
 from .infoservice import InfoServiceClientV2
@@ -9,8 +15,11 @@ import numpy as np
 from datetime import date, datetime
 import pyarrow as pa
 import itertools
-SERVER_KEY = "me_server_address"
+from collections.abc import Iterable
 
+
+
+SERVER_KEY = "me_server_address"
 
 def concatenate_position_columns(df, inplace=False):
     """function to take a dataframe with xyz position columns and replace them
@@ -49,10 +58,13 @@ class MEEncoder(json.JSONEncoder):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
 
+def convert_timestamp(ts):
+    return datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
 def MaterializationClient(server_address,
                           datastack_name=None,
                           auth_client=None,
+                          cg_client = None,
                           api_version='latest',
                           version=None,
                           verify=True):
@@ -87,12 +99,13 @@ def MaterializationClient(server_address,
     MatClient = client_mapping[api_version]
     return MatClient(server_address, auth_header, api_version,
                      endpoints, SERVER_KEY, datastack_name,
+                     cg_client=cg_client,
                      version=version, verify=verify)
 
 
 class MaterializatonClientV2(ClientBase):
     def __init__(self, server_address, auth_header, api_version,
-                 endpoints, server_name, datastack_name, version=None,
+                 endpoints, server_name, datastack_name, cg_client=None, version=None,
                  verify=True):
         super(MaterializatonClientV2, self).__init__(server_address,
                                                      auth_header, api_version, endpoints, server_name,
@@ -102,6 +115,7 @@ class MaterializatonClientV2(ClientBase):
         if version is None:
             version = self.most_recent_version()
         self._version = version
+        self.cg_client = cg_client
 
     @property
     def datastack_name(self):
@@ -244,6 +258,24 @@ class MaterializatonClientV2(ClientBase):
         meta = self.get_version_metadata(
             version=version, datastack_name=datastack_name)
         return datetime.strptime(meta['time_stamp'], '%Y-%m-%dT%H:%M:%S.%f')
+
+    @cached(cache=TTLCache(maxsize=100, ttl=60*60*12))
+    def get_versions_metadata(self, datastack_name=None):
+        """get the metadata for all the versions that are presently available and valid
+
+        Args:
+            datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
+        Returns:
+        list[dict]
+            a list of metadata dictionaries
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        return handle_response(response)
 
     def get_table_metadata(self, table_name: str, datastack_name=None):
         """ Get metadata about a table
@@ -514,6 +546,191 @@ class MaterializatonClientV2(ClientBase):
         else:
             return response.json()
 
+    def map_filters(self, filters, timestamp, timestamp_past):
+        """translate a list of filter dictionaries
+           from a point in the future, to a point in the past
+
+        Args:
+            filters (list[dict]): filter dictionaries with 
+            timestamp ([type]): [description]
+            timestamp_past ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        new_filters =[]
+        vals=[]
+        for filter_dict in filters:
+            if filter_dict is not None:      
+                for col, val in filter_dict.items():
+                    if ~isinstance(val, Iterable):
+                        vals.append([val])
+                    else:
+                        vals.append(val)
+        vals = np.unique(np.concatenate(vals))
+        id_mapping = self.cg_client.get_past_ids(vals, 
+                                                 timestamp_past=timestamp_past,
+                                                 timestamp_future=timestamp)
+        for filter_dict in filters:
+            if filter_dict is None:
+                new_filters.append(filter_dict)
+            else:
+                new_dict={}
+                for col, vals in filter_dict.items():
+                    if ~isinstance(vals, Iterable):
+                        new_dict[col]=id_mapping['past_id_map'][vals]
+                    else:
+                        new_dict[col]=np.concatenate([id_mapping['past_id_map'][v] for v in vals ])
+                new_filters.append(new_dict)
+        return new_filters
+            
+    def live_query(self,
+                    table: str,
+                    timestamp: datetime,
+                    filter_in_dict=None,
+                    filter_out_dict=None,
+                    filter_equal_dict=None,
+                    filter_spatial=None,
+                    join_args=None,
+                    select_columns=None,
+                    offset: int = None,
+                    limit: int = None,
+                    datastack_name: str = None,
+                    split_positions: bool = False,
+                    post_filter: bool = True):
+        """generic query on materialization tables
+
+        Args:
+            table: 'str'
+            timestamp (datetime.datetime): time to materialize (as utc timestamp)
+                If None defaults to now
+            filter_in_dict (dict , optional): 
+                keys are column names, values are allowed entries.
+                Defaults to None.
+            filter_out_dict (dict, optional): 
+                keys are column names, values are not allowed entries.
+                Defaults to None.
+            filter_equal_dict (dict, optional): 
+                inner layer: keys are column names, values are specified entry.
+                Defaults to None.
+            offset (int, optional): offset in query result
+            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
+            select_columns (list of str, optional): columns to select. Defaults to None.
+            suffixes: (list[str], optional): suffixes to use on duplicate columns
+            offset (int, optional): result offset to use. Defaults to None.
+                will only return top K results. 
+            datastack_name (str, optional): datastack to query. 
+                If None defaults to one specified in client. 
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
+            post_filter (bool, optional): whether to filter down the result based upon the filters specified
+                if false, it will return the query with present root_ids in the root_id columns,
+                but the rows will reflect the filters translated into their past IDs.
+                So if, for example, a cell had a false merger split off since the last materialization.
+                those annotations on that incorrect portion of the cell will be included if this is False,
+                but will be filtered down if this is True. (Default=True)
+            
+        Returns:
+        pd.DataFrame: a pandas dataframe of results of query
+
+        """
+        return_df = True
+        if self.cg_client is None:
+            raise ValueError('You must have a cg_client to run live_query')
+
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if timestamp is None:
+            timestamp = datetime.utcnow()
+        mds = self.get_versions_metadata()
+        materialization_version=None
+        for md in mds:
+            ts = convert_timestamp(md['time_stamp'])
+            if (timestamp > ts):
+                materialization_version=md['version']
+                timestamp_start = ts
+        if materialization_version is None:
+            raise(ValueError('The timestamp you passed is not recent enough for the materialization versions that are available'))
+        
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = materialization_version
+        data = {}
+        query_args = {}
+        if type(table) == str:
+            tables = [table]
+        if len(tables) == 1:
+            assert(type(tables[0]) == str)
+            endpoint_mapping["table_name"] = tables[0]
+            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
+        else:
+            data['tables'] = tables
+            url = self._endpoints["join_query"].format_map(endpoint_mapping)
+
+        past_filters = self.map_filters([filter_in_dict,
+                                        filter_out_dict,
+                                        filter_equal_dict],
+                                        timestamp, timestamp_start)
+        past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
+        if filter_in_dict is not None:
+            data['filter_in_dict'] = {table: past_filter_in_dict}
+        if filter_out_dict is not None:
+            data['filter_notin_dict'] = {table: past_filter_out_dict}
+        if filter_equal_dict is not None:
+            prev_filter_in = data.pop('filter_in_dict',None)
+            if prev_filter_in is not None:
+                prev_filter_in = prev_filter_in[table]
+                prev_filter_in.update(past_equal_dict)
+            else:
+                prev_filter_in = past_equal_dict
+            data['filter_in_dict'] = {table: prev_filter_in}
+        if select_columns is not None:
+            data['select_columns'] = select_columns
+        if offset is not None:
+            data['offset'] = offset
+        if limit is not None:
+            assert(limit > 0)
+            data['limit'] = limit
+        query_args['return_pyarrow']=True
+        query_args['split_positions']=split_positions
+        if return_df:
+            encoding = ''
+        else:
+            encoding = 'gzip'
+        print(data)
+        response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
+                                     headers={
+                                         'Content-Type': 'application/json',
+                                         'Accept-Encoding': encoding},
+                                     params=query_args,
+                                     stream=~return_df,
+                                     verify=self.verify)                         
+        self.raise_for_status(response)
+        
+        df= pa.deserialize(response.content)
+        #post process the dataframe to update all the root_ids columns
+        #with the most up to date get roots
+        sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
+        for sv_col in sv_columns:
+            root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
+            svids = df[sv_col].values
+            root_ids = self.cg_client.get_roots(svids, timestamp=timestamp)
+            df[root_id_col]=root_ids
+
+        # apply the original filters to remove rows
+        # from this result which are not relevant
+        if post_filter:
+            if filter_in_dict is not None:
+                for col, val in filter_in_dict.items():
+                    df = df[df[col].isin(val)]
+            if filter_out_dict is not None:
+                for col, val in filter_out_dict.items():
+                    df = df[~df[col].isin(val)]
+            if filter_equal_dict is not None:
+                for col, val in filter_equal_dict.items():
+                    df[df[col]==val]
+        return df
+ 
 
 client_mapping = {2: MaterializatonClientV2,
                   'latest': MaterializatonClientV2}
