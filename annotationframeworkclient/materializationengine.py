@@ -568,6 +568,11 @@ class MaterializatonClientV2(ClientBase):
                     else:
                         vals.append(val)
         vals = np.unique(np.concatenate(vals))
+        filter_vals_latest = self.cg_client.is_latest_roots(vals, timestamp=timestamp)
+        if not np.all(filter_vals_latest):
+            not_latest = vals[~filter_vals_latest]
+            raise ValueError(f'''{not_latest} are not valid rootIDs at timestamp= {timestamp}, 
+                                use chunkedgraph client to query lineage graph to find new ID(s)''')
         id_mapping = self.cg_client.get_past_ids(vals, 
                                                  timestamp_past=timestamp_past,
                                                  timestamp_future=timestamp)
