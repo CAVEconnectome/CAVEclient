@@ -350,6 +350,45 @@ class MaterializatonClientV2(ClientBase):
     #     response = self.session.get(url, params=params)
     #     self.raise_for_status(response)
     #     return response.json()
+    def _format_query_components(self, datastack_name, version, tables, 
+                                select_columns, suffixes,
+                                filter_in_dict, filter_out_dict, filter_equal_dict,
+                                return_pyarrow, split_positions, offset, limit):
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = version
+        data = {}
+        query_args = {}
+        query_args['return_pyarrow']=return_pyarrow
+        query_args['split_positions']=split_positions
+        if len(tables)==1:
+            endpoint_mapping['table_name']=tables[0]
+            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
+        else:
+            data['tables'] = tables
+            url = self._endpoints["join_query"].format_map(endpoint_mapping)
+
+        if filter_in_dict is not None:
+            data['filter_in_dict'] = filter_in_dict
+        if filter_out_dict is not None:
+            data['filter_notin_dict'] = filter_out_dict
+        if filter_equal_dict is not None:
+            data['filter_equal_dict'] = filter_equal_dict
+        if select_columns is not None:
+            data['select_columns'] = select_columns
+        if offset is not None:
+            data['offset'] = offset
+        if suffixes is not None:
+            data['suffixes'] = suffixes
+        if limit is not None:
+            assert(limit > 0)
+            data['limit'] = limit
+        if return_pyarrow:
+            encoding = ''
+        else:
+            encoding = 'gzip'
+        
+        return url, data, query_args, encoding
 
     def query_table(self,
                     table: str,
@@ -402,41 +441,17 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["version"] = materialization_version
-        data = {}
-        query_args = {}
-        if type(table) == str:
-            tables = [table]
-        if len(tables) == 1:
-            assert(type(tables[0]) == str)
-            endpoint_mapping["table_name"] = tables[0]
-            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
-        else:
-            data['tables'] = tables
-            url = self._endpoints["join_query"].format_map(endpoint_mapping)
-
-        if filter_in_dict is not None:
-            data['filter_in_dict'] = {table: filter_in_dict}
-        if filter_out_dict is not None:
-            data['filter_notin_dict'] = {table: filter_out_dict}
-        if filter_equal_dict is not None:
-            data['filter_equal_dict'] = {table: filter_equal_dict}
-        if select_columns is not None:
-            data['select_columns'] = select_columns
-        if offset is not None:
-            data['offset'] = offset
-        if limit is not None:
-            assert(limit > 0)
-            data['limit'] = limit
-        query_args['return_pyarrow']=return_df
-        query_args['split_positions']=split_positions
-        if return_df:
-            encoding = ''
-        else:
-            encoding = 'gzip'
-            
+        url, data, encoding, query_args = self._format_query_components(datastack_name,
+                                                                        materialization_version,
+                                                                        [table], select_columns, None, 
+                                                                        filter_in_dict,
+                                                                        filter_out_dict,
+                                                                        filter_equal_dict,
+                                                                        return_df,
+                                                                        split_positions,
+                                                                        offset,
+                                                                        limit)
+          
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json',
@@ -505,40 +520,23 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["version"] = materialization_version
-        data = {}
-        query_args = {}
-        query_args['return_pyarrow']=return_df
-        query_args['split_positions']=split_positions
-        data['tables'] = tables
-        url = self._endpoints["join_query"].format_map(endpoint_mapping)
-
-        if filter_in_dict is not None:
-            data['filter_in_dict'] = filter_in_dict
-        if filter_out_dict is not None:
-            data['filter_notin_dict'] = filter_out_dict
-        if filter_equal_dict is not None:
-            data['filter_equal_dict'] = filter_equal_dict
-        if select_columns is not None:
-            data['select_columns'] = select_columns
-        if offset is not None:
-            data['offset'] = offset
-        if suffixes is not None:
-            data['suffixes'] = suffixes
-        if limit is not None:
-            assert(limit > 0)
-            data['limit'] = limit
-        if return_df:
-            encoding = ''
-        else:
-            encoding = 'gzip'
+        url, data, encoding, query_args = self._format_query_components(datastack_name,
+                                                                        materialization_version,
+                                                                        tables, select_columns, suffixes, 
+                                                                        filter_in_dict,
+                                                                        filter_out_dict,
+                                                                        filter_equal_dict,
+                                                                        return_df,
+                                                                        split_positions,
+                                                                        offset,
+                                                                        limit)
+        
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
+                                     stream=~return_df,
                                      verify=self.verify)
         self.raise_for_status(response)
         if return_df:
@@ -588,7 +586,9 @@ class MaterializatonClientV2(ClientBase):
                         new_dict[col]=np.concatenate([id_mapping['past_id_map'][v] for v in vals ])
                 new_filters.append(new_dict)
         return new_filters
-            
+
+    
+
     def live_query(self,
                     table: str,
                     timestamp: datetime,
@@ -649,73 +649,58 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
+        # we want to find the most recent materialization
+        # in which the timestamp given is in the future
         mds = self.get_versions_metadata()
         materialization_version=None
-        for md in mds:
+        # make sure the materialization's are increasing in ID/time
+        for md in sorted(mds, key=lambda x: x['id']):
             ts = convert_timestamp(md['time_stamp'])
             if (timestamp > ts):
                 materialization_version=md['version']
                 timestamp_start = ts
+        # if none of the available versions are before
+        # this timestamp, then we cannot support the query
         if materialization_version is None:
             raise(ValueError('The timestamp you passed is not recent enough for the materialization versions that are available'))
        
         time_d['mat_version']=time.time()-starttime
         starttime=time.time()
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["version"] = materialization_version
-        data = {}
-        query_args = {}
-        if type(table) == str:
-            tables = [table]
-        if len(tables) == 1:
-            assert(type(tables[0]) == str)
-            endpoint_mapping["table_name"] = tables[0]
-            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
-        else:
-            data['tables'] = tables
-            url = self._endpoints["join_query"].format_map(endpoint_mapping)
-        time_d['endpoint_mapping']=time.time()-starttime
-        starttime=time.time()
-
+        # first we want to translate all these filters into the IDss at the 
+        # most recent materialization
         past_filters = self.map_filters([filter_in_dict,
                                         filter_out_dict,
                                         filter_equal_dict],
                                         timestamp, timestamp_start)
         past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
-        
+        if filter_equal_dict is not None:
+            # when doing a filter equal in the past
+            # we translate it to a filter_in, as 1 ID might
+            # be multiple IDs in the past.
+            # so we want to update the filter_in dict
+            if past_filter_in_dict is not None:
+                past_filter_in_dict.update(past_equal_dict)
+            else:
+                # or if there wasn't a filter_in dict
+                # then replace it
+                past_filter_in_dict = past_equal_dict
+                
         time_d['map_filters']=time.time()-starttime
         starttime=time.time()
 
-        if filter_in_dict is not None:
-            data['filter_in_dict'] = {table: past_filter_in_dict}
-        if filter_out_dict is not None:
-            data['filter_notin_dict'] = {table: past_filter_out_dict}
-        if filter_equal_dict is not None:
-            prev_filter_in = data.pop('filter_in_dict',None)
-            if prev_filter_in is not None:
-                prev_filter_in = prev_filter_in[table]
-                prev_filter_in.update(past_equal_dict)
-            else:
-                prev_filter_in = past_equal_dict
-            data['filter_in_dict'] = {table: prev_filter_in}
-        if select_columns is not None:
-            data['select_columns'] = select_columns
-        if offset is not None:
-            data['offset'] = offset
-        if limit is not None:
-            assert(limit > 0)
-            data['limit'] = limit
-        query_args['return_pyarrow']=True
-        query_args['split_positions']=split_positions
-        if return_df:
-            encoding = ''
-        else:
-            encoding = 'gzip'
-        
-        time_d['package_data']=time.time()-starttime
+        url, data, encoding, query_args = self._format_query_components(datastack_name,
+                                                                        materialization_version,
+                                                                        [table], None, None, 
+                                                                        past_filter_in_dict,
+                                                                        past_filter_out_dict,
+                                                                        None,
+                                                                        True,
+                                                                        split_positions,
+                                                                        offset,
+                                                                        limit)
+        time_d['package query']=time.time()-starttime
         starttime=time.time()
+        
         response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                      headers={
                                          'Content-Type': 'application/json',
