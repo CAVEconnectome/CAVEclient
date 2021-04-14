@@ -693,7 +693,8 @@ class MaterializatonClientV2(ClientBase):
         # if none of the available versions are before
         # this timestamp, then we cannot support the query
         if materialization_version is None:
-            raise(ValueError('The timestamp you passed is not recent enough for the materialization versions that are available'))
+            raise(ValueError('''The timestamp you passed is not recent enough
+             for the materialization versions that are available'''))
        
         time_d['mat_version']=time.time()-starttime
         starttime=time.time()
