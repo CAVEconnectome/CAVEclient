@@ -444,9 +444,9 @@ class MaterializatonClientV2(ClientBase):
         url, data, query_args, encoding = self._format_query_components(datastack_name,
                                                                         materialization_version,
                                                                         [table], select_columns, None, 
-                                                                        filter_in_dict,
-                                                                        filter_out_dict,
-                                                                        filter_equal_dict,
+                                                                        {table: filter_in_dict} if filter_in_dict is not None else None,
+                                                                        {table: filter_out_dict} if filter_out_dict is not None else None,
+                                                                        {table: filter_equal_dict} if filter_equal_dict is not None else None,
                                                                         return_df,
                                                                         split_positions,
                                                                         offset,
@@ -722,8 +722,8 @@ class MaterializatonClientV2(ClientBase):
         url, data, query_args, encoding = self._format_query_components(datastack_name,
                                                                         materialization_version,
                                                                         [table], None, None, 
-                                                                        past_filter_in_dict,
-                                                                        past_filter_out_dict,
+                                                                        {table: past_filter_in_dict} if past_filter_in_dict is not None else None,
+                                                                        {table: past_filter_out_dict} if past_filter_out_dict is not None else None,
                                                                         None,
                                                                         True,
                                                                         split_positions,
@@ -752,8 +752,9 @@ class MaterializatonClientV2(ClientBase):
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
         df, root_time_d = self._update_rootids(df, timestamp)
-        time_d.update(root_time_d)
         
+        time_d.update(root_time_d)
+        starttime=time.time()
         # apply the original filters to remove rows
         # from this result which are not relevant
         if post_filter:
