@@ -563,7 +563,7 @@ class MaterializatonClientV2(ClientBase):
         for filter_dict in filters:
             if filter_dict is not None:      
                 for col, val in filter_dict.items():
-                    if ~isinstance(val, (Iterable, np.ndarray)):
+                    if not isinstance(val, (Iterable, np.ndarray)):
                         vals.append([val])
                     else:
                         vals.append(val)
@@ -577,7 +577,7 @@ class MaterializatonClientV2(ClientBase):
             else:
                 new_dict={}
                 for col, vals in filter_dict.items():
-                    if ~isinstance(vals, (Iterable, np.ndarray)):
+                    if not isinstance(vals, (Iterable, np.ndarray)):
                         new_dict[col]=id_mapping['past_id_map'][vals]
                     else:
                         new_dict[col]=np.concatenate([id_mapping['past_id_map'][v] for v in vals ])
@@ -734,9 +734,27 @@ class MaterializatonClientV2(ClientBase):
         for sv_col in sv_columns:
             root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
             svids = df[sv_col].values
-            root_ids = self.cg_client.get_roots(svids, timestamp=timestamp)
-            df[root_id_col]=root_ids
+            root_ids = df[root_id_col].values.copy()
+
+            uniq_root_ids = np.unique(root_ids)
+            is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
+            is_latest_root = np.isin(root_ids, uniq_root_ids[is_latest_root])
+
+            time_d[f'is_latest_root {sv_col}']=time.time()-starttime
+            starttime=time.time()
+
+            logging.info(f'{sv_col} has {len(svids[~is_latest_root])} to update')
+            updated_root_ids = self.cg_client.get_roots(svids[~is_latest_root], timestamp=timestamp)
+
             time_d[f'get_roots {sv_col}']=time.time()-starttime
+            starttime=time.time()
+
+            root_ids[~is_latest_root]=updated_root_ids
+            # ran into an isssue with pyarrow producing read only columns
+            df[root_id_col]=None
+            df[root_id_col]=root_ids
+            
+            time_d[f'replace_roots {sv_col}']=time.time()-starttime
             starttime=time.time()
         # apply the original filters to remove rows
         # from this result which are not relevant
