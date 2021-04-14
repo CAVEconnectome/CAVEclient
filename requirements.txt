@@ -1,5 +1,5 @@
 numpy
-pyarrow>=2
+pyarrow>=3
 requests
 sqlalchemy
 pandas
