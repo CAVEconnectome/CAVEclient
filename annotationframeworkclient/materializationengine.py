@@ -441,7 +441,7 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        url, data, encoding, query_args = self._format_query_components(datastack_name,
+        url, data, query_args, encoding = self._format_query_components(datastack_name,
                                                                         materialization_version,
                                                                         [table], select_columns, None, 
                                                                         filter_in_dict,
@@ -520,7 +520,7 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        url, data, encoding, query_args = self._format_query_components(datastack_name,
+        url, data, query_args, encoding = self._format_query_components(datastack_name,
                                                                         materialization_version,
                                                                         tables, select_columns, suffixes, 
                                                                         filter_in_dict,
@@ -719,7 +719,7 @@ class MaterializatonClientV2(ClientBase):
         time_d['map_filters']=time.time()-starttime
         starttime=time.time()
 
-        url, data, encoding, query_args = self._format_query_components(datastack_name,
+        url, data, query_args, encoding = self._format_query_components(datastack_name,
                                                                         materialization_version,
                                                                         [table], None, None, 
                                                                         past_filter_in_dict,
