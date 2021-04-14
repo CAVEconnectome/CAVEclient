@@ -587,7 +587,38 @@ class MaterializatonClientV2(ClientBase):
                 new_filters.append(new_dict)
         return new_filters
 
-    
+    def _update_rootids(self, df, timestamp):
+        #post process the dataframe to update all the root_ids columns
+        #with the most up to date get roots
+        time_d = {}
+        starttime=time.time()
+        sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
+        for sv_col in sv_columns:
+            root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
+            svids = df[sv_col].values
+            root_ids = df[root_id_col].values.copy()
+
+            uniq_root_ids = np.unique(root_ids)
+            is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
+            is_latest_root = np.isin(root_ids, uniq_root_ids[is_latest_root])
+
+            time_d[f'is_latest_root {sv_col}']=time.time()-starttime
+            starttime=time.time()
+
+            logging.info(f'{sv_col} has {len(svids[~is_latest_root])} to update')
+            updated_root_ids = self.cg_client.get_roots(svids[~is_latest_root], timestamp=timestamp)
+
+            time_d[f'get_roots {sv_col}']=time.time()-starttime
+            starttime=time.time()
+
+            root_ids[~is_latest_root]=updated_root_ids
+            # ran into an isssue with pyarrow producing read only columns
+            df[root_id_col]=None
+            df[root_id_col]=root_ids
+            
+            time_d[f'replace_roots {sv_col}']=time.time()-starttime
+            starttime=time.time()
+        return df, time_d
 
     def live_query(self,
                     table: str,
@@ -720,32 +751,9 @@ class MaterializatonClientV2(ClientBase):
         
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
-        sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
-        for sv_col in sv_columns:
-            root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
-            svids = df[sv_col].values
-            root_ids = df[root_id_col].values.copy()
-
-            uniq_root_ids = np.unique(root_ids)
-            is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
-            is_latest_root = np.isin(root_ids, uniq_root_ids[is_latest_root])
-
-            time_d[f'is_latest_root {sv_col}']=time.time()-starttime
-            starttime=time.time()
-
-            logging.info(f'{sv_col} has {len(svids[~is_latest_root])} to update')
-            updated_root_ids = self.cg_client.get_roots(svids[~is_latest_root], timestamp=timestamp)
-
-            time_d[f'get_roots {sv_col}']=time.time()-starttime
-            starttime=time.time()
-
-            root_ids[~is_latest_root]=updated_root_ids
-            # ran into an isssue with pyarrow producing read only columns
-            df[root_id_col]=None
-            df[root_id_col]=root_ids
-            
-            time_d[f'replace_roots {sv_col}']=time.time()-starttime
-            starttime=time.time()
+        df, root_time_d = self._update_rootids(df, timestamp)
+        time_d.update(root_time_d)
+        
         # apply the original filters to remove rows
         # from this result which are not relevant
         if post_filter:
