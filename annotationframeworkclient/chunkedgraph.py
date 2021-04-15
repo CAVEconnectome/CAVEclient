@@ -250,7 +250,7 @@ class ChunkedGraphClientV1(ClientBase):
         response = self.session.get(url, params=params)
         return handle_response(response)
 
-    def get_leaves(self, root_id, bounds=None):
+     def get_leaves(self, root_id, bounds=None, stop_layer:int =None):
         """Get all supervoxels for a root_id
 
         Parameters
@@ -260,11 +260,14 @@ class ChunkedGraphClientV1(ClientBase):
         bounds: np.array or None, optional
             If specified, returns supervoxels within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
             If None, finds all supervoxels.
+        stop_layer: int, optional
+            If specified, returns chunkedgraph nodes at layer =stop_layer
+            default will be stop_layer=1 (supervoxels)
 
         Returns
         -------
         list
-            List of supervoxel ids
+            List of supervoxel ids (or nodeids if stop_layer>1)
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["root_id"] = root_id
@@ -272,10 +275,10 @@ class ChunkedGraphClientV1(ClientBase):
         query_d = {}
         if bounds is not None:
             query_d["bounds"] = package_bounds(bounds)
-
+        if stop_layer is not None:
+            query_d["stop_layer"]= int(stop_layer)
         response = self.session.get(url, params=query_d)
-        handle_response(response, as_json=False)
-        return np.int64(response.json()["leaf_ids"])
+        return np.int64(handle_response(response)["leaf_ids"])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
         """Perform a merge on the chunkeded graph
@@ -736,7 +739,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         response = self.session.post(url, json=[root_id])
         return handle_response(response)
 
-    def get_leaves(self, root_id, bounds=None, stop_layer:int =None):
+    def get_leaves(self, root_id, bounds=None):
         """Get all supervoxels for a root_id
 
         Parameters
@@ -746,9 +749,6 @@ class ChunkedGraphClientLegacy(ClientBase):
         bounds: np.array or None, optional
             If specified, returns supervoxels within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
             If None, finds all supervoxels.
-        stop_layer: int, optional
-            If specified, returns chunkedgraph nodes at layer =stop_layer
-            default will be stop_layer=1 (supervoxels)
 
         Returns
         -------
@@ -761,8 +761,6 @@ class ChunkedGraphClientLegacy(ClientBase):
         query_d = {}
         if bounds is not None:
             query_d["bounds"] = package_bounds(bounds)
-        if stop_layer is not None:
-            query_d["stop_layer"]= int(stop_layer)
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response)["leaf_ids"])
 
