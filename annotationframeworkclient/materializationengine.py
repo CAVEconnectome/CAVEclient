@@ -565,6 +565,9 @@ class MaterializatonClientV2(ClientBase):
                         vals.append([val])
                     else:
                         vals.append(val)
+        # if they are all None then we can safely return now
+        if len(vals)==0:
+            return [None, None, None]
         vals = np.unique(np.concatenate(vals))
         filter_vals_latest = self.cg_client.is_latest_roots(vals, timestamp=timestamp)
         if not np.all(filter_vals_latest):
