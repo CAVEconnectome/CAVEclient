@@ -250,7 +250,7 @@ class ChunkedGraphClientV1(ClientBase):
         response = self.session.get(url, params=params)
         return handle_response(response)
 
-     def get_leaves(self, root_id, bounds=None, stop_layer:int =None):
+    def get_leaves(self, root_id, bounds=None, stop_layer:int =None):
         """Get all supervoxels for a root_id
 
         Parameters
