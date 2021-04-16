@@ -126,7 +126,7 @@ class ChunkedGraphClientV1(ClientBase):
         else:
             return timestamp
 
-    def get_roots(self, supervoxel_ids, timestamp=None, stop_level=None):
+    def get_roots(self, supervoxel_ids, timestamp=None, stop_layer=None):
         """Get the root id for a specified supervoxel
 
         Parameters
@@ -135,24 +135,21 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel ids values
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
-        stop_level : int or None, optional
-            If True, looks up ids only up to a given stop level. Default is None.
+        stop_layer : int or None, optional
+            If True, looks up ids only up to a given stop layer. Default is None.
 
         Returns
         -------
         np.array(np.uint64)
             Root IDs containing each supervoxel.
         """
-        if stop_level is not None:
-            return self._get_level_roots(
-                supervoxel_ids, stop_level=stop_level, timestamp=timestamp
-            )
-
+        
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["get_roots"].format_map(endpoint_mapping)
         query_d = package_timestamp(self._process_timestamp(timestamp))
+        if stop_layer is not None:
+            query_d['stop_layer']=stop_layer
         data = np.array(supervoxel_ids, dtype=np.uint64).tobytes()
-
         response = self.session.post(url, data=data, params=query_d)
         handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
@@ -181,34 +178,7 @@ class ChunkedGraphClientV1(ClientBase):
             query_d["stop_layer"] = 2
 
         response = self.session.get(url, params=query_d)
-        handle_response(response, as_json=False)
-        return np.int64(response.json()["root_id"])
-
-    def _get_level_roots(self, supervoxel_ids, stop_level, timestamp=None):
-        """Get the root id for a specified supervoxel
-
-        Parameters
-        ----------
-        supervoxel_id : np.uint64
-            Supervoxel id value
-        timestamp : datetime.datetime, optional
-            UTC datetime to specify the state of the chunkedgraph at which to query, by default None. If None, uses the current time.
-
-        Returns
-        -------
-        np.uint64
-            Root ID containing the supervoxel.
-        """
-        endpoint_mapping = self.default_url_mapping
-
-        url = self._endpoints["handle_roots"].format_map(endpoint_mapping)
-        query_d = package_timestamp(self._process_timestamp(timestamp))
-        query_d["stop_layer"] = stop_level
-        data = {"node_ids": supervoxel_ids}
-        response = self.session.post(
-            url, data=json.dumps(data, cls=CGEncoder), params=query_d
-        )
-        return handle_response(response, as_json=True).get("root_ids", None)
+        return np.int64(handle_response(response, as_json=True)["root_id"])
 
     def get_merge_log(self, root_id):
         """Get the merge log (splits and merges) for an object
@@ -318,12 +288,11 @@ class ChunkedGraphClientV1(ClientBase):
             List of np.uint64 ids of child nodes.
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["node_id"] = node_id
+        endpoint_mapping["root_id"] = node_id
         url = self._endpoints["handle_children"].format_map(endpoint_mapping)
 
-        response = self.session.post(url)
-        handle_response(response, as_json=False)
-        return np.frombuffer(response.content, dtype=np.uint64)
+        response = self.session.get(url)
+        return np.array(handle_response(response)['children_ids'], dtype=np.int64)
 
     def get_contact_sites(self, root_id, bounds, calc_partners=False):
         """Get contacts for a root id
@@ -348,7 +317,7 @@ class ChunkedGraphClientV1(ClientBase):
         if bounds is not None:
             query_d["bounds"] = package_bounds(bounds)
         query_d["partners"] = calc_partners
-        response = self.session.post(url, json=[root_id], params=query_d)
+        response = self.session.get(url, json=[root_id], params=query_d)
         contact_d = handle_response(response)
         return {int(k): v for k, v in contact_d.items()}
 
