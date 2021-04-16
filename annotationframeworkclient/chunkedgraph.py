@@ -495,7 +495,7 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_past : datetime.datetime or None, optional
             Time of a point in the past for which to look up root ids. Default is None.
         timestamp_future : datetime.datetime or None, optional
-            Time of a poitn in the future for which to look up root ids. Not implemented on the server currently. Default is None.
+            Time of a point in the future for which to look up root ids. Not implemented on the server currently. Default is None.
 
         Returns
         -------
