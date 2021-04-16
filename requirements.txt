@@ -1,5 +1,5 @@
 numpy
-pyarrow==3.0.0
+pyarrow>=3
 requests
 pandas
 cachetools>=4.2.1
