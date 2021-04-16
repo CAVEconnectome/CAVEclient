@@ -418,6 +418,9 @@ class ChunkedGraphClientV1(ClientBase):
             dict: a dict of dictss of operation info, keys are operationids
             values are a dictionary of operation info for the operation
         """
+        if isinstance(operation_ids, np.ndarray):
+            operation_ids = operation_ids.tolist()
+
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints['operation_details'].format_map(
             endpoint_mapping)
