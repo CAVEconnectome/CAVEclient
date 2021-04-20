@@ -185,6 +185,16 @@ class TestMatclient():
         responses.add(responses.POST,
                     status=200,
                     url=q_is_latest_now,
+                    json={'is_latest':[True,True]},
+                    match=[responses.json_params_matcher({'node_ids':[201,203]})])
+        responses.add(responses.POST,
+                    status=200,
+                    url=q_is_latest_now,
+                    json={'is_latest':[True]},
+                    match=[responses.json_params_matcher({'node_ids':[203]})])            
+        responses.add(responses.POST,
+                    status=200,
+                    url=q_is_latest_now,
                     json={'is_latest':[False,True]},
                     match=[responses.json_params_matcher({'node_ids':[100,103]})])
         responses.add(responses.POST,
@@ -266,28 +276,27 @@ class TestMatclient():
                 responses.json_params_matcher(correct_query_data)
             ]
         )
-        try:
-            dfq = myclient.materialize.live_query(test_info['synapse_table'],
-                                                  good_time,
-                                                  filter_in_dict={'pre_pt_root_id':[201,103]})
-        except requests.exceptions.ConnectionError as e:
-            print(e)
-            raise Exception('failure')
+
+        dfq = myclient.materialize.live_query(test_info['synapse_table'],
+                                              good_time,
+                                              filter_in_dict={'pre_pt_root_id':[201,103]})
+
         dfr = pd.read_pickle('tests/test_data/live_query_after1.pkl')
         assert(np.all(dfq.pre_pt_root_id==dfr.pre_pt_root_id))
         assert(np.all(dfq.post_pt_root_id==dfr.post_pt_root_id))
 
-
+        
         dfq = myclient.materialize.live_query(test_info['synapse_table'],
-                                                  good_time,
-                                                  filter_in_dict={'post_pt_root_id':[201,203]})
+                                              good_time,
+                                              filter_in_dict={'post_pt_root_id':[201,203]})
+
         dfr = pd.read_pickle('tests/test_data/live_query_after2.pkl')
         assert(np.all(dfq.pre_pt_root_id==dfr.pre_pt_root_id))
         assert(np.all(dfq.post_pt_root_id==dfr.post_pt_root_id))
 
         dfq = myclient.materialize.live_query(test_info['synapse_table'],
-                                                  good_time,
-                                                  filter_equal_dict={'post_pt_root_id':203})
+                                              good_time,
+                                              filter_equal_dict={'post_pt_root_id':203})
         dfr = pd.read_pickle('tests/test_data/live_query_after3.pkl')
         assert(np.all(dfq.pre_pt_root_id==dfr.pre_pt_root_id))
         assert(np.all(dfq.post_pt_root_id==dfr.post_pt_root_id))
