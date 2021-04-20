@@ -770,7 +770,7 @@ class MaterializatonClientV2(ClientBase):
                     df = df[~df[col].isin(val)]
             if filter_equal_dict is not None:
                 for col, val in filter_equal_dict.items():
-                    df[df[col]==val]
+                    df = df[df[col]==val]
         
         time_d['post_filter']=time.time()-starttime
         starttime=time.time()
