@@ -1,3 +1,3 @@
-__version__ = "2.9.1"
+__version__ = "2.10.0"
 
 from .frameworkclient import FrameworkClient
