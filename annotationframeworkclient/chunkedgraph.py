@@ -485,6 +485,33 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
         r = handle_response(self.session.get(url, params=data))
         return r
+    
+    def is_latest_roots(self, root_ids, timestamp=None):
+        """check whether these root_ids are still a root at this timestamp
+
+        Args:
+            root_ids ([type]): root ids to check
+            timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
+        Returns:
+        np.array[np.Boolean]
+            boolean array of whether these are valid root_ids
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["is_latest_roots"].format_map(endpoint_mapping)
+        
+        if timestamp is None:
+            timestamp = self._default_timestamp
+        if timestamp is not None:
+            query_d = {"timestamp": time.mktime(timestamp.timetuple())}
+        else:
+            query_d = None
+        data = {"node_ids": root_ids}
+        r = handle_response(self.session.post(url, 
+                                             data=json.dumps(data, cls=CGEncoder),
+                                             params = query_d))
+        return np.array(r['is_latest'], np.bool)
+
+
 
     def get_past_ids(self, root_ids, timestamp_past=None, timestamp_future=None):
         """For a set of root ids, get the list of ids at a past or future time point that could contain parts of the same object.
@@ -709,7 +736,7 @@ class ChunkedGraphClientLegacy(ClientBase):
         response = self.session.post(url, json=[root_id])
         return handle_response(response)
 
-    def get_leaves(self, root_id, bounds=None):
+    def get_leaves(self, root_id, bounds=None, stop_layer:int =None):
         """Get all supervoxels for a root_id
 
         Parameters
@@ -719,11 +746,14 @@ class ChunkedGraphClientLegacy(ClientBase):
         bounds: np.array or None, optional
             If specified, returns supervoxels within a 3x2 numpy array of bounds [[minx,maxx],[miny,maxy],[minz,maxz]]
             If None, finds all supervoxels.
+        stop_layer: int, optional
+            If specified, returns chunkedgraph nodes at layer =stop_layer
+            default will be stop_layer=1 (supervoxels)
 
         Returns
         -------
         list
-            List of supervoxel ids
+            List of supervoxel ids (or nodeids if stop_layer>1)
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["root_id"] = root_id
@@ -731,7 +761,8 @@ class ChunkedGraphClientLegacy(ClientBase):
         query_d = {}
         if bounds is not None:
             query_d["bounds"] = package_bounds(bounds)
-
+        if stop_layer is not None:
+            query_d["stop_layer"]= int(stop_layer)
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response)["leaf_ids"])
 
