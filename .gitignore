@@ -110,3 +110,11 @@ venv.bak/
 .dmypy.json
 dmypy.json
 .vscode/settings.json
+
+movies/
+*_meshes/
+notebooks/
+*.pkl
+*.mp4
+*.png
+*.tiff

@@ -99,7 +99,7 @@ pcg_meshing_v1 = "{cg_server_address}/meshing/api/v1"
 chunkedgraph_endpoints_v1 = {
     "handle_root": pcg_v1 + "/table/{table_id}/node/{supervoxel_id}/root",
     "handle_roots": pcg_v1 + "/table/{table_id}/roots",
-    "handle_children": pcg_v1 + "/table/{table_id}/node/{root_id}/childen",
+    "handle_children": pcg_v1 + "/table/{table_id}/node/{root_id}/children",
     "leaves_from_root": pcg_v1 + "/table/{table_id}/node/{root_id}/leaves",
     "do_merge": pcg_v1 + "/table/{table_id}/merge",
     "get_roots": pcg_v1 + "/table/{table_id}/roots_binary",
