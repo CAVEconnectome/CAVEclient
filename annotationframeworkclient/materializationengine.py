@@ -242,8 +242,10 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        d= handle_response(response)
+        d['time_stamp']=convert_timestamp(d['time_stamp'])
+        d['expires_on']=convert_timestamp(d['expires_on'])
+        return d
 
     def get_timestamp(self, version: int = None, datastack_name: str = None):
         """Get datetime.datetime timestamp for a materialization version.
@@ -262,7 +264,7 @@ class MaterializatonClientV2(ClientBase):
         """
         meta = self.get_version_metadata(
             version=version, datastack_name=datastack_name)
-        return datetime.strptime(meta['time_stamp'], '%Y-%m-%dT%H:%M:%S.%f')
+        return convert_timestamp(meta['time_stamp'])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60*60*12))
     def get_versions_metadata(self, datastack_name=None):
@@ -280,7 +282,11 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        return handle_response(response)
+        d= handle_response(response)
+        for md in d:
+            md['time_stamp']=convert_timestamp(md['time_stamp'])
+            md['expires_on']=convert_timestamp(md['expires_on'])
+        return d
 
     def get_table_metadata(self, table_name: str, datastack_name=None):
         """ Get metadata about a table
