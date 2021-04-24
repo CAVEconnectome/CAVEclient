@@ -79,6 +79,7 @@ class ClientBase(object):
         self._default_url_mapping = {server_name: self._server_address}
         self.verify=verify
         self.session = requests.Session()
+        self.session.verify = verify
         head_val = auth_header.get('Authorization', None)
         if head_val is not None:
             token = head_val.split(' ')[1]
