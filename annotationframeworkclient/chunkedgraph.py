@@ -464,12 +464,12 @@ class ChunkedGraphClientV1(ClientBase):
     def is_latest_roots(self, root_ids, timestamp=None):
         """check whether these root_ids are still a root at this timestamp
 
-        Args:
-            root_ids ([type]): root ids to check
-            timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
-        Returns:
-        np.array[np.Boolean]
-            boolean array of whether these are valid root_ids
+            Args:
+                root_ids ([type]): root ids to check
+                timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
+            
+            Returns:
+                np.array[np.Boolean]: boolean array of whether these are valid root_ids
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["is_latest_roots"].format_map(endpoint_mapping)
