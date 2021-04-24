@@ -31,25 +31,26 @@ def AnnotationClient(server_address,
                      api_version='latest',
                      verify=True):
     """ Factory for returning AnnotationClient
-    Parameters
-    ----------
-    server_address : str 
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
-        Name of the datastack.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    verify : str (default : True)
-        whether to verify https
+    
+        Parameters
+        ----------
+        server_address : str 
+            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+        datastack_name : str
+            Name of the datastack.
+        auth_client : AuthClient or None, optional
+            Authentication client to use to connect to server. If None, do not use authentication.
+        api_version : str or int (default: latest)
+            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
+            2: new api version, (i.e. minniev1.microns-daf.com)
+            'latest': default to the most recent (current 2)
+        verify : str (default : True)
+            whether to verify https
 
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
+        Returns
+        -------
+        ClientBaseWithDatastack
+            List of datastack names for available datastacks on the annotation engine
     """
 
     if auth_client is None:
