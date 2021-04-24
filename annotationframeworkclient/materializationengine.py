@@ -155,7 +155,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -185,7 +185,7 @@ class MaterializatonClientV2(ClientBase):
         # TODO fix up latest version
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -216,7 +216,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -236,7 +236,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -274,7 +274,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         return handle_response(response)
 
     def get_table_metadata(self, table_name: str, datastack_name=None):
@@ -303,7 +303,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -457,8 +457,7 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)                         
+                                     stream=~return_df)                         
         self.raise_for_status(response)
         if return_df:
             return pa.deserialize(response.content)
@@ -536,8 +535,7 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)
+                                     stream=~return_df)
         self.raise_for_status(response)
         if return_df:
             return pa.deserialize(response.content)
@@ -741,8 +739,7 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)                         
+                                     stream=~return_df)                         
         self.raise_for_status(response)
         
         time_d['query materialize']=time.time()-starttime
