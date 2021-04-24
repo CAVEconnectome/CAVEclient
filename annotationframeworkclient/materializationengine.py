@@ -129,7 +129,7 @@ class MaterializatonClientV2(ClientBase):
 
     @property
     def homepage(self):
-        url = self._server_address + "/materialize/views/datastack/" + self._datastack_name
+        url = f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
         return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
         
     @version.setter
