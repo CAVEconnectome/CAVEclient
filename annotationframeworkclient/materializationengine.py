@@ -709,7 +709,7 @@ class MaterializatonClientV2(ClientBase):
         materialization_version=None
         # make sure the materialization's are increasing in ID/time
         for md in sorted(mds, key=lambda x: x['id']):
-            ts = convert_timestamp(md['time_stamp'])
+            ts = md['time_stamp']
             if (timestamp > ts):
                 materialization_version=md['version']
                 timestamp_start = ts
