@@ -16,7 +16,7 @@ from datetime import date, datetime
 import pyarrow as pa
 import itertools
 from collections.abc import Iterable
-
+from IPython.display import HTML
 
 
 SERVER_KEY = "me_server_address"
@@ -125,6 +125,11 @@ class MaterializatonClientV2(ClientBase):
     def version(self):
         return self._version
 
+    @property
+    def homepage(self):
+        url = self._server_address + "/materialize/views/datastack/" + self._datastack_name
+        return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
+        
     @version.setter
     def version(self, x):
         if int(x) in self.get_versions():
@@ -448,7 +453,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         {table: filter_out_dict} if filter_out_dict is not None else None,
                                                                         {table: filter_equal_dict} if filter_equal_dict is not None else None,
                                                                         return_df,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
           
@@ -461,7 +466,11 @@ class MaterializatonClientV2(ClientBase):
                                      verify=self.verify)                         
         self.raise_for_status(response)
         if return_df:
-            return pa.deserialize(response.content)
+            df= pa.deserialize(response.content)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
         else:
             return response.json()
 
@@ -527,7 +536,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         filter_out_dict,
                                                                         filter_equal_dict,
                                                                         return_df,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
         
@@ -540,9 +549,11 @@ class MaterializatonClientV2(ClientBase):
                                      verify=self.verify)
         self.raise_for_status(response)
         if return_df:
-            return pa.deserialize(response.content)
-        else:
-            return response.json()
+            df= pa.deserialize(response.content)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
 
     def map_filters(self, filters, timestamp, timestamp_past):
         """translate a list of filter dictionaries
@@ -730,7 +741,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         {table: past_filter_out_dict} if past_filter_out_dict is not None else None,
                                                                         None,
                                                                         True,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
         time_d['package query']=time.time()-starttime
@@ -748,7 +759,10 @@ class MaterializatonClientV2(ClientBase):
         time_d['query materialize']=time.time()-starttime
         starttime=time.time()
         
+                
         df= pa.deserialize(response.content)
+        if not split_positions:
+            concatenate_position_columns(df, inplace=True)
         
         time_d['deserialize']=time.time()-starttime
         starttime=time.time()
