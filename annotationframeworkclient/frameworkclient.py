@@ -44,8 +44,12 @@ class FrameworkClientGlobal(object):
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
-    client = FrameworkClient(datastack_name='my_datastack', server_address='www.myserver.com',
-                             auth_token_file='~/.mysecrets/secrets.json')
+
+    .. code:: python
+
+        client = FrameworkClient(datastack_name='my_datastack',
+                                 server_address='www.myserver.com',
+                                 auth_token_file='~/.mysecrets/secrets.json')
 
     Then
     * client.info is an InfoService client (see infoservice.InfoServiceClient)
@@ -177,8 +181,12 @@ class FrameworkClientFull(FrameworkClientGlobal):
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
-    client = FrameworkClient(datastack_name='my_datastack', server_address='www.myserver.com',
-                             auth_token_file='~/.mysecrets/secrets.json')
+    
+    .. code:: python
+
+        client = FrameworkClient(datastack_name='my_datastack',
+                                 server_address='www.myserver.com',
+                                 auth_token_file='~/.mysecrets/secrets.json')
 
     Then
     * client.info is an InfoService client (see infoservice.InfoServiceClient)

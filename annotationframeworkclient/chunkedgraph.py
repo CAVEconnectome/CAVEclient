@@ -57,6 +57,7 @@ def ChunkedGraphClient(
     auth_client=None,
     api_version="latest",
     timestamp=None,
+    verify=True
 ):
     if server_address is None:
         server_address = default_global_server_address
@@ -84,6 +85,7 @@ def ChunkedGraphClient(
         SERVER_KEY,
         timestamp=timestamp,
         table_name=table_name,
+        verify=verify
     )
 
 
@@ -99,9 +101,10 @@ class ChunkedGraphClientV1(ClientBase):
         server_key=SERVER_KEY,
         timestamp=None,
         table_name=None,
+        verify=True
     ):
         super(ChunkedGraphClientV1, self).__init__(
-            server_address, auth_header, api_version, endpoints, server_key
+            server_address, auth_header, api_version, endpoints, server_key, verify=verify
         )
         self._default_url_mapping["table_id"] = table_name
         self._default_timestamp = timestamp
@@ -464,12 +467,12 @@ class ChunkedGraphClientV1(ClientBase):
     def is_latest_roots(self, root_ids, timestamp=None):
         """check whether these root_ids are still a root at this timestamp
 
-        Args:
-            root_ids ([type]): root ids to check
-            timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
-        Returns:
-        np.array[np.Boolean]
-            boolean array of whether these are valid root_ids
+            Args:
+                root_ids ([type]): root ids to check
+                timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
+            
+            Returns:
+                np.array[np.Boolean]: boolean array of whether these are valid root_ids
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["is_latest_roots"].format_map(endpoint_mapping)
@@ -581,9 +584,10 @@ class ChunkedGraphClientLegacy(ClientBase):
         server_key=SERVER_KEY,
         timestamp=None,
         table_name=None,
+        verify=True
     ):
         super(ChunkedGraphClientLegacy, self).__init__(
-            server_address, auth_header, api_version, endpoints, server_key
+            server_address, auth_header, api_version, endpoints, server_key, verify=verify
         )
 
         self._default_url_mapping["table_id"] = table_name

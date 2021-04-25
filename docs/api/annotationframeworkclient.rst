@@ -84,6 +84,15 @@ annotationframeworkclient.jsonservice module
    :undoc-members:
    :show-inheritance:
 
+annotationframeworkclient.materializationengine module
+------------------------------------------------------
+
+.. automodule:: annotationframeworkclient.materializationengine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 Module contents
 ---------------
 

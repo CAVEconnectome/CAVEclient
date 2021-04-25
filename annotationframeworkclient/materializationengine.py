@@ -16,7 +16,8 @@ from datetime import date, datetime
 import pyarrow as pa
 import itertools
 from collections.abc import Iterable
-
+from .timeit import TimeIt
+from IPython.display import HTML
 
 
 SERVER_KEY = "me_server_address"
@@ -69,24 +70,26 @@ def MaterializationClient(server_address,
                           version=None,
                           verify=True):
     """ Factory for returning AnnotationClient
-    Parameters
-    ----------
-    server_address : str 
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
-        Name of the datastack.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    version : default version to query
-        if None will default to latest version
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
+        
+        Parameters
+        ----------
+        server_address : str 
+            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+        datastack_name : str
+            Name of the datastack.
+        auth_client : AuthClient or None, optional
+            Authentication client to use to connect to server. If None, do not use authentication.
+        api_version : str or int (default: latest)
+            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
+            2: new api version, (i.e. minniev1.microns-daf.com)
+            'latest': default to the most recent (current 2)
+        version : default version to query
+            if None will default to latest version
+
+        Returns
+        -------
+        ClientBaseWithDatastack
+            List of datastack names for available datastacks on the annotation engine
     """
 
     if auth_client is None:
@@ -125,6 +128,11 @@ class MaterializatonClientV2(ClientBase):
     def version(self):
         return self._version
 
+    @property
+    def homepage(self):
+        url = f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
+        return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
+        
     @version.setter
     def version(self, x):
         if int(x) in self.get_versions():
@@ -155,7 +163,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -185,7 +193,7 @@ class MaterializatonClientV2(ClientBase):
         # TODO fix up latest version
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -216,7 +224,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -236,9 +244,12 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+
+        response = self.session.get(url)
+        d= handle_response(response)
+        d['time_stamp']=convert_timestamp(d['time_stamp'])
+        d['expires_on']=convert_timestamp(d['expires_on'])
+        return d
 
     def get_timestamp(self, version: int = None, datastack_name: str = None):
         """Get datetime.datetime timestamp for a materialization version.
@@ -257,25 +268,30 @@ class MaterializatonClientV2(ClientBase):
         """
         meta = self.get_version_metadata(
             version=version, datastack_name=datastack_name)
-        return datetime.strptime(meta['time_stamp'], '%Y-%m-%dT%H:%M:%S.%f')
+        return convert_timestamp(meta['time_stamp'])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60*60*12))
     def get_versions_metadata(self, datastack_name=None):
         """get the metadata for all the versions that are presently available and valid
 
-        Args:
-            datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
-        Returns:
-        list[dict]
-            a list of metadata dictionaries
+            Args:
+                datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
+            
+            Returns:
+                list[dict]: a list of metadata dictionaries
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
-        return handle_response(response)
+        response = self.session.get(url)
+        d= handle_response(response)
+        for md in d:
+            md['time_stamp']=convert_timestamp(md['time_stamp'])
+            md['expires_on']=convert_timestamp(md['expires_on'])
+        return d
+
 
     def get_table_metadata(self, table_name: str, datastack_name=None):
         """ Get metadata about a table
@@ -303,7 +319,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -448,7 +464,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         {table: filter_out_dict} if filter_out_dict is not None else None,
                                                                         {table: filter_equal_dict} if filter_equal_dict is not None else None,
                                                                         return_df,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
           
@@ -457,11 +473,14 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)                         
+                                     stream=~return_df)                         
         self.raise_for_status(response)
         if return_df:
-            return pa.deserialize(response.content)
+            df= pa.deserialize(response.content)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
         else:
             return response.json()
 
@@ -511,8 +530,9 @@ class MaterializatonClientV2(ClientBase):
                 default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query. 
                 If None defaults to one specified in client.
+        
         Returns:
-        pd.DataFrame: a pandas dataframe of results of query
+            pd.DataFrame: a pandas dataframe of results of query
 
         """
         if materialization_version is None:
@@ -527,7 +547,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         filter_out_dict,
                                                                         filter_equal_dict,
                                                                         return_df,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
         
@@ -536,13 +556,14 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)
+                                     stream=~return_df)
         self.raise_for_status(response)
         if return_df:
-            return pa.deserialize(response.content)
-        else:
-            return response.json()
+            df= pa.deserialize(response.content)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
 
     def map_filters(self, filters, timestamp, timestamp_past):
         """translate a list of filter dictionaries
@@ -593,35 +614,62 @@ class MaterializatonClientV2(ClientBase):
     def _update_rootids(self, df, timestamp):
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
-        time_d = {}
-        starttime=time.time()
+        
         sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
-        for sv_col in sv_columns:
-            root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
-            svids = df[sv_col].values
-            root_ids = df[root_id_col].values.copy()
-
-            uniq_root_ids = np.unique(root_ids)
-            is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
-            is_latest_root = np.isin(root_ids, uniq_root_ids[is_latest_root])
-
-            time_d[f'is_latest_root {sv_col}']=time.time()-starttime
-            starttime=time.time()
-
-            logging.info(f'{sv_col} has {len(svids[~is_latest_root])} to update')
-            updated_root_ids = self.cg_client.get_roots(svids[~is_latest_root], timestamp=timestamp)
-
-            time_d[f'get_roots {sv_col}']=time.time()-starttime
-            starttime=time.time()
-
-            root_ids[~is_latest_root]=updated_root_ids
-            # ran into an isssue with pyarrow producing read only columns
-            df[root_id_col]=None
-            df[root_id_col]=root_ids
+        with TimeIt("is_latest_roots"):
+            all_root_ids = np.empty(0, dtype=np.int64)
             
-            time_d[f'replace_roots {sv_col}']=time.time()-starttime
-            starttime=time.time()
-        return df, time_d
+            # go through the columns and collect all the root_ids to check
+            # to see if they need updating
+            for sv_col in sv_columns:
+                root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
+                all_root_ids=np.append(all_root_ids, df[root_id_col].values.copy())
+        
+            uniq_root_ids = np.unique(all_root_ids)
+            del(all_root_ids)
+            is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
+            latest_root_ids = uniq_root_ids[is_latest_root]
+ 
+        
+            # go through the columns and collect all the supervoxel ids to update
+            all_svids = np.empty(0, dtype=np.int64)
+            all_is_latest = []
+            all_svid_lengths = []
+            for sv_col in sv_columns:
+                with TimeIt(f'find svids {sv_col}'):
+                    root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
+                    svids = df[sv_col].values
+                    root_ids = df[root_id_col]
+                    is_latest_root = np.isin(root_ids, latest_root_ids)
+                    all_is_latest.append(is_latest_root)
+                    n_svids = len(svids[~is_latest_root])
+                    all_svid_lengths.append(n_svids)
+                    logging.info(f'{sv_col} has {n_svids} to update')
+                    all_svids = np.append(all_svids, svids[~is_latest_root])
+        
+        with TimeIt("get_roots"):  
+            # find the up to date root_ids for those supervoxels
+            updated_root_ids = self.cg_client.get_roots(all_svids,
+                                                        timestamp=timestamp)
+            del(all_svids)
+    
+
+        # loop through the columns again replacing the root ids with their updated
+        # supervoxelids
+        k = 0
+        for is_latest_root,n_svids,sv_col in zip(all_is_latest, all_svid_lengths,sv_columns):
+            with TimeIt(f'replace_roots {sv_col}'):  
+                root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
+                root_ids = df[root_id_col].values.copy()
+            
+                uroot_id = updated_root_ids[k:k+n_svids]
+                k+=n_svids
+                root_ids[~is_latest_root]=uroot_id
+                # ran into an isssue with pyarrow producing read only columns
+                df[root_id_col]=None
+                df[root_id_col]=root_ids
+            
+        return df
 
     def live_query(self,
                     table: str,
@@ -676,106 +724,92 @@ class MaterializatonClientV2(ClientBase):
         return_df = True
         if self.cg_client is None:
             raise ValueError('You must have a cg_client to run live_query')
-        
-        starttime = time.time()
-        time_d ={}
 
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        # we want to find the most recent materialization
-        # in which the timestamp given is in the future
-        mds = self.get_versions_metadata()
-        materialization_version=None
-        # make sure the materialization's are increasing in ID/time
-        for md in sorted(mds, key=lambda x: x['id']):
-            ts = convert_timestamp(md['time_stamp'])
-            if (timestamp > ts):
-                materialization_version=md['version']
-                timestamp_start = ts
-        # if none of the available versions are before
-        # this timestamp, then we cannot support the query
-        if materialization_version is None:
-            raise(ValueError('''The timestamp you passed is not recent enough
-             for the materialization versions that are available'''))
+        with TimeIt('find_mat_version'):
+            # we want to find the most recent materialization
+            # in which the timestamp given is in the future
+            mds = self.get_versions_metadata()
+            materialization_version=None
+            # make sure the materialization's are increasing in ID/time
+            for md in sorted(mds, key=lambda x: x['id']):
+                ts = md['time_stamp']
+                if (timestamp > ts):
+                    materialization_version=md['version']
+                    timestamp_start = ts
+            # if none of the available versions are before
+            # this timestamp, then we cannot support the query
+            if materialization_version is None:
+                raise(ValueError('''The timestamp you passed is not recent enough
+                for the materialization versions that are available'''))
+
        
-        time_d['mat_version']=time.time()-starttime
-        starttime=time.time()
         # first we want to translate all these filters into the IDss at the 
         # most recent materialization
-        past_filters = self.map_filters([filter_in_dict,
-                                        filter_out_dict,
-                                        filter_equal_dict],
-                                        timestamp, timestamp_start)
-        past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
-        if filter_equal_dict is not None:
-            # when doing a filter equal in the past
-            # we translate it to a filter_in, as 1 ID might
-            # be multiple IDs in the past.
-            # so we want to update the filter_in dict
-            if past_filter_in_dict is not None:
-                past_filter_in_dict.update(past_equal_dict)
-            else:
-                # or if there wasn't a filter_in dict
-                # then replace it
-                past_filter_in_dict = past_equal_dict
-                
-        time_d['map_filters']=time.time()-starttime
-        starttime=time.time()
+        with TimeIt('map_filters'):
+            past_filters = self.map_filters([filter_in_dict,
+                                            filter_out_dict,
+                                            filter_equal_dict],
+                                            timestamp, timestamp_start)
+            past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
+            if filter_equal_dict is not None:
+                # when doing a filter equal in the past
+                # we translate it to a filter_in, as 1 ID might
+                # be multiple IDs in the past.
+                # so we want to update the filter_in dict
+                if past_filter_in_dict is not None:
+                    past_filter_in_dict.update(past_equal_dict)
+                else:
+                    # or if there wasn't a filter_in dict
+                    # then replace it
+                    past_filter_in_dict = past_equal_dict
 
-        url, data, query_args, encoding = self._format_query_components(datastack_name,
+        with TimeIt('package query'):
+            url, data, query_args, encoding = self._format_query_components(datastack_name,
                                                                         materialization_version,
                                                                         [table], None, None, 
                                                                         {table: past_filter_in_dict} if past_filter_in_dict is not None else None,
                                                                         {table: past_filter_out_dict} if past_filter_out_dict is not None else None,
                                                                         None,
                                                                         True,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
-        time_d['package query']=time.time()-starttime
-        starttime=time.time()
+
+        with TimeIt('query materialize'):
+            response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
+                                        headers={
+                                            'Content-Type': 'application/json',
+                                            'Accept-Encoding': encoding},
+                                        params=query_args,
+                                        stream=~return_df,
+                                        verify=self.verify)                         
+            self.raise_for_status(response)
+
         
-        response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
-                                     headers={
-                                         'Content-Type': 'application/json',
-                                         'Accept-Encoding': encoding},
-                                     params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)                         
-        self.raise_for_status(response)
-        
-        time_d['query materialize']=time.time()-starttime
-        starttime=time.time()
-        
-        df= pa.deserialize(response.content)
-        
-        time_d['deserialize']=time.time()-starttime
-        starttime=time.time()
-        
+        with TimeIt('deserialize'):
+            df= pa.deserialize(response.content)
+            if not split_positions:
+                concatenate_position_columns(df, inplace=True)
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
-        df, root_time_d = self._update_rootids(df, timestamp)
+        df = self._update_rootids(df, timestamp)
         
-        time_d.update(root_time_d)
-        starttime=time.time()
         # apply the original filters to remove rows
         # from this result which are not relevant
         if post_filter:
-            if filter_in_dict is not None:
-                for col, val in filter_in_dict.items():
-                    df = df[df[col].isin(val)]
-            if filter_out_dict is not None:
-                for col, val in filter_out_dict.items():
-                    df = df[~df[col].isin(val)]
-            if filter_equal_dict is not None:
-                for col, val in filter_equal_dict.items():
-                    df = df[df[col]==val]
-
-        
-        time_d['post_filter']=time.time()-starttime
-        starttime=time.time()
-        logging.info(time_d)
+            with TimeIt('post_filter'):
+                if filter_in_dict is not None:
+                    for col, val in filter_in_dict.items():
+                        df = df[df[col].isin(val)]
+                if filter_out_dict is not None:
+                    for col, val in filter_out_dict.items():
+                        df = df[~df[col].isin(val)]
+                if filter_equal_dict is not None:
+                    for col, val in filter_equal_dict.items():
+                        df = df[df[col]==val]
         
         return df
  
