@@ -33,7 +33,7 @@ class TestMatclient():
         }
     endpoints=materialization_endpoints_v2
     @responses.activate
-    def test_matclient(self, myclient):
+    def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
         api_versions_url = chunkedgraph_endpoints_common['get_api_versions'].format_map(endpoint_mapping)
         responses.add(
@@ -131,98 +131,76 @@ class TestMatclient():
                                                 offset=0)
 
         ### live query test
+        def my_get_roots(self, supervoxel_ids, timestamp=None, stop_layer=None):
 
-        is_latest_url = chunkedgraph_endpoints_v1['is_latest_roots'].format_map(endpoint_mapping)
-        past_id_mapping_url = chunkedgraph_endpoints_v1['past_id_mapping'].format_map(endpoint_mapping)
-        get_roots_url = chunkedgraph_endpoints_v1['get_roots'].format_map(endpoint_mapping)
-
-        query_d ={
-            'timestamp_past':time.mktime(past_timestamp.timetuple()),
-            'timestamp_future':time.mktime(good_time.timetuple())
-        }
-        qpast_id_mapping_url = past_id_mapping_url + "?" + urlencode(query_d)
-        root_ids_list1 = [103,201]
-        id_map_str1={'future_id_map': {},
-                    'past_id_map': {'201': [100],
-                        '103': [103]}}
-        responses.add(responses.GET,
-                      status=200,
-                      url=qpast_id_mapping_url,
-                      json=id_map_str1,
-                      match=[responses.json_params_matcher({'root_ids':root_ids_list1})])
+            if (timestamp==good_time):
+                sv_lookup={1:200,
+                           2:200,
+                           3:201,
+                           4:201,
+                           5:203,
+                           6:203,
+                           7:203,
+                           8:103,
+                           9:103,
+                           10:103}
+                
+            elif (timestamp==past_timestamp):
+                sv_lookup={1:100,
+                           2:100,
+                           3:100,
+                           4:100,
+                           5:101,
+                           6:102,
+                           7:102,
+                           8:103,
+                           9:103,
+                           10:103}
+            else:
+                raise ValueError('Mock is not defined at this time')
+            return np.array([sv_lookup[sv] for sv in supervoxel_ids])
         
-        root_ids_list2 = [201,203]
-        id_map_str2={'future_id_map': {},
-                    'past_id_map': {'201': [100],
-                        '203': [101,102]}}
+        def mocked_get_past_ids(self, root_ids, timestamp_past=None, timestamp_future=None):
+            id_map = {
+                201: [100],
+                103: [103],
+                203: [101,102]
+            }
+            return {
+                'future_id_map': {},
+                'past_id_map': {k:id_map[k] for k in root_ids}
+            }
 
-        responses.add(responses.GET,
-                      status=200,
-                      url=qpast_id_mapping_url,
-                      json=id_map_str2,
-                      match=[responses.json_params_matcher({'root_ids':root_ids_list2})])
-
-
-        root_ids_list3 = [203]
-        id_map_str3={'future_id_map': {},
-                    'past_id_map': {'203': [101,102]}}
-        responses.add(responses.GET,
-                      status=200,
-                      url=qpast_id_mapping_url,
-                      json=id_map_str3,
-                      match=[responses.json_params_matcher({'root_ids':root_ids_list3})])
-
-        query_d ={
-            'timestamp':time.mktime(good_time.timetuple())
-        }
-        q_is_latest_now = is_latest_url + "?" + urlencode(query_d)
-
-        responses.add(responses.POST,
-                    status=200,
-                    url=q_is_latest_now,
-                    json={'is_latest':[True,True]},
-                    match=[responses.json_params_matcher({'node_ids':[103,201]})])
-        responses.add(responses.POST,
-                    status=200,
-                    url=q_is_latest_now,
-                    json={'is_latest':[True,True]},
-                    match=[responses.json_params_matcher({'node_ids':[201,203]})])
-        responses.add(responses.POST,
-                    status=200,
-                    url=q_is_latest_now,
-                    json={'is_latest':[True]},
-                    match=[responses.json_params_matcher({'node_ids':[203]})])            
-        responses.add(responses.POST,
-                    status=200,
-                    url=q_is_latest_now,
-                    json={'is_latest':[False,True]},
-                    match=[responses.json_params_matcher({'node_ids':[100,103]})])
-        responses.add(responses.POST,
-                    status=200,
-                    url=q_is_latest_now,
-                    json={'is_latest':[False,False,False,True]},
-                    match=[responses.json_params_matcher({'node_ids':[100,101,102,103]})])
+        def mock_is_latest_roots(self, root_ids, timestamp=None):
+            if (timestamp==good_time):
+                is_latest={100:False,
+                           101:False,
+                           102:False,
+                           103:True,
+                           200:True,
+                           201:True,
+                           202:True,
+                           203:True}
+                
+            elif (timestamp==past_timestamp):
+                is_latest={100:True,
+                           101:True,
+                           102:True,
+                           103:True,
+                           200:False,
+                           201:False,
+                           202:False,
+                           203:False}
+            else:
+                raise ValueError('Mock is not defined at this time')
+            return np.array([is_latest[root_id] for root_id in root_ids])
         
-        qurl = get_roots_url + "?" + urlencode(query_d)
-        root_ids = np.array([200,201,201], dtype=np.int64)
-        svids = np.array([1,3,4], dtype=np.int64)
-        responses.add(responses.POST,
-                    url=qurl,
-                    body = root_ids.tobytes(),
-                    match=[binary_body_match(svids.tobytes())])
-
-        root_ids = np.array([203,203,200,203], dtype=np.int64)
-        svids = np.array([5,6,2,7], dtype=np.int64)
-        responses.add(responses.POST,
-                    url=qurl,
-                    body = root_ids.tobytes(),
-                    match=[binary_body_match(svids.tobytes())])
-
-        url = self.endpoints['simple_query'].format_map(endpoint_mapping)
-        query_d={'return_pyarrow': True,
-                 'split_positions': False}
-        query_string = urlencode(query_d)
-        url = url + "?" + query_string
+        mocker.patch('annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots',
+                     my_get_roots)
+        mocker.patch('annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids',
+                     mocked_get_past_ids)
+        mocker.patch('annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots',
+                     mock_is_latest_roots)
 
         df=pd.read_pickle('tests/test_data/live_query_before.pkl')
         
