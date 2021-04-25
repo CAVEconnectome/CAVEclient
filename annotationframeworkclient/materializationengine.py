@@ -596,49 +596,54 @@ class MaterializatonClientV2(ClientBase):
         time_d = {}
         starttime=time.time()
         sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
-        all_root_ids = []
+        all_root_ids = np.empty(0, dtype=np.int64)
         
         # go through the columns and collect all the root_ids to check
         # to see if they need updating
         for sv_col in sv_columns:
             root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
-            all_root_ids.append(df[root_id_col].values.copy())
-        
-        uniq_root_ids = np.unique(np.concatenate(all_root_ids))
+            all_root_ids=np.append(all_root_ids, df[root_id_col].values.copy())
+    
+        uniq_root_ids = np.unique(all_root_ids)
+        del(all_root_ids)
         is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
         latest_root_ids = uniq_root_ids[is_latest_root]
         time_d[f'is_latest_root']=time.time()-starttime
         starttime=time.time()
 
         # go through the columns and collect all the supervoxel ids to update
-        all_svids = []
+        all_svids = np.empty(0, dtype=np.int64)
         all_is_latest = []
+        all_svid_lengths = []
         for sv_col in sv_columns:
             root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
             svids = df[sv_col].values
             root_ids = df[root_id_col]
             is_latest_root = np.isin(root_ids, latest_root_ids)
             all_is_latest.append(is_latest_root)
-            logging.info(f'{sv_col} has {len(svids[~is_latest_root])} to update')
-            all_svids.append(svids[~is_latest_root])
+            n_svids = len(svids[~is_latest_root])
+            all_svid_lengths.append(n_svids)
+            logging.info(f'{sv_col} has {n_svids} to update')
+            all_svids = np.append(all_svids, svids[~is_latest_root])
             time_d[f'find svids {sv_col}']=time.time()-starttime
             starttime=time.time()
         
         # find the up to date root_ids for those supervoxels
-        updated_root_ids = self.cg_client.get_roots(np.concatenate(all_svids),
+        updated_root_ids = self.cg_client.get_roots(all_svids,
                                                     timestamp=timestamp)
+        del(all_svids)
         time_d[f'get_roots']=time.time()-starttime
         starttime=time.time()
 
         # loop through the columns again replacing the root ids with their updated
         # supervoxelids
         k = 0
-        for is_latest_root,svids,sv_col in zip(all_is_latest, all_svids,sv_columns):
+        for is_latest_root,n_svids,sv_col in zip(all_is_latest, all_svid_lengths,sv_columns):
             root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
             root_ids = df[root_id_col].values.copy()
         
-            uroot_id = updated_root_ids[k:k+len(svids)]
-            k+=len(svids)
+            uroot_id = updated_root_ids[k:k+n_svids]
+            k+=n_svids
             root_ids[~is_latest_root]=uroot_id
             # ran into an isssue with pyarrow producing read only columns
             df[root_id_col]=None
