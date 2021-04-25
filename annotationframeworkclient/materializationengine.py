@@ -17,6 +17,7 @@ import pyarrow as pa
 import itertools
 from collections.abc import Iterable
 from .timeit import TimeIt
+from IPython.display import HTML
 
 
 SERVER_KEY = "me_server_address"
@@ -69,24 +70,26 @@ def MaterializationClient(server_address,
                           version=None,
                           verify=True):
     """ Factory for returning AnnotationClient
-    Parameters
-    ----------
-    server_address : str 
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
-        Name of the datastack.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    version : default version to query
-        if None will default to latest version
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
+        
+        Parameters
+        ----------
+        server_address : str 
+            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+        datastack_name : str
+            Name of the datastack.
+        auth_client : AuthClient or None, optional
+            Authentication client to use to connect to server. If None, do not use authentication.
+        api_version : str or int (default: latest)
+            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
+            2: new api version, (i.e. minniev1.microns-daf.com)
+            'latest': default to the most recent (current 2)
+        version : default version to query
+            if None will default to latest version
+
+        Returns
+        -------
+        ClientBaseWithDatastack
+            List of datastack names for available datastacks on the annotation engine
     """
 
     if auth_client is None:
@@ -125,6 +128,11 @@ class MaterializatonClientV2(ClientBase):
     def version(self):
         return self._version
 
+    @property
+    def homepage(self):
+        url = f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
+        return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
+        
     @version.setter
     def version(self, x):
         if int(x) in self.get_versions():
@@ -155,7 +163,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -185,7 +193,7 @@ class MaterializatonClientV2(ClientBase):
         # TODO fix up latest version
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -216,7 +224,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -236,9 +244,12 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+
+        response = self.session.get(url)
+        d= handle_response(response)
+        d['time_stamp']=convert_timestamp(d['time_stamp'])
+        d['expires_on']=convert_timestamp(d['expires_on'])
+        return d
 
     def get_timestamp(self, version: int = None, datastack_name: str = None):
         """Get datetime.datetime timestamp for a materialization version.
@@ -257,25 +268,30 @@ class MaterializatonClientV2(ClientBase):
         """
         meta = self.get_version_metadata(
             version=version, datastack_name=datastack_name)
-        return datetime.strptime(meta['time_stamp'], '%Y-%m-%dT%H:%M:%S.%f')
+        return convert_timestamp(meta['time_stamp'])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60*60*12))
     def get_versions_metadata(self, datastack_name=None):
         """get the metadata for all the versions that are presently available and valid
 
-        Args:
-            datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
-        Returns:
-        list[dict]
-            a list of metadata dictionaries
+            Args:
+                datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
+            
+            Returns:
+                list[dict]: a list of metadata dictionaries
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url, verify=self.verify)
-        return handle_response(response)
+        response = self.session.get(url)
+        d= handle_response(response)
+        for md in d:
+            md['time_stamp']=convert_timestamp(md['time_stamp'])
+            md['expires_on']=convert_timestamp(md['expires_on'])
+        return d
+
 
     def get_table_metadata(self, table_name: str, datastack_name=None):
         """ Get metadata about a table
@@ -303,7 +319,7 @@ class MaterializatonClientV2(ClientBase):
 
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url, verify=self.verify)
+        response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
 
@@ -448,7 +464,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         {table: filter_out_dict} if filter_out_dict is not None else None,
                                                                         {table: filter_equal_dict} if filter_equal_dict is not None else None,
                                                                         return_df,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
           
@@ -457,11 +473,14 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)                         
+                                     stream=~return_df)                         
         self.raise_for_status(response)
         if return_df:
-            return pa.deserialize(response.content)
+            df= pa.deserialize(response.content)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
         else:
             return response.json()
 
@@ -511,8 +530,9 @@ class MaterializatonClientV2(ClientBase):
                 default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query. 
                 If None defaults to one specified in client.
+        
         Returns:
-        pd.DataFrame: a pandas dataframe of results of query
+            pd.DataFrame: a pandas dataframe of results of query
 
         """
         if materialization_version is None:
@@ -527,7 +547,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         filter_out_dict,
                                                                         filter_equal_dict,
                                                                         return_df,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
         
@@ -536,13 +556,14 @@ class MaterializatonClientV2(ClientBase):
                                          'Content-Type': 'application/json',
                                          'Accept-Encoding': encoding},
                                      params=query_args,
-                                     stream=~return_df,
-                                     verify=self.verify)
+                                     stream=~return_df)
         self.raise_for_status(response)
         if return_df:
-            return pa.deserialize(response.content)
-        else:
-            return response.json()
+            df= pa.deserialize(response.content)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
 
     def map_filters(self, filters, timestamp, timestamp_past):
         """translate a list of filter dictionaries
@@ -714,7 +735,7 @@ class MaterializatonClientV2(ClientBase):
             materialization_version=None
             # make sure the materialization's are increasing in ID/time
             for md in sorted(mds, key=lambda x: x['id']):
-                ts = convert_timestamp(md['time_stamp'])
+                ts = md['time_stamp']
                 if (timestamp > ts):
                     materialization_version=md['version']
                     timestamp_start = ts
@@ -723,6 +744,7 @@ class MaterializatonClientV2(ClientBase):
             if materialization_version is None:
                 raise(ValueError('''The timestamp you passed is not recent enough
                 for the materialization versions that are available'''))
+
        
         # first we want to translate all these filters into the IDss at the 
         # most recent materialization
@@ -752,10 +774,10 @@ class MaterializatonClientV2(ClientBase):
                                                                         {table: past_filter_out_dict} if past_filter_out_dict is not None else None,
                                                                         None,
                                                                         True,
-                                                                        split_positions,
+                                                                        False,
                                                                         offset,
                                                                         limit)
- 
+
         with TimeIt('query materialize'):
             response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                         headers={
@@ -765,10 +787,12 @@ class MaterializatonClientV2(ClientBase):
                                         stream=~return_df,
                                         verify=self.verify)                         
             self.raise_for_status(response)
+
         
         with TimeIt('deserialize'):
             df= pa.deserialize(response.content)
-        
+            if not split_positions:
+                concatenate_position_columns(df, inplace=True)
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
         df = self._update_rootids(df, timestamp)

@@ -65,3 +65,27 @@ The following could would create a new annotation and then upload it to the serv
                'pt': {'position': [1,2,3]},
                'func_id': 0}
    client.annotation.post_annotation(table_name='test_table', data=[new_data])
+
+There are methods to simplify annotation uploads if you have a pandas dataframe
+whose structure mirrors the struction of the annotation schema you want to upload
+
+.. code:: python
+
+    import pandas as pd
+
+    df = pd.DataFrame([{'id':0,
+             'type': 'microns_func_coreg',
+             'pt_position': [1,2,3]},
+             'func_id': 0}, 
+            {'id':1,
+            'type': 'microns_func_coreg',
+            'pt_position': [3,2,1]},
+            'func_id': 2}])
+    client.annotation.post_annotation_df('test_table', df)
+
+Note that here I specified the IDs of my annotations, which you can do, 
+but then its up to you to assure that the IDs don't collide with other IDs.
+If you leave them blank then the service will assign the IDs for you.
+
+There is a similar method for updating 
+:func:`annotationframeworkclient.annotationengine.AnnotationClientV2.update_annotation_df`

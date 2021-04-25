@@ -14,7 +14,7 @@ Usually in Neuroglancer, one never notices supervoxel ids, but they are
 important for programmatic work. In order to look up the root id for a
 location in space, one needs to use the supervoxel segmentation to get
 the associated supervoxel id. The ChunkedGraph client makes this easy
-using the ``get_root_ids`` method.
+using the :func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_root_id` method.
 
 .. code:: python
 
@@ -38,11 +38,20 @@ different than it is now.
     sv_id = 104200755619042523
     client.chunkedgraph.get_root_id(supervoxel_id=sv_id, timestamp=timestamp)
 
+If you are doing this across lots of supervoxels (or any nodes)
+then you can do it more efficently in one request with
+:func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots`
+
+.. code:: python
+
+    node_ids = [104200755619042523, 104200755619042524,104200755619042525]
+    root_ids = client.chunkedgraph.get_roots(node_ids)
+
 Getting supervoxels for a root id
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A root id is associated with a particular agglomeration of supervoxels,
-which can be found with the ``get_leaves`` method. A new root id is
+which can be found with the :func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_leaves` method. A new root id is
 generated for every new change in the chunkedgraph, so time stamps do
 not apply.
 
@@ -50,3 +59,19 @@ not apply.
 
     root_id = 648518346349541252
     client.chunkedgraph.get_leaves(root_id)
+
+You can also query the chunkedgraph not all the way to the bottom, using the stop_layer
+option
+
+.. code:: python
+
+    root_id = 648518346349541252
+    client.chunkedgraph.get_leaves(root_id,stop_layer=2)
+
+This will get all the level 2 IDs for this root, which correspond to the lowest chunk of the heirachy.
+An analogous option exists for :func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots`.
+
+Other functions
+^^^^^^^^^^^^^^^
+
+There are a variety of other interesting functions to explore in the :class:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1`

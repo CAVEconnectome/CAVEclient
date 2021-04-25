@@ -13,7 +13,7 @@ Welcome to AnnotationFrameworkClient's documentation!
    guide/info
    guide/schemas
    guide/state
-
+   guide/materialization
 
 API
 ---
