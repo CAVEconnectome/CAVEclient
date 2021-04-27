@@ -60,6 +60,8 @@ class MEEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 def convert_timestamp(ts):
+    if isinstance(ts, datetime):
+        return ts
     return datetime.strptime(ts, '%Y-%m-%dT%H:%M:%S.%f')
 
 def MaterializationClient(server_address,
