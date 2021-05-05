@@ -54,7 +54,7 @@ class TestMatclient():
 
         url = self.endpoints['simple_query'].format_map(endpoint_mapping)
         query_d={'return_pyarrow': True,
-            'split_positions': False}
+            'split_positions': True}
         query_string = urlencode(query_d)
         url = url + "?" + query_string
         correct_query_data = {
@@ -76,7 +76,7 @@ class TestMatclient():
             'offset':0,
             'limit':1000
         }
-        df=pd.read_pickle('tests/test_data/synapse_query.pkl')
+        df=pd.read_pickle('tests/test_data/synapse_query_split.pkl')
         
         context = pa.default_serialization_context()
         serialized = context.serialize(df)
@@ -143,7 +143,11 @@ class TestMatclient():
                            7:203,
                            8:103,
                            9:103,
-                           10:103}
+                           10:103,
+                           11:200,
+                           12:103,
+                           13:203,
+                           14:201}
                 
             elif (timestamp==past_timestamp):
                 sv_lookup={1:100,
@@ -155,7 +159,11 @@ class TestMatclient():
                            7:102,
                            8:103,
                            9:103,
-                           10:103}
+                           10:103,
+                           11:100,
+                           12:103,
+                           13:102,
+                           14:100}
             else:
                 raise ValueError('Mock is not defined at this time')
             return np.array([sv_lookup[sv] for sv in supervoxel_ids])
@@ -278,3 +286,71 @@ class TestMatclient():
         dfr = pd.read_pickle('tests/test_data/live_query_after3.pkl')
         assert(np.all(dfq.pre_pt_root_id==dfr.pre_pt_root_id))
         assert(np.all(dfq.post_pt_root_id==dfr.post_pt_root_id))
+
+        df_ct=pd.read_pickle('tests/test_data/cell_types.pkl')
+        context = pa.default_serialization_context()
+        serialized = context.serialize(df_ct)
+
+        endpoint_mapping['table_name']='cell_types'
+        url = self.endpoints['simple_query'].format_map(endpoint_mapping)
+        query_d={'return_pyarrow': True,
+            'split_positions': True}
+        query_string = urlencode(query_d)
+        url = url + "?" + query_string
+
+        correct_query_data = {}
+        responses.add(
+            responses.POST,
+            url=url,
+            body=serialized.to_buffer().to_pybytes(),
+            headers={'content-type': 'x-application/pyarrow'},
+            match=[
+                responses.json_params_matcher(correct_query_data)
+            ]
+        )
+        dfq = myclient.materialize.live_query('cell_types',
+                                              good_time,
+                                              split_positions=True)
+
+        correct_ct = pd.read_pickle('tests/test_data/cell_types_live.pkl')
+        assert(np.all(correct_ct.pt_root_id==dfq.pt_root_id))
+
+        correct_query_data = {
+            'filter_equal_dict':{
+                'cell_types':{
+                    'cell_type': "BC"
+                }
+            }
+        }
+        responses.add(
+            responses.POST,
+            url=url,
+            body=serialized.to_buffer().to_pybytes(),
+            headers={'content-type': 'x-application/pyarrow'},
+            match=[
+                responses.json_params_matcher(correct_query_data)
+            ]
+        )
+        dfq = myclient.materialize.live_query('cell_types',
+                                              good_time,
+                                              filter_equal_dict={
+                                                  'cell_type':"BC"
+                                              },
+                                              split_positions=True)
+
+        cdf = correct_ct.query('cell_type=="BC"')
+        assert(np.all(cdf.pt_root_id==dfq.pt_root_id))
+        assert(np.all(cdf.cell_type==dfq.cell_type))
+
+        dfq = myclient.materialize.live_query('cell_types',
+                                              good_time,
+                                              filter_equal_dict={
+                                                  'cell_type':"BC"
+                                              },
+                                              split_positions=False)
+        cdf = correct_ct.query('cell_type=="BC"')
+        assert(np.all(cdf.pt_root_id==dfq.pt_root_id))
+        assert(np.all(cdf.cell_type==dfq.cell_type))
+        x =  cdf.iloc[0]
+        pos = np.array([x.pt_position_x, x.pt_position_y, x.pt_position_z])                    
+        assert(np.all(dfq.pt_position.iloc[0]==pos))

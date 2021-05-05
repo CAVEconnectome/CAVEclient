@@ -43,8 +43,10 @@ def concatenate_position_columns(df, inplace=False):
         t=''.join([k[-1:] for k in gl])
         if t=='xyz':  
             df2[base]=[np.array(x) for x in df2[gl].values.tolist()]
-            df2=df2.drop(gl,axis=1,inplace=inplace)
-
+            if inplace:
+                df2.drop(gl,axis=1,inplace=inplace)
+            else:        
+                df2=df2.drop(gl,axis=1,inplace=inplace)
     return df2
 
 class MEEncoder(json.JSONEncoder):
@@ -466,7 +468,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         {table: filter_out_dict} if filter_out_dict is not None else None,
                                                                         {table: filter_equal_dict} if filter_equal_dict is not None else None,
                                                                         return_df,
-                                                                        False,
+                                                                        True,
                                                                         offset,
                                                                         limit)
           
@@ -549,7 +551,7 @@ class MaterializatonClientV2(ClientBase):
                                                                         filter_out_dict,
                                                                         filter_equal_dict,
                                                                         return_df,
-                                                                        False,
+                                                                        True,
                                                                         offset,
                                                                         limit)
         
@@ -584,10 +586,13 @@ class MaterializatonClientV2(ClientBase):
         for filter_dict in filters:
             if filter_dict is not None:      
                 for col, val in filter_dict.items():
-                    if not isinstance(val, (Iterable, np.ndarray)):
-                        vals.append([val])
-                    else:
-                        vals.append(val)
+                    if col.endswith('root_id'):
+                        if not isinstance(val, (Iterable, np.ndarray)):
+                            vals.append([val])
+                        else:
+                            vals.append(val)
+                        
+                    
         # if they are all None then we can safely return now
         if len(vals)==0:
             return [None, None, None]
@@ -606,10 +611,13 @@ class MaterializatonClientV2(ClientBase):
             else:
                 new_dict={}
                 for col, vals in filter_dict.items():
-                    if not isinstance(vals, (Iterable, np.ndarray)):
-                        new_dict[col]=id_mapping['past_id_map'][vals]
+                    if col.endswith('root_id'):
+                        if not isinstance(vals, (Iterable, np.ndarray)):
+                            new_dict[col]=id_mapping['past_id_map'][vals]
+                        else:
+                            new_dict[col]=np.concatenate([id_mapping['past_id_map'][v] for v in vals ])
                     else:
-                        new_dict[col]=np.concatenate([id_mapping['past_id_map'][v] for v in vals ])
+                        new_dict[col]=vals
                 new_filters.append(new_dict)
         return new_filters
 
@@ -756,17 +764,19 @@ class MaterializatonClientV2(ClientBase):
                                             filter_equal_dict],
                                             timestamp, timestamp_start)
             past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
-            if filter_equal_dict is not None:
+            if past_equal_dict is not None:
                 # when doing a filter equal in the past
                 # we translate it to a filter_in, as 1 ID might
                 # be multiple IDs in the past.
-                # so we want to update the filter_in dict
-                if past_filter_in_dict is not None:
-                    past_filter_in_dict.update(past_equal_dict)
-                else:
-                    # or if there wasn't a filter_in dict
-                    # then replace it
-                    past_filter_in_dict = past_equal_dict
+                # so we want to update the filter_in dict 
+                cols = [col for col in past_equal_dict.keys()]
+                for col in cols:
+                    if col.endswith('root_id'):
+                        if past_filter_in_dict is None:
+                             past_filter_in_dict={}
+                        past_filter_in_dict[col]=past_equal_dict.pop(col)
+                if len(past_equal_dict)==0:
+                    past_equal_dict=None  
 
         with TimeIt('package query'):
             url, data, query_args, encoding = self._format_query_components(datastack_name,
@@ -774,9 +784,9 @@ class MaterializatonClientV2(ClientBase):
                                                                         [table], None, None, 
                                                                         {table: past_filter_in_dict} if past_filter_in_dict is not None else None,
                                                                         {table: past_filter_out_dict} if past_filter_out_dict is not None else None,
-                                                                        None,
+                                                                        {table: past_equal_dict} if past_equal_dict is not None else None,
                                                                         True,
-                                                                        False,
+                                                                        True,
                                                                         offset,
                                                                         limit)
 
