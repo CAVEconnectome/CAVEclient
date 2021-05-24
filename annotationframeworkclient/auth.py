@@ -3,6 +3,7 @@ import requests
 import webbrowser
 import os
 from .endpoints import auth_endpoints_v1, default_global_server_address
+import urllib
 
 default_token_location = "~/.cloudvolume/secrets"
 default_token_name = "chunkedgraph-secret.json"
@@ -39,7 +40,14 @@ class AuthClient(object):
         server_address=default_global_server_address,
     ):
         if token_file is None:
-            token_file = default_token_file
+            server=urllib.parse.urlparse(server_address).netloc
+            server_file = server + "-cave-secret.json"
+            server_file_path = os.path.join(default_token_location, server_file)
+            server_file_path = os.path.expanduser(server_file_path)
+            if os.path.isfile(server_file_path):
+                token_file = server_file_path
+            else:
+                token_file = default_token_file
         self._token_file = os.path.expanduser(token_file)
 
         if token_key is None:
