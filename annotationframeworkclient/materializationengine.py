@@ -636,10 +636,13 @@ class MaterializatonClientV2(ClientBase):
                 all_root_ids=np.append(all_root_ids, df[root_id_col].values.copy())
         
             uniq_root_ids = np.unique(all_root_ids)
+            
             del(all_root_ids)
+            uniq_root_ids=uniq_root_ids[uniq_root_ids!=0]
+            logging.info(f'uniq_root_ids {uniq_root_ids}')
             is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
             latest_root_ids = uniq_root_ids[is_latest_root]
- 
+            latest_root_ids = np.concatenate([[0], latest_root_ids])
         
             # go through the columns and collect all the supervoxel ids to update
             all_svids = np.empty(0, dtype=np.int64)
@@ -656,7 +659,9 @@ class MaterializatonClientV2(ClientBase):
                     all_svid_lengths.append(n_svids)
                     logging.info(f'{sv_col} has {n_svids} to update')
                     all_svids = np.append(all_svids, svids[~is_latest_root])
-        
+        logging.info(f'num zero svids: {np.sum(all_svids==0)}')
+        logging.info(f'all_svids dtype {all_svids.dtype}')
+        logging.info(f'all_svid_lengths {all_svid_lengths}')
         with TimeIt("get_roots"):  
             # find the up to date root_ids for those supervoxels
             updated_root_ids = self.cg_client.get_roots(all_svids,
@@ -671,7 +676,7 @@ class MaterializatonClientV2(ClientBase):
             with TimeIt(f'replace_roots {sv_col}'):  
                 root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
                 root_ids = df[root_id_col].values.copy()
-            
+                
                 uroot_id = updated_root_ids[k:k+n_svids]
                 k+=n_svids
                 root_ids[~is_latest_root]=uroot_id
@@ -789,7 +794,8 @@ class MaterializatonClientV2(ClientBase):
                                                                         True,
                                                                         offset,
                                                                         limit)
-
+            logging.debug(f'query_args: {query_args}')
+            logging.debug(f'query data: {data}')
         with TimeIt('query materialize'):
             response = self.session.post(url, data=json.dumps(data, cls=MEEncoder),
                                         headers={
