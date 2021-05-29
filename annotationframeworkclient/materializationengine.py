@@ -619,9 +619,9 @@ class MaterializatonClientV2(ClientBase):
                     else:
                         new_dict[col]=vals
                 new_filters.append(new_dict)
-        return new_filters
+        return new_filters, id_mapping['future_id_map']
 
-    def _update_rootids(self, df, timestamp):
+    def _update_rootids(self, df, timestamp, future_map):
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
         
@@ -633,6 +633,8 @@ class MaterializatonClientV2(ClientBase):
             # to see if they need updating
             for sv_col in sv_columns:
                 root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
+                # use the future map to update rootIDs
+                df[root_id_col].replace(future_map, inplace=True)
                 all_root_ids=np.append(all_root_ids, df[root_id_col].values.copy())
         
             uniq_root_ids = np.unique(all_root_ids)
@@ -640,6 +642,8 @@ class MaterializatonClientV2(ClientBase):
             del(all_root_ids)
             uniq_root_ids=uniq_root_ids[uniq_root_ids!=0]
             logging.info(f'uniq_root_ids {uniq_root_ids}')
+
+
             is_latest_root = self.cg_client.is_latest_roots(uniq_root_ids, timestamp=timestamp)
             latest_root_ids = uniq_root_ids[is_latest_root]
             latest_root_ids = np.concatenate([[0], latest_root_ids])
@@ -764,10 +768,10 @@ class MaterializatonClientV2(ClientBase):
         # first we want to translate all these filters into the IDss at the 
         # most recent materialization
         with TimeIt('map_filters'):
-            past_filters = self.map_filters([filter_in_dict,
-                                            filter_out_dict,
-                                            filter_equal_dict],
-                                            timestamp, timestamp_start)
+            past_filters, future_map = self.map_filters([filter_in_dict,
+                                                         filter_out_dict,
+                                                         filter_equal_dict],
+                                                         timestamp, timestamp_start)
             past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
             if past_equal_dict is not None:
                 # when doing a filter equal in the past
@@ -813,7 +817,7 @@ class MaterializatonClientV2(ClientBase):
                 concatenate_position_columns(df, inplace=True)
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
-        df = self._update_rootids(df, timestamp)
+        df = self._update_rootids(df, timestamp, future_map)
         
         # apply the original filters to remove rows
         # from this result which are not relevant
