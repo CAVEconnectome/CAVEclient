@@ -18,7 +18,7 @@ import itertools
 from collections.abc import Iterable
 from .timeit import TimeIt
 from IPython.display import HTML
-
+import pandas as pd
 
 SERVER_KEY = "me_server_address"
 
@@ -595,7 +595,7 @@ class MaterializatonClientV2(ClientBase):
                     
         # if they are all None then we can safely return now
         if len(vals)==0:
-            return [None, None, None]
+            return [None, None, None], {}
         vals = np.unique(np.concatenate(vals))
         filter_vals_latest = self.cg_client.is_latest_roots(vals, timestamp=timestamp)
         if not np.all(filter_vals_latest):
@@ -621,10 +621,11 @@ class MaterializatonClientV2(ClientBase):
                 new_filters.append(new_dict)
         return new_filters, id_mapping['future_id_map']
 
-    def _update_rootids(self, df, timestamp, future_map):
+    def _update_rootids(self, df:pd.DataFrame, timestamp:datetime, future_map:dict):
         #post process the dataframe to update all the root_ids columns
         #with the most up to date get roots
-        
+        if len(future_map)==0:
+            future_map=None
         sv_columns = [c for c in df.columns if c.endswith('supervoxel_id')]
         with TimeIt("is_latest_roots"):
             all_root_ids = np.empty(0, dtype=np.int64)
@@ -634,7 +635,9 @@ class MaterializatonClientV2(ClientBase):
             for sv_col in sv_columns:
                 root_id_col = sv_col[:-len('supervoxel_id')] + 'root_id'
                 # use the future map to update rootIDs
-                df[root_id_col].replace(future_map, inplace=True)
+                if future_map is not None:
+                    df[root_id_col]=df[root_id_col].copy()
+                    df[root_id_col].replace(future_map, inplace=True)
                 all_root_ids=np.append(all_root_ids, df[root_id_col].values.copy())
         
             uniq_root_ids = np.unique(all_root_ids)
