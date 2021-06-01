@@ -1,4 +1,11 @@
-from .base import ClientBaseWithDataset, ClientBaseWithDatastack, ClientBase, _api_versions, _api_endpoints, handle_response
+from .base import (
+    ClientBaseWithDataset,
+    ClientBaseWithDatastack,
+    ClientBase,
+    _api_versions,
+    _api_endpoints,
+    handle_response,
+)
 from .auth import AuthClient
 from .endpoints import annotation_common, annotation_api_versions
 from .infoservice import InfoServiceClientV2
@@ -24,58 +31,96 @@ class AEEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def AnnotationClient(server_address,
-                     dataset_name=None,
-                     aligned_volume_name=None,
-                     auth_client=None,
-                     api_version='latest',
-                     verify=True):
-    """ Factory for returning AnnotationClient
-    
-        Parameters
-        ----------
-        server_address : str 
-            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-        datastack_name : str
-            Name of the datastack.
-        auth_client : AuthClient or None, optional
-            Authentication client to use to connect to server. If None, do not use authentication.
-        api_version : str or int (default: latest)
-            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) 
-            2: new api version, (i.e. minniev1.microns-daf.com)
-            'latest': default to the most recent (current 2)
-        verify : str (default : True)
-            whether to verify https
+def AnnotationClient(
+    server_address,
+    dataset_name=None,
+    aligned_volume_name=None,
+    auth_client=None,
+    api_version="latest",
+    verify=True,
+):
+    """Factory for returning AnnotationClient
 
-        Returns
-        -------
-        ClientBaseWithDatastack
-            List of datastack names for available datastacks on the annotation engine
+    Parameters
+    ----------
+    server_address : str
+        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+    datastack_name : str
+        Name of the datastack.
+    auth_client : AuthClient or None, optional
+        Authentication client to use to connect to server. If None, do not use authentication.
+    api_version : str or int (default: latest)
+        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
+        2: new api version, (i.e. minniev1.microns-daf.com)
+        'latest': default to the most recent (current 2)
+    verify : str (default : True)
+        whether to verify https
+
+    Returns
+    -------
+    ClientBaseWithDatastack
+        List of datastack names for available datastacks on the annotation engine
     """
 
     if auth_client is None:
         auth_client = AuthClient()
 
     auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(api_version, SERVER_KEY, server_address,
-                                            annotation_common, annotation_api_versions, auth_header)
+    endpoints, api_version = _api_endpoints(
+        api_version,
+        SERVER_KEY,
+        server_address,
+        annotation_common,
+        annotation_api_versions,
+        auth_header,
+    )
 
     AnnoClient = client_mapping[api_version]
     if api_version > 1:
-        return AnnoClient(server_address, auth_header, api_version,
-                          endpoints, SERVER_KEY, aligned_volume_name, verify=verify)
+        return AnnoClient(
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            SERVER_KEY,
+            aligned_volume_name,
+            verify=verify,
+        )
     else:
-        return AnnoClient(server_address, auth_header, api_version,
-                          endpoints, SERVER_KEY, dataset_name,  verify=verify)
+        return AnnoClient(
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            SERVER_KEY,
+            dataset_name,
+            verify=verify,
+        )
 
 
 class AnnotationClientLegacy(ClientBaseWithDataset):
-    def __init__(self, server_address, auth_header, api_version, endpoints, server_name, dataset_name, verify=True):
-        super(AnnotationClientLegacy, self).__init__(server_address,
-                                                     auth_header, api_version, endpoints,
-                                                     server_name, dataset_name, verify=verify)
+    def __init__(
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_name,
+        dataset_name,
+        verify=True,
+    ):
+        super(AnnotationClientLegacy, self).__init__(
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            server_name,
+            dataset_name,
+            verify=verify,
+        )
+
     def get_datasets(self):
-        """ Gets a list of datasets
+        """Gets a list of datasets
 
         Returns
         -------
@@ -87,7 +132,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         return handle_response(response)
 
     def get_tables(self, dataset_name=None):
-        """ Gets a list of table names for a dataset
+        """Gets a list of table names for a dataset
 
         Parameters
         ----------
@@ -109,7 +154,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         return handle_response(response)
 
     def create_table(self, table_name, schema_name, dataset_name=None):
-        """ Creates a new data table based on an existing schema
+        """Creates a new data table based on an existing schema
 
         Parameters
         ----------
@@ -138,7 +183,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         return handle_response(response)
 
     def get_annotation(self, table_name, annotation_id, dataset_name=None):
-        """ Retrieve a single annotation by id and table name.
+        """Retrieve a single annotation by id and table name.
 
         Parameters
         ----------
@@ -162,13 +207,12 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["annotation_id"] = annotation_id
 
-        url = self._endpoints["existing_annotation"].format_map(
-            endpoint_mapping)
+        url = self._endpoints["existing_annotation"].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
 
     def post_annotation(self, table_name, data, dataset_name=None):
-        """ Post one or more new annotations to a table in the AnnotationEngine
+        """Post one or more new annotations to a table in the AnnotationEngine
 
         Parameters
         ----------
@@ -196,16 +240,33 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
 
         url = self._endpoints["new_annotation"].format_map(endpoint_mapping)
 
-        response = self.session.post(url, data=json.dumps(data, cls=AEEncoder),
-                                     headers={'Content-Type': 'application/json'})
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=AEEncoder),
+            headers={"Content-Type": "application/json"},
+        )
         return handle_response(response)
 
 
 class AnnotationClientV2(ClientBase):
-    def __init__(self, server_address, auth_header, api_version,
-                 endpoints, server_name, aligned_volume_name, verify=True):
-        super(AnnotationClientV2, self).__init__(server_address,
-                                                 auth_header, api_version, endpoints, server_name, verify=verify)
+    def __init__(
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_name,
+        aligned_volume_name,
+        verify=True,
+    ):
+        super(AnnotationClientV2, self).__init__(
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            server_name,
+            verify=verify,
+        )
 
         self._aligned_volume_name = aligned_volume_name
 
@@ -214,7 +275,7 @@ class AnnotationClientV2(ClientBase):
         return self._aligned_volume_name
 
     def get_tables(self, aligned_volume_name=None):
-        """ Gets a list of table names for a aligned_volume_name
+        """Gets a list of table names for a aligned_volume_name
 
         Parameters
         ----------
@@ -238,11 +299,11 @@ class AnnotationClientV2(ClientBase):
         return handle_response(response)
 
     def get_annotation_count(self, table_name: str, aligned_volume_name=None):
-        """ Get number of annotations in a table
+        """Get number of annotations in a table
 
         Parameters
         ----------
-        table_name (str): 
+        table_name (str):
             name of table to mark for deletion
         aligned_volume_name: str or None, optional,
             Name of the aligned_volume. If None, uses the one specified in the client.
@@ -266,11 +327,11 @@ class AnnotationClientV2(ClientBase):
         return handle_response(response)
 
     def get_table_metadata(self, table_name: str, aligned_volume_name=None):
-        """ Get metadata about a table
+        """Get metadata about a table
 
         Parameters
         ----------
-        table_name (str): 
+        table_name (str):
             name of table to mark for deletion
         aligned_volume_name: str or None, optional,
             Name of the aligned_volume. If None, uses the one specified in the client.
@@ -294,12 +355,12 @@ class AnnotationClientV2(ClientBase):
         return handle_response(response)
 
     def delete_table(self, table_name: str, aligned_volume_name=None):
-        """ Marks a table for deletion
+        """Marks a table for deletion
         requires super admin priviledges
 
         Parameters
         ----------
-        table_name (str): 
+        table_name (str):
             name of table to mark for deletion
         aligned_volume_name: str or None, optional,
             Name of the aligned_volume. If None, uses the one specified in the client.
@@ -322,12 +383,17 @@ class AnnotationClientV2(ClientBase):
         response = self.session.delete(url)
         return handle_response(response)
 
-    def create_table(self, table_name, schema_name,
-                     description, reference_table=None,
-                     flat_segmentation_source=None,
-                     user_id=None,
-                     aligned_volume_name=None):
-        """ Creates a new data table based on an existing schema
+    def create_table(
+        self,
+        table_name,
+        schema_name,
+        description,
+        reference_table=None,
+        flat_segmentation_source=None,
+        user_id=None,
+        aligned_volume_name=None,
+    ):
+        """Creates a new data table based on an existing schema
 
         Parameters
         ----------
@@ -342,7 +408,7 @@ class AnnotationClientV2(ClientBase):
             And who should you talk to if you want to use it.
             An Example:
             a manual synapse table to detect chandelier synapses
-            on 81 PyC cells with complete AISs 
+            on 81 PyC cells with complete AISs
             [created by Agnes - agnesb@alleninstitute.org, uploaded by Forrest]
         reference_table: str or None
             If the schema you are using is a reference schema
@@ -371,22 +437,24 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
 
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-        metadata = {'description': description}
+        metadata = {"description": description}
         if user_id is not None:
-            metadata['user_id'] = user_id
+            metadata["user_id"] = user_id
         if reference_table is not None:
-            metadata['reference_table'] = reference_table
+            metadata["reference_table"] = reference_table
         if flat_segmentation_source is not None:
-            metadata['flat_segmentation_source'] = flat_segmentation_source
-        data = {"schema_type": schema_name,
-                "table_name": table_name,
-                "metadata": metadata}
+            metadata["flat_segmentation_source"] = flat_segmentation_source
+        data = {
+            "schema_type": schema_name,
+            "table_name": table_name,
+            "metadata": metadata,
+        }
 
         response = self.session.post(url, json=data)
         return handle_response(response)
 
     def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
-        """ Retrieve an annotation or annotations by id(s) and table name.
+        """Retrieve an annotation or annotations by id(s) and table name.
 
         Parameters
         ----------
@@ -414,14 +482,12 @@ class AnnotationClientV2(ClientBase):
         except TypeError:
             annotation_ids = [annotation_ids]
 
-        params = {
-            'annotation_ids': ",".join([str(a) for a in annotation_ids])
-        }
+        params = {"annotation_ids": ",".join([str(a) for a in annotation_ids])}
         response = self.session.get(url, params=params)
         return handle_response(response)
 
     def post_annotation(self, table_name, data, aligned_volume_name=None):
-        """ Post one or more new annotations to a table in the AnnotationEngine
+        """Post one or more new annotations to a table in the AnnotationEngine
 
         Parameters
         ----------
@@ -453,17 +519,19 @@ class AnnotationClientV2(ClientBase):
         except TypeError:
             annotation_ids = [data]
 
-        data = {
-            "annotations": data
-        }
+        data = {"annotations": data}
 
-        response = self.session.post(url, data=json.dumps(data, cls=AEEncoder),
-                                     headers={'Content-Type': 'application/json'})
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=AEEncoder),
+            headers={"Content-Type": "application/json"},
+        )
         return handle_response(response)
 
     @staticmethod
-    def process_position_columns(df: pd.DataFrame,
-                                 position_columns: (Iterable[str] or Mapping[str, str] or None)):
+    def process_position_columns(
+        df: pd.DataFrame, position_columns: (Iterable[str] or Mapping[str, str] or None)
+    ):
         """process a dataframe into a list of dictionaries, nesting thing
 
         Args:
@@ -474,23 +542,27 @@ class AnnotationClientV2(ClientBase):
 
         """
         if position_columns is None:
-            position_columns = [c for c in df.columns if c.endswith('_position')]
+            position_columns = [c for c in df.columns if c.endswith("_position")]
         if isinstance(position_columns, (list, np.ndarray, pd.Index)):
-            position_columns = {c:c.rsplit('_',1)[0] for c in position_columns}
-        if type(position_columns)!=dict:
-            raise ValueError('position_columns must be a list, dict or None')
+            position_columns = {c: c.rsplit("_", 1)[0] for c in position_columns}
+        if type(position_columns) != dict:
+            raise ValueError("position_columns must be a list, dict or None")
 
-        data=df.to_dict(orient='records')
+        data = df.to_dict(orient="records")
         for d in data:
-            for k,v in position_columns.items():
+            for k, v in position_columns.items():
                 pos = d.pop(k)
-                d[v]={'position':pos}
+                d[v] = {"position": pos}
         return data
 
-    def post_annotation_df(self, table_name: str, df: pd.DataFrame,
-                           position_columns: (Iterable[str] or Mapping[str, str] or None),
-                           aligned_volume_name=None):
-        """ Post one or more new annotations to a table in the AnnotationEngine
+    def post_annotation_df(
+        self,
+        table_name: str,
+        df: pd.DataFrame,
+        position_columns: (Iterable[str] or Mapping[str, str] or None),
+        aligned_volume_name=None,
+    ):
+        """Post one or more new annotations to a table in the AnnotationEngine
 
         Parameters
         ----------
@@ -501,13 +573,13 @@ class AnnotationClientV2(ClientBase):
             position columns need to be called out in position_columns argument.
         position_columns: dict or (list or np.array or pd.Index) or None
             if None, will look for all columns with 'X_position' in the name and assume they go
-            in fields called "X". 
+            in fields called "X".
             if Iterable assumes each column given ends in _position.
-            (i.e. ['pt_position'] if 'pt' is the name of the position field in schema) 
+            (i.e. ['pt_position'] if 'pt' is the name of the position field in schema)
             if Mapping, keys are names of columns in dataframe, values are the names of the fields
             (i.e. {'pt_column': 'pt'} would be correct if you had one column named 'pt_column'
             which needed to go into a schema with a position column called 'pt')
-            
+
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
 
@@ -519,10 +591,12 @@ class AnnotationClientV2(ClientBase):
         """
         if aligned_volume_name is None:
             aligned_volume_name = self.aligned_volume_name
-        
+
         data = self.process_position_columns(df, position_columns)
 
-        return self.post_annotation(table_name, data, aligned_volume_name=aligned_volume_name)
+        return self.post_annotation(
+            table_name, data, aligned_volume_name=aligned_volume_name
+        )
 
     def update_annotation(self, table_name, data, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
@@ -560,17 +634,19 @@ class AnnotationClientV2(ClientBase):
         except TypeError:
             annotation_ids = [data]
 
-        data = {
-            "annotations": data
-        }
+        data = {"annotations": data}
 
         response = self.session.put(url, json=data)
         return handle_response(response)
 
-    def update_annotation_df(self, table_name: str, df: pd.DataFrame,
-                           position_columns: (Iterable[str] or Mapping[str, str] or None),
-                           aligned_volume_name=None):
-        """ Update one or more  annotations to a table in the AnnotationEngine using a dataframe as format
+    def update_annotation_df(
+        self,
+        table_name: str,
+        df: pd.DataFrame,
+        position_columns: (Iterable[str] or Mapping[str, str] or None),
+        aligned_volume_name=None,
+    ):
+        """Update one or more  annotations to a table in the AnnotationEngine using a dataframe as format
 
         Parameters
         ----------
@@ -581,13 +657,13 @@ class AnnotationClientV2(ClientBase):
             position columns need to be called out in position_columns argument.
         position_columns: dict or (list or np.array or pd.Index) or None
             if None, will look for all columns with 'X_position' in the name and assume they go
-            in fields called "X". 
+            in fields called "X".
             if Iterable assumes each column given ends in _position.
-            (i.e. ['pt_position'] if 'pt' is the name of the position field in schema) 
+            (i.e. ['pt_position'] if 'pt' is the name of the position field in schema)
             if Mapping, keys are names of columns in dataframe, values are the names of the fields
             (i.e. {'pt_column': 'pt'} would be correct if you had one column named 'pt_column'
             which needed to go into a schema with a position column called 'pt')
-            
+
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
 
@@ -599,11 +675,13 @@ class AnnotationClientV2(ClientBase):
         """
         if aligned_volume_name is None:
             aligned_volume_name = self.aligned_volume_name
-        
+
         data = self.process_position_columns(df, position_columns)
 
-        return self.update_annotation(table_name, data, aligned_volume_name=aligned_volume_name)
-        
+        return self.update_annotation(
+            table_name, data, aligned_volume_name=aligned_volume_name
+        )
+
     def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """Update one or more new annotations to a table in the AnnotationEngine
         Note update is implemented by deleting the old annotation
@@ -638,15 +716,18 @@ class AnnotationClientV2(ClientBase):
         except TypeError:
             annotation_ids = [annotation_ids]
 
-        data = {
-            "annotation_ids": annotation_ids
-        }
+        data = {"annotation_ids": annotation_ids}
 
-        response = self.session.delete(url, data=json.dumps(data, cls=AEEncoder),
-                                       headers={'Content-Type': 'application/json'})
+        response = self.session.delete(
+            url,
+            data=json.dumps(data, cls=AEEncoder),
+            headers={"Content-Type": "application/json"},
+        )
         return handle_response(response)
 
 
-client_mapping = {0: AnnotationClientLegacy,
-                  2: AnnotationClientV2,
-                  'latest': AnnotationClientV2}
+client_mapping = {
+    0: AnnotationClientLegacy,
+    2: AnnotationClientV2,
+    "latest": AnnotationClientV2,
+}

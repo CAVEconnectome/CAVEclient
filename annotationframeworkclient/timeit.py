@@ -4,6 +4,7 @@ from time import time
 
 indent = 0
 
+
 class TimeIt:
     def __init__(self, message="", *args, **kwargs):
         self._message = message
