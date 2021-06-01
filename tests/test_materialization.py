@@ -22,6 +22,9 @@ def binary_body_match(body):
         return body == request_body
     return match
 
+class TestChunkedgraphException(Exception):
+    '''Error to raise is bad values make it to chunkedgraph'''
+
 class TestMatclient():
     default_mapping = {
             'me_server_address': TEST_LOCAL_SERVER,
@@ -132,7 +135,8 @@ class TestMatclient():
 
         ### live query test
         def my_get_roots(self, supervoxel_ids, timestamp=None, stop_layer=None):
-
+            if 0 in supervoxel_ids:
+                raise TestChunkedgraphException(('should not call get roots on svid =0'))
             if (timestamp==good_time):
                 sv_lookup={1:200,
                            2:200,
@@ -147,7 +151,8 @@ class TestMatclient():
                            11:200,
                            12:103,
                            13:203,
-                           14:201}
+                           14:201,
+                           15:201}
                 
             elif (timestamp==past_timestamp):
                 sv_lookup={1:100,
@@ -163,12 +168,15 @@ class TestMatclient():
                            11:100,
                            12:103,
                            13:102,
-                           14:100}
+                           14:100,
+                           15:100}
             else:
                 raise ValueError('Mock is not defined at this time')
             return np.array([sv_lookup[sv] for sv in supervoxel_ids])
         
         def mocked_get_past_ids(self, root_ids, timestamp_past=None, timestamp_future=None):
+            if 0 in root_ids:
+                raise TestChunkedgraphException(('should not past_ids on svid =0'))
             id_map = {
                 201: [100],
                 103: [103],
@@ -180,6 +188,8 @@ class TestMatclient():
             }
 
         def mock_is_latest_roots(self, root_ids, timestamp=None):
+            if 0 in root_ids:
+                raise TestChunkedgraphException(('should not call is_latest on svid =0'))
             if (timestamp==good_time):
                 is_latest={100:False,
                            101:False,
