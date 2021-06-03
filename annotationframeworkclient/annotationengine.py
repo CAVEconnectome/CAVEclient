@@ -98,164 +98,6 @@ def AnnotationClient(
         )
 
 
-class AnnotationClientLegacy(ClientBaseWithDataset):
-    def __init__(
-        self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
-        dataset_name,
-        verify=True,
-    ):
-        super(AnnotationClientLegacy, self).__init__(
-            server_address,
-            auth_header,
-            api_version,
-            endpoints,
-            server_name,
-            dataset_name,
-            verify=verify,
-        )
-
-    def get_datasets(self):
-        """Gets a list of datasets
-
-        Returns
-        -------
-        list
-            List of dataset names for available datasets on the annotation engine
-        """
-        url = self._endpoints["datasets"].format_map(self.default_url_mapping)
-        response = self.session.get(url)
-        return handle_response(response)
-
-    def get_tables(self, dataset_name=None):
-        """Gets a list of table names for a dataset
-
-        Parameters
-        ----------
-        dataset_name : str or None, optional
-            Name of the dataset, by default None. If None, uses the one specified in the client.
-
-        Returns
-        -------
-        list
-            List of table names
-        """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        url = self._endpoints["table_names"].format_map(endpoint_mapping)
-
-        response = self.session.get(url)
-        return handle_response(response)
-
-    def create_table(self, table_name, schema_name, voxel_resolution, dataset_name=None):
-        """Creates a new data table based on an existing schema
-
-        Parameters
-        ----------
-        table_name: str
-            Name of the new table. Cannot be the same as an existing table
-        schema_name: str
-            Name of the schema for the new table.
-        voxel_resolution: list[float]
-            voxel resolution of table points (x,y,z) usually nm
-        dataset_name: str or None, optional,
-            Name of the dataset. If None, uses the one specified in the client.
-
-        Returns
-        -------
-        json
-            Response JSON
-
-        """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        url = self._endpoints["table_names"].format_map(endpoint_mapping)
-        assert(len(voxel_resolution)==3)
-        data = {"schema_name": schema_name,
-                "table_name": table_name,
-                "voxel_resolution_x": float(voxel_resolution[0]),
-                "voxel_resolution_y": float(voxel_resolution[1]),
-                "voxel_resolution_z": float(voxel_resolution[2])
-                }
-
-        response = requests.post(url, json=data)
-        return handle_response(response)
-
-    def get_annotation(self, table_name, annotation_id, dataset_name=None):
-        """Retrieve a single annotation by id and table name.
-
-        Parameters
-        ----------
-        table_name : str
-            Name of the table
-        annotation_id : int
-            ID number of the annotation to retreive (starting from 1)
-        dataset_name : str or None, optional
-            Name of the dataset. If None, uses the one specified in the client.
-
-        Returns
-        -------
-        dict
-            Annotation data
-        """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["table_name"] = table_name
-        endpoint_mapping["annotation_id"] = annotation_id
-
-        url = self._endpoints["existing_annotation"].format_map(endpoint_mapping)
-        response = self.session.get(url)
-        return handle_response(response)
-
-    def post_annotation(self, table_name, data, dataset_name=None):
-        """Post one or more new annotations to a table in the AnnotationEngine
-
-        Parameters
-        ----------
-        table_name : str
-            Name of the table where annotations will be added
-        data : dict or list,
-            A list of (or a single) dict of schematized annotation data matching the target table.
-        dataset_name : str or None, optional
-            Name of the dataset. If None, uses the one specified in the client.
-
-        Returns
-        -------
-        json
-            Response JSON
-
-        """
-        if dataset_name is None:
-            dataset_name = self.dataset_name
-        if isinstance(data, dict):
-            data = [data]
-
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["dataset_name"] = dataset_name
-        endpoint_mapping["table_name"] = table_name
-
-        url = self._endpoints["new_annotation"].format_map(endpoint_mapping)
-
-        response = self.session.post(
-            url,
-            data=json.dumps(data, cls=AEEncoder),
-            headers={"Content-Type": "application/json"},
-        )
-        return handle_response(response)
-
-
 class AnnotationClientV2(ClientBase):
     def __init__(
         self,
@@ -396,6 +238,7 @@ class AnnotationClientV2(ClientBase):
         table_name,
         schema_name,
         description,
+        voxel_resolution,
         reference_table=None,
         flat_segmentation_source=None,
         user_id=None,
@@ -418,6 +261,9 @@ class AnnotationClientV2(ClientBase):
             a manual synapse table to detect chandelier synapses
             on 81 PyC cells with complete AISs
             [created by Agnes - agnesb@alleninstitute.org, uploaded by Forrest]
+        voxel_resolution: list[float]
+            voxel resolution points will be uploaded in, typically nm, i.e [1,1,1] means nanometers
+            [4,4,40] would be 4nm, 4nm, 40nm voxels
         reference_table: str or None
             If the schema you are using is a reference schema
             Meaning it is an annotation of another annotation.
@@ -456,6 +302,9 @@ class AnnotationClientV2(ClientBase):
             "schema_type": schema_name,
             "table_name": table_name,
             "metadata": metadata,
+            "voxel_resolution_x": float(voxel_resolution[0]),
+            "voxel_resolution_y": float(voxel_resolution[1]),
+            "voxel_resolution_z": float(voxel_resolution[2])
         }
 
         response = self.session.post(url, json=data)
@@ -735,7 +584,6 @@ class AnnotationClientV2(ClientBase):
 
 
 client_mapping = {
-    0: AnnotationClientLegacy,
     2: AnnotationClientV2,
     "latest": AnnotationClientV2,
 }
