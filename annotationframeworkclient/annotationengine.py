@@ -153,7 +153,7 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         response = self.session.get(url)
         return handle_response(response)
 
-    def create_table(self, table_name, schema_name, dataset_name=None):
+    def create_table(self, table_name, schema_name, voxel_resolution, dataset_name=None):
         """Creates a new data table based on an existing schema
 
         Parameters
@@ -162,6 +162,8 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
             Name of the new table. Cannot be the same as an existing table
         schema_name: str
             Name of the schema for the new table.
+        voxel_resolution: list[float]
+            voxel resolution of table points (x,y,z) usually nm
         dataset_name: str or None, optional,
             Name of the dataset. If None, uses the one specified in the client.
 
@@ -177,7 +179,13 @@ class AnnotationClientLegacy(ClientBaseWithDataset):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["dataset_name"] = dataset_name
         url = self._endpoints["table_names"].format_map(endpoint_mapping)
-        data = {"schema_name": schema_name, "table_name": table_name}
+        assert(len(voxel_resolution)==3)
+        data = {"schema_name": schema_name,
+                "table_name": table_name,
+                "voxel_resolution_x": float(voxel_resolution[0]),
+                "voxel_resolution_y": float(voxel_resolution[1]),
+                "voxel_resolution_z": float(voxel_resolution[2])
+                }
 
         response = requests.post(url, json=data)
         return handle_response(response)
