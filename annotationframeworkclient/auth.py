@@ -6,7 +6,7 @@ from .endpoints import auth_endpoints_v1, default_global_server_address
 
 default_token_location = "~/.cloudvolume/secrets"
 default_token_name = "chunkedgraph-secret.json"
-default_token_key = 'token'
+default_token_key = "token"
 default_token_file = f"{default_token_location}/{default_token_name}"
 
 
@@ -51,13 +51,11 @@ class AuthClient(object):
         self._token = token
 
         self._server_address = server_address
-        self._default_endpoint_mapping = {
-            "auth_server_address": self._server_address}
+        self._default_endpoint_mapping = {"auth_server_address": self._server_address}
 
     @property
     def token(self):
-        """Secret token used to authenticate yourself to the Dynamic Annotation Framework services.
-        """
+        """Secret token used to authenticate yourself to the Dynamic Annotation Framework services."""
         return self._token
 
     @token.setter
@@ -65,7 +63,10 @@ class AuthClient(object):
         self._token = new_token
         self._token_key = None
 
-    def get_token(self, token_key=None, ):
+    def get_token(
+        self,
+        token_key=None,
+    ):
         """Load a token with a given key the specified token file
 
         Parameters
@@ -160,7 +161,8 @@ class AuthClient(object):
 
             if overwrite is False and token_key in secrets:
                 raise ValueError(
-                    f"Key \"{token_key}\" already exists in token file \"{save_token_file}\"")
+                    f'Key "{token_key}" already exists in token file "{save_token_file}"'
+                )
         else:
             secrets = {}
 
@@ -181,8 +183,7 @@ class AuthClient(object):
 
     @property
     def request_header(self):
-        """Formatted request header with the specified token
-        """
+        """Formatted request header with the specified token"""
         if self.token is not None:
             auth_header = {"Authorization": f"Bearer {self.token}"}
             return auth_header

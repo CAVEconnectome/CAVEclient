@@ -86,9 +86,11 @@ class FrameworkClientGlobal(object):
             server_address = default_global_server_address
         self._server_address = server_address
         self._auth_config = {}
-        self.change_auth(auth_token_file=auth_token_file,
-                         auth_token_key=auth_token_key,
-                         auth_token=auth_token)
+        self.change_auth(
+            auth_token_file=auth_token_file,
+            auth_token_key=auth_token_key,
+            auth_token=auth_token,
+        )
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
@@ -104,15 +106,15 @@ class FrameworkClientGlobal(object):
             Direct entry of a new token, by default None.
         """
         if auth_token_file is None:
-            auth_token_file = self._auth_config.get('auth_token_file', None)
+            auth_token_file = self._auth_config.get("auth_token_file", None)
         if auth_token_key is None:
-            auth_token_key = self._auth_config.get('auth_token_key', None)
+            auth_token_key = self._auth_config.get("auth_token_key", None)
 
         self._auth_config = {
-            'token_file': auth_token_file,
-            'token_key': auth_token_key,
-            'token': auth_token,
-            'server_address': self._server_address,
+            "token_file": auth_token_file,
+            "token_key": auth_token_key,
+            "token": auth_token,
+            "server_address": self._server_address,
         }
         self._reset_services()
 
@@ -181,7 +183,7 @@ class FrameworkClientFull(FrameworkClientGlobal):
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
     To instantiate a client:
-    
+
     .. code:: python
 
         client = FrameworkClient(datastack_name='my_datastack',
@@ -279,16 +281,20 @@ class FrameworkClientFull(FrameworkClientGlobal):
     @property
     def materialize(self):
         if self._materialize is None:
-            self._materialize = MaterializationClient(server_address=self.local_server,
-                                                      auth_client=self.auth,
-                                                      datastack_name=self._datastack_name,
-                                                      cg_client=self.chunkedgraph)
+            self._materialize = MaterializationClient(
+                server_address=self.local_server,
+                auth_client=self.auth,
+                datastack_name=self._datastack_name,
+                cg_client=self.chunkedgraph,
+            )
         return self._materialize
-        
+
     @property
     def state(self):
         if self._state is None:
             self._state = JSONService(
-                server_address=self.server_address, auth_client=self.auth, ngl_url=self.info.viewer_site(),
+                server_address=self.server_address,
+                auth_client=self.auth,
+                ngl_url=self.info.viewer_site(),
             )
         return self._state

@@ -1,18 +1,23 @@
 from .base import ClientBase, _api_versions, _api_endpoints, handle_response
 from .auth import AuthClient
-from .endpoints import jsonservice_common, jsonservice_api_versions, default_global_server_address
+from .endpoints import (
+    jsonservice_common,
+    jsonservice_api_versions,
+    default_global_server_address,
+)
 import requests
 import json
 import re
 
-server_key = 'json_server_address'
+server_key = "json_server_address"
 
 
-def JSONService(server_address=None,
-                auth_client=None,
-                api_version='latest',
-                ngl_url=None,
-                ):
+def JSONService(
+    server_address=None,
+    auth_client=None,
+    api_version="latest",
+    ngl_url=None,
+):
     """Client factory to interface with the JSON state service.
 
     Parameters
@@ -38,36 +43,40 @@ def JSONService(server_address=None,
 
     auth_header = auth_client.request_header
 
-    endpoints, api_version = _api_endpoints(api_version, server_key, server_address,
-                                            jsonservice_common, jsonservice_api_versions, auth_header)
+    endpoints, api_version = _api_endpoints(
+        api_version,
+        server_key,
+        server_address,
+        jsonservice_common,
+        jsonservice_api_versions,
+        auth_header,
+    )
 
     JSONClient = client_mapping[api_version]
-    return JSONClient(server_address=server_address,
-                      auth_header=auth_header,
-                      api_version=api_version,
-                      endpoints=endpoints,
-                      server_name=server_key,
-                      ngl_url=ngl_url)
+    return JSONClient(
+        server_address=server_address,
+        auth_header=auth_header,
+        api_version=api_version,
+        endpoints=endpoints,
+        server_name=server_key,
+        ngl_url=ngl_url,
+    )
 
 
 class JSONServiceV1(ClientBase):
-    def __init__(self,
-                 server_address,
-                 auth_header,
-                 api_version,
-                 endpoints,
-                 server_name,
-                 ngl_url):
-        super(JSONServiceV1, self).__init__(server_address,
-                                            auth_header, api_version, endpoints, server_name)
+    def __init__(
+        self, server_address, auth_header, api_version, endpoints, server_name, ngl_url
+    ):
+        super(JSONServiceV1, self).__init__(
+            server_address, auth_header, api_version, endpoints, server_name
+        )
         self._ngl_url = ngl_url
 
     @property
     def state_service_endpoint(self):
-        """Endpoint URL for posting JSON state
-        """
+        """Endpoint URL for posting JSON state"""
         url_mapping = self.default_url_mapping
-        return self._endpoints['upload_state'].format_map(url_mapping)
+        return self._endpoints["upload_state"].format_map(url_mapping)
 
     @property
     def ngl_url(self):
@@ -91,21 +100,20 @@ class JSONServiceV1(ClientBase):
             JSON specifying a Neuroglancer state.
         """
         url_mapping = self.default_url_mapping
-        url_mapping['state_id'] = state_id
-        url = self._endpoints['get_state'].format_map(url_mapping)
+        url_mapping["state_id"] = state_id
+        url = self._endpoints["get_state"].format_map(url_mapping)
         response = self.session.get(url)
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
-    def upload_state_json(self, json_state, state_id=None, 
-                          timestamp=None):
+    def upload_state_json(self, json_state, state_id=None, timestamp=None):
         """Upload a Neuroglancer JSON state
 
         Parameters
         ----------
         json_state : dict
             JSON-formatted Neuroglancer state
-        state_id : int 
+        state_id : int
             ID of a JSON state uploaded to the state service.
             Using a state_id is an admin feature.
         timestamp: time.time
@@ -119,15 +127,15 @@ class JSONServiceV1(ClientBase):
         url_mapping = self.default_url_mapping
 
         if state_id is None:
-            url = self._endpoints['upload_state'].format_map(url_mapping)
+            url = self._endpoints["upload_state"].format_map(url_mapping)
         else:
             url_mapping = self.default_url_mapping
-            url_mapping['state_id'] = state_id
-            url = self._endpoints['upload_state_w_id'].format_map(url_mapping)
+            url_mapping["state_id"] = state_id
+            url = self._endpoints["upload_state_w_id"].format_map(url_mapping)
 
         response = self.session.post(url, data=json.dumps(json_state))
         handle_response(response, as_json=False)
-        response_re = re.search('.*\/(\d+)', str(response.content))
+        response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
     def build_neuroglancer_url(self, state_id, ngl_url=None):
@@ -151,36 +159,32 @@ class JSONServiceV1(ClientBase):
         if ngl_url is None:
             ngl_url = self.ngl_url
         if ngl_url is None:
-            ngl_url = ''
-            parameter_text = ''
-        elif ngl_url[-1] == '/':
-            parameter_text = '?json_url='
+            ngl_url = ""
+            parameter_text = ""
+        elif ngl_url[-1] == "/":
+            parameter_text = "?json_url="
         else:
-            parameter_text = '/?json_url='
+            parameter_text = "/?json_url="
 
         url_mapping = self.default_url_mapping
-        url_mapping['state_id'] = state_id
-        get_state_url = self._endpoints['get_state'].format_map(url_mapping)
+        url_mapping["state_id"] = state_id
+        get_state_url = self._endpoints["get_state"].format_map(url_mapping)
         url = ngl_url + parameter_text + get_state_url
         return url
 
 
 class JSONServiceLegacy(ClientBase):
-    def __init__(self,
-                 server_address,
-                 auth_header,
-                 api_version,
-                 endpoints,
-                 server_name,
-                 ngl_url):
-        super(JSONServiceLegacy, self).__init__(server_address,
-                                                auth_header, api_version, endpoints, server_name)
+    def __init__(
+        self, server_address, auth_header, api_version, endpoints, server_name, ngl_url
+    ):
+        super(JSONServiceLegacy, self).__init__(
+            server_address, auth_header, api_version, endpoints, server_name
+        )
 
     @property
     def state_service_endpoint(self):
-        """Endpoint URL for posting JSON state
-        """
-        return self._endpoints['upload_state']
+        """Endpoint URL for posting JSON state"""
+        return self._endpoints["upload_state"]
 
     def get_state_json(self, state_id):
         """Download a Neuroglancer JSON state
@@ -196,8 +200,8 @@ class JSONServiceLegacy(ClientBase):
             JSON specifying a Neuroglancer state.
         """
         url_mapping = self.default_url_mapping
-        url_mapping['state_id'] = state_id
-        url = self._endpoints['get_state'].format_map(url_mapping)
+        url_mapping["state_id"] = state_id
+        url = self._endpoints["get_state"].format_map(url_mapping)
         response = self.session.get(url)
         handle_response(response, as_json=False)
         return json.loads(response.content)
@@ -216,10 +220,10 @@ class JSONServiceLegacy(ClientBase):
             state_id of the uploaded JSON state
         """
         url_mapping = self.default_url_mapping
-        url = self._endpoints['upload_state'].format_map(url_mapping)
+        url = self._endpoints["upload_state"].format_map(url_mapping)
         response = self.session.post(url, data=json.dumps(json_state))
         handle_response(response, as_json=False)
-        response_re = re.search('.*\/(\d+)', str(response.content))
+        response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
     def build_neuroglancer_url(self, state_id, ngl_url):
@@ -230,7 +234,7 @@ class JSONServiceLegacy(ClientBase):
         state_id : int
             State id to retrieve
         ngl_url : str
-            Base url of a neuroglancer deployment. For example, 'https://neuromancer-seung-import.appspot.com'. 
+            Base url of a neuroglancer deployment. For example, 'https://neuromancer-seung-import.appspot.com'.
 
         Returns
         -------
@@ -238,16 +242,17 @@ class JSONServiceLegacy(ClientBase):
             The full URL requested
         """
         url_mapping = self.default_url_mapping
-        url_mapping['state_id'] = state_id
-        get_state_url = self._endpoints['get_state'].format_map(url_mapping)
-        if ngl_url[-1] == '/':
-            spacer = '?json_url='
+        url_mapping["state_id"] = state_id
+        get_state_url = self._endpoints["get_state"].format_map(url_mapping)
+        if ngl_url[-1] == "/":
+            spacer = "?json_url="
         else:
-            spacer = '/?json_url='
-        url = ngl_url + '/?json_url=' + get_state_url
+            spacer = "/?json_url="
+        url = ngl_url + "/?json_url=" + get_state_url
         return url
 
 
-client_mapping = {0: JSONServiceLegacy,
-                  1: JSONServiceV1,
-                  }
+client_mapping = {
+    0: JSONServiceLegacy,
+    1: JSONServiceV1,
+}
