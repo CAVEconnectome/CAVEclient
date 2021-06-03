@@ -202,7 +202,12 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        return handle_response(response)
+        d= handle_response(response)
+        vx = d.pop('voxel_resolution_x')
+        vx = d.pop('voxel_resolution_y')
+        vz = d.pop('voxel_resolution_z')
+        d['voxel_resolution']=[vx,vy,vz]
+        return d
 
     def delete_table(self, table_name: str, aligned_volume_name=None):
         """Marks a table for deletion
