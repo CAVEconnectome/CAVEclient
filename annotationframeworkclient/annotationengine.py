@@ -204,7 +204,7 @@ class AnnotationClientV2(ClientBase):
         response = self.session.get(url)
         d= handle_response(response)
         vx = d.pop('voxel_resolution_x')
-        vx = d.pop('voxel_resolution_y')
+        vy = d.pop('voxel_resolution_y')
         vz = d.pop('voxel_resolution_z')
         d['voxel_resolution']=[vx,vy,vz]
         return d
