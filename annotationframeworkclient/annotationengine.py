@@ -382,7 +382,7 @@ class AnnotationClientV2(ClientBase):
         try:
             iter(data)
         except TypeError:
-            annotation_ids = [data]
+            data = [data]
 
         data = {"annotations": data}
 
