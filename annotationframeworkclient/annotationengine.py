@@ -202,11 +202,11 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        d= handle_response(response)
-        vx = d.pop('voxel_resolution_x')
-        vy = d.pop('voxel_resolution_y')
-        vz = d.pop('voxel_resolution_z')
-        d['voxel_resolution']=[vx,vy,vz]
+        d = handle_response(response)
+        vx = d.pop("voxel_resolution_x")
+        vy = d.pop("voxel_resolution_y")
+        vz = d.pop("voxel_resolution_z")
+        d["voxel_resolution"] = [vx, vy, vz]
         return d
 
     def delete_table(self, table_name: str, aligned_volume_name=None):
@@ -296,20 +296,23 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
 
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-        metadata = {"description": description}
+        metadata = {
+            "description": description,
+            "voxel_resolution_x": float(voxel_resolution[0]),
+            "voxel_resolution_y": float(voxel_resolution[1]),
+            "voxel_resolution_z": float(voxel_resolution[2]),
+        }
         if user_id is not None:
             metadata["user_id"] = user_id
         if reference_table is not None:
             metadata["reference_table"] = reference_table
         if flat_segmentation_source is not None:
             metadata["flat_segmentation_source"] = flat_segmentation_source
+
         data = {
             "schema_type": schema_name,
             "table_name": table_name,
             "metadata": metadata,
-            "voxel_resolution_x": float(voxel_resolution[0]),
-            "voxel_resolution_y": float(voxel_resolution[1]),
-            "voxel_resolution_z": float(voxel_resolution[2])
         }
 
         response = self.session.post(url, json=data)
