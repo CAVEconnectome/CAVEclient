@@ -70,7 +70,7 @@ def _api_versions(server_name, server_address, endpoints_common, auth_header):
     if url_base is not None:
         url = url_base.format_map(url_mapping)
         response = requests.get(url, headers=auth_header)
-        self.raise_for_status(response)
+        _raise_for_status(response)
         return response.json()
     else:
         return None
