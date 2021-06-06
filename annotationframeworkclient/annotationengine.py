@@ -316,7 +316,7 @@ class AnnotationClientV2(ClientBase):
         }
 
         response = self.session.post(url, json=data)
-        return handle_response(response)
+        return handle_response(response, as_json=False)
 
     def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
         """Retrieve an annotation or annotations by id(s) and table name.
