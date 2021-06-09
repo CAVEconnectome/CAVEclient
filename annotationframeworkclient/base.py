@@ -7,9 +7,46 @@ class AuthException(Exception):
     pass
 
 
+def _raise_for_status(r):
+    http_error_msg = ""
+    if isinstance(r.reason, bytes):
+        # We attempt to decode utf-8 first because some servers
+        # choose to localize their reason strings. If the string
+        # isn't utf-8, we fall back to iso-8859-1 for all other
+        # encodings. (See PR #3538)
+        try:
+            reason = r.reason.decode("utf-8")
+        except UnicodeDecodeError:
+            reason = r.reason.decode("iso-8859-1")
+    else:
+        reason = r.reason
+
+    if 400 <= r.status_code < 500:
+        http_error_msg = "%s Client Error: %s for url: %s content: %s" % (
+            r.status_code,
+            reason,
+            r.url,
+            r.content,
+        )
+
+    elif 500 <= r.status_code < 600:
+        http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
+            r.status_code,
+            reason,
+            r.url,
+            r.content,
+        )
+
+    if http_error_msg:
+        raise requests.HTTPError(http_error_msg, response=r)
+    warning = r.headers.get("Warning")
+    if warning:
+        logging.warning(warning)
+
+
 def handle_response(response, as_json=True):
     """Deal with potential errors in endpoint response and return json for default case"""
-    response.raise_for_status()
+    _raise_for_status(response)
     _check_authorization_redirect(response)
     if as_json:
         return response.json()
@@ -33,7 +70,7 @@ def _api_versions(server_name, server_address, endpoints_common, auth_header):
     if url_base is not None:
         url = url_base.format_map(url_mapping)
         response = requests.get(url, headers=auth_header)
-        self.raise_for_status(response)
+        _raise_for_status(response)
         return response.json()
     else:
         return None
@@ -115,40 +152,7 @@ class ClientBase(object):
     def raise_for_status(r):
         """Raises :class:`HTTPError`, if one occurred."""
 
-        http_error_msg = ""
-        if isinstance(r.reason, bytes):
-            # We attempt to decode utf-8 first because some servers
-            # choose to localize their reason strings. If the string
-            # isn't utf-8, we fall back to iso-8859-1 for all other
-            # encodings. (See PR #3538)
-            try:
-                reason = r.reason.decode("utf-8")
-            except UnicodeDecodeError:
-                reason = r.reason.decode("iso-8859-1")
-        else:
-            reason = r.reason
-
-        if 400 <= r.status_code < 500:
-            http_error_msg = "%s Client Error: %s for url: %s content: %s" % (
-                r.status_code,
-                reason,
-                r.url,
-                r.content,
-            )
-
-        elif 500 <= r.status_code < 600:
-            http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
-                r.status_code,
-                reason,
-                r.url,
-                r.content,
-            )
-
-        if http_error_msg:
-            raise requests.HTTPError(http_error_msg, response=r)
-        warning = r.headers.get("Warning")
-        if warning:
-            logging.warning(warning)
+        _raise_for_status(r)
 
 
 class ClientBaseWithDataset(ClientBase):
