@@ -75,9 +75,9 @@ class MEEncoder(json.JSONEncoder):
 def convert_timestamp(ts: datetime):
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
-            return ts.replace(tzinfo=timezone.utc)
-        else:
             return pytz.UTC.localize(ts)
+        else:
+            return ts.astimezone(timezone.utc)
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     return dt.replace(tzinfo=timezone.utc)
 
