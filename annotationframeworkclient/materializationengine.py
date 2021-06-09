@@ -19,7 +19,7 @@ import requests
 import time
 import json
 import numpy as np
-from datetime import date, datetime
+from datetime import date, datetime, timezone, tzinfo
 import pyarrow as pa
 import itertools
 from collections.abc import Iterable
@@ -72,14 +72,14 @@ class MEEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def convert_timestamp(ts):
+def convert_timestamp(ts: datetime):
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
-            return pytz.UTC.localize(ts)
+            return ts.replace(tzinfo=timezone.utc)
         else:
-            return ts
+            return pytz.UTC.localize(ts)
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
-    return pytz.UTC.localize(dt)
+    return dt.replace(tzinfo=timezone.utc)
 
 
 def MaterializationClient(
