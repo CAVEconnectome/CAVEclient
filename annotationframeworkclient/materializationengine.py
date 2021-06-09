@@ -74,8 +74,12 @@ class MEEncoder(json.JSONEncoder):
 
 def convert_timestamp(ts):
     if isinstance(ts, datetime):
-        return ts
-    return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+        if ts.tzinfo is None:
+            return pytz.UTC.localize(ts)
+        else:
+            return ts
+    dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+    return pytz.UTC.localize(dt)
 
 
 def MaterializationClient(
@@ -645,7 +649,8 @@ class MaterializatonClientV2(ClientBase):
         Returns:
             [type]: [description]
         """
-        timestamp = pytz.UTC.localize(timestamp)
+        timestamp = convert_timestamp(timestamp)
+        timestamp_past = convert_timestamp(timestamp_past)
 
         new_filters = []
         root_ids = []
@@ -829,6 +834,7 @@ class MaterializatonClientV2(ClientBase):
         pd.DataFrame: a pandas dataframe of results of query
 
         """
+        timestamp = convert_timestamp(timestamp)
         return_df = True
         if self.cg_client is None:
             raise ValueError("You must have a cg_client to run live_query")
