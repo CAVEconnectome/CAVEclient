@@ -111,8 +111,12 @@ class TestMatclient:
         md_url = self.endpoints["versions_metadata"].format_map(endpoint_mapping)
         responses.add(responses.GET, url=md_url, json=correct_metadata, status=200)
 
-        bad_time = datetime.datetime(year=2020, month=4, day=19, hour=0)
-        good_time = datetime.datetime(year=2021, month=4, day=19, hour=0)
+        bad_time = datetime.datetime(
+            year=2020, month=4, day=19, hour=0, tzinfo=datetime.timezone.utc
+        )
+        good_time = datetime.datetime(
+            year=2021, month=4, day=19, hour=0, tzinfo=datetime.timezone.utc
+        )
 
         with pytest.raises(ValueError):
             df = myclient.materialize.live_query(
