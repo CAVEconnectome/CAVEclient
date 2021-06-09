@@ -538,7 +538,8 @@ class ChunkedGraphClientV1(ClientBase):
     def is_latest_roots(self, root_ids, timestamp=None):
         """Check whether these root_ids are still a root at this timestamp
 
-        Args:
+        Parameters
+        ----------
             root_ids ([type]): root ids to check
             timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
 
@@ -561,7 +562,17 @@ class ChunkedGraphClientV1(ClientBase):
         return np.array(r["is_latest"], np.bool)
 
     def get_root_timestamps(self, root_ids):
-        """Retrieves timestamps when roots where created."""
+        """Retrieves timestamps when roots where created.
+
+        Parameters
+        ----------
+        root_ids: Iterable,
+            Iterable of seed root ids.
+
+        Returns
+        -------
+
+        """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["root_timestamps"].format_map(endpoint_mapping)
 
