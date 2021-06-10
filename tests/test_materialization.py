@@ -208,6 +208,7 @@ class TestMatclient:
                     201: True,
                     202: True,
                     203: True,
+                    303: True,
                 }
 
             elif timestamp == past_timestamp:
@@ -220,6 +221,7 @@ class TestMatclient:
                     201: False,
                     202: False,
                     203: False,
+                    303: True,
                 }
             else:
                 raise ValueError("Mock is not defined at this time")
@@ -235,6 +237,7 @@ class TestMatclient:
                 201: good_time - datetime.timedelta(days=1),
                 202: good_time - datetime.timedelta(days=1),
                 203: good_time - datetime.timedelta(days=1),
+                303: good_time + datetime.timedelta(days=1),
             }
             return np.array([timestamp_dict[root_id] for root_id in root_ids])
 
@@ -380,3 +383,10 @@ class TestMatclient:
         x = cdf.iloc[0]
         pos = np.array([x.pt_position_x, x.pt_position_y, x.pt_position_z])
         assert np.all(dfq.pt_position.iloc[0] == pos)
+
+        with pytest.raises(ValueError):
+            dfq = myclient.materialize.live_query(
+                test_info["synapse_table"],
+                good_time,
+                filter_in_dict={"pre_pt_root_id": [303]},
+            )
