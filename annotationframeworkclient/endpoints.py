@@ -115,6 +115,7 @@ chunkedgraph_endpoints_v1 = {
     "past_id_mapping": pcg_v1 + "/table/{table_id}/past_id_mapping",
     "operation_details": pcg_v1 + "/table/{table_id}/operation_details",
     "is_latest_roots": pcg_v1 + "/table/{table_id}/is_latest_roots",
+    "root_timestamps": pcg_v1 + "/table/{table_id}/root_timestamps",
 }
 
 chunkedgraph_api_versions = {

@@ -19,13 +19,14 @@ import requests
 import time
 import json
 import numpy as np
-from datetime import date, datetime
+from datetime import date, datetime, timezone, tzinfo
 import pyarrow as pa
 import itertools
 from collections.abc import Iterable
 from .timeit import TimeIt
 from IPython.display import HTML
 import pandas as pd
+import pytz
 
 SERVER_KEY = "me_server_address"
 
@@ -71,10 +72,14 @@ class MEEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def convert_timestamp(ts):
+def convert_timestamp(ts: datetime):
     if isinstance(ts, datetime):
-        return ts
-    return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+        if ts.tzinfo is None:
+            return pytz.UTC.localize(ts)
+        else:
+            return ts.astimezone(timezone.utc)
+    dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+    return dt.replace(tzinfo=timezone.utc)
 
 
 def MaterializationClient(
@@ -644,46 +649,63 @@ class MaterializatonClientV2(ClientBase):
         Returns:
             [type]: [description]
         """
+        timestamp = convert_timestamp(timestamp)
+        timestamp_past = convert_timestamp(timestamp_past)
+
         new_filters = []
-        vals = []
+        root_ids = []
         for filter_dict in filters:
             if filter_dict is not None:
                 for col, val in filter_dict.items():
                     if col.endswith("root_id"):
                         if not isinstance(val, (Iterable, np.ndarray)):
-                            vals.append([val])
+                            root_ids.append([val])
                         else:
-                            vals.append(val)
+                            root_ids.append(val)
 
         # if they are all None then we can safely return now
-        if len(vals) == 0:
+        if len(root_ids) == 0:
             return [None, None, None], {}
-        vals = np.unique(np.concatenate(vals))
-        filter_vals_latest = self.cg_client.is_latest_roots(vals, timestamp=timestamp)
-        if not np.all(filter_vals_latest):
-            not_latest = vals[~filter_vals_latest]
+        root_ids = np.unique(np.concatenate(root_ids))
+
+        filter_timed_end = self.cg_client.is_latest_roots(root_ids, timestamp=timestamp)
+        filter_timed_start = self.cg_client.get_root_timestamps(root_ids) < timestamp
+        filter_timestamp = np.logical_and(filter_timed_start, filter_timed_end)
+        if not np.all(filter_timestamp):
+            roots_too_old = root_ids[~filter_timed_end]
+            roots_too_recent = root_ids[~filter_timed_start]
+
+            if len(roots_too_old) > 0:
+                too_old_str = f"{roots_too_old} are expired, "
+            else:
+                too_old_str = ""
+            if len(roots_too_recent) > 0:
+                too_recent_str = f"{roots_too_recent} are too recent, "
+            else:
+                too_recent_str = ""
+
             raise ValueError(
-                f"""{not_latest} are not valid rootIDs at timestamp= {timestamp}, 
-                                use chunkedgraph client to query lineage graph to find new ID(s)"""
+                f"Timestamp incompatible with IDs: {too_old_str}{too_recent_str}use chunkedgraph client to find valid ID(s)"
             )
+
         id_mapping = self.cg_client.get_past_ids(
-            vals, timestamp_past=timestamp_past, timestamp_future=timestamp
+            root_ids, timestamp_past=timestamp_past, timestamp_future=timestamp
         )
         for filter_dict in filters:
             if filter_dict is None:
                 new_filters.append(filter_dict)
             else:
                 new_dict = {}
-                for col, vals in filter_dict.items():
+                for col, root_ids in filter_dict.items():
                     if col.endswith("root_id"):
-                        if not isinstance(vals, (Iterable, np.ndarray)):
-                            new_dict[col] = id_mapping["past_id_map"][vals]
+                        if not isinstance(root_ids, (Iterable, np.ndarray)):
+                            new_dict[col] = id_mapping["past_id_map"][root_ids]
                         else:
                             new_dict[col] = np.concatenate(
-                                [id_mapping["past_id_map"][v] for v in vals]
+                                [id_mapping["past_id_map"][v] for v in root_ids]
                             )
                     else:
-                        new_dict[col] = vals
+                        new_dict[col] = root_ids
                 new_filters.append(new_dict)
         return new_filters, id_mapping["future_id_map"]
 
@@ -812,6 +834,7 @@ class MaterializatonClientV2(ClientBase):
         pd.DataFrame: a pandas dataframe of results of query
 
         """
+        timestamp = convert_timestamp(timestamp)
         return_df = True
         if self.cg_client is None:
             raise ValueError("You must have a cg_client to run live_query")

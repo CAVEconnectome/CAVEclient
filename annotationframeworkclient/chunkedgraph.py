@@ -3,6 +3,7 @@ import requests
 import datetime
 import time
 import json
+import pytz
 from . import endpoints
 from . import infoservice
 from .endpoints import (
@@ -14,6 +15,7 @@ from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
 from typing import Iterable
 from urllib.parse import urlencode
+import networkx as nx
 
 
 SERVER_KEY = "cg_server_address"
@@ -438,7 +440,9 @@ class ChunkedGraphClientV1(ClientBase):
         r.raise_for_status()
         return r.json()
 
-    def get_lineage_graph(self, root_id, timestamp_past=None, timestamp_future=None):
+    def get_lineage_graph(
+        self, root_id, timestamp_past=None, timestamp_future=None, as_nx_graph=False
+    ):
         """Returns the lineage graph for a root id, optionally cut off in the past or the future.
 
         Parameters
@@ -449,6 +453,8 @@ class ChunkedGraphClientV1(ClientBase):
             Cutoff for the lineage graph backwards in time. By default, None.
         timestamp_future : datetime.datetime or None, optional
             Cutoff for the lineage graph going forwards in time. By default, None.
+        as_nx_graph: bool
+            if True, a networkx graph is returned
 
         Returns
         -------
@@ -467,12 +473,73 @@ class ChunkedGraphClientV1(ClientBase):
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
         r = handle_response(self.session.get(url, params=data))
-        return r
+
+        if as_nx_graph:
+            return nx.node_link_graph(r)
+        else:
+            return r
+
+    def get_latest_roots(self, root_id, timestamp_future=None):
+        """Returns root ids that are the latest successors of a given root id.
+
+        Parameters
+        ----------
+        root_id : int
+            Object root id
+        timestamp_future : datetime.datetime or None, optional
+            Cutoff for the search going forwards in time. By default, None.
+
+        Returns
+        -------
+        np.ndarray
+            1d array with all latest successors
+        """
+
+        lineage_graph = self.get_lineage_graph(
+            root_id,
+            timestamp_past=self.get_root_timestamps([root_id])[0],
+            timestamp_future=timestamp_future,
+            as_nx_graph=True,
+        )
+
+        out_degree_dict = dict(lineage_graph.out_degree)
+        nodes = np.array(list(out_degree_dict.keys()))
+        out_degrees = np.array(list(out_degree_dict.values()))
+        return nodes[out_degrees == 0]
+
+    def get_original_roots(self, root_id, timestamp_past=None):
+        """Returns root ids that are the latest successors of a given root id.
+
+        Parameters
+        ----------
+        root_id : int
+            Object root id
+        timestamp_past : datetime.datetime or None, optional
+            Cutoff for the search going backwards in time. By default, None.
+
+        Returns
+        -------
+        np.ndarray
+            1d array with all latest successors
+        """
+
+        lineage_graph = self.get_lineage_graph(
+            root_id,
+            timestamp_past=timestamp_past,
+            timestamp_future=self.get_root_timestamps([root_id])[0],
+            as_nx_graph=True,
+        )
+
+        in_degree_dict = dict(lineage_graph.in_degree)
+        nodes = np.array(list(in_degree_dict.keys()))
+        in_degrees = np.array(list(in_degree_dict.values()))
+        return nodes[in_degrees == 0]
 
     def is_latest_roots(self, root_ids, timestamp=None):
-        """check whether these root_ids are still a root at this timestamp
+        """Check whether these root_ids are still a root at this timestamp
 
-        Args:
+        Parameters
+        ----------
             root_ids ([type]): root ids to check
             timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
 
@@ -493,6 +560,33 @@ class ChunkedGraphClientV1(ClientBase):
             self.session.post(url, data=json.dumps(data, cls=CGEncoder), params=query_d)
         )
         return np.array(r["is_latest"], np.bool)
+
+    def get_root_timestamps(self, root_ids):
+        """Retrieves timestamps when roots where created.
+
+        Parameters
+        ----------
+        root_ids: Iterable,
+            Iterable of seed root ids.
+
+        Returns
+        -------
+
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["root_timestamps"].format_map(endpoint_mapping)
+
+        data = {"node_ids": root_ids}
+        r = handle_response(
+            self.session.post(url, data=json.dumps(data, cls=CGEncoder))
+        )
+
+        return np.array(
+            [
+                pytz.UTC.localize(datetime.datetime.fromtimestamp(ts))
+                for ts in r["timestamp"]
+            ]
+        )
 
     def get_past_ids(self, root_ids, timestamp_past=None, timestamp_future=None):
         """For a set of root ids, get the list of ids at a past or future time point that could contain parts of the same object.
