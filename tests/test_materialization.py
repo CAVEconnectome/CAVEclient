@@ -1,6 +1,6 @@
 import pytest
 import requests
-from annotationframeworkclient import FrameworkClient
+from annotationframeworkclient import FrameworkClient, materializationengine
 import os
 from annotationframeworkclient.endpoints import (
     materialization_endpoints_v2,
@@ -104,18 +104,24 @@ class TestMatclient:
             }
         ]
 
-        past_timestamp = datetime.datetime.strptime(
-            correct_metadata[0]["time_stamp"], "%Y-%m-%dT%H:%M:%S.%f"
+        past_timestamp = materializationengine.convert_timestamp(
+            datetime.datetime.strptime(
+                correct_metadata[0]["time_stamp"], "%Y-%m-%dT%H:%M:%S.%f"
+            )
         )
 
         md_url = self.endpoints["versions_metadata"].format_map(endpoint_mapping)
         responses.add(responses.GET, url=md_url, json=correct_metadata, status=200)
 
-        bad_time = datetime.datetime(
-            year=2020, month=4, day=19, hour=0, tzinfo=datetime.timezone.utc
+        bad_time = materializationengine.convert_timestamp(
+            datetime.datetime(
+                year=2020, month=4, day=19, hour=0, tzinfo=datetime.timezone.utc
+            )
         )
-        good_time = datetime.datetime(
-            year=2021, month=4, day=19, hour=0, tzinfo=datetime.timezone.utc
+        good_time = materializationengine.convert_timestamp(
+            datetime.datetime(
+                year=2021, month=4, day=19, hour=0, tzinfo=datetime.timezone.utc
+            )
         )
 
         with pytest.raises(ValueError):
@@ -219,6 +225,19 @@ class TestMatclient:
                 raise ValueError("Mock is not defined at this time")
             return np.array([is_latest[root_id] for root_id in root_ids])
 
+        def mock_get_root_timestamps(self, root_ids):
+            timestamp_dict = {
+                100: bad_time - datetime.timedelta(days=1),
+                101: bad_time - datetime.timedelta(days=1),
+                102: bad_time - datetime.timedelta(days=1),
+                103: bad_time - datetime.timedelta(days=1),
+                200: good_time - datetime.timedelta(days=1),
+                201: good_time - datetime.timedelta(days=1),
+                202: good_time - datetime.timedelta(days=1),
+                203: good_time - datetime.timedelta(days=1),
+            }
+            return np.array([timestamp_dict[root_id] for root_id in root_ids])
+
         mocker.patch(
             "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots",
             my_get_roots,
@@ -231,7 +250,10 @@ class TestMatclient:
             "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots",
             mock_is_latest_roots,
         )
-
+        mocker.patch(
+            "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps",
+            mock_get_root_timestamps,
+        )
         df = pd.read_pickle("tests/test_data/live_query_before.pkl")
 
         context = pa.default_serialization_context()
