@@ -853,6 +853,23 @@ class MaterializatonClientV2(ClientBase):
                 if timestamp > ts:
                     materialization_version = md["version"]
                     timestamp_start = ts
+                if np.abs(timestamp - ts) < datetime.second:
+                    # then we should just use a static query
+                    return self.query_table(
+                        table,
+                        filter_in_dict=filter_in_dict,
+                        filter_equal_dict=filter_equal_dict,
+                        filter_out_dict=filter_out_dict,
+                        filter_spatial=filter_spatial,
+                        join_args=join_args,
+                        select_columns=select_columns,
+                        offset=offset,
+                        limit=limit,
+                        datastack_name=datastack_name,
+                        split_positions=split_positions,
+                        materialization_version=materialization_version,
+                    )
+
             # if none of the available versions are before
             # this timestamp, then we cannot support the query
             if materialization_version is None:
