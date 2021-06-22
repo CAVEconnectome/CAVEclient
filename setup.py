@@ -27,7 +27,7 @@ setup(
     name="caveclient",
     description="a service for interacting with the Connectome Annotation Versioning Engine",
     author="Forrest Collman, Casey Schneider-Mizell, Sven Dorkenwald",
-    author_email="forrestc@alleninstute.org,caseym@alleninstitute.org,svenmd@princeton.edu,",
+    author_email="forrestc@alleninstute.org,caseys@alleninstitute.org,svenmd@princeton.edu,",
     url="https://github.com/seung-lab/CAVEclient",
     packages=["caveclient"],
     include_package_data=True,
