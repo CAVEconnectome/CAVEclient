@@ -1,7 +1,7 @@
 Framework Client: One client for all services
 =============================================
 
-The Dynamic Annotation Framework consists of a number of different
+The CAVE Framework consists of a number of different
 services, each with a specific set of tasks that it can perform through
 REST endpoints.
 The FrameworkCleint is designed to ease programmatic interaction
@@ -15,7 +15,7 @@ Each of the individual services has their own specific documentation as well.
 Global and Local Services
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are two categories of data in the Dynamic Annotation Framework: Global and local.
+There are two categories of data in CAVE: Global and local.
 Local services are associated with a single so-called "datastack", which refers to a precise collection of imagery and segmentation data that function together.
 For example, EM imagery and a specific pychunkedgraph segmentation would be one datastack, while the same EM imagery but an initial static segmentation would be another.
 Datastacks are refered to by a short name, for instance ``pinky100_public_flat_v185``.
@@ -36,7 +36,7 @@ only access global services can be initialized:
 
 .. code:: python
 
-    from annotationframeworkclient import FrameworkClient
+    from caveclient import FrameworkClient
     
     client = FrameworkClient()
 

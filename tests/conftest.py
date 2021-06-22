@@ -1,8 +1,8 @@
 import pytest
 import responses
-from annotationframeworkclient import FrameworkClient
+from caveclient import FrameworkClient
 import os
-from annotationframeworkclient import endpoints
+from caveclient import endpoints
 
 
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")

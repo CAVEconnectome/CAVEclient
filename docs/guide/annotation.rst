@@ -88,4 +88,4 @@ but then its up to you to assure that the IDs don't collide with other IDs.
 If you leave them blank then the service will assign the IDs for you.
 
 There is a similar method for updating 
-:func:`annotationframeworkclient.annotationengine.AnnotationClientV2.update_annotation_df`
+:func:`caveclient.annotationengine.AnnotationClientV2.update_annotation_df`

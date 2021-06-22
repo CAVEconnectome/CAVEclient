@@ -1,7 +1,7 @@
-annotationframeworkclient
+caveclient
 =========================
 
 .. toctree::
    :maxdepth: 4
 
-   annotationframeworkclient
+   caveclient

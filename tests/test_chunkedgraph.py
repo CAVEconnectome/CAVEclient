@@ -3,7 +3,7 @@ from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import pytest
 import responses
 import numpy as np
-from annotationframeworkclient.endpoints import (
+from caveclient.endpoints import (
     chunkedgraph_endpoints_v1,
     chunkedgraph_endpoints_common,
 )
