@@ -1,6 +1,6 @@
 import pytest
 import requests
-from caveclient import FrameworkClient, materializationengine
+from caveclient import CAVEclient, materializationengine
 import os
 from caveclient.endpoints import (
     materialization_endpoints_v2,

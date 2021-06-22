@@ -56,17 +56,17 @@ If we had wanted to use a different file or a different json key, we
 could have specified that in auth.save_token.
 
 Because we used the default values, this token is used automatically
-when we intialize a new FrameworkClient. If we wanted to use a different
+when we intialize a new CAVEclient. If we wanted to use a different
 token file, token key, or even directly specify a token we could do so
 here.
 
 .. code:: python
 
-    client = FrameworkClient(datastack_name)
+    client = CAVEclient(datastack_name)
     print(f"Now my basic token is: {client.auth.token}")
     
-    client_direct = FrameworkClient(datastack_name, auth_token='another_fake_token_678')
+    client_direct = CAVEclient(datastack_name, auth_token='another_fake_token_678')
     print(f"A directly specified token is: {client_direct.auth.token}")
 
-If you use a FrameworkClient, the AuthClient and its token will be
+If you use a CAVEclient, the AuthClient and its token will be
 automatically applied to any other services without further use.

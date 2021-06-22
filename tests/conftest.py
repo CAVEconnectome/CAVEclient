@@ -1,6 +1,6 @@
 import pytest
 import responses
-from caveclient import FrameworkClient
+from caveclient import CAVEclient
 import os
 from caveclient import endpoints
 
@@ -34,5 +34,5 @@ def myclient():
     url = url_template.format_map(mapping)
     responses.add(responses.GET, url, json=test_info, status=200)
 
-    client = FrameworkClient(TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER)
+    client = CAVEclient(TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER)
     return client

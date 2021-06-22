@@ -11,7 +11,7 @@ An InfoClient is accessed at ``client.info``.
 
 .. code:: python
 
-    client = FrameworkClient(datastack_name)
+    client = CAVEclient(datastack_name)
     print(f"This is an info client for {client.info.datastack_name} on {client.info.server_address}")
 
 Accessing datastack information
