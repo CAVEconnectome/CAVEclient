@@ -3,6 +3,7 @@ from cachetools import cached, TTLCache
 from typing import ValuesView
 
 from numpy.lib.function_base import iterable
+from numpy.lib.twodim_base import _trilu_indices_form_dispatcher
 import caveclient
 from .base import (
     ClientBaseWithDataset,
@@ -23,6 +24,7 @@ from datetime import date, datetime, timezone, tzinfo
 import pyarrow as pa
 import itertools
 from collections.abc import Iterable
+from typing import Union
 from .timeit import TimeIt
 from IPython.display import HTML
 import pandas as pd
@@ -87,6 +89,7 @@ def MaterializationClient(
     datastack_name=None,
     auth_client=None,
     cg_client=None,
+    synapse_table=None,
     api_version="latest",
     version=None,
     verify=True,
@@ -105,6 +108,10 @@ def MaterializationClient(
         What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
         2: new api version, (i.e. minniev1.microns-daf.com)
         'latest': default to the most recent (current 2)
+    cg_client: caveclient.chunkedgraph.ChunkeGraphClient
+        chunkedgraph client for live materializations
+    synapse_table: str
+        default synapse table for queries
     version : default version to query
         if None will default to latest version
 
@@ -136,6 +143,7 @@ def MaterializationClient(
         SERVER_KEY,
         datastack_name,
         cg_client=cg_client,
+        synapse_table=synapse_table,
         version=version,
         verify=verify,
     )
@@ -151,6 +159,7 @@ class MaterializatonClientV2(ClientBase):
         server_name,
         datastack_name,
         cg_client=None,
+        synapse_table=None,
         version=None,
         verify=True,
     ):
@@ -168,6 +177,7 @@ class MaterializatonClientV2(ClientBase):
             version = self.most_recent_version()
         self._version = version
         self.cg_client = cg_client
+        self.synapse_table = synapse_table
 
     @property
     def datastack_name(self):
@@ -479,6 +489,7 @@ class MaterializatonClientV2(ClientBase):
         return_df: bool = True,
         split_positions: bool = False,
         materialization_version: int = None,
+        timestamp: datetime.datetime = None,
     ):
         """generic query on materialization tables
 
@@ -508,10 +519,31 @@ class MaterializatonClientV2(ClientBase):
                 default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query.
                 If None defaults to one specified in client.
+            timestamp (datetime.datetime, optional): timestamp to query
+                If passsed will do a live query. Error if also passing a materialization version
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
         """
+        if timestamp is not None:
+            if materialization_version is not None:
+                raise ValueError("cannot specify timestamp and materialization version")
+            else:
+                return self.live_query(
+                    table,
+                    timestamp,
+                    filter_in_dict=filter_in_dict,
+                    filter_out_dict=filter_out_dict,
+                    filter_equal_dict=filter_equal_dict,
+                    filter_spatial=filter_spatial,
+                    join_args=join_args,
+                    select_columns=select_columns,
+                    offset=offset,
+                    limit=limit,
+                    datastack_name=datastack_name,
+                    split_positions=split_positions,
+                    post_filter=True,
+                )
         if materialization_version is None:
             materialization_version = self.version
         if datastack_name is None:
@@ -945,5 +977,75 @@ class MaterializatonClientV2(ClientBase):
 
         return df
 
+    def query_synapse(
+        self,
+        pre_ids: Union[int, Iterable[int]] = None,
+        post_ids: Union[int, Iterable[int]] = None,
+        timestamp: datetime.datetime = None,
+        remove_autapses: bool = True,
+        include_zeros: bool = True,
+        limit: int = None,
+        offset: int = None,
+        split_positions: bool = False,
+        synapse_table: str = None,
+        datastack_name: str = None,
+        materialization_version: int = None,
+    ):
+        """query synapses
+
+        Args:
+            pre_ids (Union[int, Iterable, optional): pre_synaptic cell(s) to query. Defaults to None.
+            post_ids (Union[int, Iterable, optional): post synaptic cell(s) to query. Defaults to None.
+            timestamp (datetime.datetime, optional): timestamp to query (optional).
+                If passed recalculate query at timestamp, do not pass with materialization_verison
+            remove_autapses (bool, optional): post-hoc filter out synapses. Defaults to True.
+            include_zeros (bool, optional): whether to include synapses to/from id=0 (out of segmentation). Defaults to True.
+            limit (int, optional): number of synapses to limit, Defaults to None (server side limit applies)
+            offset (int, optional): number of synapses to offset query, Defaults to None (no offset).
+            split_positions (bool, optional): whether to return positions as seperate x,y,z columns (faster)
+                defaults to False
+            synapse_table (str, optional): synapse table to query. If None, defaults to self.synapse_table.
+            datastack_name: (str, optional): datastack to query
+            materialization_version (int, optional): version to query.
+                defaults to self.materialization_version if not specified
+        """
+        filter_in_dict = {}
+        filter_out_dict = None
+        filter_equal_dict = {}
+        if synapse_table is None:
+            if self.synapse_table is None:
+                raise ValueError(
+                    "Must define synapse table in class init or pass to method"
+                )
+            synapse_table = self.synapse_table
+
+        if not include_zeros:
+            filter_out_dict = {"pre_pt_root_id": [0], "post_pt_root_id": [0]}
+
+        if isinstance(pre_ids, Iterable[int]):
+            filter_in_dict = {"pre_pt_root_id": pre_ids}
+        else:
+            filter_equal_dict = {"pre_pt_root_id": pre_ids}
+
+        if isinstance(post_ids, Iterable[int]):
+            filter_in_dict = {"post_pt_root_id": post_ids}
+        else:
+            filter_equal_dict = {"post_pt_root_id": post_ids}
+
+        df= self.query_table(
+            synapse_table,
+            filter_in_dict=filter_in_dict,
+            filter_out_dict=filter_out_dict,
+            filter_equal_dict=filter_equal_dict,
+            offset=offset,
+            limit=limit,
+            split_positions=split_positions,
+            materialization_version=materialization_version,
+            timestamp=timestamp,
+        )
+        if remove_autapses:
+            return df.query("pre_pt_root_id!=post_pt_root_id")
+        else:
+            return df
 
 client_mapping = {2: MaterializatonClientV2, "latest": MaterializatonClientV2}
