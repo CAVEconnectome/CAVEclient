@@ -25,7 +25,7 @@ with open("requirements.txt", "r") as f:
 setup(
     version=find_version("caveclient", "__init__.py"),
     name="caveclient",
-    description="a service for interacting with the AnnotationFramework",
+    description="a service for interacting with the Connectome Annotation Versioning Engine",
     author="Forrest Collman, Casey Schneider-Mizell, Sven Dorkenwald",
     author_email="forrestc@alleninstute.org,caseym@alleninstitute.org,svenmd@princeton.edu,",
     url="https://github.com/seung-lab/CAVEclient",
