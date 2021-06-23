@@ -489,7 +489,7 @@ class MaterializatonClientV2(ClientBase):
         return_df: bool = True,
         split_positions: bool = False,
         materialization_version: int = None,
-        timestamp: datetime.datetime = None,
+        timestamp: datetime = None,
     ):
         """generic query on materialization tables
 
@@ -977,11 +977,11 @@ class MaterializatonClientV2(ClientBase):
 
         return df
 
-    def query_synapse(
+    def synapse_query(
         self,
-        pre_ids: Union[int, Iterable[int]] = None,
-        post_ids: Union[int, Iterable[int]] = None,
-        timestamp: datetime.datetime = None,
+        pre_ids: Union[int, Iterable, np.ndarray] = None,
+        post_ids: Union[int, Iterable, np.ndarray] = None,
+        timestamp: datetime = None,
         remove_autapses: bool = True,
         include_zeros: bool = True,
         limit: int = None,
@@ -1010,6 +1010,7 @@ class MaterializatonClientV2(ClientBase):
                 defaults to self.materialization_version if not specified
         """
         filter_in_dict = {}
+        filter_equal_dict = {}
         filter_out_dict = None
         filter_equal_dict = {}
         if synapse_table is None:
@@ -1022,17 +1023,19 @@ class MaterializatonClientV2(ClientBase):
         if not include_zeros:
             filter_out_dict = {"pre_pt_root_id": [0], "post_pt_root_id": [0]}
 
-        if isinstance(pre_ids, Iterable[int]):
-            filter_in_dict = {"pre_pt_root_id": pre_ids}
-        else:
-            filter_equal_dict = {"pre_pt_root_id": pre_ids}
+        if pre_ids is not None:
+            if isinstance(pre_ids, (Iterable, np.ndarray)):
+                filter_in_dict["pre_pt_root_id"] = pre_ids
+            else:
+                filter_equal_dict["pre_pt_root_id"] = pre_ids
 
-        if isinstance(post_ids, Iterable[int]):
-            filter_in_dict = {"post_pt_root_id": post_ids}
-        else:
-            filter_equal_dict = {"post_pt_root_id": post_ids}
-
-        df= self.query_table(
+        if post_ids is not None:
+            if isinstance(post_ids, (Iterable, np.ndarray)):
+                filter_in_dict["post_pt_root_id"] = post_ids
+            else:
+                filter_equal_dict["post_pt_root_id"] = post_ids
+        print(filter_in_dict, filter_equal_dict, filter_out_dict)
+        df = self.query_table(
             synapse_table,
             filter_in_dict=filter_in_dict,
             filter_out_dict=filter_out_dict,
@@ -1047,5 +1050,6 @@ class MaterializatonClientV2(ClientBase):
             return df.query("pre_pt_root_id!=post_pt_root_id")
         else:
             return df
+
 
 client_mapping = {2: MaterializatonClientV2, "latest": MaterializatonClientV2}
