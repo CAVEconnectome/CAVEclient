@@ -1,93 +1,93 @@
-annotationframeworkclient package
+caveclient package
 =================================
 
 Submodules
 ----------
 
-annotationframeworkclient.annotationengine module
+caveclient.annotationengine module
 -------------------------------------------------
 
-.. automodule:: annotationframeworkclient.annotationengine
+.. automodule:: caveclient.annotationengine
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.auth module
+caveclient.auth module
 -------------------------------------
 
-.. automodule:: annotationframeworkclient.auth
+.. automodule:: caveclient.auth
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.base module
+caveclient.base module
 -------------------------------------
 
-.. automodule:: annotationframeworkclient.base
+.. automodule:: caveclient.base
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.chunkedgraph module
+caveclient.chunkedgraph module
 ---------------------------------------------
 
-.. automodule:: annotationframeworkclient.chunkedgraph
+.. automodule:: caveclient.chunkedgraph
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.emannotationschemas module
+caveclient.emannotationschemas module
 ----------------------------------------------------
 
-.. automodule:: annotationframeworkclient.emannotationschemas
+.. automodule:: caveclient.emannotationschemas
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.endpoints module
+caveclient.endpoints module
 ------------------------------------------
 
-.. automodule:: annotationframeworkclient.endpoints
+.. automodule:: caveclient.endpoints
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.format\_utils module
+caveclient.format\_utils module
 ----------------------------------------------
 
-.. automodule:: annotationframeworkclient.format_utils
+.. automodule:: caveclient.format_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.frameworkclient module
+caveclient.frameworkclient module
 ------------------------------------------------
 
-.. automodule:: annotationframeworkclient.frameworkclient
+.. automodule:: caveclient.frameworkclient
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.infoservice module
+caveclient.infoservice module
 --------------------------------------------
 
-.. automodule:: annotationframeworkclient.infoservice
+.. automodule:: caveclient.infoservice
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.jsonservice module
+caveclient.jsonservice module
 --------------------------------------------
 
-.. automodule:: annotationframeworkclient.jsonservice
+.. automodule:: caveclient.jsonservice
    :members:
    :undoc-members:
    :show-inheritance:
 
-annotationframeworkclient.materializationengine module
+caveclient.materializationengine module
 ------------------------------------------------------
 
-.. automodule:: annotationframeworkclient.materializationengine
+.. automodule:: caveclient.materializationengine
    :members:
    :undoc-members:
    :show-inheritance:
@@ -96,7 +96,7 @@ annotationframeworkclient.materializationengine module
 Module contents
 ---------------
 
-.. automodule:: annotationframeworkclient
+.. automodule:: caveclient
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,8 +1,8 @@
 import pytest
 import requests
-from annotationframeworkclient import FrameworkClient, materializationengine
+from caveclient import CAVEclient, materializationengine
 import os
-from annotationframeworkclient.endpoints import (
+from caveclient.endpoints import (
     materialization_endpoints_v2,
     chunkedgraph_endpoints_v1,
     chunkedgraph_endpoints_common,
@@ -242,19 +242,19 @@ class TestMatclient:
             return np.array([timestamp_dict[root_id] for root_id in root_ids])
 
         mocker.patch(
-            "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots",
+            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots",
             my_get_roots,
         )
         mocker.patch(
-            "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids",
+            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids",
             mocked_get_past_ids,
         )
         mocker.patch(
-            "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots",
+            "caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots",
             mock_is_latest_roots,
         )
         mocker.patch(
-            "annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps",
+            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps",
             mock_get_root_timestamps,
         )
         df = pd.read_pickle("tests/test_data/live_query_before.pkl")

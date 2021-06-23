@@ -40,7 +40,7 @@ class AuthClient(object):
         server_address=default_global_server_address,
     ):
         if token_file is None:
-            server=urllib.parse.urlparse(server_address).netloc
+            server = urllib.parse.urlparse(server_address).netloc
             server_file = server + "-cave-secret.json"
             server_file_path = os.path.join(default_token_location, server_file)
             server_file_path = os.path.expanduser(server_file_path)
@@ -63,7 +63,7 @@ class AuthClient(object):
 
     @property
     def token(self):
-        """Secret token used to authenticate yourself to the Dynamic Annotation Framework services."""
+        """Secret token used to authenticate yourself to the Connectome Annotation Versioning Engine services."""
         return self._token
 
     @token.setter

@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-AnnotationFramework client is a package for simplifying interactions with HTML services associated with the DynamicAnnotationFramework, which includes:
+AnnotationFramework client is a package for simplifying interactions with HTML services associated with the CAVE (Connectome Annotation Versioning Engine), which includes:
 
 - `pychunkedgraph <https://www.github.com/seung-lab/pychunkedgraph>`_ (For tracking dynamic segmentations)
 - `NeuroglancerJsonServer <https://www.github.com/seung-lab/NeuroglancerJsonServer>`_ (For posting/getting neuroglancer json states)
@@ -12,11 +12,11 @@ AnnotationFramework client is a package for simplifying interactions with HTML s
 Installation
 ~~~~~~~~~~~~
 
-The AnnotationFrameworkClient can be installed with pip:
+The CAVEclient can be installed with pip:
 
 .. code-block:: bash
 
-   $ pip install annotationframeworkclient
+   $ pip install caveclient
 
 Assumptions
 ~~~~~~~~~~~

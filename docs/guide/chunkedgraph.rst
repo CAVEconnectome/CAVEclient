@@ -14,7 +14,7 @@ Usually in Neuroglancer, one never notices supervoxel ids, but they are
 important for programmatic work. In order to look up the root id for a
 location in space, one needs to use the supervoxel segmentation to get
 the associated supervoxel id. The ChunkedGraph client makes this easy
-using the :func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_root_id` method.
+using the :func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id` method.
 
 .. code:: python
 
@@ -40,7 +40,7 @@ different than it is now.
 
 If you are doing this across lots of supervoxels (or any nodes)
 then you can do it more efficently in one request with
-:func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots`
+:func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots`
 
 .. code:: python
 
@@ -51,7 +51,7 @@ Getting supervoxels for a root id
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A root id is associated with a particular agglomeration of supervoxels,
-which can be found with the :func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_leaves` method. A new root id is
+which can be found with the :func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves` method. A new root id is
 generated for every new change in the chunkedgraph, so time stamps do
 not apply.
 
@@ -69,9 +69,9 @@ option
     client.chunkedgraph.get_leaves(root_id,stop_layer=2)
 
 This will get all the level 2 IDs for this root, which correspond to the lowest chunk of the heirachy.
-An analogous option exists for :func:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1.get_roots`.
+An analogous option exists for :func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots`.
 
 Other functions
 ^^^^^^^^^^^^^^^
 
-There are a variety of other interesting functions to explore in the :class:`~annotationframeworkclient.chunkedgraph.ChunkedGraphClientV1`
+There are a variety of other interesting functions to explore in the :class:`~caveclient.chunkedgraph.ChunkedGraphClientV1`

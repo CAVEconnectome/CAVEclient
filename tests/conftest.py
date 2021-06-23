@@ -1,8 +1,8 @@
 import pytest
 import responses
-from annotationframeworkclient import FrameworkClient
+from caveclient import CAVEclient
 import os
-from annotationframeworkclient import endpoints
+from caveclient import endpoints
 
 
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
@@ -34,5 +34,5 @@ def myclient():
     url = url_template.format_map(mapping)
     responses.add(responses.GET, url, json=test_info, status=200)
 
-    client = FrameworkClient(TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER)
+    client = CAVEclient(TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER)
     return client

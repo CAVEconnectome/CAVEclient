@@ -3,14 +3,13 @@ import os
 import numpy as np
 import time
 
-from annotationframeworkclient import annotationengine as ae
+from caveclient import annotationengine as ae
 
 HOME = os.path.expanduser("~")
 
 
-def load_synapses(path=HOME + "/Downloads/pinky100_final.df",
-                  scaling=(1, 1, 1)):
-    """ Test scenario using real synapses """
+def load_synapses(path=HOME + "/Downloads/pinky100_final.df", scaling=(1, 1, 1)):
+    """Test scenario using real synapses"""
 
     scaling = np.array(list(scaling))
 
@@ -22,16 +21,24 @@ def load_synapses(path=HOME + "/Downloads/pinky100_final.df",
 
     df = df[mask]
 
-    df['pre_pt.position'] = list((np.array(df[['presyn_x', 'presyn_y', 'presyn_z']]) / scaling).astype(np.int))
-    df['ctr_pt.position'] = list((np.array(df[['centroid_x', 'centroid_y', 'centroid_z']]) / scaling).astype(np.int))
-    df['post_pt.position'] = list((np.array(df[['postsyn_x', 'postsyn_y', 'postsyn_z']]) / scaling).astype(np.int))
+    df["pre_pt.position"] = list(
+        (np.array(df[["presyn_x", "presyn_y", "presyn_z"]]) / scaling).astype(np.int)
+    )
+    df["ctr_pt.position"] = list(
+        (np.array(df[["centroid_x", "centroid_y", "centroid_z"]]) / scaling).astype(
+            np.int
+        )
+    )
+    df["post_pt.position"] = list(
+        (np.array(df[["postsyn_x", "postsyn_y", "postsyn_z"]]) / scaling).astype(np.int)
+    )
 
-    df = df[['pre_pt.position', 'ctr_pt.position', 'post_pt.position', 'size']]
+    df = df[["pre_pt.position", "ctr_pt.position", "post_pt.position", "size"]]
 
     return df
 
 
-def insert_synapses(syn_df, datastack_name='pinky100', annotation_type="synapse"):
+def insert_synapses(syn_df, datastack_name="pinky100", annotation_type="synapse"):
     ac = ae.AnnotationClient(datastack_name=datastack_name)
     ac.bulk_import_df(annotation_type, syn_df)
 
@@ -47,4 +54,3 @@ if __name__ == "__main__":
     time_start = time.time()
     insert_synapses(syn_df)
     print("Time for inserting: %.2fmin" % ((time.time() - time_start) / 60))
-

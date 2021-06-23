@@ -3,7 +3,7 @@ from cachetools import cached, TTLCache
 from typing import ValuesView
 
 from numpy.lib.function_base import iterable
-import annotationframeworkclient
+import caveclient
 from .base import (
     ClientBaseWithDataset,
     ClientBaseWithDatastack,

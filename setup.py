@@ -23,13 +23,13 @@ with open("requirements.txt", "r") as f:
     required = f.read().splitlines()
 
 setup(
-    version=find_version("annotationframeworkclient", "__init__.py"),
-    name="annotationframeworkclient",
-    description="a service for interacting with the AnnotationFramework",
-    author="Sven Dorkenwald",
-    author_email="svenmd@princeton.edu",
-    url="https://github.com/seung-lab/AnnotationFrameworkClient",
-    packages=["annotationframeworkclient"],
+    version=find_version("caveclient", "__init__.py"),
+    name="caveclient",
+    description="a service for interacting with the Connectome Annotation Versioning Engine",
+    author="Forrest Collman, Casey Schneider-Mizell, Sven Dorkenwald",
+    author_email="forrestc@alleninstute.org,caseys@alleninstitute.org,svenmd@princeton.edu,",
+    url="https://github.com/seung-lab/CAVEclient",
+    packages=["caveclient"],
     include_package_data=True,
     install_requires=required,
     setup_requires=["pytest-runner"],

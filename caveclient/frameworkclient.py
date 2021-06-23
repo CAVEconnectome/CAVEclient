@@ -12,7 +12,7 @@ class GlobalClientError(Exception):
     pass
 
 
-class FrameworkClient(object):
+class CAVEclient(object):
     def __new__(
         cls,
         datastack_name=None,
@@ -23,14 +23,14 @@ class FrameworkClient(object):
         global_only=False,
     ):
         if global_only or datastack_name is None:
-            return FrameworkClientGlobal(
+            return CAVEclientGlobal(
                 server_address=server_address,
                 auth_token_file=auth_token_file,
                 auth_token_key=auth_token_key,
                 auth_token=auth_token,
             )
         else:
-            return FrameworkClientFull(
+            return CAVEclientFull(
                 datastack_name=datastack_name,
                 server_address=server_address,
                 auth_token_file=auth_token_file,
@@ -39,7 +39,7 @@ class FrameworkClient(object):
             )
 
 
-class FrameworkClientGlobal(object):
+class CAVEclientGlobal(object):
     """A manager for all clients sharing common datastack and authentication information.
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
@@ -47,7 +47,7 @@ class FrameworkClientGlobal(object):
 
     .. code:: python
 
-        client = FrameworkClient(datastack_name='my_datastack',
+        client = CAVEclient(datastack_name='my_datastack',
                                  server_address='www.myserver.com',
                                  auth_token_file='~/.mysecrets/secrets.json')
 
@@ -178,7 +178,7 @@ class FrameworkClientGlobal(object):
         return None
 
 
-class FrameworkClientFull(FrameworkClientGlobal):
+class CAVEclientFull(CAVEclientGlobal):
     """A manager for all clients sharing common datastack and authentication information.
 
     This client wraps all the other clients and keeps track of the things that need to be consistent across them.
@@ -186,7 +186,7 @@ class FrameworkClientFull(FrameworkClientGlobal):
 
     .. code:: python
 
-        client = FrameworkClient(datastack_name='my_datastack',
+        client = CAVEclient(datastack_name='my_datastack',
                                  server_address='www.myserver.com',
                                  auth_token_file='~/.mysecrets/secrets.json')
 
@@ -225,7 +225,7 @@ class FrameworkClientFull(FrameworkClientGlobal):
         auth_token_key="token",
         auth_token=None,
     ):
-        super(FrameworkClientFull, self).__init__(
+        super(CAVEclientFull, self).__init__(
             server_address=server_address,
             auth_token_file=auth_token_file,
             auth_token_key=auth_token_key,

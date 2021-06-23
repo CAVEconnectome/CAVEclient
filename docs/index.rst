@@ -1,4 +1,4 @@
-Welcome to AnnotationFrameworkClient's documentation!
+Welcome to CAVEclient's documentation!
 =====================================================
 
 .. toctree::
@@ -21,7 +21,7 @@ API
    :maxdepth: 2
    :caption: API:
 
-   api/annotationframeworkclient
+   api/caveclient
 
 
 Indices and tables
