@@ -29,6 +29,7 @@ from .timeit import TimeIt
 from IPython.display import HTML
 import pandas as pd
 import pytz
+import warnings
 
 SERVER_KEY = "me_server_address"
 
@@ -573,7 +574,9 @@ class MaterializatonClientV2(ClientBase):
         )
         self.raise_for_status(response)
         if return_df:
-            df = pa.deserialize(response.content)
+            with warnings.catch_warnings():
+                warnings.simplefilter(action="ignore", category=FutureWarning)
+                df = pa.deserialize(response.content)
             if split_positions:
                 return df
             else:
@@ -663,7 +666,10 @@ class MaterializatonClientV2(ClientBase):
         )
         self.raise_for_status(response)
         if return_df:
-            df = pa.deserialize(response.content)
+            with warnings.catch_warnings():
+                warnings.simplefilter(action="ignore", category=FutureWarning)
+                df = pa.deserialize(response.content)
+
             if split_positions:
                 return df
             else:
@@ -954,7 +960,9 @@ class MaterializatonClientV2(ClientBase):
             self.raise_for_status(response)
 
         with TimeIt("deserialize"):
-            df = pa.deserialize(response.content)
+            with warnings.catch_warnings():
+                warnings.simplefilter(action="ignore", category=FutureWarning)
+                df = pa.deserialize(response.content)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
         # post process the dataframe to update all the root_ids columns
