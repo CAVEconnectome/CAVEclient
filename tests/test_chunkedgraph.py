@@ -210,6 +210,52 @@ class TestChunkedgraph:
         qchildren_ids = myclient.chunkedgraph.get_children(root_id)
         assert np.all(children_ids == qchildren_ids)
 
+    @responses.activate
+    def test_delta_roots(self, myclient):
+        endpoint_mapping = self._default_endpoint_map
+        url = chunkedgraph_endpoints_v1["delta_roots"].format_map(endpoint_mapping)
+
+        now = datetime.datetime.utcnow()
+        timestamp_past = now - datetime.timedelta(days=1)
+        query_d = {
+            "timestamp_past": time.mktime(timestamp_past.timetuple()),
+            "timestamp_future": time.mktime(now.timetuple()),
+        }
+
+        urlq = url + "?" + urlencode(query_d)
+
+        old_ids = [
+            864691135969138021,
+            864691135139373503,
+            864691135478492102,
+            864691135799951458,
+            864691135383121131,
+            864691134136949808,
+            864691136867461742,
+            864691135697607189,
+            864691135140967615,
+            864691135383120619,
+        ]
+        new_ids = [
+            864691136123991846,
+            864691135122597927,
+            864691135564887127,
+            864691136109117880,
+            864691135502092381,
+            864691135865876613,
+            864691136008781742,
+            864691135564887383,
+            864691135776866656,
+            864691135292110006,
+            864691136672918919,
+        ]
+        responses.add(
+            responses.GET, json={"old_ids": old_ids, "new_ids": new_ids}, url=urlq
+        )
+
+        qold_ids, qnew_ids = myclient.chunkedgraph.get_delta_roots(timestamp_past, now)
+        assert(np.all(qold_ids==old_ids))
+        assert(np.all(qnew_ids==new_ids))
     # waiting for backend fix
     # @responses.activate
     # def test_contact_sites(self, myclient):
