@@ -250,12 +250,13 @@ class TestChunkedgraph:
             864691136672918919,
         ]
         responses.add(
-            responses.GET, json={"old_ids": old_ids, "new_ids": new_ids}, url=urlq
+            responses.GET, json={"old_roots": old_ids, "new_roots": new_ids}, url=urlq
         )
 
         qold_ids, qnew_ids = myclient.chunkedgraph.get_delta_roots(timestamp_past, now)
-        assert(np.all(qold_ids==old_ids))
-        assert(np.all(qnew_ids==new_ids))
+        assert np.all(qold_ids == old_ids)
+        assert np.all(qnew_ids == new_ids)
+
     # waiting for backend fix
     # @responses.activate
     # def test_contact_sites(self, myclient):
