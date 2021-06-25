@@ -172,7 +172,6 @@ class MaterializatonClientV2(ClientBase):
             server_name,
             verify=verify,
         )
-
         self._datastack_name = datastack_name
         if version is None:
             version = self.most_recent_version()
@@ -351,7 +350,7 @@ class MaterializatonClientV2(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
-    def get_table_metadata(self, table_name: str, datastack_name=None):
+    def get_table_metadata(self, table_name: str, datastack_name=None, version: int= None):
         """Get metadata about a table
 
         Parameters
@@ -370,10 +369,12 @@ class MaterializatonClientV2(ClientBase):
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
-
+        if version is None:
+            version = self.version
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
+        endpoint_mapping["version"] = version
 
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
