@@ -286,6 +286,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 auth_client=self.auth,
                 datastack_name=self._datastack_name,
                 cg_client=self.chunkedgraph,
+                synapse_table=self.info.get_datastack_info().get("synapse_table", None),
             )
         return self._materialize
 
