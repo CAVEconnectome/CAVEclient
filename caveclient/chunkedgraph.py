@@ -632,6 +632,31 @@ class ChunkedGraphClientV1(ClientBase):
             r["future_id_map"][int(k)] = dat
         return r
 
+    def get_delta_roots(
+        self,
+        timestamp_past: datetime.datetime,
+        timestamp_future: datetime.datetime = datetime.datetime.utcnow(),
+    ):
+        """get the list of roots that have changed between timetamp_past and timestamp_future
+
+
+        Args:
+            timestamp_past (datetime.datetime): past timepoint to query
+            timestamp_future (datetime.datetime, optional): future timepoint to query. Defaults to datetime.datetime.utcnow().
+
+        Returns:
+            old_roots (np.ndarray): roots that have expired in that interval
+            new_roots (np.ndarray): roots that are new in that interval
+        """
+        endpoint_mapping = self.default_url_mapping
+        params = {
+            "timestamp_past": time.mktime(timestamp_past.timetuple()),
+            "timestamp_future": time.mktime(timestamp_future.timetuple()),
+        }
+        url = self._endpoints["delta_roots"].format_map(endpoint_mapping)
+        r = handle_response(self.session.get(url, params=params))
+        return np.array(r["old_roots"]), np.array(r["new_roots"])
+
     @property
     def cloudvolume_path(self):
         return self._endpoints["cloudvolume_path"].format_map(self.default_url_mapping)
@@ -655,8 +680,6 @@ class ChunkedGraphClientV1(ClientBase):
             3-long list of x/y/z voxel dimensions in nm
         """
         return self.segmentation_info["scales"][0].get("resolution")
-
-
 
 
 client_mapping = {
