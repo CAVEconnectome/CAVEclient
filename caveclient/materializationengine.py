@@ -350,7 +350,9 @@ class MaterializatonClientV2(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
-    def get_table_metadata(self, table_name: str, datastack_name=None, version: int= None):
+    def get_table_metadata(
+        self, table_name: str, datastack_name=None, version: int = None
+    ):
         """Get metadata about a table
 
         Parameters
@@ -1043,7 +1045,6 @@ class MaterializatonClientV2(ClientBase):
                 filter_in_dict["post_pt_root_id"] = post_ids
             else:
                 filter_equal_dict["post_pt_root_id"] = post_ids
-        print(filter_in_dict, filter_equal_dict, filter_out_dict)
         df = self.query_table(
             synapse_table,
             filter_in_dict=filter_in_dict,
