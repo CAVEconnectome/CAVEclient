@@ -755,6 +755,11 @@ class MaterializatonClientV2(ClientBase):
         # with the most up to date get roots
         if len(future_map) == 0:
             future_map = None
+
+        if future_map is not None:
+            # pyarrow can make dataframes read only. Copying resets that.
+            df = df.copy()
+
         sv_columns = [c for c in df.columns if c.endswith("supervoxel_id")]
         with TimeIt("is_latest_roots"):
             all_root_ids = np.empty(0, dtype=np.int64)
@@ -765,7 +770,6 @@ class MaterializatonClientV2(ClientBase):
                 root_id_col = sv_col[: -len("supervoxel_id")] + "root_id"
                 # use the future map to update rootIDs
                 if future_map is not None:
-                    df[root_id_col] = df[root_id_col].copy()
                     df[root_id_col].replace(future_map, inplace=True)
                 all_root_ids = np.append(all_root_ids, df[root_id_col].values.copy())
 
