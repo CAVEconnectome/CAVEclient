@@ -5,6 +5,7 @@ from .emannotationschemas import SchemaClient
 from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
 from .materializationengine import MaterializationClient
+from .l2cache import L2CacheClient
 from .endpoints import default_global_server_address
 
 
@@ -237,6 +238,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._chunkedgraph = None
         self._annotation = None
         self._materialize = None
+        self._l2cache = None
 
         self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
@@ -250,6 +252,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._chunkedgraph = None
         self._annotation = None
         self._materialize = None
+        self._l2cache = None
 
     @property
     def datastack_name(self):
@@ -257,10 +260,10 @@ class CAVEclientFull(CAVEclientGlobal):
 
     @property
     def chunkedgraph(self):
-        seg_source = self.info.segmentation_source()
-        table_name = seg_source.split("/")[-1]
-
         if self._chunkedgraph is None:
+            seg_source = self.info.segmentation_source()
+            table_name = seg_source.split("/")[-1]
+
             self._chunkedgraph = ChunkedGraphClient(
                 table_name=table_name,
                 server_address=self.local_server,
@@ -299,3 +302,16 @@ class CAVEclientFull(CAVEclientGlobal):
                 ngl_url=self.info.viewer_site(),
             )
         return self._state
+
+    @property
+    def l2cache(self):
+        if self._l2cache is None:
+            seg_source = self.info.segmentation_source()
+            table_name = seg_source.split("/")[-1]
+
+            self._l2cache = L2CacheClient(
+                server_address=self.local_server,
+                auth_client=self.auth,
+                table_name=table_name,
+            )
+        return self._l2cache

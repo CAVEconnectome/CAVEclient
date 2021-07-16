@@ -183,3 +183,20 @@ auth_endpoints_v1 = {"refresh_token": v1_auth + "/refresh_token"}
 auth_api_versions = {
     1: auth_endpoints_v1,
 }
+
+
+# -------------------------------
+# ------ L2Cache endpoints
+# -------------------------------
+l2cache_common = "{l2cache_server_address}/schema"
+l2cache_endpoints_common = {
+    # "get_api_versions": schema_common + "/versions",
+}
+
+l2cache_v1 = "{l2cache_server_address}/l2cache/api/v1"
+l2cache_endpoints_v1 = {
+    "l2cache_data": l2cache_v1 + "/table/{table_id}/attributes",
+    "l2cache_meta": l2cache_v1 + "/attribute_metadata",
+}
+
+l2cache_api_versions = {1: l2cache_endpoints_v1}
