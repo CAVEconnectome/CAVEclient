@@ -381,8 +381,12 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        self.raise_for_status(response)
-        return response.json()
+        metadata_d = handle_response(response)
+        vx = metadata_d.pop("voxel_resolution_x", None)
+        vy = metadata_d.pop("voxel_resolution_y", None)
+        vz = metadata_d.pop("voxel_resolution_z", None)
+        metadata_d["voxel_resolution"] = [vx, vy, vz]
+        return metadata_d
 
     # def get_annotation(self, table_name, annotation_ids,
     #                    materialization_version=None,
