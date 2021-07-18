@@ -441,6 +441,7 @@ class MaterializatonClientV2(ClientBase):
         filter_in_dict,
         filter_out_dict,
         filter_equal_dict,
+        filter_spatial_dict,
         return_pyarrow,
         split_positions,
         offset,
@@ -466,6 +467,8 @@ class MaterializatonClientV2(ClientBase):
             data["filter_notin_dict"] = filter_out_dict
         if filter_equal_dict is not None:
             data["filter_equal_dict"] = filter_equal_dict
+        if filter_spatial_dict is not None:
+            data["filter_spatial_dict"] = filter_spatial_dict
         if select_columns is not None:
             data["select_columns"] = select_columns
         if offset is not None:
@@ -488,7 +491,7 @@ class MaterializatonClientV2(ClientBase):
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
-        filter_spatial=None,
+        filter_spatial_dict=None,
         join_args=None,
         select_columns=None,
         offset: int = None,
@@ -513,6 +516,8 @@ class MaterializatonClientV2(ClientBase):
             filter_equal_dict (dict, optional):
                 inner layer: keys are column names, values are specified entry.
                 Defaults to None.
+            filter_spatial (dict, optional):
+                inner layer: keys are column names, values are bounding boxes
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -543,7 +548,7 @@ class MaterializatonClientV2(ClientBase):
                     filter_in_dict=filter_in_dict,
                     filter_out_dict=filter_out_dict,
                     filter_equal_dict=filter_equal_dict,
-                    filter_spatial=filter_spatial,
+                    filter_spatial_dict=filter_spatial_dict,
                     join_args=join_args,
                     select_columns=select_columns,
                     offset=offset,
@@ -566,6 +571,7 @@ class MaterializatonClientV2(ClientBase):
             {table: filter_in_dict} if filter_in_dict is not None else None,
             {table: filter_out_dict} if filter_out_dict is not None else None,
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
+            {table: filter_spatial_dict} if filter_spatial_dict is not None else None,
             return_df,
             True,
             offset,
@@ -597,7 +603,7 @@ class MaterializatonClientV2(ClientBase):
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
-        filter_spatial=None,
+        filter_spatial_dict=None,
         join_args=None,
         select_columns=None,
         offset: int = None,
@@ -626,6 +632,10 @@ class MaterializatonClientV2(ClientBase):
                 outer layer: keys are table names
                 inner layer: keys are column names, values are specified entry.
                 Defaults to None.
+            filter_spatial (dict of dicts, optional):
+                outer layer: keys are table names:
+                inner layer: keys are column names, values are bounding boxes
+                Defaults to None
             select_columns (list of str, optional): columns to select. Defaults to None.
             offset (int, optional): result offset to use. Defaults to None.
                 will only return top K results.
@@ -658,6 +668,7 @@ class MaterializatonClientV2(ClientBase):
             filter_in_dict,
             filter_out_dict,
             filter_equal_dict,
+            filter_spatial_dict,
             return_df,
             True,
             offset,
@@ -838,7 +849,7 @@ class MaterializatonClientV2(ClientBase):
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
-        filter_spatial=None,
+        filter_spatial_dict=None,
         join_args=None,
         select_columns=None,
         offset: int = None,
@@ -862,6 +873,9 @@ class MaterializatonClientV2(ClientBase):
             filter_equal_dict (dict, optional):
                 inner layer: keys are column names, values are specified entry.
                 Defaults to None.
+            filter_spatial (dict, optional):
+                inner layer: keys are column names, values are bounding boxes
+                Defaults to None
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -949,6 +963,9 @@ class MaterializatonClientV2(ClientBase):
                 if past_filter_out_dict is not None
                 else None,
                 {table: past_equal_dict} if past_equal_dict is not None else None,
+                {table: filter_spatial_dict}
+                if filter_spatial_dict is not None
+                else None,
                 True,
                 True,
                 offset,
@@ -1000,6 +1017,8 @@ class MaterializatonClientV2(ClientBase):
         self,
         pre_ids: Union[int, Iterable, np.ndarray] = None,
         post_ids: Union[int, Iterable, np.ndarray] = None,
+        bounding_box = None,
+        bounding_box_column: str = "post_pt_position",
         timestamp: datetime = None,
         remove_autapses: bool = True,
         include_zeros: bool = True,
@@ -1017,6 +1036,9 @@ class MaterializatonClientV2(ClientBase):
             post_ids (Union[int, Iterable, optional): post synaptic cell(s) to query. Defaults to None.
             timestamp (datetime.datetime, optional): timestamp to query (optional).
                 If passed recalculate query at timestamp, do not pass with materialization_verison
+            bounding_box: [[min_x, min_y, min_z],[max_x, max_y, max_z]] bounding box to filter
+                          synapse locations (optional)
+            bounding_box_column (str, optional): which synapse location column to filter by (Default to "post_pt_position")
             remove_autapses (bool, optional): post-hoc filter out synapses. Defaults to True.
             include_zeros (bool, optional): whether to include synapses to/from id=0 (out of segmentation). Defaults to True.
             limit (int, optional): number of synapses to limit, Defaults to None (server side limit applies)
@@ -1032,6 +1054,7 @@ class MaterializatonClientV2(ClientBase):
         filter_equal_dict = {}
         filter_out_dict = None
         filter_equal_dict = {}
+        filter_spatial_dict = None
         if synapse_table is None:
             if self.synapse_table is None:
                 raise ValueError(
@@ -1053,11 +1076,15 @@ class MaterializatonClientV2(ClientBase):
                 filter_in_dict["post_pt_root_id"] = post_ids
             else:
                 filter_equal_dict["post_pt_root_id"] = post_ids
+        if bounding_box is not None:
+            filter_spatial_dict = {bounding_box_column: bounding_box}
+
         df = self.query_table(
             synapse_table,
             filter_in_dict=filter_in_dict,
             filter_out_dict=filter_out_dict,
             filter_equal_dict=filter_equal_dict,
+            filter_spatial_dict= filter_spatial_dict,
             offset=offset,
             limit=limit,
             split_positions=split_positions,
