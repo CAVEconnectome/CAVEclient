@@ -589,6 +589,7 @@ class MaterializatonClientV2(ClientBase):
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
             if split_positions:
                 return df
@@ -686,6 +687,7 @@ class MaterializatonClientV2(ClientBase):
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
 
             if split_positions:
@@ -990,6 +992,7 @@ class MaterializatonClientV2(ClientBase):
         with TimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
@@ -1017,7 +1020,7 @@ class MaterializatonClientV2(ClientBase):
         self,
         pre_ids: Union[int, Iterable, np.ndarray] = None,
         post_ids: Union[int, Iterable, np.ndarray] = None,
-        bounding_box = None,
+        bounding_box=None,
         bounding_box_column: str = "post_pt_position",
         timestamp: datetime = None,
         remove_autapses: bool = True,
@@ -1084,7 +1087,7 @@ class MaterializatonClientV2(ClientBase):
             filter_in_dict=filter_in_dict,
             filter_out_dict=filter_out_dict,
             filter_equal_dict=filter_equal_dict,
-            filter_spatial_dict= filter_spatial_dict,
+            filter_spatial_dict=filter_spatial_dict,
             offset=offset,
             limit=limit,
             split_positions=split_positions,
