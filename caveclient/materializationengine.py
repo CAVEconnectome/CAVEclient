@@ -518,6 +518,8 @@ class MaterializatonClientV2(ClientBase):
                 Defaults to None.
             filter_spatial (dict, optional):
                 inner layer: keys are column names, values are bounding boxes
+                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
+                             Expressed in units of the voxel_resolution of this dataset.
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -636,6 +638,8 @@ class MaterializatonClientV2(ClientBase):
             filter_spatial (dict of dicts, optional):
                 outer layer: keys are table names:
                 inner layer: keys are column names, values are bounding boxes
+                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
+                             Expressed in units of the voxel_resolution of this dataset.
                 Defaults to None
             select_columns (list of str, optional): columns to select. Defaults to None.
             offset (int, optional): result offset to use. Defaults to None.
@@ -877,7 +881,9 @@ class MaterializatonClientV2(ClientBase):
                 Defaults to None.
             filter_spatial (dict, optional):
                 inner layer: keys are column names, values are bounding boxes
-                Defaults to None
+                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
+                             Expressed in units of the voxel_resolution of this dataset.
+                             Defaults to None
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -1040,7 +1046,7 @@ class MaterializatonClientV2(ClientBase):
             timestamp (datetime.datetime, optional): timestamp to query (optional).
                 If passed recalculate query at timestamp, do not pass with materialization_verison
             bounding_box: [[min_x, min_y, min_z],[max_x, max_y, max_z]] bounding box to filter
-                          synapse locations (optional)
+                          synapse locations. Expressed in units of the voxel_resolution of this dataset (optional)
             bounding_box_column (str, optional): which synapse location column to filter by (Default to "post_pt_position")
             remove_autapses (bool, optional): post-hoc filter out synapses. Defaults to True.
             include_zeros (bool, optional): whether to include synapses to/from id=0 (out of segmentation). Defaults to True.
