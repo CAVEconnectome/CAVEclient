@@ -114,7 +114,8 @@ So for example, if you are only interested in the root_ids and locations of pre_
 you might limit the query with select_columns.  Also, it is convient to return the 
 with positions as a column of np.array([x,y,z]) coordinates for many purposes.
 However, sometimes you might prefer to have them split out as seperate _x, _y, _z columns.
-To enable this option use split_columns=True.  Below is an example of using both options.
+To enable this option use split_columns=True. split_columns=True is faster, as combining them is an extra step.  
+You can recombine split-out position columns using :func:`~caveclient.materializationengine.concatenate_position_columns`
 
 .. code:: python
 
@@ -124,8 +125,36 @@ To enable this option use split_columns=True.  Below is an example of using both
                                       select_columns=['id','pre_pt_root_id', 'pre_pt_position'],
                                       split_columns=True)
 
+Spatial filters
+~~~~~~~~~~~~~~~
+You can also filter columns that are associated with spatial locations based upon being within a 3d bounding box.
 
-You can recombine split-out position columns using :func:`~caveclient.materializationengine.concatenate_position_columns`
+This is done by adding a filter_spatial_dict argument to query_table.
+The units of the bounding box should be in the units of the voxel_resolution of the table 
+(which can be obtained from :func:`~caveclient.materializationengine.MaterializatonClientV2.get_table_metadata`).
+
+
+.. code:: python
+    bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+    synapse_table = client.info.get_datastack_info('synapse_table')
+    df=client.materialize.query_table(synapse_table,
+                                      filter_equal_dict = {'post_pt_root_id': MYID},
+                                      filter_spatial_dict = {'post_pt_position': bounding_box)
+
+
+Synapse Query
+~~~~~~~~~~~~~~
+For synapses in particular, we have a simplified method for querying them with a reduced syntax.
+:func:`~caveclient.materializationengine.MaterializatonClientV2.synapse_query` 
+lets you specify pre and post synaptic partners as keyword arguments and bounding boxes.
+The defaults make reasonable assumptions about what you want to query, namely that the synapse_table is
+the table that the info service advertises, and that if you specify a bounding box, that you want the post_pt_position. 
+These can be overridden of course, but the above bounding box query is simplified to.
+
+.. code:: python
+    bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+    df=client.materialize.query_table(post_ids = MYID,
+                                      bounding_box=bounding_box)
 
 
 Live Query
@@ -155,7 +184,8 @@ object in the most recent materialization.
 
 However, sometimes you might be browsing and proofreadding the data and get an ID
 that is more recent that the most recent version available.  For convience, you can use 
-:func:`~caveclient.materializationengine.MaterializatonClientV2.live_query`
+:func:`~caveclient.materializationengine.MaterializatonClientV2.live_query`.
+
 
 to automatically update the results of your query to a time in the future, such as now.
 For example, to pass now, use ```datetime.datetime.utcnow```.  Note all timestamps are in UTC
@@ -171,7 +201,16 @@ throughout the codebase.
 
 This will raise an ValueError exception if the IDs passed in your filters are not valid at the timestamp given
 
-Note this is slower than querying a materialized version, so should you should only use this if necessary. 
+You can also pass a timestamp directly to query_table and it will call live_query automatically. 
+
+.. code:: python
+
+    import datetime
+    synapse_table = client.info.get_datastack_info('synapse_table')
+    df=client.materialize.query_table(synapse_table,
+                                      timestamp=datetime.datetime.utcnow(),
+                                      filter_equal_dict = {'post_pt_root_id': MYID})
+
 
 Also, keep in mind if you run multiple queries and at each time pass ``datetime.datetime.utcnow()``,
 there is no gauruntee that the IDs will be consistent from query to query, as proofreading might be happening
