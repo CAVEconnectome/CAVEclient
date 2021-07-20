@@ -1,10 +1,10 @@
-Framework Client: One client for all services
+CAVEclient: One client for all services
 =============================================
 
 The CAVE Framework consists of a number of different
 services, each with a specific set of tasks that it can perform through
 REST endpoints.
-The FrameworkCleint is designed to ease programmatic interaction
+The CAVEclient is designed to ease programmatic interaction
 with all of the various endpoints.
 In addition, most programmatic access requires the use of authentication tokens.
 In order to collect a given server, datastack name, and user token together into a coherent package that can be used
