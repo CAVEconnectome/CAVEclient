@@ -125,8 +125,8 @@ You can recombine split-out position columns using :func:`~caveclient.materializ
                                       select_columns=['id','pre_pt_root_id', 'pre_pt_position'],
                                       split_columns=True)
 
-Spatial filters
-~~~~~~~~~~~~~~~
+Spatial Filters
+^^^^^^^^^^^^^^^
 You can also filter columns that are associated with spatial locations based upon being within a 3d bounding box.
 
 This is done by adding a filter_spatial_dict argument to query_table.
@@ -144,7 +144,7 @@ The units of the bounding box should be in the units of the voxel_resolution of 
 
 
 Synapse Query
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^
 For synapses in particular, we have a simplified method for querying them with a reduced syntax.
 :func:`~caveclient.materializationengine.MaterializatonClientV2.synapse_query` 
 lets you specify pre and post synaptic partners as keyword arguments and bounding boxes.
@@ -153,7 +153,7 @@ the table that the info service advertises, and that if you specify a bounding b
 These can be overridden of course, but the above bounding box query is simplified to.
 
 .. code:: python
-    
+
     bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
     df=client.materialize.query_table(post_ids = MYID,
                                       bounding_box=bounding_box)
