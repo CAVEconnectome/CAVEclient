@@ -135,6 +135,7 @@ The units of the bounding box should be in the units of the voxel_resolution of 
 
 
 .. code:: python
+
     bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
     synapse_table = client.info.get_datastack_info('synapse_table')
     df=client.materialize.query_table(synapse_table,
@@ -152,6 +153,7 @@ the table that the info service advertises, and that if you specify a bounding b
 These can be overridden of course, but the above bounding box query is simplified to.
 
 .. code:: python
+    
     bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
     df=client.materialize.query_table(post_ids = MYID,
                                       bounding_box=bounding_box)
