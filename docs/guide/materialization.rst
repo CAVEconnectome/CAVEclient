@@ -140,7 +140,7 @@ The units of the bounding box should be in the units of the voxel_resolution of 
     synapse_table = client.info.get_datastack_info('synapse_table')
     df=client.materialize.query_table(synapse_table,
                                       filter_equal_dict = {'post_pt_root_id': MYID},
-                                      filter_spatial_dict = {'post_pt_position': bounding_box)
+                                      filter_spatial_dict = {'post_pt_position': bounding_box})
 
 
 Synapse Query
