@@ -28,6 +28,7 @@ def InfoServiceClient(
     datastack_name=None,
     auth_client=None,
     api_version="latest",
+    verify=True,
 ):
     if server_address is None:
         server_address = default_global_server_address
@@ -53,6 +54,7 @@ def InfoServiceClient(
         endpoints,
         SERVER_KEY,
         datastack_name,
+        verify=verify,
     )
 
 
@@ -65,6 +67,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         endpoints,
         server_name,
         datastack_name,
+        verify=True,
     ):
         super(InfoServiceClientV2, self).__init__(
             server_address,
@@ -73,6 +76,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             endpoints,
             server_name,
             datastack_name,
+            verify=verify,
         )
         self.info_cache = dict()
         if datastack_name is not None:
@@ -130,7 +134,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             endpoint_mapping["datastack_name"] = datastack_name
             url = self._endpoints["datastack_info"].format_map(endpoint_mapping)
 
-            response = self.session.get(url)
+            response = self.session.get(url, allow_redirects=False)
             self.raise_for_status(response)
 
             self.info_cache[datastack_name] = handle_response(response)
