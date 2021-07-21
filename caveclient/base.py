@@ -1,6 +1,7 @@
 import requests
 import json
 import logging
+import webbrowser
 
 
 class AuthException(Exception):
@@ -28,6 +29,11 @@ def _raise_for_status(r):
             r.url,
             r.content,
         )
+        if r.status_code == 403:
+            json_data = r.json()
+            if "error" in json_data.keys():
+                if json_data["error"] == "missing_tos":
+                    webbrowser.open(json_data["data"]["tos_form_url"])
 
     elif 500 <= r.status_code < 600:
         http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
@@ -191,6 +197,7 @@ class ClientBaseWithDatastack(ClientBase):
         endpoints,
         server_name,
         datastack_name,
+        verify=True,
     ):
 
         super(ClientBaseWithDatastack, self).__init__(
@@ -199,6 +206,7 @@ class ClientBaseWithDatastack(ClientBase):
             api_version,
             endpoints,
             server_name,
+            verify=verify,
         )
         self._datastack_name = datastack_name
 
