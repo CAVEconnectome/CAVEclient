@@ -1,4 +1,5 @@
 import json
+import logging
 import requests
 import webbrowser
 import os
@@ -6,9 +7,13 @@ from .endpoints import auth_endpoints_v1, default_global_server_address
 import urllib
 
 default_token_location = "~/.cloudvolume/secrets"
-default_token_name = "chunkedgraph-secret.json"
+default_token_name = "cave-secret.json"
+deprecated_token_names = ["chunkedgraph-secret.json"]
 default_token_key = "token"
 default_token_file = f"{default_token_location}/{default_token_name}"
+deprecated_token_files = [
+    f"{default_token_location}/{f}" for f in deprecated_token_names
+]
 
 
 class AuthClient(object):
@@ -18,8 +23,8 @@ class AuthClient(object):
     ----------
     token_file : str, optional
         Path to a JSON key:value file holding your auth token.
-        By default, "~/.cloudvolume/secrets/chunkedgraph-secret.json"
-
+        By default, "~/.cloudvolume/secrets/cave-secret.json"
+        (will check deprecated token name "chunkedgraph-secret.json" as well)
     token_key : str, optional
         Key for the token in the token_file.
         By default, "token"
@@ -56,6 +61,18 @@ class AuthClient(object):
 
         if token is None:
             token = self._load_token(self._token_file, self._token_key)
+            if token is None:
+                # then check the deprecated token
+                for deprecated_file in deprecated_token_files:
+                    _dep_file = os.path.expanduser(deprecated_file)
+                    token = self._load_token(_dep_file, self._token_key)
+                    if token is not None:
+                        logging.warning(
+                            f"""file location {deprecated_file} is deprecated,
+rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
+                        )
+                        # then we found a token and we should break
+                        break
         self._token = token
 
         self._server_address = server_address
