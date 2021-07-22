@@ -74,7 +74,7 @@ def _check_authorization_redirect(response):
 
         raise AuthException(
             f"""You have not setup a token to access
-{first_url}s
+{first_url}
 with the current auth configuration.\n
 Read the documentation at 
 https://caveclient.readthedocs.io/en/latest/guide/authentication.html
