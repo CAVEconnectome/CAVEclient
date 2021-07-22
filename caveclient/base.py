@@ -1,3 +1,4 @@
+import urllib
 import requests
 import json
 import logging
@@ -68,13 +69,19 @@ def _check_authorization_redirect(response):
     if len(response.history) == 0:
         pass
     else:
+        first_url = response.history[0].url
+        urlp = urllib.parse.urlparse(first_url)
+
         raise AuthException(
             f"""You have not setup a token to access
-{response.history[0].url}
+{first_url}s
 with the current auth configuration.\n
-Read the documentation or follow instructions under 
+Read the documentation at 
+https://caveclient.readthedocs.io/en/latest/guide/authentication.html
+or follow instructions under 
 client.auth.get_new_token() for how to set a valid API token.
-after initializing an empty client (client=CAVEclient(s))"""
+after initializing a global client with
+client=CAVEclient(server_address="{urlp.scheme +"://"+ urlp.netloc}")"""
         )
 
 

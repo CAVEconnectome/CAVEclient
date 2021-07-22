@@ -12,7 +12,8 @@ however it has some convenient features for saving new tokens the first
 time. Let’s see if you have a token already. Probably not.
 
 .. code:: python
-
+    
+    client = CAVEclient()
     auth = client.auth
     print(f"My current token is: {auth.token}")
 
