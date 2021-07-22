@@ -134,7 +134,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             endpoint_mapping["datastack_name"] = datastack_name
             url = self._endpoints["datastack_info"].format_map(endpoint_mapping)
 
-            response = self.session.get(url, allow_redirects=False)
+            response = self.session.get(url)
             self.raise_for_status(response)
 
             self.info_cache[datastack_name] = handle_response(response)
