@@ -26,7 +26,7 @@ the function ``get_new_token()`` provides instructions for how to get and
 save the token.
 
 By default, the token is saved to
-``~/.cloudvolume/secrets/chunkedgraph-secret.json`` as a string under
+``~/.cloudvolume/secrets/cave-secret.json`` as a string under
 the key ``token``. This makes it compatible by default with
 `Cloudvolume <https://github.com/seung-lab/cloud-volume>`_ projects, which
 can come in handy. The following steps will save a token to the default
@@ -49,7 +49,7 @@ you will need to share the same token information.
 Loading saved tokens
 ^^^^^^^^^^^^^^^^^^^^
 
-Try opening ``~/.cloudvolume/secrets/chunkedgraph-secret.json`` to see
+Try opening ``~/.cloudvolume/secrets/cave-secret.json`` to see
 what we just created.
 
 If we had wanted to use a different file or a different json key, we
