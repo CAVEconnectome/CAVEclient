@@ -35,7 +35,7 @@ def _raise_for_status(r):
             json_data = r.json()
 
         if r.status_code == 403:
-            if r.headers.get("content-type") == "application/json":
+            if json_data:
                 if "error" in json_data.keys():
                     if json_data["error"] == "missing_tos":
                         webbrowser.open(json_data["data"]["tos_form_url"])
