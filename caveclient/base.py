@@ -29,11 +29,15 @@ def _raise_for_status(r):
             r.url,
             r.content,
         )
-        if r.status_code == 403:
+        json_data = None
+        if r.headers.get("content-type") == "application/json":
             json_data = r.json()
-            if "error" in json_data.keys():
-                if json_data["error"] == "missing_tos":
-                    webbrowser.open(json_data["data"]["tos_form_url"])
+
+        if r.status_code == 403:
+            if r.headers.get("content-type") == "application/json":
+                if "error" in json_data.keys():
+                    if json_data["error"] == "missing_tos":
+                        webbrowser.open(json_data["data"]["tos_form_url"])
 
     elif 500 <= r.status_code < 600:
         http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
@@ -65,7 +69,12 @@ def _check_authorization_redirect(response):
         pass
     else:
         raise AuthException(
-            f"""You do not have permission to use the endpoint {response.history[0].url} with the current auth configuration.\nRead the documentation or follow instructions under client.auth.get_new_token() for how to set a valid API token."""
+            f"""You have not setup a token to access
+{response.history[0].url}
+with the current auth configuration.\n
+Read the documentation or follow instructions under 
+client.auth.get_new_token() for how to set a valid API token.
+after initializing an empty client (client=CAVEclient(s))"""
         )
 
 
