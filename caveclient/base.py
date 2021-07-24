@@ -1,6 +1,8 @@
+import urllib
 import requests
 import json
 import logging
+import webbrowser
 
 
 class AuthException(Exception):
@@ -28,6 +30,15 @@ def _raise_for_status(r):
             r.url,
             r.content,
         )
+        json_data = None
+        if r.headers.get("content-type") == "application/json":
+            json_data = r.json()
+
+        if r.status_code == 403:
+            if json_data:
+                if "error" in json_data.keys():
+                    if json_data["error"] == "missing_tos":
+                        webbrowser.open(json_data["data"]["tos_form_url"])
 
     elif 500 <= r.status_code < 600:
         http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
@@ -58,8 +69,19 @@ def _check_authorization_redirect(response):
     if len(response.history) == 0:
         pass
     else:
+        first_url = response.history[0].url
+        urlp = urllib.parse.urlparse(first_url)
+
         raise AuthException(
-            f"""You do not have permission to use the endpoint {response.history[0].url} with the current auth configuration.\nRead the documentation or follow instructions under client.auth.get_new_token() for how to set a valid API token."""
+            f"""You have not setup a token to access
+{first_url}
+with the current auth configuration.\n
+Read the documentation at 
+https://caveclient.readthedocs.io/en/latest/guide/authentication.html
+or follow instructions under 
+client.auth.get_new_token() for how to set a valid API token.
+after initializing a global client with
+client=CAVEclient(server_address="{urlp.scheme +"://"+ urlp.netloc}")"""
         )
 
 
@@ -191,6 +213,7 @@ class ClientBaseWithDatastack(ClientBase):
         endpoints,
         server_name,
         datastack_name,
+        verify=True,
     ):
 
         super(ClientBaseWithDatastack, self).__init__(
@@ -199,6 +222,7 @@ class ClientBaseWithDatastack(ClientBase):
             api_version,
             endpoints,
             server_name,
+            verify=verify,
         )
         self._datastack_name = datastack_name
 

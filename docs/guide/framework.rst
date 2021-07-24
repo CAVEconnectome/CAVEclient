@@ -31,7 +31,7 @@ Initializing a CAVEclient
 
 Assuming that the services are on ``http://globalv1.daf-apis.com``
 and authentication tokens are either not being used or set up with
-default values (see next section), a simple CAVEclient that can
+default values (see :doc:`authentication`), a simple CAVEclient that can
 only access global services can be initialized:
 
 .. code:: python
