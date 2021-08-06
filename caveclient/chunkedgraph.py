@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import requests
 import datetime
 import time
@@ -228,7 +229,37 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["change_log"].format_map(endpoint_mapping)
         params = {"filtered": filtered}
         response = self.session.get(url, params=params)
+
         return handle_response(response)
+
+    def get_tabular_change_log(self, root_ids, filtered=True):
+        """Get a detailed changelog for neurons
+
+        Parameters
+        ----------
+        root_ids : list of np.uint64
+            Object root ids to look up
+
+        Returns
+        -------
+            dict of dataframe
+        """
+        root_ids = [int(r) for r in np.unique(root_ids)]
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["root_ids"] = root_ids
+        url = self._endpoints["tabular_change_log"].format_map(endpoint_mapping)
+        params = {"filtered": filtered}
+        data = json.dumps({"root_ids": root_ids}, cls=CGEncoder)
+
+        response = self.session.get(url, data=data, params=params)
+        res_dict = handle_response(response)
+
+        changelog_dict = {}
+        for k in res_dict.keys():
+            changelog_dict[int(k)] = pd.DataFrame(json.loads(res_dict[k]))
+
+        return changelog_dict
 
     def get_leaves(self, root_id, bounds=None, stop_layer: int = None):
         """Get all supervoxels for a root_id

@@ -103,6 +103,7 @@ chunkedgraph_endpoints_v1 = {
     "get_roots": pcg_v1 + "/table/{table_id}/roots_binary",
     "merge_log": pcg_v1 + "/table/{table_id}/root/{root_id}/merge_log",
     "change_log": pcg_v1 + "/table/{table_id}/root/{root_id}/change_log",
+    "tabular_change_log": pcg_v1 + "/table/{table_id}/tabular_change_log_many",
     "contact_sites": pcg_v1 + "/table/{table_id}/node/{root_id}/contact_sites",
     "contact_sites_pairwise": pcg_v1
     + "/table/{table_id}/contact_sites_pair/{root_id_1}/{root_id_2}",
