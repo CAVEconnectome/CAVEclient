@@ -1,4 +1,4 @@
-from .base import ClientBase, _api_endpoints, handle_response
+from .base import ClientBase, _api_endpoints, handle_response, CGEncoder
 from .endpoints import (
     l2cache_common,
     l2cache_api_versions,
@@ -80,6 +80,7 @@ class L2CacheClientLegacy(ClientBase):
             url,
             data=json.dumps(
                 {"l2_ids": l2_ids},
+                cls=CGEncoder,
             ),
             params=query_d,
         )
