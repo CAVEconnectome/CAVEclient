@@ -6,7 +6,8 @@ import webbrowser
 import numpy as np
 import datetime
 
-class CGEncoder(json.JSONEncoder):
+
+class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()

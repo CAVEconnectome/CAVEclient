@@ -12,7 +12,7 @@ from .endpoints import (
     chunkedgraph_endpoints_common,
     default_global_server_address,
 )
-from .base import _api_endpoints, _api_versions, ClientBase, handle_response, CGEncoder
+from .base import _api_endpoints, _api_versions, ClientBase, handle_response
 from .auth import AuthClient
 from typing import Iterable
 from urllib.parse import urlencode
@@ -20,6 +20,17 @@ import networkx as nx
 
 
 SERVER_KEY = "cg_server_address"
+
+
+class CGEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.uint64):
+            return int(obj)
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
 
 def package_bounds(bounds):
