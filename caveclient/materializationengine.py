@@ -9,6 +9,7 @@ from .base import (
     ClientBaseWithDataset,
     ClientBaseWithDatastack,
     ClientBase,
+    BaseEncoder,
     _api_versions,
     _api_endpoints,
     handle_response,
@@ -60,19 +61,6 @@ def concatenate_position_columns(df, inplace=False):
             else:
                 df2 = df2.drop(gl, axis=1, inplace=inplace)
     return df2
-
-
-class MEEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        if isinstance(obj, np.uint64):
-            return int(obj)
-        if isinstance(obj, np.int64):
-            return int(obj)
-        if isinstance(obj, (datetime, date)):
-            return obj.isoformat()
-        return json.JSONEncoder.default(self, obj)
 
 
 def convert_timestamp(ts: datetime):
@@ -582,7 +570,7 @@ class MaterializatonClientV2(ClientBase):
 
         response = self.session.post(
             url,
-            data=json.dumps(data, cls=MEEncoder),
+            data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
@@ -682,7 +670,7 @@ class MaterializatonClientV2(ClientBase):
 
         response = self.session.post(
             url,
-            data=json.dumps(data, cls=MEEncoder),
+            data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
@@ -984,7 +972,7 @@ class MaterializatonClientV2(ClientBase):
         with TimeIt("query materialize"):
             response = self.session.post(
                 url,
-                data=json.dumps(data, cls=MEEncoder),
+                data=json.dumps(data, cls=BaseEncoder),
                 headers={
                     "Content-Type": "application/json",
                     "Accept-Encoding": encoding,
