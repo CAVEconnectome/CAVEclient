@@ -14,7 +14,7 @@ from urllib.parse import urlencode
 
 def binary_body_match(body):
     def match(request_body):
-        return body == request_body
+        return [body == request_body]
 
     return match
 
