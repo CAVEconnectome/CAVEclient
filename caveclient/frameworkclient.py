@@ -22,6 +22,9 @@ class CAVEclient(object):
         auth_token_key=None,
         auth_token=None,
         global_only=False,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
@@ -29,6 +32,9 @@ class CAVEclient(object):
                 auth_token_file=auth_token_file,
                 auth_token_key=auth_token_key,
                 auth_token=auth_token,
+                max_retries=None,
+                pool_maxsize=None,
+                pool_block=None,
             )
         else:
             return CAVEclientFull(
@@ -82,6 +88,9 @@ class CAVEclientGlobal(object):
         auth_token_file=None,
         auth_token_key=None,
         auth_token=None,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         if server_address is None:
             server_address = default_global_server_address
@@ -92,6 +101,9 @@ class CAVEclientGlobal(object):
             auth_token_key=auth_token_key,
             auth_token=auth_token,
         )
+        self._max_retries = max_retries
+        self._pool_maxsize = pool_maxsize
+        self._pool_block = pool_block
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
@@ -142,6 +154,9 @@ class CAVEclientGlobal(object):
                 server_address=self.server_address,
                 datastack_name=self.datastack_name,
                 auth_client=self.auth,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._info
 
@@ -149,7 +164,11 @@ class CAVEclientGlobal(object):
     def state(self):
         if self._state is None:
             self._state = JSONService(
-                server_address=self.server_address, auth_client=self.auth
+                server_address=self.server_address,
+                auth_client=self.auth,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._state
 
@@ -157,7 +176,11 @@ class CAVEclientGlobal(object):
     def schema(self):
         if self._schema is None:
             self._schema = SchemaClient(
-                server_address=self.server_address, auth_client=self.auth
+                server_address=self.server_address,
+                auth_client=self.auth,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._schema
 
@@ -225,12 +248,18 @@ class CAVEclientFull(CAVEclientGlobal):
         auth_token_file=default_token_file,
         auth_token_key="token",
         auth_token=None,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
             auth_token_file=auth_token_file,
             auth_token_key=auth_token_key,
             auth_token=auth_token,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
         self._datastack_name = datastack_name
@@ -268,6 +297,9 @@ class CAVEclientFull(CAVEclientGlobal):
                 table_name=table_name,
                 server_address=self.local_server,
                 auth_client=self.auth,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._chunkedgraph
 
@@ -278,6 +310,9 @@ class CAVEclientFull(CAVEclientGlobal):
                 server_address=self.local_server,
                 aligned_volume_name=self._aligned_volume_name,
                 auth_client=self.auth,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._annotation
 
@@ -290,6 +325,9 @@ class CAVEclientFull(CAVEclientGlobal):
                 datastack_name=self._datastack_name,
                 cg_client=self.chunkedgraph,
                 synapse_table=self.info.get_datastack_info().get("synapse_table", None),
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._materialize
 
@@ -300,6 +338,9 @@ class CAVEclientFull(CAVEclientGlobal):
                 server_address=self.server_address,
                 auth_client=self.auth,
                 ngl_url=self.info.viewer_site(),
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._state
 
@@ -313,5 +354,8 @@ class CAVEclientFull(CAVEclientGlobal):
                 server_address=self.local_server,
                 auth_client=self.auth,
                 table_name=table_name,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
             )
         return self._l2cache

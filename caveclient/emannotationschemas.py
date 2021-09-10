@@ -6,7 +6,14 @@ import requests
 server_key = "emas_server_address"
 
 
-def SchemaClient(server_address=None, auth_client=None, api_version="latest"):
+def SchemaClient(
+    server_address=None,
+    auth_client=None,
+    api_version="latest",
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
+):
     if auth_client is None:
         auth_client = AuthClient()
 
@@ -26,15 +33,33 @@ def SchemaClient(server_address=None, auth_client=None, api_version="latest"):
         api_version=api_version,
         endpoints=endpoints,
         server_name=server_key,
+        max_retries=max_retries,
+        pool_maxsize=pool_maxsize,
+        pool_block=pool_block,
     )
 
 
 class SchemaClientLegacy(ClientBase):
     def __init__(
-        self, server_address, auth_header, api_version, endpoints, server_name
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_name,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         super(SchemaClientLegacy, self).__init__(
-            server_address, auth_header, api_version, endpoints, server_name
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            server_name,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
     def get_schemas(self):

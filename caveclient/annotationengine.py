@@ -9,8 +9,7 @@ from .base import (
 from .auth import AuthClient
 from .endpoints import annotation_common, annotation_api_versions
 from .infoservice import InfoServiceClientV2
-import requests
-import time
+
 import json
 import numpy as np
 from datetime import date, datetime
@@ -38,6 +37,9 @@ def AnnotationClient(
     auth_client=None,
     api_version="latest",
     verify=True,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
 ):
     """Factory for returning AnnotationClient
 
@@ -55,6 +57,12 @@ def AnnotationClient(
         'latest': default to the most recent (current 2)
     verify : str (default : True)
         whether to verify https
+    max_retries : Int or None, optional
+        Set the number of retries per request, by default None. If None, defaults to requests package default.
+    pool_block : Bool or None, optional
+        If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.
+    pool_maxsize : Int or None, optional
+        Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
 
     Returns
     -------
@@ -85,6 +93,9 @@ def AnnotationClient(
             SERVER_KEY,
             aligned_volume_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
     else:
         return AnnoClient(
@@ -95,6 +106,9 @@ def AnnotationClient(
             SERVER_KEY,
             dataset_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
 
@@ -108,6 +122,9 @@ class AnnotationClientV2(ClientBase):
         server_name,
         aligned_volume_name,
         verify=True,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         super(AnnotationClientV2, self).__init__(
             server_address,
@@ -116,6 +133,9 @@ class AnnotationClientV2(ClientBase):
             endpoints,
             server_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
         self._aligned_volume_name = aligned_volume_name
