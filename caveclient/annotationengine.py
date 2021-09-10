@@ -2,6 +2,7 @@ from .base import (
     ClientBaseWithDataset,
     ClientBaseWithDatastack,
     ClientBase,
+    BaseEncoder,
     _api_versions,
     _api_endpoints,
     handle_response,
@@ -18,17 +19,6 @@ import pandas as pd
 from typing import Iterable, Mapping
 
 SERVER_KEY = "ae_server_address"
-
-
-class AEEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        if isinstance(obj, np.uint64):
-            return int(obj)
-        if isinstance(obj, (datetime, date)):
-            return obj.isoformat()
-        return json.JSONEncoder.default(self, obj)
 
 
 def AnnotationClient(
@@ -388,7 +378,7 @@ class AnnotationClientV2(ClientBase):
 
         response = self.session.post(
             url,
-            data=json.dumps(data, cls=AEEncoder),
+            data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json"},
         )
         return handle_response(response)
@@ -585,7 +575,7 @@ class AnnotationClientV2(ClientBase):
 
         response = self.session.delete(
             url,
-            data=json.dumps(data, cls=AEEncoder),
+            data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json"},
         )
         return handle_response(response)
