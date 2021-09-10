@@ -32,9 +32,9 @@ class CAVEclient(object):
                 auth_token_file=auth_token_file,
                 auth_token_key=auth_token_key,
                 auth_token=auth_token,
-                max_retries=None,
-                pool_maxsize=None,
-                pool_block=None,
+                max_retries=max_retries,
+                pool_maxsize=pool_maxsize,
+                pool_block=pool_block,
             )
         else:
             return CAVEclientFull(
@@ -43,6 +43,9 @@ class CAVEclient(object):
                 auth_token_file=auth_token_file,
                 auth_token_key=auth_token_key,
                 auth_token=auth_token,
+                max_retries=max_retries,
+                pool_maxsize=pool_maxsize,
+                pool_block=pool_block,
             )
 
 
