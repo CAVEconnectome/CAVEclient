@@ -8,6 +8,8 @@ from .materializationengine import MaterializationClient
 from .l2cache import L2CacheClient
 from .endpoints import default_global_server_address
 
+DEFAULT_RETRIES = 2
+
 
 class GlobalClientError(Exception):
     pass
@@ -22,7 +24,7 @@ class CAVEclient(object):
         auth_token_key=None,
         auth_token=None,
         global_only=False,
-        max_retries=None,
+        max_retries=DEFAULT_RETRIES,
         pool_maxsize=None,
         pool_block=None,
     ):
@@ -83,6 +85,12 @@ class CAVEclientGlobal(object):
     auth_token : str or None
         Direct entry of an auth token. If None, uses the file arguments to find the token.
         Optional, default is None.
+    max_retries : int or None, optional
+        Sets the default number of retries on failed requests. Optional, by default 2.
+    pool_maxsize : int or None, optional
+        Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
+    pool_block: bool or None, optional
+        If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
     """
 
     def __init__(
@@ -91,7 +99,7 @@ class CAVEclientGlobal(object):
         auth_token_file=None,
         auth_token_key=None,
         auth_token=None,
-        max_retries=None,
+        max_retries=DEFAULT_RETRIES,
         pool_maxsize=None,
         pool_block=None,
     ):
@@ -242,6 +250,12 @@ class CAVEclientFull(CAVEclientGlobal):
     auth_token : str or None
         Direct entry of an auth token. If None, uses the file arguments to find the token.
         Optional, default is None.
+    max_retries : int or None, optional
+        Sets the default number of retries on failed requests. Optional, by default 2.
+    pool_maxsize : int or None, optional
+        Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
+    pool_block: bool or None, optional
+        If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
     """
 
     def __init__(
@@ -251,7 +265,7 @@ class CAVEclientFull(CAVEclientGlobal):
         auth_token_file=default_token_file,
         auth_token_key="token",
         auth_token=None,
-        max_retries=None,
+        max_retries=DEFAULT_RETRIES,
         pool_maxsize=None,
         pool_block=None,
     ):
