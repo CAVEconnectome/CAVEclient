@@ -1,4 +1,9 @@
-from .base import ClientBase, _api_versions, _api_endpoints, handle_response
+from .base import (
+    ClientBase,
+    _api_versions,
+    _api_endpoints,
+    handle_response,
+)
 from .auth import AuthClient
 from .endpoints import (
     jsonservice_common,

@@ -4,6 +4,21 @@ import json
 import logging
 import webbrowser
 from .session_config import patch_session
+import numpy as np
+import datetime
+
+
+class BaseEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.uint64):
+            return int(obj)
+        if isinstance(obj, np.int64):
+            return int(obj)
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
 
 class AuthException(Exception):

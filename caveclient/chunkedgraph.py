@@ -12,7 +12,13 @@ from .endpoints import (
     chunkedgraph_endpoints_common,
     default_global_server_address,
 )
-from .base import _api_endpoints, _api_versions, ClientBase, handle_response
+from .base import (
+    _api_endpoints,
+    _api_versions,
+    ClientBase,
+    BaseEncoder,
+    handle_response,
+)
 from .auth import AuthClient
 from typing import Iterable
 from urllib.parse import urlencode
@@ -20,17 +26,6 @@ import networkx as nx
 
 
 SERVER_KEY = "cg_server_address"
-
-
-class CGEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        if isinstance(obj, np.uint64):
-            return int(obj)
-        if isinstance(obj, (datetime.datetime, datetime.date)):
-            return obj.isoformat()
-        return json.JSONEncoder.default(self, obj)
 
 
 def package_bounds(bounds):
@@ -262,7 +257,7 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping["root_ids"] = root_ids
         url = self._endpoints["tabular_change_log"].format_map(endpoint_mapping)
         params = {"filtered": filtered}
-        data = json.dumps({"root_ids": root_ids}, cls=CGEncoder)
+        data = json.dumps({"root_ids": root_ids}, cls=BaseEncoder)
 
         response = self.session.get(url, data=data, params=params)
         res_dict = handle_response(response)
@@ -321,7 +316,7 @@ class ChunkedGraphClientV1(ClientBase):
         params = {"priority": False}
         response = self.session.post(
             url,
-            data=json.dumps(data, cls=CGEncoder),
+            data=json.dumps(data, cls=BaseEncoder),
             params=params,
             headers={"Content-Type": "application/json"},
         )
@@ -398,7 +393,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         response = self.session.post(
             url,
-            data=json.dumps(nodes, cls=CGEncoder),
+            data=json.dumps(nodes, cls=BaseEncoder),
             params=query_d,
             headers={"Content-Type": "application/json"},
         )
@@ -600,7 +595,9 @@ class ChunkedGraphClientV1(ClientBase):
             query_d = None
         data = {"node_ids": root_ids}
         r = handle_response(
-            self.session.post(url, data=json.dumps(data, cls=CGEncoder), params=query_d)
+            self.session.post(
+                url, data=json.dumps(data, cls=BaseEncoder), params=query_d
+            )
         )
         return np.array(r["is_latest"], np.bool)
 
@@ -621,7 +618,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         data = {"node_ids": root_ids}
         r = handle_response(
-            self.session.post(url, data=json.dumps(data, cls=CGEncoder))
+            self.session.post(url, data=json.dumps(data, cls=BaseEncoder))
         )
 
         return np.array(
@@ -660,7 +657,7 @@ class ChunkedGraphClientV1(ClientBase):
         data = {"root_ids": np.array(root_ids, dtype=np.uint64)}
         url = self._endpoints["past_id_mapping"].format_map(endpoint_mapping)
         r = handle_response(
-            self.session.get(url, data=json.dumps(data, cls=CGEncoder), params=params)
+            self.session.get(url, data=json.dumps(data, cls=BaseEncoder), params=params)
         )
 
         # Convert id keys as strings to ints
