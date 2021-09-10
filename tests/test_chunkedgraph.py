@@ -54,7 +54,7 @@ class TestChunkedgraph:
             responses.POST,
             url=qurl,
             body=root_ids.tobytes(),
-            match=[binary_body_match(svids.tobytes())],
+            # match=[binary_body_match(svids.tobytes())],
         )
         new_root_ids = myclient.chunkedgraph.get_roots(
             svids, timestamp=now, stop_layer=3
