@@ -8,7 +8,7 @@ from .materializationengine import MaterializationClient
 from .l2cache import L2CacheClient
 from .endpoints import default_global_server_address
 
-DEFAULT_RETRIES = 2
+DEFAULT_RETRIES = 3
 
 
 class GlobalClientError(Exception):

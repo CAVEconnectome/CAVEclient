@@ -30,7 +30,7 @@ def patch_session(
     else:
         retries = Retry(
             total=max_retries,
-            backoff_factor=0.2,
+            backoff_factor=0.1,
             status_forcelist=[500, 502, 503, 504],
         )
     if pool_block is None:
