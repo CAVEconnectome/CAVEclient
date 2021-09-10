@@ -1,6 +1,7 @@
 numpy
 pyarrow>=3
 requests
+urllib3
 pandas
 cachetools>=4.2.1
 ipython
