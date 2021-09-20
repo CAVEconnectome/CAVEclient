@@ -3,6 +3,7 @@ import requests
 import json
 import logging
 import webbrowser
+from .session_config import patch_session
 import numpy as np
 import datetime
 
@@ -155,11 +156,21 @@ class ClientBase(object):
         endpoints,
         server_name,
         verify=True,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         self._server_address = server_address
         self._default_url_mapping = {server_name: self._server_address}
         self.verify = verify
         self.session = requests.Session()
+        patch_session(
+            self.session,
+            max_retries=max_retries,
+            pool_block=pool_block,
+            pool_maxsize=pool_maxsize,
+        )
+
         self.session.verify = verify
         head_val = auth_header.get("Authorization", None)
         if head_val is not None:
@@ -202,6 +213,9 @@ class ClientBaseWithDataset(ClientBase):
         server_name,
         dataset_name,
         verify=True,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
 
         super(ClientBaseWithDataset, self).__init__(
@@ -211,6 +225,9 @@ class ClientBaseWithDataset(ClientBase):
             endpoints,
             server_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
         self._dataset_name = dataset_name
 
@@ -229,6 +246,9 @@ class ClientBaseWithDatastack(ClientBase):
         server_name,
         datastack_name,
         verify=True,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
 
         super(ClientBaseWithDatastack, self).__init__(
@@ -238,6 +258,9 @@ class ClientBaseWithDatastack(ClientBase):
             endpoints,
             server_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
         self._datastack_name = datastack_name
 

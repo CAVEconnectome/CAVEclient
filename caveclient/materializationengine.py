@@ -82,6 +82,9 @@ def MaterializationClient(
     api_version="latest",
     version=None,
     verify=True,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
 ):
     """Factory for returning AnnotationClient
 
@@ -135,6 +138,9 @@ def MaterializationClient(
         synapse_table=synapse_table,
         version=version,
         verify=verify,
+        max_retries=max_retries,
+        pool_maxsize=pool_maxsize,
+        pool_block=pool_block,
     )
 
 
@@ -151,6 +157,9 @@ class MaterializatonClientV2(ClientBase):
         synapse_table=None,
         version=None,
         verify=True,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         super(MaterializatonClientV2, self).__init__(
             server_address,
@@ -159,6 +168,9 @@ class MaterializatonClientV2(ClientBase):
             endpoints,
             server_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
         self._datastack_name = datastack_name
         if version is None:

@@ -22,6 +22,9 @@ def JSONService(
     auth_client=None,
     api_version="latest",
     ngl_url=None,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
 ):
     """Client factory to interface with the JSON state service.
 
@@ -65,15 +68,34 @@ def JSONService(
         endpoints=endpoints,
         server_name=server_key,
         ngl_url=ngl_url,
+        max_retries=max_retries,
+        pool_maxsize=pool_maxsize,
+        pool_block=pool_block,
     )
 
 
 class JSONServiceV1(ClientBase):
     def __init__(
-        self, server_address, auth_header, api_version, endpoints, server_name, ngl_url
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_name,
+        ngl_url,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         super(JSONServiceV1, self).__init__(
-            server_address, auth_header, api_version, endpoints, server_name
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            server_name,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
         self._ngl_url = ngl_url
 

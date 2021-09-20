@@ -29,6 +29,9 @@ def InfoServiceClient(
     auth_client=None,
     api_version="latest",
     verify=True,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
 ):
     if server_address is None:
         server_address = default_global_server_address
@@ -55,6 +58,9 @@ def InfoServiceClient(
         SERVER_KEY,
         datastack_name,
         verify=verify,
+        max_retries=max_retries,
+        pool_maxsize=pool_maxsize,
+        pool_block=pool_block,
     )
 
 
@@ -68,6 +74,9 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         server_name,
         datastack_name,
         verify=True,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
     ):
         super(InfoServiceClientV2, self).__init__(
             server_address,
@@ -77,6 +86,10 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             server_name,
             datastack_name,
             verify=verify,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
+
         )
         self.info_cache = dict()
         if datastack_name is not None:
