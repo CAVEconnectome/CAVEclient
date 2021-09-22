@@ -887,7 +887,6 @@ class MaterializatonClientV2(ClientBase):
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
-            suffixes: (list[str], optional): suffixes to use on duplicate columns
             offset (int, optional): result offset to use. Defaults to None.
                 will only return top K results.
             datastack_name (str, optional): datastack to query.
@@ -962,7 +961,7 @@ class MaterializatonClientV2(ClientBase):
                 datastack_name,
                 materialization_version,
                 [table],
-                None,
+                select_columns,
                 None,
                 {table: past_filter_in_dict}
                 if past_filter_in_dict is not None
