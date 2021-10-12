@@ -515,7 +515,7 @@ class ChunkedGraphClientV1(ClientBase):
             params.update(package_timestamp(timestamp_future, name="timestamp_future"))
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url, params=data))
+        r = handle_response(self.session.get(url, params=params))
 
         if as_nx_graph:
             return nx.node_link_graph(r)

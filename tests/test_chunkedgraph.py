@@ -449,11 +449,11 @@ class TestChunkedgraph:
         )
 
         qid_map = myclient.chunkedgraph.get_past_ids(
-            root_ids, timestamp_past=past_time, timestamp_future=now
+            root_ids, timestamp_past=timestamp_past, timestamp_future=now
         )
         assert qid_map == id_map
         qid_map = myclient.chunkedgraph.get_past_ids(
-            root_id_list, timestamp_past=past_time, timestamp_future=now
+            root_id_list, timestamp_past=timestamp_past, timestamp_future=now
         )
         assert qid_map == id_map
 
