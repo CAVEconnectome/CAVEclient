@@ -433,7 +433,7 @@ class TestChunkedgraph:
             },
         }
         now = datetime.datetime.utcnow()
-        past_time = now - datetime.timedelta(days=7)
+        timestamp_past = now - datetime.timedelta(days=7)
 
         query_d = package_timestamp(timestamp_past, name="timestamp_past")
         query_d.update(package_timestamp(now, name="timestamp_future"))
@@ -469,7 +469,7 @@ class TestChunkedgraph:
             endpoint_mapping
         )
         now = datetime.datetime.utcnow()
-        past_time = now - datetime.timedelta(days=7)
+        timestamp_past = now - datetime.timedelta(days=7)
 
         query_d = package_timestamp(timestamp_past, name="timestamp_past")
         query_d.update(package_timestamp(now, name="timestamp_future"))
@@ -505,7 +505,7 @@ class TestChunkedgraph:
         responses.add(responses.GET, status=200, url=qurl, json=lineage_graph)
 
         qlineage_graph = myclient.chunkedgraph.get_lineage_graph(
-            root_id, timestamp_past=past_time, timestamp_future=now
+            root_id, timestamp_past=timestamp_past, timestamp_future=now
         )
         assert lineage_graph == qlineage_graph
 
