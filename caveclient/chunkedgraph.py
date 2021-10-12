@@ -41,11 +41,16 @@ def package_bounds(bounds):
     return bounds_str
 
 
-def package_timestamp(timestamp):
+def package_timestamp(timestamp, name="timestamp"):
     if timestamp is None:
-        query_d = None
+        query_d = {}
     else:
-        query_d = {"timestamp": time.mktime(timestamp.timetuple())}
+        if timestamp.tzinfo is None:
+            timestamp = pytz.UTC.localize(timestamp)
+        else:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
+        query_d = {name: timestamp.timestamp()}
     return query_d
 
 
@@ -503,14 +508,14 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["root_id"] = root_id
 
-        data = {}
+        params = {}
         if timestamp_past is not None:
-            data["timestamp_past"] = time.mktime(timestamp_past.timetuple())
+            params.update(package_timestamp(timestamp_past, name="timestamp_past"))
         if timestamp_future is not None:
-            data["timestamp_future"] = time.mktime(timestamp_future.timetuple())
+            params.update(package_timestamp(timestamp_future, name="timestamp_future"))
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url, params=data))
+        r = handle_response(self.session.get(url, params=params))
 
         if as_nx_graph:
             return nx.node_link_graph(r)
@@ -590,7 +595,7 @@ class ChunkedGraphClientV1(ClientBase):
         if timestamp is None:
             timestamp = self._default_timestamp
         if timestamp is not None:
-            query_d = {"timestamp": time.mktime(timestamp.timetuple())}
+            query_d = package_timestamp(self._process_timestamp(timestamp))
         else:
             query_d = None
         data = {"node_ids": root_ids}
@@ -650,9 +655,9 @@ class ChunkedGraphClientV1(ClientBase):
 
         params = {}
         if timestamp_past is not None:
-            params["timestamp_past"] = time.mktime(timestamp_past.timetuple())
+            params.update(package_timestamp(timestamp_past, name="timestamp_past"))
         if timestamp_future is not None:
-            params["timestamp_future"] = time.mktime(timestamp_future.timetuple())
+            params.update(package_timestamp(timestamp_future, name="timestamp_future"))
 
         data = {"root_ids": np.array(root_ids, dtype=np.uint64)}
         url = self._endpoints["past_id_mapping"].format_map(endpoint_mapping)
@@ -689,10 +694,9 @@ class ChunkedGraphClientV1(ClientBase):
             new_roots (np.ndarray): roots that are new in that interval
         """
         endpoint_mapping = self.default_url_mapping
-        params = {
-            "timestamp_past": time.mktime(timestamp_past.timetuple()),
-            "timestamp_future": time.mktime(timestamp_future.timetuple()),
-        }
+        params = package_timestamp(timestamp_past, name="timestamp_past")
+        params.update(package_timestamp(timestamp_future, name="timestamp_future"))
+
         url = self._endpoints["delta_roots"].format_map(endpoint_mapping)
         r = handle_response(self.session.get(url, params=params))
         return np.array(r["old_roots"]), np.array(r["new_roots"])

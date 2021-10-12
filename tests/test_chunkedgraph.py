@@ -2,6 +2,7 @@ from re import match
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import pytest
 import responses
+import pytz
 import numpy as np
 from caveclient.endpoints import (
     chunkedgraph_endpoints_v1,
@@ -19,6 +20,19 @@ def binary_body_match(body):
     return match
 
 
+def package_timestamp(timestamp, name="timestamp"):
+    if timestamp is None:
+        query_d = {}
+    else:
+        if timestamp.tzinfo is None:
+            timestamp = pytz.UTC.localize(timestamp)
+        else:
+            timestamp = timestamp.astimezone(datetime.timezone.utc)
+
+        query_d = {name: timestamp.timestamp()}
+    return query_d
+
+
 class TestChunkedgraph:
 
     _default_endpoint_map = {
@@ -33,7 +47,7 @@ class TestChunkedgraph:
         svids = np.array([97557743795364048, 75089979126506763], dtype=np.uint64)
         root_ids = np.array([864691135217871271, 864691135566275148], dtype=np.uint64)
         now = datetime.datetime.utcnow()
-        query_d = {"timestamp": time.mktime(now.timetuple())}
+        query_d = package_timestamp(now)
         qurl = url + "?" + urlencode(query_d)
         responses.add(
             responses.POST,
@@ -48,7 +62,8 @@ class TestChunkedgraph:
         new_root_ids = myclient.chunkedgraph.get_roots(svids)
         assert np.all(new_root_ids == root_ids)
 
-        query_d = {"timestamp": time.mktime(now.timetuple()), "stop_layer": 3}
+        query_d = package_timestamp(now)
+        query_d["stop_layer"] = 3
         qurl = url + "?" + urlencode(query_d)
         responses.add(
             responses.POST,
@@ -63,7 +78,7 @@ class TestChunkedgraph:
 
         endpoint_mapping["supervoxel_id"] = svids[0]
         url = chunkedgraph_endpoints_v1["handle_root"].format_map(endpoint_mapping)
-        query_d = {"timestamp": time.mktime(now.timetuple())}
+        query_d = package_timestamp(now)
         qurl = url + "?" + urlencode(query_d)
         responses.add(responses.GET, url=qurl, json={"root_id": int(root_ids[0])})
         qroot_id = myclient.chunkedgraph.get_root_id(svids[0], timestamp=now)
@@ -217,10 +232,8 @@ class TestChunkedgraph:
 
         now = datetime.datetime.utcnow()
         timestamp_past = now - datetime.timedelta(days=1)
-        query_d = {
-            "timestamp_past": time.mktime(timestamp_past.timetuple()),
-            "timestamp_future": time.mktime(now.timetuple()),
-        }
+        query_d = package_timestamp(timestamp_past, name="timestamp_past")
+        query_d.update(package_timestamp(now, name="timestamp_future"))
 
         urlq = url + "?" + urlencode(query_d)
 
@@ -421,11 +434,11 @@ class TestChunkedgraph:
             },
         }
         now = datetime.datetime.utcnow()
-        past_time = now - datetime.timedelta(days=7)
-        query_d = {
-            "timestamp_past": time.mktime(past_time.timetuple()),
-            "timestamp_future": time.mktime(now.timetuple()),
-        }
+        timestamp_past = now - datetime.timedelta(days=7)
+
+        query_d = package_timestamp(timestamp_past, name="timestamp_past")
+        query_d.update(package_timestamp(now, name="timestamp_future"))
+
         qurl = url + "?" + urlencode(query_d)
         responses.add(
             responses.GET,
@@ -436,11 +449,11 @@ class TestChunkedgraph:
         )
 
         qid_map = myclient.chunkedgraph.get_past_ids(
-            root_ids, timestamp_past=past_time, timestamp_future=now
+            root_ids, timestamp_past=timestamp_past, timestamp_future=now
         )
         assert qid_map == id_map
         qid_map = myclient.chunkedgraph.get_past_ids(
-            root_id_list, timestamp_past=past_time, timestamp_future=now
+            root_id_list, timestamp_past=timestamp_past, timestamp_future=now
         )
         assert qid_map == id_map
 
@@ -457,11 +470,11 @@ class TestChunkedgraph:
             endpoint_mapping
         )
         now = datetime.datetime.utcnow()
-        past_time = now - datetime.timedelta(days=7)
-        query_d = {
-            "timestamp_past": time.mktime(past_time.timetuple()),
-            "timestamp_future": time.mktime(now.timetuple()),
-        }
+        timestamp_past = now - datetime.timedelta(days=7)
+
+        query_d = package_timestamp(timestamp_past, name="timestamp_past")
+        query_d.update(package_timestamp(now, name="timestamp_future"))
+
         qurl = url + "?" + urlencode(query_d)
 
         lineage_graph = {
@@ -493,7 +506,7 @@ class TestChunkedgraph:
         responses.add(responses.GET, status=200, url=qurl, json=lineage_graph)
 
         qlineage_graph = myclient.chunkedgraph.get_lineage_graph(
-            root_id, timestamp_past=past_time, timestamp_future=now
+            root_id, timestamp_past=timestamp_past, timestamp_future=now
         )
         assert lineage_graph == qlineage_graph
 
