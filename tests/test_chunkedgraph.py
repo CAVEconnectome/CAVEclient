@@ -2,6 +2,7 @@ from re import match
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import pytest
 import responses
+import pytz
 import numpy as np
 from caveclient.endpoints import (
     chunkedgraph_endpoints_v1,
