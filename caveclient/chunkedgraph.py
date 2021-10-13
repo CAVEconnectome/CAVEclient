@@ -627,10 +627,7 @@ class ChunkedGraphClientV1(ClientBase):
         )
 
         return np.array(
-            [
-                pytz.UTC.localize(datetime.datetime.fromtimestamp(ts))
-                for ts in r["timestamp"]
-            ]
+            [datetime.datetime.fromtimestamp(ts, pytz.UTC) for ts in r["timestamp"]]
         )
 
     def get_past_ids(self, root_ids, timestamp_past=None, timestamp_future=None):
