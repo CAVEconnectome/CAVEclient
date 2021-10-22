@@ -1,21 +1,12 @@
-from .base import (
-    ClientBaseWithDataset,
-    ClientBaseWithDatastack,
-    ClientBase,
-    BaseEncoder,
-    _api_versions,
-    _api_endpoints,
-    handle_response,
-)
-from .auth import AuthClient
-from .endpoints import annotation_common, annotation_api_versions
-from .infoservice import InfoServiceClientV2
-
 import json
+from typing import Iterable, List, Mapping
+
 import numpy as np
-from datetime import date, datetime
 import pandas as pd
-from typing import Iterable, Mapping
+
+from .auth import AuthClient
+from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
+from .endpoints import annotation_api_versions, annotation_common
 
 SERVER_KEY = "ae_server_address"
 
@@ -134,7 +125,7 @@ class AnnotationClientV2(ClientBase):
     def aligned_volume_name(self):
         return self._aligned_volume_name
 
-    def get_tables(self, aligned_volume_name=None):
+    def get_tables(self, aligned_volume_name: str = None):
         """Gets a list of table names for a aligned_volume_name
 
         Parameters
@@ -158,7 +149,7 @@ class AnnotationClientV2(ClientBase):
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_annotation_count(self, table_name: str, aligned_volume_name=None):
+    def get_annotation_count(self, table_name: str, aligned_volume_name: str = None):
         """Get number of annotations in a table
 
         Parameters
@@ -186,7 +177,7 @@ class AnnotationClientV2(ClientBase):
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_table_metadata(self, table_name: str, aligned_volume_name=None):
+    def get_table_metadata(self, table_name: str, aligned_volume_name: str = None):
         """Get metadata about a table
 
         Parameters
@@ -219,9 +210,8 @@ class AnnotationClientV2(ClientBase):
         metadata_d["voxel_resolution"] = [vx, vy, vz]
         return metadata_d
 
-    def delete_table(self, table_name: str, aligned_volume_name=None):
-        """Marks a table for deletion
-        requires super admin priviledges
+    def delete_table(self, table_name: str, aligned_volume_name: str = None):
+        """Marks a table for deletion requires super admin privileges
 
         Parameters
         ----------
@@ -250,14 +240,14 @@ class AnnotationClientV2(ClientBase):
 
     def create_table(
         self,
-        table_name,
-        schema_name,
-        description,
-        voxel_resolution,
-        reference_table=None,
-        flat_segmentation_source=None,
-        user_id=None,
-        aligned_volume_name=None,
+        table_name: str,
+        schema_name: str,
+        description: str,
+        voxel_resolution: List[float],
+        reference_table_dict: dict = None,
+        flat_segmentation_source: str = None,
+        user_id: int = None,
+        aligned_volume_name: str = None,
     ):
         """Creates a new data table based on an existing schema
 
@@ -279,10 +269,15 @@ class AnnotationClientV2(ClientBase):
         voxel_resolution: list[float]
             voxel resolution points will be uploaded in, typically nm, i.e [1,1,1] means nanometers
             [4,4,40] would be 4nm, 4nm, 40nm voxels
-        reference_table: str or None
+        reference_table_dict: dict or None
             If the schema you are using is a reference schema
             Meaning it is an annotation of another annotation.
             Then you need to specify what table those annotations are in.
+            Required:
+                "reference_table" = the table in which the annotations are referenced
+            Optional:
+                "track_target_id_updates" = True or False (default True) indicates
+                whether to automatically update the foreign key of the annotation if updated.
         flat_segmentation_source: str or None
             the source to a flat segmentation that corresponds to this table
             i.e. precomputed:\\gs:\\mybucket\this_tables_annotation
@@ -298,6 +293,21 @@ class AnnotationClientV2(ClientBase):
         json
             Response JSON
 
+        Examples
+        --------
+        Basic annotation table:
+        description = "Some description about the table"
+        voxel_res = [4,4,40]
+        client.create_table("some_synapse_table", "synapse", description, voxel_res)
+
+        Reference Annotation Table:
+        description = "This is a reference table to 'neuron_cell_types'"
+        voxel_res = [4,4,40]
+        reference_table_dict = {
+                "reference_table": "layer5_neuron_positions",
+                "track_target_id_updates": True
+                }
+        client.create_table("neuron_cell_types", "cell_type", description, voxel_res, reference_table_dict)
         """
         if aligned_volume_name is None:
             aligned_volume_name = self.aligned_volume_name
@@ -314,8 +324,8 @@ class AnnotationClientV2(ClientBase):
         }
         if user_id is not None:
             metadata["user_id"] = user_id
-        if reference_table is not None:
-            metadata["reference_table"] = reference_table
+        if reference_table_dict is not None:
+            metadata["reference_table_dict"] = reference_table_dict
         if flat_segmentation_source is not None:
             metadata["flat_segmentation_source"] = flat_segmentation_source
 
@@ -328,7 +338,12 @@ class AnnotationClientV2(ClientBase):
         response = self.session.post(url, json=data)
         return handle_response(response, as_json=False)
 
-    def get_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
+    def get_annotation(
+        self,
+        table_name: str,
+        annotation_ids: (int or Iterable),
+        aligned_volume_name: str = None,
+    ):
         """Retrieve an annotation or annotations by id(s) and table name.
 
         Parameters
@@ -361,8 +376,13 @@ class AnnotationClientV2(ClientBase):
         response = self.session.get(url, params=params)
         return handle_response(response)
 
-    def post_annotation(self, table_name, data, aligned_volume_name=None):
-        """Post one or more new annotations to a table in the AnnotationEngine
+    def post_annotation(
+        self, table_name: str, data: (dict or List), aligned_volume_name: str = None
+    ):
+        """Post one or more new annotations to a table in the AnnotationEngine.
+        All inserted annotations will be marked as 'valid'. To invalidate
+        annotations refer to 'update_annotation', 'update_annotation_df'
+        and 'delete_annotation' methods.
 
         Parameters
         ----------
@@ -407,7 +427,7 @@ class AnnotationClientV2(ClientBase):
     def process_position_columns(
         df: pd.DataFrame, position_columns: (Iterable[str] or Mapping[str, str] or None)
     ):
-        """process a dataframe into a list of dictionaries, nesting thing
+        """Process a dataframe into a list of dictionaries, nesting thing
 
         Args:
             df (pd.DataFrame): dataframe to process
@@ -437,7 +457,10 @@ class AnnotationClientV2(ClientBase):
         position_columns: (Iterable[str] or Mapping[str, str] or None),
         aligned_volume_name=None,
     ):
-        """Post one or more new annotations to a table in the AnnotationEngine
+        """Post one or more new annotations to a table in the AnnotationEngine.
+        All inserted annotations will be marked as 'valid'. To invalidate
+        annotations see 'update_annotation', 'update_annotation_df'
+        and 'delete_annotation' methods.
 
         Parameters
         ----------
@@ -473,10 +496,17 @@ class AnnotationClientV2(ClientBase):
             table_name, data, aligned_volume_name=aligned_volume_name
         )
 
-    def update_annotation(self, table_name, data, aligned_volume_name=None):
-        """Update one or more new annotations to a table in the AnnotationEngine
-        Note update is implemented by deleting the old annotation
-        and inserting a new annotation, which will receive a new ID.
+    def update_annotation(
+        self, table_name: str, data: (dict or List), aligned_volume_name: str = None
+    ):
+        """Update one or more new annotations to a table in the AnnotationEngine.
+        Updating is implemented by invalidating the old annotation
+        and inserting a new annotation row, which will receive a new primary key ID.
+
+        Notes
+        -----
+        If annotations ids were user provided upon insertion the database will
+        autoincrement from the current max id in the table.
 
         Parameters
         ----------
@@ -507,7 +537,7 @@ class AnnotationClientV2(ClientBase):
         try:
             iter(data)
         except TypeError:
-            annotation_ids = [data]
+            data = [data]
 
         data = {"annotations": data}
 
@@ -521,7 +551,14 @@ class AnnotationClientV2(ClientBase):
         position_columns: (Iterable[str] or Mapping[str, str] or None),
         aligned_volume_name=None,
     ):
-        """Update one or more  annotations to a table in the AnnotationEngine using a dataframe as format
+        """Update one or more annotations to a table in the AnnotationEngine using a
+        dataframe as format. Updating is implemented by invalidating the old annotation
+        and inserting a new annotation row, which will receive a new primary key ID.
+
+        Notes
+        -----
+        If annotations ids were user provided upon insertion the database will
+        autoincrement from the current max id in the table.
 
         Parameters
         ----------
@@ -557,10 +594,14 @@ class AnnotationClientV2(ClientBase):
             table_name, data, aligned_volume_name=aligned_volume_name
         )
 
-    def delete_annotation(self, table_name, annotation_ids, aligned_volume_name=None):
-        """Update one or more new annotations to a table in the AnnotationEngine
-        Note update is implemented by deleting the old annotation
-        and inserting a new annotation, which will receive a new ID.
+    def delete_annotation(
+        self,
+        table_name: str,
+        annotation_ids: (dict or List),
+        aligned_volume_name: str = None,
+    ):
+        """Delete one or more annotations in a table. Annotations that are
+        deleted are recorded as 'non-valid' but are not physically removed from the table.
 
         Parameters
         ----------
