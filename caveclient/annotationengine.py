@@ -244,7 +244,8 @@ class AnnotationClientV2(ClientBase):
         schema_name: str,
         description: str,
         voxel_resolution: List[float],
-        reference_table_dict: dict = None,
+        reference_table: str = None,
+        track_target_id_updates: bool = None,
         flat_segmentation_source: str = None,
         user_id: int = None,
         aligned_volume_name: str = None,
@@ -269,15 +270,14 @@ class AnnotationClientV2(ClientBase):
         voxel_resolution: list[float]
             voxel resolution points will be uploaded in, typically nm, i.e [1,1,1] means nanometers
             [4,4,40] would be 4nm, 4nm, 40nm voxels
-        reference_table_dict: dict or None
+        reference_table: str or None
             If the schema you are using is a reference schema
             Meaning it is an annotation of another annotation.
-            Then you need to specify what table those annotations are in.
-            Required:
-                "reference_table" = the table in which the annotations are referenced
-            Optional:
-                "track_target_id_updates" = True or False (default True) indicates
-                whether to automatically update the foreign key of the annotation if updated.
+            Then you need to specify what the target table 
+            those annotations are in.
+        track_target_id_updates: bool or None
+            Indicates whether to automatically update reference table's foreign key 
+            if target annotation table row is updated.
         flat_segmentation_source: str or None
             the source to a flat segmentation that corresponds to this table
             i.e. precomputed:\\gs:\\mybucket\this_tables_annotation
@@ -299,15 +299,6 @@ class AnnotationClientV2(ClientBase):
         description = "Some description about the table"
         voxel_res = [4,4,40]
         client.create_table("some_synapse_table", "synapse", description, voxel_res)
-
-        Reference Annotation Table:
-        description = "This is a reference table to 'neuron_cell_types'"
-        voxel_res = [4,4,40]
-        reference_table_dict = {
-                "reference_table": "layer5_neuron_positions",
-                "track_target_id_updates": True
-                }
-        client.create_table("neuron_cell_types", "cell_type", description, voxel_res, reference_table_dict)
         """
         if aligned_volume_name is None:
             aligned_volume_name = self.aligned_volume_name
@@ -324,8 +315,11 @@ class AnnotationClientV2(ClientBase):
         }
         if user_id is not None:
             metadata["user_id"] = user_id
-        if reference_table_dict is not None:
-            metadata["reference_table_dict"] = reference_table_dict
+        if reference_table is not None:
+            metadata["reference_table_dict"] = {
+                "reference_table": reference_table,
+                "track_target_id_updates": track_target_id_updates,
+            }
         if flat_segmentation_source is not None:
             metadata["flat_segmentation_source"] = flat_segmentation_source
 
