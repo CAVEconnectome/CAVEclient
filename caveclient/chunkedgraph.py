@@ -316,7 +316,8 @@ class ChunkedGraphClientV1(ClientBase):
 
         data = []
         for svid, coor in zip(supervoxels, coords):
-            row = np.concatenate([[svid], np.array(coor) * resolution])
+            pos = np.array(coor) * resolution
+            row = [svid, pos[0], pos[1], pos[2]]
             data.append(row)
         params = {"priority": False}
         response = self.session.post(
