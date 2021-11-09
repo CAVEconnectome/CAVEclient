@@ -182,6 +182,7 @@ v1_auth = "{auth_server_address}/auth/api/v1"
 auth_endpoints_v1 = {
     "refresh_token": v1_auth + "/refresh_token",
     "create_token": v1_auth + "/create_token",
+    "get_users": v1_auth + "/user",
 }
 
 auth_api_versions = {

@@ -5,6 +5,9 @@ import webbrowser
 import os
 from .endpoints import auth_endpoints_v1, default_global_server_address
 import urllib
+from .base import (
+    handle_response,
+)
 
 default_token_location = "~/.cloudvolume/secrets"
 default_token_name = "cave-secret.json"
@@ -205,6 +208,21 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             self._token = token
             self._token_key = token_key
             self._token_file = save_token_file
+
+    def get_users(self, user_id):
+        """Get user data.
+
+        Parameters
+        ----------
+        user_id : list of int
+            user_ids to look up
+        """
+        endpoint_mapping = self._default_endpoint_mapping
+        params = {"id": ','.join(str(i) for i in user_id)}
+        url = auth_endpoints_v1["get_users"].format_map(endpoint_mapping)
+        response = requests.Session().get(url, headers=self.request_header, params=params)
+
+        return handle_response(response)
 
     @property
     def request_header(self):
