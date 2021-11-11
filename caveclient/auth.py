@@ -209,7 +209,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             self._token_key = token_key
             self._token_file = save_token_file
 
-    def get_users(self, user_id):
+    def get_user_information(self, user_ids):
         """Get user data.
 
         Parameters
@@ -218,7 +218,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             user_ids to look up
         """
         endpoint_mapping = self._default_endpoint_mapping
-        params = {"id": ','.join(str(i) for i in user_id)}
+        params = {"id": ','.join(str(i) for i in user_ids)}
         url = auth_endpoints_v1["get_users"].format_map(endpoint_mapping)
         response = requests.Session().get(url, headers=self.request_header, params=params)
 
