@@ -485,7 +485,7 @@ class ChunkedGraphClientV1(ClientBase):
         return r.json()
 
     def get_lineage_graph(
-        self, root_id, root_ids=[], timestamp_past=None, timestamp_future=None, as_nx_graph=False
+        self, root_id=None, root_ids=[], timestamp_past=None, timestamp_future=None, as_nx_graph=False
     ):
         """Returns the lineage graph for a root id, optionally cut off in the past or the future.
 
