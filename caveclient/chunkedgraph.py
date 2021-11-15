@@ -485,7 +485,7 @@ class ChunkedGraphClientV1(ClientBase):
         return r.json()
 
     def get_lineage_graph(
-        self, root_id, timestamp_past=None, timestamp_future=None, as_nx_graph=False
+        self, root_ids, timestamp_past=None, timestamp_future=None, as_nx_graph=False
     ):
         """Returns the lineage graph for a root id, optionally cut off in the past or the future.
 
@@ -505,9 +505,10 @@ class ChunkedGraphClientV1(ClientBase):
         dict
             Dictionary describing the lineage graph and operations for the root id.
         """
+        root_ids = [int(r) for r in np.unique(root_ids)]
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["root_id"] = root_id
+        #endpoint_mapping["root_id"] = root_id
 
         params = {}
         if timestamp_past is not None:
@@ -516,7 +517,8 @@ class ChunkedGraphClientV1(ClientBase):
             params.update(package_timestamp(timestamp_future, name="timestamp_future"))
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url, params=params))
+        data = json.dumps({"root_ids": root_ids}, cls=BaseEncoder)
+        r = handle_response(self.session.post(url, data=data, params=params))
 
         if as_nx_graph:
             return nx.node_link_graph(r)
