@@ -575,7 +575,7 @@ class MaterializatonClientV2(ClientBase):
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
             {table: filter_spatial_dict} if filter_spatial_dict is not None else None,
             return_df,
-            True,
+            split_positions,
             offset,
             limit,
         )
