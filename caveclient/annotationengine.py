@@ -316,7 +316,7 @@ class AnnotationClientV2(ClientBase):
         if user_id is not None:
             metadata["user_id"] = user_id
         if reference_table is not None:
-            metadata["reference_table_dict"] = {
+            metadata["table_metadata"] = {
                 "reference_table": reference_table,
                 "track_target_id_updates": track_target_id_updates,
             }
