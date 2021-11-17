@@ -503,7 +503,7 @@ class TestChunkedgraph:
                 },
             ],
         }
-        responses.add(responses.GET, status=200, url=qurl, json=lineage_graph)
+        responses.add(responses.POST, status=200, url=qurl, json=lineage_graph)
 
         qlineage_graph = myclient.chunkedgraph.get_lineage_graph(
             root_id, timestamp_past=timestamp_past, timestamp_future=now
