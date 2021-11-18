@@ -505,9 +505,14 @@ class ChunkedGraphClientV1(ClientBase):
         dict
             Dictionary describing the lineage graph and operations for the root id.
         """
+        if isinstance(root_id, int) or isinstance(root_id, np.uint64):
+            root_id = [root_id]
+        if isinstance(root_id, np.ndarray) or isinstance(root_id, list):
+            root_id = np.unique(root_id).astype(np.uint64)
+        else:
+            raise TypeError("root_id has to be list or uint64")
 
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["root_id"] = root_id
 
         params = {}
         if timestamp_past is not None:
@@ -516,7 +521,8 @@ class ChunkedGraphClientV1(ClientBase):
             params.update(package_timestamp(timestamp_future, name="timestamp_future"))
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url, params=params))
+        data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
+        r = handle_response(self.session.post(url, data=data, params=params))
 
         if as_nx_graph:
             return nx.node_link_graph(r)
