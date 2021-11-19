@@ -725,9 +725,9 @@ class MaterializatonClientV2(ClientBase):
                         else:
                             root_ids.append(val)
 
-        # if they are all None then we can safely return now
+        # if there are no root_ids then we can safely return now
         if len(root_ids) == 0:
-            return [None, None, None], {}
+            return filters, {}
         root_ids = np.unique(np.concatenate(root_ids))
 
         filter_timed_end = self.cg_client.is_latest_roots(root_ids, timestamp=timestamp)
