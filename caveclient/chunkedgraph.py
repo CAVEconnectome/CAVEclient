@@ -54,6 +54,26 @@ def package_timestamp(timestamp, name="timestamp"):
     return query_d
 
 
+def root_id_int_list_check(
+    root_id,
+):
+    if isinstance(root_id, int) or isinstance(root_id, np.uint64):
+        root_id = [root_id]
+    elif isinstance(root_id, str):
+        try:
+            root_id = np.uint64(root_id)
+        except ValueError:
+            raise ValueError(
+                "When passing a string for 'root_id' make sure the string can be converted to a uint64"
+            )
+    elif isinstance(root_id, np.ndarray) or isinstance(root_id, list):
+        root_id = np.unique(root_id).astype(np.uint64)
+    else:
+        raise ValueError("root_id has to be list or uint64")
+
+    return root_id
+
+
 def ChunkedGraphClient(
     server_address=None,
     table_name=None,
@@ -505,12 +525,7 @@ class ChunkedGraphClientV1(ClientBase):
         dict
             Dictionary describing the lineage graph and operations for the root id.
         """
-        if isinstance(root_id, int) or isinstance(root_id, np.uint64):
-            root_id = [root_id]
-        if isinstance(root_id, np.ndarray) or isinstance(root_id, list):
-            root_id = np.unique(root_id).astype(np.uint64)
-        else:
-            raise TypeError("root_id has to be list or uint64")
+        root_id = root_id_int_list_check(root_id)
 
         endpoint_mapping = self.default_url_mapping
 
@@ -544,10 +559,13 @@ class ChunkedGraphClientV1(ClientBase):
         np.ndarray
             1d array with all latest successors
         """
+        root_id = root_id_int_list_check(root_id)
+
+        timestamp_past = self.get_root_timestamps(root_id).min()
 
         lineage_graph = self.get_lineage_graph(
             root_id,
-            timestamp_past=self.get_root_timestamps([root_id])[0],
+            timestamp_past=timestamp_past,
             timestamp_future=timestamp_future,
             as_nx_graph=True,
         )
@@ -572,11 +590,14 @@ class ChunkedGraphClientV1(ClientBase):
         np.ndarray
             1d array with all latest successors
         """
+        root_id = root_id_int_list_check(root_id)
+
+        timestamp_future = self.get_root_timestamps(root_id).max()
 
         lineage_graph = self.get_lineage_graph(
             root_id,
             timestamp_past=timestamp_past,
-            timestamp_future=self.get_root_timestamps([root_id])[0],
+            timestamp_future=timestamp_future,
             as_nx_graph=True,
         )
 
@@ -596,6 +617,8 @@ class ChunkedGraphClientV1(ClientBase):
         Returns:
             np.array[np.Boolean]: boolean array of whether these are valid root_ids
         """
+        root_ids = root_id_int_list_check(root_ids)
+
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["is_latest_roots"].format_map(endpoint_mapping)
 
@@ -625,6 +648,8 @@ class ChunkedGraphClientV1(ClientBase):
         -------
 
         """
+        root_ids = root_id_int_list_check(root_ids)
+
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["root_timestamps"].format_map(endpoint_mapping)
 
@@ -655,6 +680,8 @@ class ChunkedGraphClientV1(ClientBase):
             Dict with keys `future_id_map` and `past_id_map`. Each is a dict whose keys are the supplied root ids and whose values
             are the list of related root ids at the past/future time stamp.
         """
+        root_ids = root_id_int_list_check(root_ids)
+
         endpoint_mapping = self.default_url_mapping
 
         params = {}
