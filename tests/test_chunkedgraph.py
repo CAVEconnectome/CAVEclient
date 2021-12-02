@@ -1,4 +1,4 @@
-from re import match
+from re import A, match
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import pytest
 import responses
@@ -10,6 +10,7 @@ from caveclient.endpoints import (
 )
 import datetime
 import time
+import json
 from urllib.parse import urlencode
 
 
@@ -562,6 +563,91 @@ class TestChunkedgraph:
             operation_id_list
         )
         assert operation_details == qoperation_details
+
+    @responses.activate
+    def test_preview_split(self, myclient):
+        endpoint_mapping = self._default_endpoint_map
+        url = chunkedgraph_endpoints_v1["preview_split"].format_map(endpoint_mapping)
+
+        root_id = 864691136903317426
+        source_points = np.array(
+            [
+                [1003807.6875, 936951.5, 818076.3125],
+                [1004930.875, 937234.3125, 817636.3125],
+            ]
+        )
+        sink_points = np.array(
+            [
+                [999861.9375, 935460, 818956.3125],
+                [998668.8125, 934651.75, 819156.3125],
+            ]
+        )
+        source_svids = [None, None]
+        sink_svids = [99172788401132026, None]
+        qdata_svid = {
+            "sources": [
+                [
+                    root_id,
+                    source_points[0][0],
+                    source_points[0][1],
+                    source_points[0][2],
+                ],
+                [
+                    root_id,
+                    source_points[1][0],
+                    source_points[1][1],
+                    source_points[1][2],
+                ],
+            ],
+            "sinks": [
+                [
+                    sink_svids[0],
+                    sink_points[0][0],
+                    sink_points[0][1],
+                    sink_points[0][2],
+                ],
+                [root_id, sink_points[1][0], sink_points[1][1], sink_points[1][2]],
+            ],
+        }
+
+        response_data = {
+            "supervoxel_connected_components": [[0, 1, 2], [3, 4, 5]],
+            "illegal_split": False,
+        }
+
+        responses.add(
+            responses.POST,
+            status=200,
+            url=url,
+            body=json.dumps(response_data),
+            match=[
+                responses.json_params_matcher(
+                    {"sources": qdata_svid["sources"], "sinks": qdata_svid["sinks"]}
+                )
+            ],
+        )
+        r = myclient.chunkedgraph.preview_split(
+            source_points, sink_points, root_id, source_svids, sink_svids
+        )
+        assert np.all(
+            np.equal(r[0], response_data["supervoxel_connected_components"][0])
+        )
+        assert np.all(
+            np.equal(r[1], response_data["supervoxel_connected_components"][1])
+        )
+        assert r[2]
+
+        # same, but no explicit source svids.
+        r = myclient.chunkedgraph.preview_split(
+            source_points, sink_points, root_id, None, sink_svids
+        )
+        assert np.all(
+            np.equal(r[0], response_data["supervoxel_connected_components"][0])
+        )
+        assert np.all(
+            np.equal(r[1], response_data["supervoxel_connected_components"][1])
+        )
+        assert r[2]
 
     @responses.activate
     def test_get_info(self, myclient):

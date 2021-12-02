@@ -348,6 +348,88 @@ class ChunkedGraphClientV1(ClientBase):
         )
         handle_response(response)
 
+    def preview_split(
+        self,
+        source_points,
+        sink_points,
+        root_id,
+        source_supervoxels=None,
+        sink_supervoxels=None,
+        return_additional_ccs=False,
+    ):
+        """Get supervoxel connected components from a preview multicut split.
+
+        Parameters
+        ----------
+        source_points : array or list
+            Nx3 list or array of 3d points in nm coordinates for source points (red).
+        sink_points : array or list
+            Mx3 list or array of 3d points in nm coordinates for sink points (blue).
+        root_id : int
+            root id of object to do split preview.
+        source_supervoxels : array, list or None, optional
+            If providing source supervoxels, an N-length array of supervoxel ids or Nones matched to source points. If None, treats as a full array of Nones. By default None
+        sink_supervoxels : array, list or None, optional
+            If providing sink supervoxels, an M-length array of supervoxel ids or Nones matched to source points. If None, treats as a full array of Nones. By default None
+        return_additional_ccs : bool, optional
+            If True, returns any additional connected components beyond the ones with source and sink points. In most situations, this can be ignored. By default, False.
+
+        Returns
+        -------
+        source_connected_component
+            List of supervoxel ids in the component with the most source points.
+        sink_connected_component
+            List of supervoxel ids in the component with the most sink points.
+        successful_split
+            Boolean value that is True if the split worked.
+        other_connected_components (optional)
+            List of lists of supervoxel ids for any other resulting connected components. Only returned if `return_additional_ccs` is True.
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["preview_split"].format_map(endpoint_mapping)
+
+        categories = ["sources", "sinks"]
+        pts = [source_points, sink_points]
+        svs = [source_supervoxels, sink_supervoxels]
+        for pt_list, sv_list in zip(pts, svs):
+            if sv_list is not None:
+                if len(pt_list) != len(sv_list):
+                    raise ValueError(
+                        "If supervoxels are provided, they must have the same length as points"
+                    )
+
+        data = {}
+        for cat, pt_list, sv_list in zip(categories, pts, svs):
+            if sv_list is None:
+                sv_list = [None] * len(pt_list)
+            sv_list = [x if x is not None else root_id for x in sv_list]
+
+            out = []
+            for svid, pt in zip(sv_list, pt_list):
+                out.append([svid, pt[0], pt[1], pt[2]])
+
+            data[cat] = out
+
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            headers={"Content-Type": "application/json"},
+        )
+        r = handle_response(response)
+        source_cc = r["supervoxel_connected_components"][0]
+        sink_cc = r["supervoxel_connected_components"][1]
+        if len(r["supervoxel_connected_components"]) == 2:
+            other_ccs = []
+        else:
+            other_ccs = r["supervoxel_connected_components"][2:]
+
+        success = not r["illegal_split"]
+
+        if return_additional_ccs:
+            return source_cc, sink_cc, success, other_ccs
+        else:
+            return source_cc, sink_cc, success
+
     def get_children(self, node_id):
         """Get the children of a node in the hierarchy
 
