@@ -393,9 +393,9 @@ class TestChunkedgraph:
 
         url = chunkedgraph_endpoints_v1["is_latest_roots"].format_map(endpoint_mapping)
 
-        root_id_list = [864691135776832352, 164471821834388001]
-        root_ids = np.array(root_id_list, dtype=np.int64)
-        is_latest_list = [True, False]
+        root_id_list = [164471821834388001, 864691135776832352]
+        root_ids = np.array(root_id_list, dtype=np.uint64)
+        is_latest_list = [False, True]
         is_latest = np.array(is_latest_list, np.bool)
 
         responses.add(
@@ -417,7 +417,7 @@ class TestChunkedgraph:
 
         url = chunkedgraph_endpoints_v1["past_id_mapping"].format_map(endpoint_mapping)
 
-        root_id_list = [864691136577570580, 864691135415612346]
+        root_id_list = [864691135415612346, 864691136577570580]
         root_ids = np.array(root_id_list, np.int64)
         id_map = {
             "future_id_map": {},
