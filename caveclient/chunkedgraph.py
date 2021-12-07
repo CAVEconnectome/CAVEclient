@@ -56,6 +56,7 @@ def package_timestamp(timestamp, name="timestamp"):
 
 def root_id_int_list_check(
     root_id,
+    make_unique=False,
 ):
     if isinstance(root_id, int) or isinstance(root_id, np.uint64):
         root_id = [root_id]
@@ -67,7 +68,10 @@ def root_id_int_list_check(
                 "When passing a string for 'root_id' make sure the string can be converted to a uint64"
             )
     elif isinstance(root_id, np.ndarray) or isinstance(root_id, list):
-        root_id = np.unique(root_id).astype(np.uint64)
+        if make_unique:
+            root_id = np.unique(root_id).astype(np.uint64)
+        else:
+            root_id = np.array(root_id, dtype=np.uint64)
     else:
         raise ValueError("root_id has to be list or uint64")
 
@@ -607,7 +611,7 @@ class ChunkedGraphClientV1(ClientBase):
         dict
             Dictionary describing the lineage graph and operations for the root id.
         """
-        root_id = root_id_int_list_check(root_id)
+        root_id = root_id_int_list_check(root_id, make_unique=True)
 
         endpoint_mapping = self.default_url_mapping
 
@@ -641,7 +645,7 @@ class ChunkedGraphClientV1(ClientBase):
         np.ndarray
             1d array with all latest successors
         """
-        root_id = root_id_int_list_check(root_id)
+        root_id = root_id_int_list_check(root_id, make_unique=True)
 
         timestamp_past = self.get_root_timestamps(root_id).min()
 
@@ -672,7 +676,7 @@ class ChunkedGraphClientV1(ClientBase):
         np.ndarray
             1d array with all latest successors
         """
-        root_id = root_id_int_list_check(root_id)
+        root_id = root_id_int_list_check(root_id, make_unique=True)
 
         timestamp_future = self.get_root_timestamps(root_id).max()
 
@@ -699,7 +703,7 @@ class ChunkedGraphClientV1(ClientBase):
         Returns:
             np.array[np.Boolean]: boolean array of whether these are valid root_ids
         """
-        root_ids = root_id_int_list_check(root_ids)
+        root_ids = root_id_int_list_check(root_ids, make_unique=False)
 
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["is_latest_roots"].format_map(endpoint_mapping)
@@ -730,7 +734,7 @@ class ChunkedGraphClientV1(ClientBase):
         -------
 
         """
-        root_ids = root_id_int_list_check(root_ids)
+        root_ids = root_id_int_list_check(root_ids, make_unique=False)
 
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["root_timestamps"].format_map(endpoint_mapping)
@@ -762,7 +766,7 @@ class ChunkedGraphClientV1(ClientBase):
             Dict with keys `future_id_map` and `past_id_map`. Each is a dict whose keys are the supplied root ids and whose values
             are the list of related root ids at the past/future time stamp.
         """
-        root_ids = root_id_int_list_check(root_ids)
+        root_ids = root_id_int_list_check(root_ids, make_unique=True)
 
         endpoint_mapping = self.default_url_mapping
 
