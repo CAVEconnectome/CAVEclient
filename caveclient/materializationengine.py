@@ -1095,7 +1095,7 @@ class MaterializatonClientV2(ClientBase):
                 limit=limit,
                 live_query=timestamp is not None,
                 timestamp=string_format_timestamp(timestamp),
-                materialization_version=materialization_version,
+                materialization_version=None,
             )
             df.attrs.update(attrs)
 
