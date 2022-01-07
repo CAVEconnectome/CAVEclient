@@ -31,6 +31,7 @@ from IPython.display import HTML
 import pandas as pd
 import pytz
 import warnings
+import re
 
 SERVER_KEY = "me_server_address"
 
@@ -64,11 +65,16 @@ def concatenate_position_columns(df, inplace=False):
 
 
 def convert_timestamp(ts: datetime):
+    if ts == "now":
+        ts = datetime.utcnow()
+
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
             return pytz.UTC.localize(ts)
         else:
             return ts.astimezone(timezone.utc)
+    elif isinstance(ts, float):
+        return datetime.fromtimestamp(ts)
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     return dt.replace(tzinfo=timezone.utc)
 
@@ -551,7 +557,6 @@ class MaterializatonClientV2(ClientBase):
                     filter_out_dict=filter_out_dict,
                     filter_equal_dict=filter_equal_dict,
                     filter_spatial_dict=filter_spatial_dict,
-                    join_args=join_args,
                     select_columns=select_columns,
                     offset=offset,
                     limit=limit,
@@ -593,6 +598,24 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+
+            attrs = self._assemble_attributes(
+                table,
+                join_query=False,
+                filters={
+                    "inclusive": filter_in_dict,
+                    "exclusive": filter_out_dict,
+                    "equal": filter_equal_dict,
+                    "spatial": filter_spatial_dict,
+                },
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                live_query=timestamp is not None,
+                timestamp=timestamp,
+                materialization_version=materialization_version,
+            )
+            df.attrs.update(attrs)
             if split_positions:
                 return df
             else:
@@ -693,7 +716,24 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
-
+            attrs = self._assemble_attributes(
+                tables,
+                join_query=True,
+                suffixes=suffixes,
+                filters={
+                    "inclusive": filter_in_dict,
+                    "exclusive": filter_out_dict,
+                    "equal": filter_equal_dict,
+                    "spatial": filter_spatial_dict,
+                },
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                live_query=False,
+                timestamp=None,
+                materialization_version=materialization_version,
+            )
+            df.attrs.update(attrs)
             if split_positions:
                 return df
             else:
@@ -1020,6 +1060,24 @@ class MaterializatonClientV2(ClientBase):
                     for col, val in filter_equal_dict.items():
                         df = df[df[col] == val]
 
+        attrs = self._assemble_attributes(
+            table,
+            join_query=False,
+            filters={
+                "inclusive": filter_in_dict,
+                "exclusive": filter_out_dict,
+                "equal": filter_equal_dict,
+                "spatial": filter_spatial_dict,
+            },
+            select_columns=select_columns,
+            offset=offset,
+            limit=limit,
+            live_query=timestamp is not None,
+            timestamp=timestamp,
+            materialization_version=materialization_version,
+        )
+        df.attrs.update(attrs)
+
         return df
 
     def synapse_query(
@@ -1099,11 +1157,46 @@ class MaterializatonClientV2(ClientBase):
             split_positions=split_positions,
             materialization_version=materialization_version,
             timestamp=timestamp,
+            datastack_name=datastack_name,
         )
+        df.attrs["remove_autapses"] = remove_autapses
+
         if remove_autapses:
             return df.query("pre_pt_root_id!=post_pt_root_id")
         else:
             return df
+
+    def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
+        attrs = {
+            "datastack_name": self.datastack_name,
+        }
+        if not join_query:
+            attrs["join_query"] = False
+            meta = self.get_table_metadata(tables)
+            for k, v in meta.items():
+                if re.match("^table", k):
+                    attrs[k] = v
+                else:
+                    attrs[f"table_{k}"] = v
+        else:
+            attrs["join_query"] = True
+            attrs["tables"] = {}
+            table_attrs = attrs["tables"]
+            if suffixes is None:
+                suffixes = ["_x", "_y"]
+            for (tname, jcol), s in zip(tables, suffixes):
+                table_attrs[tname] = {}
+                meta = self.get_table_metadata(tname)
+                for k, v in meta.items():
+                    if re.match("^table", k):
+                        table_attrs[tname][k] = v
+                    else:
+                        table_attrs[tname][f"table_{k}"] = v
+                table_attrs[tname]["join_column"] = jcol
+                table_attrs[tname]["suffix"] = s
+
+        attrs.update(kwargs)
+        return attrs
 
 
 client_mapping = {2: MaterializatonClientV2, "latest": MaterializatonClientV2}
