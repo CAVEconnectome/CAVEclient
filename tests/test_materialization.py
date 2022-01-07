@@ -44,6 +44,21 @@ class TestMatclient:
     }
     endpoints = materialization_endpoints_v2
 
+    table_metadata = {
+        "aligned_volume": "minnie65_phase3",
+        "id": 473,
+        "schema": "cell_type_local",
+        "valid": True,
+        "created": "2021-04-29T05:58:42.196350",
+        "table_name": "allen_v1_column_types_slanted",
+        "description": "Adaptation of the allen_v1_column_types_v2 table, but with a lower region that follows the natural curvature of the neurons. The direction was estimated from several PT cell axons from within the column. Only neurons are included in this table, not non-neuronal cells. Slanted region and new cell typing was initially done by Casey Schneider-Mizell, with help from Nuno da Costa and Agnes Bodor.",
+        "flat_segmentation_source": "",
+        "schema_type": "cell_type_local",
+        "user_id": "56",
+        "reference_table": "",
+        "voxel_resolution": [4.0, 4.0, 40.0],
+    }
+
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
@@ -82,6 +97,9 @@ class TestMatclient:
             match=[responses.json_params_matcher(correct_query_data)],
         )
 
+        meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
+        responses.add(responses.GET, url=meta_url, json=self.table_metadata)
+
         df = myclient.materialize.query_table(
             test_info["synapse_table"],
             filter_in_dict={"pre_pt_root_id": [500]},
@@ -92,6 +110,7 @@ class TestMatclient:
         )
         assert len(df) == 1000
         assert type(df) == pd.DataFrame
+        assert df.attrs["table_id"] == self.table_metadata["id"]
 
         correct_metadata = [
             {
@@ -112,6 +131,9 @@ class TestMatclient:
 
         md_url = self.endpoints["versions_metadata"].format_map(endpoint_mapping)
         responses.add(responses.GET, url=md_url, json=correct_metadata, status=200)
+
+        meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
+        responses.add(responses.GET, url=meta_url, json=self.table_metadata)
 
         bad_time = materializationengine.convert_timestamp(
             datetime.datetime(
@@ -336,6 +358,9 @@ class TestMatclient:
         query_d = {"return_pyarrow": True, "split_positions": True}
         query_string = urlencode(query_d)
         url = url + "?" + query_string
+
+        meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
+        responses.add(responses.GET, url=meta_url, json=self.table_metadata)
 
         correct_query_data = {}
         responses.add(
