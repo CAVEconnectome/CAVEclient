@@ -31,6 +31,7 @@ from IPython.display import HTML
 import pandas as pd
 import pytz
 import warnings
+import re
 
 SERVER_KEY = "me_server_address"
 
@@ -64,13 +65,25 @@ def concatenate_position_columns(df, inplace=False):
 
 
 def convert_timestamp(ts: datetime):
+    if ts == "now":
+        ts = datetime.utcnow()
+
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
             return pytz.UTC.localize(ts)
         else:
             return ts.astimezone(timezone.utc)
+    elif isinstance(ts, float):
+        return datetime.fromtimestamp(ts)
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     return dt.replace(tzinfo=timezone.utc)
+
+
+def string_format_timestamp(ts):
+    if isinstance(ts, datetime):
+        return datetime.strftime(ts, "%Y-%m-%dT%H:%M:%S.%f")
+    else:
+        return ts
 
 
 def MaterializationClient(
@@ -501,6 +514,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         materialization_version: int = None,
         timestamp: datetime = None,
+        metadata: bool = True,
     ):
         """generic query on materialization tables
 
@@ -536,6 +550,8 @@ class MaterializatonClientV2(ClientBase):
                 If None defaults to one specified in client.
             timestamp (datetime.datetime, optional): timestamp to query
                 If passsed will do a live query. Error if also passing a materialization version
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -551,13 +567,13 @@ class MaterializatonClientV2(ClientBase):
                     filter_out_dict=filter_out_dict,
                     filter_equal_dict=filter_equal_dict,
                     filter_spatial_dict=filter_spatial_dict,
-                    join_args=join_args,
                     select_columns=select_columns,
                     offset=offset,
                     limit=limit,
                     datastack_name=datastack_name,
                     split_positions=split_positions,
                     post_filter=True,
+                    metadata=metadata,
                 )
         if materialization_version is None:
             materialization_version = self.version
@@ -593,6 +609,25 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+
+            if metadata:
+                attrs = self._assemble_attributes(
+                    table,
+                    join_query=False,
+                    filters={
+                        "inclusive": filter_in_dict,
+                        "exclusive": filter_out_dict,
+                        "equal": filter_equal_dict,
+                        "spatial": filter_spatial_dict,
+                    },
+                    select_columns=select_columns,
+                    offset=offset,
+                    limit=limit,
+                    live_query=timestamp is not None,
+                    timestamp=string_format_timestamp(timestamp),
+                    materialization_version=materialization_version,
+                )
+                df.attrs.update(attrs)
             if split_positions:
                 return df
             else:
@@ -616,6 +651,7 @@ class MaterializatonClientV2(ClientBase):
         return_df: bool = True,
         split_positions: bool = False,
         materialization_version: int = None,
+        metadata: bool = True,
     ):
         """generic query on materialization tables
 
@@ -654,6 +690,8 @@ class MaterializatonClientV2(ClientBase):
                 default False, if False data is returned as one column with [x,y,z] array (slower)
             materialization_version (int, optional): version to query.
                 If None defaults to one specified in client.
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
 
         Returns:
             pd.DataFrame: a pandas dataframe of results of query
@@ -694,6 +732,25 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
 
+            if metadata:
+                attrs = self._assemble_attributes(
+                    tables,
+                    join_query=True,
+                    suffixes=suffixes,
+                    filters={
+                        "inclusive": filter_in_dict,
+                        "exclusive": filter_out_dict,
+                        "equal": filter_equal_dict,
+                        "spatial": filter_spatial_dict,
+                    },
+                    select_columns=select_columns,
+                    offset=offset,
+                    limit=limit,
+                    live_query=False,
+                    timestamp=None,
+                    materialization_version=materialization_version,
+                )
+                df.attrs.update(attrs)
             if split_positions:
                 return df
             else:
@@ -863,6 +920,7 @@ class MaterializatonClientV2(ClientBase):
         datastack_name: str = None,
         split_positions: bool = False,
         post_filter: bool = True,
+        metadata: bool = True,
     ):
         """generic query on materialization tables
 
@@ -900,6 +958,9 @@ class MaterializatonClientV2(ClientBase):
                 So if, for example, a cell had a false merger split off since the last materialization.
                 those annotations on that incorrect portion of the cell will be included if this is False,
                 but will be filtered down if this is True. (Default=True)
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+
 
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
@@ -1019,6 +1080,24 @@ class MaterializatonClientV2(ClientBase):
                 if filter_equal_dict is not None:
                     for col, val in filter_equal_dict.items():
                         df = df[df[col] == val]
+        if metadata:
+            attrs = self._assemble_attributes(
+                table,
+                join_query=False,
+                filters={
+                    "inclusive": filter_in_dict,
+                    "exclusive": filter_out_dict,
+                    "equal": filter_equal_dict,
+                    "spatial": filter_spatial_dict,
+                },
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                live_query=timestamp is not None,
+                timestamp=string_format_timestamp(timestamp),
+                materialization_version=None,
+            )
+            df.attrs.update(attrs)
 
         return df
 
@@ -1037,6 +1116,7 @@ class MaterializatonClientV2(ClientBase):
         synapse_table: str = None,
         datastack_name: str = None,
         materialization_version: int = None,
+        metadata: bool = True,
     ):
         """query synapses
 
@@ -1058,6 +1138,9 @@ class MaterializatonClientV2(ClientBase):
             datastack_name: (str, optional): datastack to query
             materialization_version (int, optional): version to query.
                 defaults to self.materialization_version if not specified
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+
         """
         filter_in_dict = {}
         filter_equal_dict = {}
@@ -1099,11 +1182,49 @@ class MaterializatonClientV2(ClientBase):
             split_positions=split_positions,
             materialization_version=materialization_version,
             timestamp=timestamp,
+            datastack_name=datastack_name,
+            metadata=metadata,
         )
+
+        if metadata:
+            df.attrs["remove_autapses"] = remove_autapses
+
         if remove_autapses:
             return df.query("pre_pt_root_id!=post_pt_root_id")
         else:
             return df
+
+    def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
+        attrs = {
+            "datastack_name": self.datastack_name,
+        }
+        if not join_query:
+            attrs["join_query"] = False
+            meta = self.get_table_metadata(tables)
+            for k, v in meta.items():
+                if re.match("^table", k):
+                    attrs[k] = v
+                else:
+                    attrs[f"table_{k}"] = v
+        else:
+            attrs["join_query"] = True
+            attrs["tables"] = {}
+            table_attrs = attrs["tables"]
+            if suffixes is None:
+                suffixes = ["_x", "_y"]
+            for (tname, jcol), s in zip(tables, suffixes):
+                table_attrs[tname] = {}
+                meta = self.get_table_metadata(tname)
+                for k, v in meta.items():
+                    if re.match("^table", k):
+                        table_attrs[tname][k] = v
+                    else:
+                        table_attrs[tname][f"table_{k}"] = v
+                table_attrs[tname]["join_column"] = jcol
+                table_attrs[tname]["suffix"] = s
+
+        attrs.update(kwargs)
+        return attrs
 
 
 client_mapping = {2: MaterializatonClientV2, "latest": MaterializatonClientV2}
