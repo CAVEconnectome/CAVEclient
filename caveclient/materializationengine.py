@@ -446,6 +446,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions,
         offset,
         limit,
+        get_count,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -454,6 +455,7 @@ class MaterializatonClientV2(ClientBase):
         query_args = {}
         query_args["return_pyarrow"] = return_pyarrow
         query_args["split_positions"] = split_positions
+        query_args["count"] = get_count
         if len(tables) == 1:
             endpoint_mapping["table_name"] = tables[0]
             url = self._endpoints["simple_query"].format_map(endpoint_mapping)
@@ -478,6 +480,7 @@ class MaterializatonClientV2(ClientBase):
         if limit is not None:
             assert limit > 0
             data["limit"] = limit
+
         if return_pyarrow:
             encoding = ""
         else:
@@ -496,6 +499,7 @@ class MaterializatonClientV2(ClientBase):
         select_columns=None,
         offset: int = None,
         limit: int = None,
+        get_count: bool = False,
         datastack_name: str = None,
         return_df: bool = True,
         split_positions: bool = False,
@@ -522,6 +526,7 @@ class MaterializatonClientV2(ClientBase):
                              Expressed in units of the voxel_resolution of this dataset.
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
+            get_count: if True only returns the count of the entire query; ignores limits
             select_columns (list of str, optional): columns to select. Defaults to None.
             suffixes: (list[str], optional): suffixes to use on duplicate columns
             offset (int, optional): result offset to use. Defaults to None.
@@ -578,6 +583,7 @@ class MaterializatonClientV2(ClientBase):
             True,
             offset,
             limit,
+            get_count,
         )
 
         response = self.session.post(
@@ -593,7 +599,7 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
-            if split_positions:
+            if split_positions or get_count:
                 return df
             else:
                 return concatenate_position_columns(df, inplace=True)
@@ -611,6 +617,7 @@ class MaterializatonClientV2(ClientBase):
         select_columns=None,
         offset: int = None,
         limit: int = None,
+        get_count: bool = False,
         suffixes: list = None,
         datastack_name: str = None,
         return_df: bool = True,
@@ -678,6 +685,7 @@ class MaterializatonClientV2(ClientBase):
             True,
             offset,
             limit,
+            get_count,
         )
 
         response = self.session.post(
@@ -978,6 +986,7 @@ class MaterializatonClientV2(ClientBase):
                 True,
                 offset,
                 limit,
+                False,
             )
             logging.debug(f"query_args: {query_args}")
             logging.debug(f"query data: {data}")
@@ -1032,6 +1041,7 @@ class MaterializatonClientV2(ClientBase):
         remove_autapses: bool = True,
         include_zeros: bool = True,
         limit: int = None,
+        get_count: bool = False,
         offset: int = None,
         split_positions: bool = False,
         synapse_table: str = None,
@@ -1099,6 +1109,7 @@ class MaterializatonClientV2(ClientBase):
             split_positions=split_positions,
             materialization_version=materialization_version,
             timestamp=timestamp,
+            get_count=get_count,
         )
         if remove_autapses:
             return df.query("pre_pt_root_id!=post_pt_root_id")
