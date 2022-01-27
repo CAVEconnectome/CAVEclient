@@ -268,6 +268,42 @@ class ChunkedGraphClientV1(ClientBase):
 
         return handle_response(response)
 
+    def get_user_operations(
+        self,
+        user_id: int,
+        include_undo: bool = True,
+        timestamp_start: datetime.datetime = None,
+        timestamp_end: datetime.datetime = None,
+    ):
+        """get operation details for a user_id
+
+        Args:
+            user_id (int): userID to query (use 0 for all users [admin only])
+            include_undo (bool, optional): whether to include undos. Defaults to True.
+            timestamp_start (datetime.datetime, optional): timestamp to start filter (UTC). Defaults to None.
+            timestamp_end (datetime.datetime, optional): timestamp to end filter (UTC). Defaults to None.
+        """
+        endpoint_mapping = self.default_url_mapping
+
+        url = self._endpoints["user_operations"].format_map(endpoint_mapping)
+        params = {"include_undo": include_undo}
+
+        if user_id > 0:
+            params = {"user_id": user_id}
+        if timestamp_start is not None:
+            params.update(
+                package_timestamp(
+                    self._process_timestamp(timestamp_start), "start_time"
+                )
+            )
+        if timestamp_end is not None:
+            params.update(
+                package_timestamp(self._process_timestamp(timestamp_end), "end_time")
+            )
+        response = self.session.get(url, params=params)
+
+        return handle_response(response)
+
     def get_tabular_change_log(self, root_ids, filtered=True):
         """Get a detailed changelog for neurons
 
