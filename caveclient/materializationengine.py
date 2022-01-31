@@ -76,7 +76,7 @@ def convert_timestamp(ts: datetime):
     elif isinstance(ts, float):
         return datetime.fromtimestamp(ts)
     elif ts is None:
-        return None
+        return pd.Timestamp.max.to_pydatetime()
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     return dt.replace(tzinfo=timezone.utc)
 
