@@ -75,6 +75,8 @@ def convert_timestamp(ts: datetime):
             return ts.astimezone(timezone.utc)
     elif isinstance(ts, float):
         return datetime.fromtimestamp(ts)
+    elif ts is None:
+        return None
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     return dt.replace(tzinfo=timezone.utc)
 
