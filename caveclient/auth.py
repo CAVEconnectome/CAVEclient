@@ -218,9 +218,11 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             user_ids to look up
         """
         endpoint_mapping = self._default_endpoint_mapping
-        params = {"id": ','.join(str(i) for i in user_ids)}
+        params = {"id": ",".join(str(i) for i in user_ids)}
         url = auth_endpoints_v1["get_users"].format_map(endpoint_mapping)
-        response = requests.Session().get(url, headers=self.request_header, params=params)
+        response = requests.Session().get(
+            url, headers=self.request_header, params=params
+        )
 
         return handle_response(response)
 
