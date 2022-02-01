@@ -723,7 +723,11 @@ class ChunkedGraphClientV1(ClientBase):
         return np.array(r["is_latest"], np.bool)
 
     def is_valid_nodes(self, node_ids, start_timestamp=None, end_timestamp=None):
-        """Check whether these root_ids are still a root at this timestamp
+        """Check whether nodes are valid for given timestamp range
+
+        Valid is defined as existing in the chunkedgraph. This makes no statement
+        about these IDs being roots, supervoxel or anything in-between. It also
+        does not take into account whether a root id has since been edited.
 
         Parameters
         ----------
@@ -732,7 +736,7 @@ class ChunkedGraphClientV1(ClientBase):
             end_timestamp (datetime.dateime, optional): timestamp to check whether these IDs were valid before this timestamp. Defaults to None (assumes now).
 
         Returns:
-            np.array[np.Boolean]: boolean array of whether these are valid root_ids
+            np.array[np.Boolean]: boolean array of whether these are valid IDs
         """
         node_ids = root_id_int_list_check(node_ids, make_unique=False)
 
