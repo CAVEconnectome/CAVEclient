@@ -17,6 +17,7 @@ from .format_utils import (
     output_map_graphene,
     format_raw,
 )
+import re
 import requests
 from warnings import warn
 
@@ -89,7 +90,6 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
-
         )
         self.info_cache = dict()
         if datastack_name is not None:
@@ -340,6 +340,49 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             use_stored=use_stored,
             format_for="raw",
         )
+
+    def image_cloudvolume(self, **kwargs):
+        """Generate a cloudvolume instance based on the image source, using authentication if needed and
+        sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
+        is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
+        can be overridden.
+        """
+        return self._make_cloudvolume(self.image_source(), **kwargs)
+
+    def segmentation_cloudvolume(self, **kwargs):
+        """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
+        sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
+        is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
+        can be overridden.
+        """
+        return self._make_cloudvolume(self.segmentation_source(), **kwargs)
+
+    def _make_cloudvolume(self, cloudpath, **kwargs):
+        try:
+            import cloudvolume
+        except:
+            raise ImportError(
+                "Could not import cloudvolume. Make sure it is installed."
+            )
+
+        use_https = kwargs.pop("use_https", True)
+        bounded = kwargs.pop("bounded", False)
+        fill_missing = kwargs.pop("fill_missing", True)
+
+        if re.search("^graphene", cloudpath):
+            # Authentication header is "Authorization {token}"
+            secrets = {"token": self.session.headers.get("Authorization").split(" ")[1]}
+        else:
+            secrets = None
+
+        cv = cloudvolume.CloudVolume(
+            cloudpath,
+            use_https=use_https,
+            fill_missing=fill_missing,
+            bounded=bounded,
+            secrets=secrets,
+        )
+        return cv
 
 
 client_mapping = {
