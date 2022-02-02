@@ -385,6 +385,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             fill_missing=fill_missing,
             bounded=bounded,
             secrets=secrets,
+            **kwargs,
         )
         return cv
 
