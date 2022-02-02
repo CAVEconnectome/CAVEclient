@@ -346,6 +346,8 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
         can be overridden.
+
+        Requires cloudvolume to be installed, which is not included by default.
         """
         return self._make_cloudvolume(self.image_source(), **kwargs)
 
@@ -354,6 +356,8 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
         can be overridden.
+
+        Requires cloudvolume to be installed, which is not included by default.
         """
         return self._make_cloudvolume(self.segmentation_source(), **kwargs)
 
@@ -362,7 +366,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             import cloudvolume
         except:
             raise ImportError(
-                "Could not import cloudvolume. Make sure it is installed."
+                "Could not import cloudvolume. Make sure it is installed. See https://pypi.org/project/cloud-volume for more info."
             )
 
         use_https = kwargs.pop("use_https", True)
