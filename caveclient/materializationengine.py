@@ -511,8 +511,8 @@ class MaterializatonClientV2(ClientBase):
             target_table = md["reference_table"]
 
         if target_table is not None:
-            tables = [[table, "target_id"], [md["reference_table"], id]]
-            suffixes = ("", "_ref")
+            tables = [[table, "target_id"], [md["reference_table"], "id"]]
+            suffixes = ("", "ref")
         else:
             tables = [table]
             suffixes = None
