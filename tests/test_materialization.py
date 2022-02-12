@@ -59,6 +59,21 @@ class TestMatclient:
         "voxel_resolution": [4.0, 4.0, 40.0],
     }
 
+    synapse_metadata = {
+        "aligned_volume": test_info["aligned_volume"],
+        "id": 474,
+        "schema": "synapse",
+        "valid": True,
+        "created": "2021-04-29T05:58:42.196350",
+        "table_name": test_info["synapse_table"],
+        "description": "test synapse table",
+        "flat_segmentation_source": "",
+        "schema_type": "synapse",
+        "user_id": "56",
+        "reference_table": "",
+        "voxel_resolution": [4.0, 4.0, 40.0],
+    }
+
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
@@ -72,6 +87,10 @@ class TestMatclient:
         responses.add(responses.GET, url=versionurl, json=[1], status=200)
 
         url = self.endpoints["simple_query"].format_map(endpoint_mapping)
+        syn_md_url = self.endpoints["metadata"].format_map(endpoint_mapping)
+
+        responses.add(responses.GET, url=syn_md_url, json=self.synapse_metadata)
+
         query_d = {"return_pyarrow": True, "split_positions": True}
         query_string = urlencode(query_d)
         url = url + "?" + query_string
