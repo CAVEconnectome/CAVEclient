@@ -508,8 +508,11 @@ class MaterializatonClientV2(ClientBase):
                 datastack_name=datastack_name,
                 version=materialization_version,
             )
-            target_table = md["reference_table"] if len(md["reference_table"])>1 else None
-
+            target_table = (
+                md["reference_table"] if len(md["reference_table"]) > 1 else None
+            )
+        else:
+            target_table = None
         if target_table is not None:
             tables = [[table, "target_id"], [md["reference_table"], "id"]]
             suffixes = ("", "ref")
