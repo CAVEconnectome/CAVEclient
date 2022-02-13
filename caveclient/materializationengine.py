@@ -4,6 +4,7 @@ from typing import ValuesView
 
 from numpy.lib.function_base import iterable
 from numpy.lib.twodim_base import _trilu_indices_form_dispatcher
+from responses import target
 import caveclient
 from .base import (
     ClientBaseWithDataset,
@@ -508,9 +509,13 @@ class MaterializatonClientV2(ClientBase):
                 datastack_name=datastack_name,
                 version=materialization_version,
             )
-            target_table = (
-                md["reference_table"] if len(md["reference_table"]) > 1 else None
-            )
+            if md["reference_table"] is None:
+                target_table = None
+            else:
+                if len(md["reference_table"] )==0:
+                    target_table = None
+                else:
+                    target_table = md["reference_table"]
         else:
             target_table = None
         if target_table is not None:

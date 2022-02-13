@@ -70,7 +70,7 @@ class TestMatclient:
         "flat_segmentation_source": "",
         "schema_type": "synapse",
         "user_id": "56",
-        "reference_table": "",
+        "reference_table": None,
         "voxel_resolution": [4.0, 4.0, 40.0],
     }
 
