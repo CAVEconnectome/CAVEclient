@@ -27,6 +27,7 @@ class CAVEclient(object):
         max_retries=DEFAULT_RETRIES,
         pool_maxsize=None,
         pool_block=None,
+        desired_resolution=None,
     ):
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
@@ -48,6 +49,7 @@ class CAVEclient(object):
                 max_retries=max_retries,
                 pool_maxsize=pool_maxsize,
                 pool_block=pool_block,
+                desired_resolution=desired_resolution,
             )
 
 
@@ -256,6 +258,9 @@ class CAVEclientFull(CAVEclientGlobal):
         Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
     pool_block: bool or None, optional
         If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
+    desired_resolution : Iterable[float]or None, optional
+        If given, should be a list or array of the desired resolution you want queries returned in
+        useful for materialization queries.
     """
 
     def __init__(
@@ -268,6 +273,7 @@ class CAVEclientFull(CAVEclientGlobal):
         max_retries=DEFAULT_RETRIES,
         pool_maxsize=None,
         pool_block=None,
+        desired_resolution=None,
     ):
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
@@ -285,7 +291,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._annotation = None
         self._materialize = None
         self._l2cache = None
-
+        self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
@@ -345,6 +351,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                desired_resolution=self.desired_resolution,
             )
         return self._materialize
 
