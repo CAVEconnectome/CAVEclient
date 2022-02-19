@@ -1,10 +1,7 @@
 import pytest
-import requests
-from caveclient import CAVEclient, materializationengine
-import os
+from caveclient import materializationengine
 from caveclient.endpoints import (
     materialization_endpoints_v2,
-    chunkedgraph_endpoints_v1,
     chunkedgraph_endpoints_common,
 )
 import pandas as pd
@@ -13,7 +10,6 @@ import pyarrow as pa
 from urllib.parse import urlencode
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import datetime
-import time
 import numpy as np
 
 
