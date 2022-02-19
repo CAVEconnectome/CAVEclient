@@ -602,6 +602,7 @@ class MaterializatonClientV2(ClientBase):
                 if desired_resolution is None:
                     desired_resolution = self.desired_resolution
                 if desired_resolution is not None:
+                    df = df.copy()
                     if len(desired_resolution) != 3:
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
@@ -1067,6 +1068,7 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 if desired_resolution is not None:
+                    df = df.copy()
                     if len(desired_resolution) != 3:
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
