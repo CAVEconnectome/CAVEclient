@@ -119,7 +119,7 @@ def MaterializationClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
-    desired_resolution=None
+    desired_resolution=None,
 ):
     """Factory for returning AnnotationClient
 
@@ -141,7 +141,7 @@ def MaterializationClient(
         default synapse table for queries
     version : default version to query
         if None will default to latest version
-    desired_resolution : Iterable[float]or None, optional
+    desired_resolution : Iterable[float] or None, optional
         If given, should be a list or array of the desired resolution you want queries returned in
         useful for materialization queries.
 
@@ -500,7 +500,7 @@ class MaterializatonClientV2(ClientBase):
         materialization_version: int = None,
         timestamp: datetime = None,
         metadata: bool = True,
-        desired_resolution: Iterable[float] = None,
+        desired_resolution: Iterable = None,
     ):
         """generic query on materialization tables
 
@@ -608,7 +608,7 @@ class MaterializatonClientV2(ClientBase):
                         )
                     vox_res = self.get_table_metadata(
                         table, datastack_name, materialization_version
-                    )
+                    )["voxel_resolution"]
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
                 attrs = self._assemble_attributes(
@@ -920,7 +920,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         post_filter: bool = True,
         metadata: bool = True,
-        desired_resolution: Iterable[float] = None,
+        desired_resolution: Iterable = None,
     ):
         """generic query on materialization tables
 
@@ -1075,7 +1075,7 @@ class MaterializatonClientV2(ClientBase):
                         table_name=table,
                         datastack_name=datastack_name,
                         version=materialization_version,
-                    )
+                    )["voxel_resolution"]
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
