@@ -1,7 +1,7 @@
+import re
+import numpy as np
 from .base import (
-    ClientBaseWithDataset,
     ClientBaseWithDatastack,
-    _api_versions,
     _api_endpoints,
     handle_response,
 )
@@ -14,12 +14,9 @@ from .endpoints import (
 from .format_utils import (
     output_map_raw,
     output_map_precomputed,
-    output_map_graphene,
     format_raw,
 )
-import re
-import requests
-from warnings import warn
+
 
 SERVER_KEY = "i_server_address"
 
@@ -331,6 +328,37 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         """Reload the stored info values from the server."""
         for ds in self.info_cache.keys():
             self.get_datastack_info(datastack_name=ds, use_stored=False)
+
+    def viewer_resolution(self, datastack_name=None, use_stored=True):
+        """get the viewer resolution metadata for this datastack
+
+        Args:
+            datastack_name (_type_, optional): _description_. Defaults to None.
+              If None use the default one configured in the client
+            use_stored (bool, optional): _description_. Defaults to True.
+              Use the cached value, if False go get a new value from server
+        Returns:
+            np.array: voxel resolution as a len(3) np.array
+        """
+        vx = self._get_property(
+            "voxel_resolution_x",
+            datastack_name=datastack_name,
+            use_stored=use_stored,
+            format_for="raw",
+        )
+        vy = self._get_property(
+            "voxel_resolution_y",
+            datastack_name=datastack_name,
+            use_stored=use_stored,
+            format_for="raw",
+        )
+        vz = self._get_property(
+            "voxel_resolution_z",
+            datastack_name=datastack_name,
+            use_stored=use_stored,
+            format_for="raw",
+        )
+        return np.array([vx, vy, vz])
 
     def viewer_site(self, datastack_name=None, use_stored=True):
         """Get the base Neuroglancer URL for the dataset"""
