@@ -341,19 +341,19 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             np.array: voxel resolution as a len(3) np.array
         """
         vx = self._get_property(
-            "voxel_resolution_x",
+            "viewer_resolution_x",
             datastack_name=datastack_name,
             use_stored=use_stored,
             format_for="raw",
         )
         vy = self._get_property(
-            "voxel_resolution_y",
+            "viewer_resolution_y",
             datastack_name=datastack_name,
             use_stored=use_stored,
             format_for="raw",
         )
         vz = self._get_property(
-            "voxel_resolution_z",
+            "viewer_resolution_z",
             datastack_name=datastack_name,
             use_stored=use_stored,
             format_for="raw",
