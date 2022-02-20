@@ -444,6 +444,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions,
         offset,
         limit,
+        use_live=False,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -454,7 +455,10 @@ class MaterializatonClientV2(ClientBase):
         query_args["split_positions"] = split_positions
         if len(tables) == 1:
             endpoint_mapping["table_name"] = tables[0]
-            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
+            if use_live:
+                url = self._endpoints["simple_live_query"].format_map(endpoint_mapping)
+            else:
+                url = self._endpoints["simple_query"].format_map(endpoint_mapping)
         else:
             data["tables"] = tables
             url = self._endpoints["join_query"].format_map(endpoint_mapping)
@@ -501,6 +505,7 @@ class MaterializatonClientV2(ClientBase):
         timestamp: datetime = None,
         metadata: bool = True,
         desired_resolution: Iterable = None,
+        use_live=False,
     ):
         """generic query on materialization tables
 
@@ -584,6 +589,7 @@ class MaterializatonClientV2(ClientBase):
             True,
             offset,
             limit,
+            use_live=use_live
         )
 
         response = self.session.post(
@@ -922,6 +928,7 @@ class MaterializatonClientV2(ClientBase):
         post_filter: bool = True,
         metadata: bool = True,
         desired_resolution: Iterable = None,
+        use_live = False
     ):
         """generic query on materialization tables
 
