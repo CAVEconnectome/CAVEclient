@@ -44,6 +44,8 @@ materialization_endpoints_v2 = {
     "metadata": mat_v2_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
     "versions_metadata": mat_v2_api + "/datastack/{datastack_name}/metadata",
+    "ingest_annotation_table": mat_v2_api
+    + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
 }
 materialization_api_versions = {2: materialization_endpoints_v2}
 annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}

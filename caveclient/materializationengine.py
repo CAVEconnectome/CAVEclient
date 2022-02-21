@@ -589,7 +589,7 @@ class MaterializatonClientV2(ClientBase):
             True,
             offset,
             limit,
-            use_live=use_live
+            use_live=use_live,
         )
 
         response = self.session.post(
@@ -928,7 +928,7 @@ class MaterializatonClientV2(ClientBase):
         post_filter: bool = True,
         metadata: bool = True,
         desired_resolution: Iterable = None,
-        use_live = False
+        use_live=False,
     ):
         """generic query on materialization tables
 
@@ -1218,6 +1218,24 @@ class MaterializatonClientV2(ClientBase):
             return df.query("pre_pt_root_id!=post_pt_root_id")
         else:
             return df
+
+    def trigger_annotation_ingestion(self, table_name: str, datastack_name=None):
+        """triggers the ingestion of new annotations (supervoxel and root id lookups)
+
+        Args:
+            table_name (str): table to trigger on
+            datastack_name (str, optional): datastack table exists in. Defaults to datastack specfied by client.
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["ingest_annotation_table"].format_map(endpoint_mapping)
+        response = self.session.post(url)
+        return handle_response(response, as_json=False)
 
     def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
         attrs = {
