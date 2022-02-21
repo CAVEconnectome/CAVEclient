@@ -6,3 +6,5 @@ pandas
 cachetools>=4.2.1
 ipython
 networkx
+jsonschema
+attrs
