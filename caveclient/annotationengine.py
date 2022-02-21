@@ -273,10 +273,10 @@ class AnnotationClientV2(ClientBase):
         reference_table: str or None
             If the schema you are using is a reference schema
             Meaning it is an annotation of another annotation.
-            Then you need to specify what the target table 
+            Then you need to specify what the target table
             those annotations are in.
         track_target_id_updates: bool or None
-            Indicates whether to automatically update reference table's foreign key 
+            Indicates whether to automatically update reference table's foreign key
             if target annotation table row is updated.
         flat_segmentation_source: str or None
             the source to a flat segmentation that corresponds to this table
@@ -535,7 +535,11 @@ class AnnotationClientV2(ClientBase):
 
         data = {"annotations": data}
 
-        response = self.session.put(url, json=data)
+        response = self.session.put(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            headers={"Content-Type": "application/json"},
+        )
         return handle_response(response)
 
     def update_annotation_df(
