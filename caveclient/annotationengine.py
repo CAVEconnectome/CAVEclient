@@ -7,7 +7,7 @@ import pandas as pd
 from .auth import AuthClient
 from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
 from .endpoints import annotation_api_versions, annotation_common
-from .utils import stage
+from .tools import stage
 
 SERVER_KEY = "ae_server_address"
 
@@ -111,6 +111,7 @@ class AnnotationClientV2(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        schema_client=None,
     ):
         super(AnnotationClientV2, self).__init__(
             server_address,
@@ -126,6 +127,10 @@ class AnnotationClientV2(ClientBase):
         )
 
         self._aligned_volume_name = aligned_volume_name
+        if schema_client is None:
+            self._schema_client = self.fc.schema
+        else:
+            self._schema_client = schema_client
 
     @property
     def aligned_volume_name(self):
@@ -206,7 +211,6 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["table_name"] = table_name
 
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
-
         response = self.session.get(url)
         metadata_d = handle_response(response)
         vx = metadata_d.pop("voxel_resolution_x")
@@ -685,7 +689,7 @@ class AnnotationClientV2(ClientBase):
                 raise ValueError("Must specify either table name or schema name")
             obj_name = schema_name
 
-        schema = self.fc.schema.schema_definition(schema_name)
+        schema = self._schema_client.schema_definition(schema_name)
         return stage.StagedAnnotations(
             schema,
             name=obj_name,
