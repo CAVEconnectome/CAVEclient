@@ -179,3 +179,12 @@ class TestAnnoClinet:
             match=[responses.matchers.json_params_matcher(update_data)],
         )
         myclient.annotation.upload_staged_annotations(update_stage)
+
+        schema_stage = myclient.annotation.stage_annotations(
+            schema_name="cell_type_local"
+        )
+        schema_stage.add(**good_annotation)
+        with pytest.raises(ValueError):
+            myclient.annotation.upload_staged_annotations(schema_stage)
+        schema_stage.table_name = self.default_mapping.get("table_name")
+        myclient.annotation.upload_staged_annotations(schema_stage)
