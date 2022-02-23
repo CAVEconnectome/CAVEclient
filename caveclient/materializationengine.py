@@ -1259,7 +1259,7 @@ class MaterializatonClientV2(ClientBase):
         else:
             return df
 
-    def _assemble_attributes(self, tables, suffixes=None, **kwargs):
+    def _assemble_attributes(self, tables, suffixes=None, desired_resolution=None, **kwargs):
         if isinstance(tables, str):
             tables = [tables]
 
