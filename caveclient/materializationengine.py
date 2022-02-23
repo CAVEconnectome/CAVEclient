@@ -627,6 +627,7 @@ class MaterializatonClientV2(ClientBase):
                     live_query=timestamp is not None,
                     timestamp=string_format_timestamp(timestamp),
                     materialization_version=materialization_version,
+                    desired_resolution=desired_resolution,
                 )
                 df.attrs.update(attrs)
             if split_positions:
@@ -1114,6 +1115,7 @@ class MaterializatonClientV2(ClientBase):
                 live_query=timestamp is not None,
                 timestamp=string_format_timestamp(timestamp),
                 materialization_version=None,
+                desired_resolution=desired_resolution,
             )
             df.attrs.update(attrs)
 
@@ -1212,7 +1214,9 @@ class MaterializatonClientV2(ClientBase):
         else:
             return df
 
-    def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
+    def _assemble_attributes(
+        self, tables, join_query, suffixes=None, desired_resolution=None, **kwargs
+    ):
         attrs = {
             "datastack_name": self.datastack_name,
         }
@@ -1224,6 +1228,10 @@ class MaterializatonClientV2(ClientBase):
                     attrs[k] = v
                 else:
                     attrs[f"table_{k}"] = v
+            if desired_resolution is None:
+                attrs["dataframe_resolution"] = attrs["table_voxel_resolution"]
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
         else:
             attrs["join_query"] = True
             attrs["tables"] = {}
@@ -1240,6 +1248,17 @@ class MaterializatonClientV2(ClientBase):
                         table_attrs[tname][f"table_{k}"] = v
                 table_attrs[tname]["join_column"] = jcol
                 table_attrs[tname]["suffix"] = s
+
+            if desired_resolution is None:
+                res = []
+                for tn in attrs["tables"]:
+                    res.append(attrs["tables"][tn]["table_voxel_resolution"])
+                if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
+                    attrs["dataframe_resolution"] = res[0]
+                else:
+                    attrs["dataframe_resolution"] = "mixed_resolutions"
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
 
         attrs.update(kwargs)
         return attrs
