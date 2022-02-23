@@ -1,28 +1,16 @@
 import logging
 from cachetools import cached, TTLCache
-from typing import ValuesView
-
-from numpy.lib.function_base import iterable
-from numpy.lib.twodim_base import _trilu_indices_form_dispatcher
-from responses import target
-import caveclient
 from .base import (
-    ClientBaseWithDataset,
-    ClientBaseWithDatastack,
     ClientBase,
     BaseEncoder,
-    _api_versions,
     _api_endpoints,
     handle_response,
 )
 from .auth import AuthClient
 from .endpoints import materialization_api_versions, materialization_common
-from .infoservice import InfoServiceClientV2
-import requests
-import time
 import json
 import numpy as np
-from datetime import date, datetime, timezone, tzinfo
+from datetime import datetime, timezone
 import pyarrow as pa
 import itertools
 from collections.abc import Iterable
@@ -37,8 +25,38 @@ import re
 SERVER_KEY = "me_server_address"
 
 
+def convert_position_columns(df, given_resolution, desired_resolution):
+    """function to take a dataframe with x,y,z position columns and convert
+    them to the desired resolution from the given resolution
+
+    Args:
+        df (pd.DataFrame): dataframe to alter
+        given_resolution (Iterable(float)): what the given resolution is
+        desired_resoultion (Iterable(float)): what the desired resolution is
+
+    Returns:
+        pd.DataFrame: [description]
+    """
+    gr = np.array(given_resolution)
+    dr = np.array(desired_resolution)
+    sf = gr / dr
+    posmap = {"x": 0, "y": 1, "z": 2}
+    if np.all(sf == 1):
+        return df
+    else:
+        grps = itertools.groupby(df.columns, key=lambda x: x[:-2])
+        for _, g in grps:
+            gl = list(g)
+            t = "".join([k[-1:] for k in gl])
+            if t == "xyz":
+                for col in gl:
+                    df[col] = df[col] * sf[posmap[col[-1]]]
+
+    return df
+
+
 def concatenate_position_columns(df, inplace=False):
-    """function to take a dataframe with xyz position columns and replace them
+    """function to take a dataframe with x,y,z position columns and replace them
     with one column per position with an xyz numpy array.  Edits occur
 
     Args:
@@ -71,7 +89,7 @@ def convert_timestamp(ts: datetime):
 
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
-            return pytz.UTC.localize(ts)
+            return pytz.UTC.localize(dt=ts)
         else:
             return ts.astimezone(timezone.utc)
     elif isinstance(ts, float):
@@ -101,6 +119,7 @@ def MaterializationClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    desired_resolution=None,
     over_client=None,
 ):
     """Factory for returning AnnotationClient
@@ -123,6 +142,9 @@ def MaterializationClient(
         default synapse table for queries
     version : default version to query
         if None will default to latest version
+    desired_resolution : Iterable[float] or None, optional
+        If given, should be a list or array of the desired resolution you want queries returned in
+        useful for materialization queries.
 
     Returns
     -------
@@ -159,6 +181,7 @@ def MaterializationClient(
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
         over_client=over_client,
+        desired_resolution=desired_resolution,
     )
 
 
@@ -179,6 +202,7 @@ class MaterializatonClientV2(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        desired_resolution=None,
     ):
         super(MaterializatonClientV2, self).__init__(
             server_address,
@@ -201,6 +225,7 @@ class MaterializatonClientV2(ClientBase):
         else:
             self.cg_client = cg_client
         self.synapse_table = synapse_table
+        self.desired_resolution = desired_resolution
 
     @property
     def datastack_name(self):
@@ -412,49 +437,6 @@ class MaterializatonClientV2(ClientBase):
         metadata_d["voxel_resolution"] = [vx, vy, vz]
         return metadata_d
 
-    # def get_annotation(self, table_name, annotation_ids,
-    #                    materialization_version=None,
-    #                    datastack_name=None):
-    #     """ Retrieve an annotation or annotations by id(s) and table name.
-
-    #     Parameters
-    #     ----------
-    #     table_name : str
-    #         Name of the table
-    #     annotation_ids : int or iterable
-    #         ID or IDS of the annotation to retreive
-    #     materialization_version: int or None
-    #         materialization version to use
-    #         If None, uses the one specified in the client
-    #     datastack_name : str or None, optional
-    #         Name of the datastack_name.
-    #         If None, uses the one specified in the client.
-    #     Returns
-    #     -------
-    #     list
-    #         Annotation data
-    #     """
-    #     if materialization_version is None:
-    #         materialization_version = self.version
-    #     if datastack_name is None:
-    #         datastack_name = self.datastack_name
-
-    #     endpoint_mapping = self.default_url_mapping
-    #     endpoint_mapping["datastack_name"] = datastack_name
-    #     endpoint_mapping["table_name"] = table_name
-    #     endpoint_mapping["version"] = materialization_version
-    #     url = self._endpoints["annotations"].format_map(endpoint_mapping)
-    #     try:
-    #         iter(annotation_ids)
-    #     except TypeError:
-    #         annotation_ids = [annotation_ids]
-
-    #     params = {
-    #         'annotation_ids': ",".join([str(a) for a in annotation_ids])
-    #     }
-    #     response = self.session.get(url, params=params)
-    #     self.raise_for_status(response)
-    #     return response.json()
     def _format_query_components(
         self,
         datastack_name,
@@ -552,6 +534,7 @@ class MaterializatonClientV2(ClientBase):
         timestamp: datetime = None,
         metadata: bool = True,
         merge_reference: bool = True,
+        desired_resolution: Iterable = None,
     ):
         """generic query on materialization tables
 
@@ -592,6 +575,9 @@ class MaterializatonClientV2(ClientBase):
             merge_reference: (bool, optional) : toggle to automatically join reference table
                 If True, metadata will be queries and if its a reference table it will perform a join
                 on the reference table to return the rows of that
+            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
+                If None, defaults to one specified in client, if that is None then points are returned
+                as stored in the table and should be in the resolution specified in the table metadata
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -614,6 +600,7 @@ class MaterializatonClientV2(ClientBase):
                     split_positions=split_positions,
                     post_filter=True,
                     metadata=metadata,
+                    desired_resolution=desired_resolution,
                 )
         if materialization_version is None:
             materialization_version = self.version
@@ -653,7 +640,18 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
-
+                if desired_resolution is None:
+                    desired_resolution = self.desired_resolution
+                if desired_resolution is not None:
+                    df = df.copy()
+                    if len(desired_resolution) != 3:
+                        raise ValueError(
+                            "desired resolution needs to be of length 3, for xyz"
+                        )
+                    vox_res = self.get_table_metadata(
+                        table, datastack_name, materialization_version
+                    )["voxel_resolution"]
+                    df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
                 attrs = self._assemble_attributes(
                     tables,
@@ -669,6 +667,7 @@ class MaterializatonClientV2(ClientBase):
                     live_query=timestamp is not None,
                     timestamp=string_format_timestamp(timestamp),
                     materialization_version=materialization_version,
+                    desired_resolution=desired_resolution,
                 )
                 df.attrs.update(attrs)
             if split_positions:
@@ -697,46 +696,45 @@ class MaterializatonClientV2(ClientBase):
     ):
         """generic query on materialization tables
 
-        Args:
-            tables: list of lists with length 2 or 'str'
-                list of two lists: first entries are table names, second
-                                   entries are the columns used for the join
-            filter_in_dict (dict of dicts, optional):
-                outer layer: keys are table names
-                inner layer: keys are column names, values are allowed entries.
-                Defaults to None.
-            filter_out_dict (dict of dicts, optional):
-                outer layer: keys are table names
-                inner layer: keys are column names, values are not allowed entries.
-                Defaults to None.
-            filter_equal_dict (dict of dicts, optional):
-                outer layer: keys are table names
-                inner layer: keys are column names, values are specified entry.
-                Defaults to None.
-            filter_spatial (dict of dicts, optional):
-                outer layer: keys are table names:
-                inner layer: keys are column names, values are bounding boxes
-                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                             Expressed in units of the voxel_resolution of this dataset.
-                Defaults to None
-            select_columns (list of str, optional): columns to select. Defaults to None.
-            offset (int, optional): result offset to use. Defaults to None.
-                will only return top K results.
-            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-            suffixes (list[str], optional): suffixes to use for duplicate columns same order as tables
-            datastack_name (str, optional): datastack to query.
-                If None defaults to one specified in client.
-            return_df (bool, optional): whether to return as a dataframe
-                default True, if False, data is returned as json (slower)
-            split_positions (bool, optional): whether to break position columns into x,y,z columns
-                default False, if False data is returned as one column with [x,y,z] array (slower)
-            materialization_version (int, optional): version to query.
-                If None defaults to one specified in client.
-            metadata: (bool, optional) : toggle to return metadata
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-
+         Args:
+             tables: list of lists with length 2 or 'str'
+                 list of two lists: first entries are table names, second
+                                    entries are the columns used for the join
+             filter_in_dict (dict of dicts, optional):
+                 outer layer: keys are table names
+                 inner layer: keys are column names, values are allowed entries.
+                 Defaults to None.
+             filter_out_dict (dict of dicts, optional):
+                 outer layer: keys are table names
+                 inner layer: keys are column names, values are not allowed entries.
+                 Defaults to None.
+             filter_equal_dict (dict of dicts, optional):
+                 outer layer: keys are table names
+                 inner layer: keys are column names, values are specified entry.
+                 Defaults to None.
+             filter_spatial (dict of dicts, optional):
+                 outer layer: keys are table names:
+                 inner layer: keys are column names, values are bounding boxes
+                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
+                              Expressed in units of the voxel_resolution of this dataset.
+                 Defaults to None
+             select_columns (list of str, optional): columns to select. Defaults to None.
+             offset (int, optional): result offset to use. Defaults to None.
+                 will only return top K results.
+             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
+             suffixes (list[str], optional): suffixes to use for duplicate columns same order as tables
+             datastack_name (str, optional): datastack to query.
+                 If None defaults to one specified in client.
+             return_df (bool, optional): whether to return as a dataframe
+                 default True, if False, data is returned as json (slower)
+             split_positions (bool, optional): whether to break position columns into x,y,z columns
+                 default False, if False data is returned as one column with [x,y,z] array (slower)
+             materialization_version (int, optional): version to query.
+                 If None defaults to one specified in client.
+             metadata: (bool, optional) : toggle to return metadata
+                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
         Returns:
-            pd.DataFrame: a pandas dataframe of results of query
+             pd.DataFrame: a pandas dataframe of results of query
 
         """
         if materialization_version is None:
@@ -962,6 +960,7 @@ class MaterializatonClientV2(ClientBase):
         post_filter: bool = True,
         metadata: bool = True,
         merge_reference: bool = True,
+        desired_resolution: Iterable = None,
     ):
         """generic query on materialization tables
 
@@ -1004,6 +1003,9 @@ class MaterializatonClientV2(ClientBase):
             merge_reference: (bool, optional) : toggle to automatically join reference table
                 If True, metadata will be queries and if its a reference table it will perform a join
                 on the reference table to return the rows of that
+            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
+                If None, defaults to one specified in client, if that is None then points are returned
+                as stored in the table and should be in the resolution specified in the table metadata
 
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
@@ -1102,11 +1104,26 @@ class MaterializatonClientV2(ClientBase):
             )
             self.raise_for_status(response)
 
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
+
         with TimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                if desired_resolution is not None:
+                    df = df.copy()
+                    if len(desired_resolution) != 3:
+                        raise ValueError(
+                            "desired resolution needs to be of length 3, for xyz"
+                        )
+                    vox_res = self.get_table_metadata(
+                        table_name=table,
+                        datastack_name=datastack_name,
+                        version=materialization_version,
+                    )["voxel_resolution"]
+                    df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
         # post process the dataframe to update all the root_ids columns
@@ -1142,6 +1159,7 @@ class MaterializatonClientV2(ClientBase):
                 live_query=timestamp is not None,
                 timestamp=string_format_timestamp(timestamp),
                 materialization_version=None,
+                desired_resolution=desired_resolution,
             )
             df.attrs.update(attrs)
 
@@ -1241,7 +1259,7 @@ class MaterializatonClientV2(ClientBase):
         else:
             return df
 
-    def _assemble_attributes(self, tables, suffixes=None, **kwargs):
+    def _assemble_attributes(self, tables, suffixes=None, desired_resolution=None, **kwargs):
         if isinstance(tables, str):
             tables = [tables]
 
@@ -1258,6 +1276,10 @@ class MaterializatonClientV2(ClientBase):
                     attrs[k] = v
                 else:
                     attrs[f"table_{k}"] = v
+            if desired_resolution is None:
+                attrs["dataframe_resolution"] = attrs["table_voxel_resolution"]
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
         else:
             attrs["join_query"] = True
             attrs["tables"] = {}
@@ -1274,6 +1296,17 @@ class MaterializatonClientV2(ClientBase):
                         table_attrs[tname][f"table_{k}"] = v
                 table_attrs[tname]["join_column"] = jcol
                 table_attrs[tname]["suffix"] = s
+
+            if desired_resolution is None:
+                res = []
+                for tn in attrs["tables"]:
+                    res.append(attrs["tables"][tn]["table_voxel_resolution"])
+                if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
+                    attrs["dataframe_resolution"] = res[0]
+                else:
+                    attrs["dataframe_resolution"] = "mixed_resolutions"
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
 
         attrs.update(kwargs)
         return attrs

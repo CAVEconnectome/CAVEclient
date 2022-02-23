@@ -1,10 +1,7 @@
 import pytest
-import requests
-from caveclient import CAVEclient, materializationengine
-import os
+from caveclient import materializationengine
 from caveclient.endpoints import (
     materialization_endpoints_v2,
-    chunkedgraph_endpoints_v1,
     chunkedgraph_endpoints_common,
 )
 import pandas as pd
@@ -13,7 +10,6 @@ import pyarrow as pa
 from urllib.parse import urlencode
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import datetime
-import time
 import numpy as np
 
 
@@ -56,7 +52,9 @@ class TestMatclient:
         "schema_type": "cell_type_local",
         "user_id": "56",
         "reference_table": "",
-        "voxel_resolution": [4.0, 4.0, 40.0],
+        "voxel_resolution_x": 4.0,
+        "voxel_resolution_y": 4.0,
+        "voxel_resolution_z": 40.0,
     }
 
     synapse_metadata = {
@@ -434,3 +432,33 @@ class TestMatclient:
                 good_time,
                 filter_in_dict={"pre_pt_root_id": [303]},
             )
+
+        ### testing desired resolution
+        orig_df = pd.read_pickle("tests/test_data/synapse_query_split.pkl")
+        df = myclient.materialize.query_table(
+            test_info["synapse_table"],
+            filter_in_dict={"pre_pt_root_id": [500]},
+            filter_out_dict={"post_pt_root_id": [501]},
+            filter_equal_dict={"size": 100},
+            limit=1000,
+            offset=0,
+            desired_resolution=[1, 1, 1],
+        )
+        orig_xyz = orig_df[
+            ["ctr_pt_position_x", "ctr_pt_position_y", "ctr_pt_position_z"]
+        ].values
+        new_xyz = np.vstack(df.ctr_pt_position.values)
+        assert np.all(new_xyz == orig_xyz * [4, 4, 40])
+
+        myclient._materialize = None
+        myclient.desired_resolution = [1, 1, 1]
+        df = myclient.materialize.query_table(
+            test_info["synapse_table"],
+            filter_in_dict={"pre_pt_root_id": [500]},
+            filter_out_dict={"post_pt_root_id": [501]},
+            filter_equal_dict={"size": 100},
+            limit=1000,
+            offset=0,
+        )
+        new_xyz = np.vstack(df.ctr_pt_position.values)
+        assert np.all(new_xyz == orig_xyz * [4, 4, 40])
