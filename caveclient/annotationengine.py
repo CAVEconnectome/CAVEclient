@@ -7,6 +7,7 @@ import pandas as pd
 from .auth import AuthClient
 from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
 from .endpoints import annotation_api_versions, annotation_common
+from .tools import stage
 
 SERVER_KEY = "ae_server_address"
 
@@ -21,6 +22,7 @@ def AnnotationClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     """Factory for returning AnnotationClient
 
@@ -77,6 +79,7 @@ def AnnotationClient(
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
     else:
         return AnnoClient(
@@ -90,6 +93,7 @@ def AnnotationClient(
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
 
 
@@ -106,6 +110,8 @@ class AnnotationClientV2(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
+        schema_client=None,
     ):
         super(AnnotationClientV2, self).__init__(
             server_address,
@@ -117,9 +123,14 @@ class AnnotationClientV2(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
 
         self._aligned_volume_name = aligned_volume_name
+        if schema_client is None:
+            self._schema_client = self.fc.schema
+        else:
+            self._schema_client = schema_client
 
     @property
     def aligned_volume_name(self):
@@ -145,7 +156,6 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-        print(url)
         response = self.session.get(url)
         return handle_response(response)
 
@@ -201,7 +211,6 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["table_name"] = table_name
 
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
-
         response = self.session.get(url)
         metadata_d = handle_response(response)
         vx = metadata_d.pop("voxel_resolution_x")
@@ -638,6 +647,97 @@ class AnnotationClientV2(ClientBase):
             headers={"Content-Type": "application/json"},
         )
         return handle_response(response)
+
+    def stage_annotations(
+        self,
+        table_name=None,
+        schema_name=None,
+        update=False,
+        id_field=False,
+        table_resolution=None,
+        annotation_resolution=None,
+    ):
+        """
+        Get a StagedAnnotations object to help produce correctly formatted annotations for a given table or schema.
+        StagedAnnotation objects can be uploaded directly with `upload_staged_annotations`.
+
+        Parameters
+        ----------
+        table_name : str, optional
+            Table name to stage annotations for, by default None.
+        schema_name : str, optional
+            Schema name to use to make annotations. Only needed if the table_name is not set, by default None
+        update : bool, optional
+            Set to True if individual annotations are going to be updated, by default False.
+        id_field : bool, optional
+            Set to True if id fields are to be specified. Not needed if update is True, which always needs id fields. Optional, by default False
+        table_resolution : list-like or None, optional
+            Voxel resolution of spatial points in the table in nanometers. This is found automatically from the info service if a table name is provided, by default None.
+            If annotation_resolution is also set, this allows points to be scaled correctly for the table.
+        annotation_resolution : list-like, optional
+            Voxel resolution of spatial points provided by the user when creating annotations. If the table resolution is also available (manually or from the info service),
+            annotations are correctly rescaled for the volume. By default, None.
+        """
+
+        if table_name is not None:
+            obj_name = table_name
+            table_meta = self.get_table_metadata(table_name)
+            schema_name = table_meta["schema_type"]
+            table_resolution = table_meta["voxel_resolution"]
+        else:
+            if schema_name is None:
+                raise ValueError("Must specify either table name or schema name")
+            obj_name = schema_name
+
+        schema = self._schema_client.schema_definition(schema_name)
+        return stage.StagedAnnotations(
+            schema,
+            name=obj_name,
+            update=update,
+            id_field=id_field,
+            annotation_resolution=annotation_resolution,
+            table_resolution=table_resolution,
+            table_name=table_name,
+        )
+
+    def upload_staged_annotations(
+        self,
+        staged_annos: stage.StagedAnnotations,
+        aligned_volume_name: str = None,
+    ):
+        """
+        Upload annotations directly from an Annotation Guide object.
+        This method uses the options specified in the object, including table name and if the annotation is an update or not.
+
+        Parameters
+        ----------
+        staged_annos : guide.AnnotationGuide
+            AnnotationGuide object with a specified table name and a collection of annotations already filled in.
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
+
+        Returns
+        -------
+        List or dict
+            If new annotations are posted, a list of ids.
+            If annotations are being updated, a dictionary with the mapping from old ids to new ids.
+        """
+        if staged_annos.table_name is None:
+            raise ValueError(
+                "Only annotation guide objects with a specified table name can be used here"
+            )
+        if staged_annos.is_update:
+            return self.update_annotation(
+                staged_annos.table_name,
+                staged_annos.annotation_list,
+                aligned_volume_name=aligned_volume_name,
+            )
+        else:
+            return self.post_annotation(
+                staged_annos.table_name,
+                staged_annos.annotation_list,
+                aligned_volume_name=aligned_volume_name,
+            )
 
 
 client_mapping = {

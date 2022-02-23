@@ -101,6 +101,7 @@ def MaterializationClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     """Factory for returning AnnotationClient
 
@@ -157,6 +158,7 @@ def MaterializationClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 
@@ -176,6 +178,7 @@ class MaterializatonClientV2(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
         super(MaterializatonClientV2, self).__init__(
             server_address,
@@ -187,12 +190,16 @@ class MaterializatonClientV2(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self._datastack_name = datastack_name
         if version is None:
             version = self.most_recent_version()
         self._version = version
-        self.cg_client = cg_client
+        if cg_client is None:
+            self.cg_client = self.fc.chunkedgraph
+        else:
+            self.cg_client = cg_client
         self.synapse_table = synapse_table
 
     @property

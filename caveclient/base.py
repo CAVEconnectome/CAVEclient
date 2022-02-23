@@ -3,6 +3,7 @@ import requests
 import json
 import logging
 import webbrowser
+
 from .session_config import patch_session
 import numpy as np
 import datetime
@@ -159,6 +160,7 @@ class ClientBase(object):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
         self._server_address = server_address
         self._default_url_mapping = {server_name: self._server_address}
@@ -183,6 +185,11 @@ class ClientBase(object):
 
         self._api_version = api_version
         self._endpoints = endpoints
+        self._fc = over_client
+
+    @property
+    def fc(self):
+        return self._fc
 
     @property
     def default_url_mapping(self):
@@ -216,6 +223,7 @@ class ClientBaseWithDataset(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
 
         super(ClientBaseWithDataset, self).__init__(
@@ -228,6 +236,7 @@ class ClientBaseWithDataset(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self._dataset_name = dataset_name
 
@@ -249,6 +258,7 @@ class ClientBaseWithDatastack(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
 
         super(ClientBaseWithDatastack, self).__init__(
@@ -261,6 +271,7 @@ class ClientBaseWithDatastack(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self._datastack_name = datastack_name
 

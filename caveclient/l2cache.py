@@ -21,6 +21,7 @@ def L2CacheClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     if auth_client is None:
         auth_client = AuthClient()
@@ -45,6 +46,7 @@ def L2CacheClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 
@@ -60,6 +62,7 @@ class L2CacheClientLegacy(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
         super(L2CacheClientLegacy, self).__init__(
             server_address,
@@ -70,6 +73,7 @@ class L2CacheClientLegacy(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         warnings.warn("L2Cache is in an experimental stage", UserWarning)
         self._default_url_mapping["table_id"] = table_name
