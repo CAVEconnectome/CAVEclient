@@ -1233,6 +1233,9 @@ class MaterializatonClientV2(ClientBase):
             return df
 
     def _assemble_attributes(self, tables, suffixes=None, **kwargs):
+        if isinstance(tables, str):
+            tables = [tables]
+
         join_query = len(tables) > 1
 
         attrs = {
