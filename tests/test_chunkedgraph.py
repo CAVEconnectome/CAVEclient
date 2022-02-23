@@ -397,7 +397,7 @@ class TestChunkedgraph:
         root_id_list = [164471821834388001, 864691135776832352]
         root_ids = np.array(root_id_list, dtype=np.uint64)
         is_latest_list = [False, True]
-        is_latest = np.array(is_latest_list, np.bool)
+        is_latest = np.array(is_latest_list, bool)
 
         responses.add(
             responses.POST,

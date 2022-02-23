@@ -25,6 +25,7 @@ def JSONService(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     """Client factory to interface with the JSON state service.
 
@@ -71,6 +72,7 @@ def JSONService(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 
@@ -86,6 +88,7 @@ class JSONServiceV1(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None
     ):
         super(JSONServiceV1, self).__init__(
             server_address,
@@ -96,6 +99,7 @@ class JSONServiceV1(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self._ngl_url = ngl_url
 

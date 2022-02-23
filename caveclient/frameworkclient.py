@@ -170,6 +170,7 @@ class CAVEclientGlobal(object):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._info
 
@@ -182,6 +183,7 @@ class CAVEclientGlobal(object):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._state
 
@@ -194,6 +196,7 @@ class CAVEclientGlobal(object):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._schema
 
@@ -323,6 +326,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._chunkedgraph
 
@@ -336,6 +340,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._annotation
 
@@ -346,11 +351,11 @@ class CAVEclientFull(CAVEclientGlobal):
                 server_address=self.local_server,
                 auth_client=self.auth,
                 datastack_name=self._datastack_name,
-                cg_client=self.chunkedgraph,
                 synapse_table=self.info.get_datastack_info().get("synapse_table", None),
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
                 desired_resolution=self.desired_resolution,
             )
         return self._materialize
@@ -365,6 +370,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._state
 
@@ -381,5 +387,6 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                over_client=self,
             )
         return self._l2cache
