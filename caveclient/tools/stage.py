@@ -94,7 +94,7 @@ class StagedAnnotations(object):
             table_text = f"table '{self.table_name}'"
         else:
             table_text = f"schema '{self._ref_class}' with no table"
-        return f"Staged {update} annotations for {table_text} ({len(self)} annotations)"
+        return f"Staged annotations for {table_text} ({len(self)} {update} annotations)"
 
     def __len__(self):
         return len(self._anno_list)
