@@ -512,7 +512,7 @@ class MaterializatonClientV2(ClientBase):
             if md["reference_table"] is None:
                 target_table = None
             else:
-                if len(md["reference_table"] )==0:
+                if len(md["reference_table"]) == 0:
                     target_table = None
                 else:
                     target_table = md["reference_table"]
@@ -647,8 +647,7 @@ class MaterializatonClientV2(ClientBase):
 
             if metadata:
                 attrs = self._assemble_attributes(
-                    table,
-                    join_query=False,
+                    tables,
                     filters={
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
@@ -769,7 +768,6 @@ class MaterializatonClientV2(ClientBase):
             if metadata:
                 attrs = self._assemble_attributes(
                     tables,
-                    join_query=True,
                     suffixes=suffixes,
                     filters={
                         "inclusive": filter_in_dict,
@@ -1234,13 +1232,15 @@ class MaterializatonClientV2(ClientBase):
         else:
             return df
 
-    def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
+    def _assemble_attributes(self, tables, suffixes=None, **kwargs):
+        join_query = len(tables) > 1
+
         attrs = {
             "datastack_name": self.datastack_name,
         }
         if not join_query:
             attrs["join_query"] = False
-            meta = self.get_table_metadata(tables)
+            meta = self.get_table_metadata(tables[0])
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
