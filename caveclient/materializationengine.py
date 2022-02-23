@@ -4,6 +4,7 @@ from typing import ValuesView
 
 from numpy.lib.function_base import iterable
 from numpy.lib.twodim_base import _trilu_indices_form_dispatcher
+from responses import target
 import caveclient
 from .base import (
     ClientBaseWithDataset,
@@ -365,6 +366,7 @@ class MaterializatonClientV2(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
+    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_table_metadata(
         self, table_name: str, datastack_name=None, version: int = None
     ):
@@ -500,6 +502,32 @@ class MaterializatonClientV2(ClientBase):
 
         return url, data, query_args, encoding
 
+    def _resolve_merge_reference(
+        self, merge_reference, table, datastack_name, materialization_version
+    ):
+        if merge_reference:
+            md = self.get_table_metadata(
+                table_name=table,
+                datastack_name=datastack_name,
+                version=materialization_version,
+            )
+            if md["reference_table"] is None:
+                target_table = None
+            else:
+                if len(md["reference_table"]) == 0:
+                    target_table = None
+                else:
+                    target_table = md["reference_table"]
+        else:
+            target_table = None
+        if target_table is not None:
+            tables = [[table, "target_id"], [md["reference_table"], "id"]]
+            suffixes = ("", "ref")
+        else:
+            tables = [table]
+            suffixes = None
+        return tables, suffixes
+
     def query_table(
         self,
         table: str,
@@ -507,7 +535,6 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
-        join_args=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -517,6 +544,7 @@ class MaterializatonClientV2(ClientBase):
         materialization_version: int = None,
         timestamp: datetime = None,
         metadata: bool = True,
+        merge_reference: bool = True,
     ):
         """generic query on materialization tables
 
@@ -552,8 +580,11 @@ class MaterializatonClientV2(ClientBase):
                 If None defaults to one specified in client.
             timestamp (datetime.datetime, optional): timestamp to query
                 If passsed will do a live query. Error if also passing a materialization version
-            metadata: (bool, optional) : toggle to return metadata
+            metadata: (bool, optional) : toggle to return metadata (default True)
                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+            merge_reference: (bool, optional) : toggle to automatically join reference table
+                If True, metadata will be queries and if its a reference table it will perform a join
+                on the reference table to return the rows of that
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -582,12 +613,16 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
+        tables, suffixes = self._resolve_merge_reference(
+            merge_reference, table, datastack_name, materialization_version
+        )
+
         url, data, query_args, encoding = self._format_query_components(
             datastack_name,
             materialization_version,
-            [table],
+            tables,
             select_columns,
-            None,
+            suffixes,
             {table: filter_in_dict} if filter_in_dict is not None else None,
             {table: filter_out_dict} if filter_out_dict is not None else None,
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
@@ -614,8 +649,7 @@ class MaterializatonClientV2(ClientBase):
 
             if metadata:
                 attrs = self._assemble_attributes(
-                    table,
-                    join_query=False,
+                    tables,
                     filters={
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
@@ -644,7 +678,6 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
-        join_args=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -737,7 +770,6 @@ class MaterializatonClientV2(ClientBase):
             if metadata:
                 attrs = self._assemble_attributes(
                     tables,
-                    join_query=True,
                     suffixes=suffixes,
                     filters={
                         "inclusive": filter_in_dict,
@@ -915,7 +947,6 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
-        join_args=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -923,6 +954,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         post_filter: bool = True,
         metadata: bool = True,
+        merge_reference: bool = True,
     ):
         """generic query on materialization tables
 
@@ -962,7 +994,9 @@ class MaterializatonClientV2(ClientBase):
                 but will be filtered down if this is True. (Default=True)
             metadata: (bool, optional) : toggle to return metadata
                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-
+            merge_reference: (bool, optional) : toggle to automatically join reference table
+                If True, metadata will be queries and if its a reference table it will perform a join
+                on the reference table to return the rows of that
 
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
@@ -1020,13 +1054,16 @@ class MaterializatonClientV2(ClientBase):
                 if len(past_equal_dict) == 0:
                     past_equal_dict = None
 
+        tables, suffixes = self._resolve_merge_reference(
+            merge_reference, table, datastack_name, materialization_version
+        )
         with TimeIt("package query"):
             url, data, query_args, encoding = self._format_query_components(
                 datastack_name,
                 materialization_version,
-                [table],
+                tables,
                 None,
-                None,
+                suffixes,
                 {table: past_filter_in_dict}
                 if past_filter_in_dict is not None
                 else None,
@@ -1186,6 +1223,7 @@ class MaterializatonClientV2(ClientBase):
             timestamp=timestamp,
             datastack_name=datastack_name,
             metadata=metadata,
+            merge_reference=False,
         )
 
         if metadata:
@@ -1196,13 +1234,18 @@ class MaterializatonClientV2(ClientBase):
         else:
             return df
 
-    def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
+    def _assemble_attributes(self, tables, suffixes=None, **kwargs):
+        if isinstance(tables, str):
+            tables = [tables]
+
+        join_query = len(tables) > 1
+
         attrs = {
             "datastack_name": self.datastack_name,
         }
         if not join_query:
             attrs["join_query"] = False
-            meta = self.get_table_metadata(tables)
+            meta = self.get_table_metadata(tables[0])
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v

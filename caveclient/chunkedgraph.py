@@ -701,7 +701,7 @@ class ChunkedGraphClientV1(ClientBase):
             timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
 
         Returns:
-            np.array[np.Boolean]: boolean array of whether these are valid root_ids
+            np.array[bool]: boolean array of whether these are valid root_ids
         """
         root_ids = root_id_int_list_check(root_ids, make_unique=False)
 
@@ -720,7 +720,7 @@ class ChunkedGraphClientV1(ClientBase):
                 url, data=json.dumps(data, cls=BaseEncoder), params=query_d
             )
         )
-        return np.array(r["is_latest"], np.bool)
+        return np.array(r["is_latest"], bool)
 
     def get_root_timestamps(self, root_ids):
         """Retrieves timestamps when roots where created.
