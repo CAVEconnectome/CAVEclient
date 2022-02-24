@@ -1,5 +1,5 @@
 caveclient
-=========================
+==========
 
 .. toctree::
    :maxdepth: 4

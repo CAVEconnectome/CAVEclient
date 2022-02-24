@@ -1,11 +1,19 @@
 caveclient package
-=================================
+==================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   caveclient.tools
 
 Submodules
 ----------
 
 caveclient.annotationengine module
--------------------------------------------------
+----------------------------------
 
 .. automodule:: caveclient.annotationengine
    :members:
@@ -13,7 +21,7 @@ caveclient.annotationengine module
    :show-inheritance:
 
 caveclient.auth module
--------------------------------------
+----------------------
 
 .. automodule:: caveclient.auth
    :members:
@@ -21,7 +29,7 @@ caveclient.auth module
    :show-inheritance:
 
 caveclient.base module
--------------------------------------
+----------------------
 
 .. automodule:: caveclient.base
    :members:
@@ -29,7 +37,7 @@ caveclient.base module
    :show-inheritance:
 
 caveclient.chunkedgraph module
----------------------------------------------
+------------------------------
 
 .. automodule:: caveclient.chunkedgraph
    :members:
@@ -37,7 +45,7 @@ caveclient.chunkedgraph module
    :show-inheritance:
 
 caveclient.emannotationschemas module
-----------------------------------------------------
+-------------------------------------
 
 .. automodule:: caveclient.emannotationschemas
    :members:
@@ -45,7 +53,7 @@ caveclient.emannotationschemas module
    :show-inheritance:
 
 caveclient.endpoints module
-------------------------------------------
+---------------------------
 
 .. automodule:: caveclient.endpoints
    :members:
@@ -53,7 +61,7 @@ caveclient.endpoints module
    :show-inheritance:
 
 caveclient.format\_utils module
-----------------------------------------------
+-------------------------------
 
 .. automodule:: caveclient.format_utils
    :members:
@@ -61,7 +69,7 @@ caveclient.format\_utils module
    :show-inheritance:
 
 caveclient.frameworkclient module
-------------------------------------------------
+---------------------------------
 
 .. automodule:: caveclient.frameworkclient
    :members:
@@ -69,7 +77,7 @@ caveclient.frameworkclient module
    :show-inheritance:
 
 caveclient.infoservice module
---------------------------------------------
+-----------------------------
 
 .. automodule:: caveclient.infoservice
    :members:
@@ -77,21 +85,44 @@ caveclient.infoservice module
    :show-inheritance:
 
 caveclient.jsonservice module
---------------------------------------------
+-----------------------------
 
 .. automodule:: caveclient.jsonservice
    :members:
    :undoc-members:
    :show-inheritance:
 
+caveclient.l2cache module
+-------------------------
+
+.. automodule:: caveclient.l2cache
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 caveclient.materializationengine module
-------------------------------------------------------
+---------------------------------------
 
 .. automodule:: caveclient.materializationengine
    :members:
    :undoc-members:
    :show-inheritance:
 
+caveclient.session\_config module
+---------------------------------
+
+.. automodule:: caveclient.session_config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+caveclient.timeit module
+------------------------
+
+.. automodule:: caveclient.timeit
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
