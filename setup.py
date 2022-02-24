@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import re
 import os
 import codecs
@@ -29,7 +29,7 @@ setup(
     author="Forrest Collman, Casey Schneider-Mizell, Sven Dorkenwald",
     author_email="forrestc@alleninstute.org,caseys@alleninstitute.org,svenmd@princeton.edu,",
     url="https://github.com/seung-lab/CAVEclient",
-    packages=["caveclient"],
+    packages=find_packages(where="."),
     include_package_data=True,
     install_requires=required,
     setup_requires=["pytest-runner"],
