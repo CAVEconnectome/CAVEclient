@@ -119,11 +119,11 @@ class StagedAnnotations(object):
         if len(missing_cols) > 0 or len(additional_cols) > 0:
             if len(missing_cols) == 0:
                 raise ValueError(
-                    f"Schema needs columns not in dataframe: {missing_cols}."
+                    f"Schema needs columns not in dataframe: {additional_cols}."
                 )
             if len(additional_cols) == 0:
                 raise ValueError(
-                    f"Dataframe has columns that do not match fields: {additional_cols}."
+                    f"Dataframe has columns that do not match fields: {missing_cols}."
                 )
             raise ValueError(
                 f"Schema needs columns not in dataframe: {missing_cols} and dataframe has columns that do not match fields: {additional_cols}."
@@ -154,9 +154,9 @@ class StagedAnnotations(object):
     @property
     def fields_required(self):
         if self._id_field:
-            return ["id"] + self._required_props
+            return ["id"] + self._name_positions_required()
         else:
-            return self._required_props
+            return self._name_positions_required()
 
     @property
     def annotation_list(self):
@@ -207,6 +207,12 @@ class StagedAnnotations(object):
     def _name_positions(self):
         return [
             x if x not in self._spatial_pts else f"{x}_position" for x in self._props
+        ]
+
+    def _name_positions_required(self):
+        return [
+            x if x not in self._spatial_pts else f"{x}_position"
+            for x in self._required_props
         ]
 
     def _process_spatial(self, d):
