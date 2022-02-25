@@ -191,15 +191,18 @@ class StagedAnnotations(object):
         return AddAndValidate
 
     def _make_anno_func(self, id_field=False, mixin=()):
-        c = {}
+        cdict = {}
+
         if id_field:
-            c["id"] = attrs.field()
+            cdict["id"] = attrs.field()
         for prop, prop_name in zip(self._props, self._prop_names):
             if prop in self._required_props:
-                c[prop_name] = attrs.field()
-            else:
-                c[prop_name] = attrs.field(default=None)
-        return attrs.make_class(self.name, c, bases=mixin)
+                cdict[prop_name] = attrs.field()
+        for prop, prop_name in zip(self._props, self._prop_names):
+            if prop not in self._required_props:
+                cdict[prop_name] = attrs.field(default=None)
+
+        return attrs.make_class(self.name, cdict, bases=mixin)
 
     def _name_positions(self):
         return [

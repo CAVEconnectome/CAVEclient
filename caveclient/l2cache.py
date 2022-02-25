@@ -77,6 +77,7 @@ class L2CacheClientLegacy(ClientBase):
         )
         warnings.warn("L2Cache is in an experimental stage", UserWarning)
         self._default_url_mapping["table_id"] = table_name
+        self._available_attributes = None
 
     @property
     def default_url_mapping(self):
@@ -124,6 +125,12 @@ class L2CacheClientLegacy(ClientBase):
         url = self._endpoints["l2cache_meta"].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
+
+    @property
+    def attributes(self):
+        if self._available_attributes is None:
+            self._available_attributes = list(self.cache_metadata().keys())
+        return self._available_attributes
 
 
 client_mapping = {
