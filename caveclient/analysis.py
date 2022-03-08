@@ -92,6 +92,7 @@ def make_connection_matrix(
                 'dataframe' returns this as a dataframe with rows as pre-synaptic-ids
                             and columns as post-synaptic root-ids
                 'sparse' returns this as a sparse.csgraph object
-        fill_na (bool, optional): _description_. Defaults to True.
-        soma_column_prefix (str, optional): _description_. Defaults to "n_soma".
+        fill_na (bool, optional): whether to fill missing entries with 0s. Defaults to True.
+        soma_column_prefix (str, optional): what prefix to find the n_soma columns (_pre/_post).
+                                            Defaults to "n_soma".
     """
