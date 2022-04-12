@@ -1,7 +1,7 @@
 import jsonschema
 import attrs
 import pandas as pd
-import inspect
+import numpy as np
 
 SPATIAL_POINT_CLASSES = ["SpatialPoint", "BoundSpatialPoint"]
 
@@ -218,6 +218,8 @@ class StagedAnnotations(object):
     def _process_spatial(self, d):
         dout = {}
         for k, v in d.items():
+            if isinstance(v, np.ndarray):
+                v = list(v)
             if k in self._convert_pts:
                 dout[k] = self._process_spatial_point(v)
             else:
