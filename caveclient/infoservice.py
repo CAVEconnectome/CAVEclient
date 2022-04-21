@@ -30,6 +30,7 @@ def InfoServiceClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     if server_address is None:
         server_address = default_global_server_address
@@ -59,6 +60,7 @@ def InfoServiceClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 
@@ -75,6 +77,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
         super(InfoServiceClientV2, self).__init__(
             server_address,
@@ -87,6 +90,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self.info_cache = dict()
         if datastack_name is not None:
@@ -379,7 +383,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         """
         return self._make_cloudvolume(self.image_source(), **kwargs)
 
-    def segmentation_cloudvolume(self, **kwargs):
+    def segmentation_cloudvolume(self, use_client_secret=True, **kwargs):
         """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
@@ -387,9 +391,11 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
 
         Requires cloudvolume to be installed, which is not included by default.
         """
-        return self._make_cloudvolume(self.segmentation_source(), **kwargs)
+        return self._make_cloudvolume(
+            self.segmentation_source(), use_client_secret=use_client_secret, **kwargs
+        )
 
-    def _make_cloudvolume(self, cloudpath, **kwargs):
+    def _make_cloudvolume(self, cloudpath, use_client_secret=True, **kwargs):
         try:
             import cloudvolume
         except:
@@ -401,7 +407,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         bounded = kwargs.pop("bounded", False)
         fill_missing = kwargs.pop("fill_missing", True)
 
-        if re.search("^graphene", cloudpath):
+        if re.search("^graphene", cloudpath) and use_client_secret:
             # Authentication header is "Authorization {token}"
             secrets = {"token": self.session.headers.get("Authorization").split(" ")[1]}
         else:

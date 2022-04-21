@@ -120,6 +120,7 @@ def MaterializationClient(
     pool_maxsize=None,
     pool_block=None,
     desired_resolution=None,
+    over_client=None,
 ):
     """Factory for returning AnnotationClient
 
@@ -179,6 +180,7 @@ def MaterializationClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
         desired_resolution=desired_resolution,
     )
 
@@ -199,6 +201,7 @@ class MaterializatonClientV2(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
         desired_resolution=None,
     ):
         super(MaterializatonClientV2, self).__init__(
@@ -211,12 +214,16 @@ class MaterializatonClientV2(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self._datastack_name = datastack_name
         if version is None:
             version = self.most_recent_version()
         self._version = version
-        self.cg_client = cg_client
+        if cg_client is None:
+            self.cg_client = self.fc.chunkedgraph
+        else:
+            self.cg_client = cg_client
         self.synapse_table = synapse_table
         self.desired_resolution = desired_resolution
 
@@ -391,6 +398,7 @@ class MaterializatonClientV2(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
+    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_table_metadata(
         self, table_name: str, datastack_name=None, version: int = None
     ):
@@ -487,6 +495,32 @@ class MaterializatonClientV2(ClientBase):
 
         return url, data, query_args, encoding
 
+    def _resolve_merge_reference(
+        self, merge_reference, table, datastack_name, materialization_version
+    ):
+        if merge_reference:
+            md = self.get_table_metadata(
+                table_name=table,
+                datastack_name=datastack_name,
+                version=materialization_version,
+            )
+            if md["reference_table"] is None:
+                target_table = None
+            else:
+                if len(md["reference_table"]) == 0:
+                    target_table = None
+                else:
+                    target_table = md["reference_table"]
+        else:
+            target_table = None
+        if target_table is not None:
+            tables = [[table, "target_id"], [md["reference_table"], "id"]]
+            suffixes = ("", "ref")
+        else:
+            tables = [table]
+            suffixes = None
+        return tables, suffixes
+
     def query_table(
         self,
         table: str,
@@ -494,7 +528,6 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
-        join_args=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -504,6 +537,7 @@ class MaterializatonClientV2(ClientBase):
         materialization_version: int = None,
         timestamp: datetime = None,
         metadata: bool = True,
+        merge_reference: bool = True,
         desired_resolution: Iterable = None,
         use_live=False,
     ):
@@ -541,8 +575,11 @@ class MaterializatonClientV2(ClientBase):
                 If None defaults to one specified in client.
             timestamp (datetime.datetime, optional): timestamp to query
                 If passsed will do a live query. Error if also passing a materialization version
-            metadata: (bool, optional) : toggle to return metadata
+            metadata: (bool, optional) : toggle to return metadata (default True)
                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+            merge_reference: (bool, optional) : toggle to automatically join reference table
+                If True, metadata will be queries and if its a reference table it will perform a join
+                on the reference table to return the rows of that
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
@@ -575,12 +612,16 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
+        tables, suffixes = self._resolve_merge_reference(
+            merge_reference, table, datastack_name, materialization_version
+        )
+
         url, data, query_args, encoding = self._format_query_components(
             datastack_name,
             materialization_version,
-            [table],
+            tables,
             select_columns,
-            None,
+            suffixes,
             {table: filter_in_dict} if filter_in_dict is not None else None,
             {table: filter_out_dict} if filter_out_dict is not None else None,
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
@@ -619,8 +660,7 @@ class MaterializatonClientV2(ClientBase):
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
                 attrs = self._assemble_attributes(
-                    table,
-                    join_query=False,
+                    tables,
                     filters={
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
@@ -633,6 +673,7 @@ class MaterializatonClientV2(ClientBase):
                     live_query=timestamp is not None,
                     timestamp=string_format_timestamp(timestamp),
                     materialization_version=materialization_version,
+                    desired_resolution=desired_resolution,
                 )
                 df.attrs.update(attrs)
             if split_positions:
@@ -649,7 +690,6 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
-        join_args=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -741,7 +781,6 @@ class MaterializatonClientV2(ClientBase):
             if metadata:
                 attrs = self._assemble_attributes(
                     tables,
-                    join_query=True,
                     suffixes=suffixes,
                     filters={
                         "inclusive": filter_in_dict,
@@ -919,7 +958,6 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
-        join_args=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -927,6 +965,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         post_filter: bool = True,
         metadata: bool = True,
+        merge_reference: bool = True,
         desired_resolution: Iterable = None,
         use_live=False,
     ):
@@ -968,6 +1007,9 @@ class MaterializatonClientV2(ClientBase):
                 but will be filtered down if this is True. (Default=True)
             metadata: (bool, optional) : toggle to return metadata
                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+            merge_reference: (bool, optional) : toggle to automatically join reference table
+                If True, metadata will be queries and if its a reference table it will perform a join
+                on the reference table to return the rows of that
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
@@ -1028,13 +1070,16 @@ class MaterializatonClientV2(ClientBase):
                 if len(past_equal_dict) == 0:
                     past_equal_dict = None
 
+        tables, suffixes = self._resolve_merge_reference(
+            merge_reference, table, datastack_name, materialization_version
+        )
         with TimeIt("package query"):
             url, data, query_args, encoding = self._format_query_components(
                 datastack_name,
                 materialization_version,
-                [table],
+                tables,
                 None,
-                None,
+                suffixes,
                 {table: past_filter_in_dict}
                 if past_filter_in_dict is not None
                 else None,
@@ -1121,6 +1166,7 @@ class MaterializatonClientV2(ClientBase):
                 live_query=timestamp is not None,
                 timestamp=string_format_timestamp(timestamp),
                 materialization_version=None,
+                desired_resolution=desired_resolution,
             )
             df.attrs.update(attrs)
 
@@ -1209,6 +1255,7 @@ class MaterializatonClientV2(ClientBase):
             timestamp=timestamp,
             datastack_name=datastack_name,
             metadata=metadata,
+            merge_reference=False,
         )
 
         if metadata:
@@ -1237,18 +1284,27 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url)
         return handle_response(response, as_json=False)
 
-    def _assemble_attributes(self, tables, join_query, suffixes=None, **kwargs):
+    def _assemble_attributes(self, tables, suffixes=None, desired_resolution=None, **kwargs):
+        if isinstance(tables, str):
+            tables = [tables]
+
+        join_query = len(tables) > 1
+
         attrs = {
             "datastack_name": self.datastack_name,
         }
         if not join_query:
             attrs["join_query"] = False
-            meta = self.get_table_metadata(tables)
+            meta = self.get_table_metadata(tables[0])
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
                 else:
                     attrs[f"table_{k}"] = v
+            if desired_resolution is None:
+                attrs["dataframe_resolution"] = attrs["table_voxel_resolution"]
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
         else:
             attrs["join_query"] = True
             attrs["tables"] = {}
@@ -1265,6 +1321,17 @@ class MaterializatonClientV2(ClientBase):
                         table_attrs[tname][f"table_{k}"] = v
                 table_attrs[tname]["join_column"] = jcol
                 table_attrs[tname]["suffix"] = s
+
+            if desired_resolution is None:
+                res = []
+                for tn in attrs["tables"]:
+                    res.append(attrs["tables"][tn]["table_voxel_resolution"])
+                if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
+                    attrs["dataframe_resolution"] = res[0]
+                else:
+                    attrs["dataframe_resolution"] = "mixed_resolutions"
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
 
         attrs.update(kwargs)
         return attrs

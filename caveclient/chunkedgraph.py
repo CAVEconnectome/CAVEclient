@@ -88,6 +88,7 @@ def ChunkedGraphClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     if server_address is None:
         server_address = default_global_server_address
@@ -119,6 +120,7 @@ def ChunkedGraphClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 
@@ -138,6 +140,7 @@ class ChunkedGraphClientV1(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
         super(ChunkedGraphClientV1, self).__init__(
             server_address,
@@ -149,6 +152,7 @@ class ChunkedGraphClientV1(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
         self._default_url_mapping["table_id"] = table_name
         self._default_timestamp = timestamp
@@ -701,7 +705,7 @@ class ChunkedGraphClientV1(ClientBase):
             timestamp (datetime.dateime, optional): timestamp to check whether these IDs are valid root_ids. Defaults to None (assumes now).
 
         Returns:
-            np.array[np.Boolean]: boolean array of whether these are valid root_ids
+            np.array[bool]: boolean array of whether these are valid root_ids
         """
         root_ids = root_id_int_list_check(root_ids, make_unique=False)
 
@@ -720,7 +724,7 @@ class ChunkedGraphClientV1(ClientBase):
                 url, data=json.dumps(data, cls=BaseEncoder), params=query_d
             )
         )
-        return np.array(r["is_latest"], np.bool)
+        return np.array(r["is_latest"], bool)
 
     def get_root_timestamps(self, root_ids):
         """Retrieves timestamps when roots where created.

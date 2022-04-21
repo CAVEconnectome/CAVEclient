@@ -13,6 +13,7 @@ def SchemaClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ):
     if auth_client is None:
         auth_client = AuthClient()
@@ -36,6 +37,7 @@ def SchemaClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 
@@ -50,6 +52,7 @@ class SchemaClientLegacy(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
+        over_client=None,
     ):
         super(SchemaClientLegacy, self).__init__(
             server_address,
@@ -60,6 +63,7 @@ class SchemaClientLegacy(ClientBase):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            over_client=over_client,
         )
 
     def get_schemas(self):
