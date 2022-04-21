@@ -21,6 +21,7 @@ import pandas as pd
 import pytz
 import warnings
 import re
+import pickle5
 
 SERVER_KEY = "me_server_address"
 
@@ -98,6 +99,25 @@ def convert_timestamp(ts: datetime):
         return pd.Timestamp.max.to_pydatetime()
     dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     return dt.replace(tzinfo=timezone.utc)
+
+
+def _convert_pyarrow_to_pandas(df):
+    dtype_mapping = {
+        pa.int8(): pd.Int8Dtype(),
+        pa.int16(): pd.Int16Dtype(),
+        pa.int32(): pd.Int32Dtype(),
+        pa.int64(): pd.Int64Dtype(),
+        pa.uint8(): pd.UInt8Dtype(),
+        pa.uint16(): pd.UInt16Dtype(),
+        pa.uint32(): pd.UInt32Dtype(),
+        pa.uint64(): pd.UInt64Dtype(),
+        pa.bool_(): pd.BooleanDtype(),
+        pa.float32(): pd.Float32Dtype(),
+        pa.float64(): pd.Float64Dtype(),
+        pa.string(): pd.StringDtype(),
+    }
+    df = df.to_pandas(types_mapper=dtype_mapping.get)
+    return df
 
 
 def string_format_timestamp(ts):
@@ -453,6 +473,7 @@ class MaterializatonClientV2(ClientBase):
         offset,
         limit,
         use_live=False,
+        filter_invalid=True,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -461,6 +482,8 @@ class MaterializatonClientV2(ClientBase):
         query_args = {}
         query_args["return_pyarrow"] = return_pyarrow
         query_args["split_positions"] = split_positions
+        query_args["return_pandas"] = False
+        query_args["filter_invalid"] = filter_invalid
         if len(tables) == 1:
             endpoint_mapping["table_name"] = tables[0]
             if use_live:
@@ -540,6 +563,7 @@ class MaterializatonClientV2(ClientBase):
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         use_live=False,
+        filter_invalid=True,
     ):
         """generic query on materialization tables
 
@@ -583,6 +607,8 @@ class MaterializatonClientV2(ClientBase):
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
+            use_live: (bool, optional) : whether to query the production database. experimental admin only.
+            filter_invalid: (bool, optional) : whether to filter out invalid or deleted annotations (only relevant for use_live=True)
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -631,6 +657,7 @@ class MaterializatonClientV2(ClientBase):
             offset,
             limit,
             use_live=use_live,
+            filter_invalid=filter_invalid,
         )
 
         response = self.session.post(
@@ -646,6 +673,9 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                if type(df) == pa.Table:
+                    df = _convert_pyarrow_to_pandas(df)
+
                 if desired_resolution is None:
                     desired_resolution = self.desired_resolution
                 if desired_resolution is not None:
@@ -777,6 +807,8 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                if type(df) == pa.Table:
+                    df = _convert_pyarrow_to_pandas(df)
 
             if metadata:
                 attrs = self._assemble_attributes(
@@ -1119,6 +1151,8 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                if type(df) == pa.Table:
+                    df = _convert_pyarrow_to_pandas(df)
                 if desired_resolution is not None:
                     df = df.copy()
                     if len(desired_resolution) != 3:
@@ -1284,7 +1318,9 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url)
         return handle_response(response, as_json=False)
 
-    def _assemble_attributes(self, tables, suffixes=None, desired_resolution=None, **kwargs):
+    def _assemble_attributes(
+        self, tables, suffixes=None, desired_resolution=None, **kwargs
+    ):
         if isinstance(tables, str):
             tables = [tables]
 
