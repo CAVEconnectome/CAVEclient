@@ -28,7 +28,56 @@ class CAVEclient(object):
         pool_maxsize=None,
         pool_block=None,
         desired_resolution=None,
+        info_cache=None,
     ):
+        """A manager for all clients sharing common datastack and authentication information.
+
+        This client wraps all the other clients and keeps track of the things that need to be consistent across them.
+        To instantiate a client:
+
+        .. code:: python
+
+            client = CAVEclient(datastack_name='my_datastack',
+                                    server_address='www.myserver.com',
+                                    auth_token_file='~/.mysecrets/secrets.json')
+
+        Then
+        * client.info is an InfoService client (see infoservice.InfoServiceClient)
+        * client.state is a neuroglancer state client (see jsonservice.JSONService)
+        * client.schema is an EM Annotation Schemas client (see emannotationschemas.SchemaClient)
+        * client.chunkedgraph is a Chunkedgraph client (see chunkedgraph.ChunkedGraphClient)
+        * client.annotation is an Annotation DB client (see annotationengine.AnnotationClient)
+
+        All subclients are loaded lazily and share the same datastack name, server address, and auth tokens where used.
+
+        Parameters
+        ----------
+        datastack_name : str, optional
+            Datastack name for the services. Almost all services need this and will not work if it is not passed.
+        server_address : str or None
+            URL of the framework server. If None, chooses the default server www.dynamicannotationframework.com.
+            Optional, defaults to None.
+        auth_token_file : str or None
+            Path to a json file containing the auth token. If None, uses the default location. See Auth client documentation.
+            Optional, defaults to None.
+        auth_token_key : str
+            Dictionary key for the token in the the JSON file.
+            Optional, default is 'token'.
+        auth_token : str or None
+            Direct entry of an auth token. If None, uses the file arguments to find the token.
+            Optional, default is None.
+        max_retries : int or None, optional
+            Sets the default number of retries on failed requests. Optional, by default 2.
+        pool_maxsize : int or None, optional
+            Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
+        pool_block: bool or None, optional
+            If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
+        desired_resolution : Iterable[float]or None, optional
+            If given, should be a list or array of the desired resolution you want queries returned in
+            useful for materialization queries.
+        info_cache: dict or None, optional
+            Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
+        """
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
                 server_address=server_address,
@@ -38,6 +87,7 @@ class CAVEclient(object):
                 max_retries=max_retries,
                 pool_maxsize=pool_maxsize,
                 pool_block=pool_block,
+                info_cache=info_cache,
             )
         else:
             return CAVEclientFull(
@@ -50,6 +100,7 @@ class CAVEclient(object):
                 pool_maxsize=pool_maxsize,
                 pool_block=pool_block,
                 desired_resolution=desired_resolution,
+                info_cache=info_cache,
             )
 
 
@@ -93,6 +144,8 @@ class CAVEclientGlobal(object):
         Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
     pool_block: bool or None, optional
         If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
+    info_cache: dict or None, optional
+        Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
     """
 
     def __init__(
@@ -104,6 +157,7 @@ class CAVEclientGlobal(object):
         max_retries=DEFAULT_RETRIES,
         pool_maxsize=None,
         pool_block=None,
+        info_cache=None,
     ):
         if server_address is None:
             server_address = default_global_server_address
@@ -117,6 +171,7 @@ class CAVEclientGlobal(object):
         self._max_retries = max_retries
         self._pool_maxsize = pool_maxsize
         self._pool_block = pool_block
+        self._info_cache = info_cache
 
     def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
         """Change the authentication token and reset services.
@@ -171,6 +226,7 @@ class CAVEclientGlobal(object):
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
+                info_cache=self._info_cache,
             )
         return self._info
 
@@ -264,6 +320,8 @@ class CAVEclientFull(CAVEclientGlobal):
     desired_resolution : Iterable[float]or None, optional
         If given, should be a list or array of the desired resolution you want queries returned in
         useful for materialization queries.
+    info_cache: dict or None, optional
+        Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
     """
 
     def __init__(
@@ -277,6 +335,7 @@ class CAVEclientFull(CAVEclientGlobal):
         pool_maxsize=None,
         pool_block=None,
         desired_resolution=None,
+        info_cache=None,
     ):
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
@@ -286,6 +345,7 @@ class CAVEclientFull(CAVEclientGlobal):
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
+            info_cache=info_cache,
         )
 
         self._datastack_name = datastack_name

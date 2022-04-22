@@ -31,6 +31,7 @@ def InfoServiceClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
+    info_cache=None,
 ):
     if server_address is None:
         server_address = default_global_server_address
@@ -61,6 +62,7 @@ def InfoServiceClient(
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
         over_client=over_client,
+        info_cache=info_cache,
     )
 
 
@@ -78,6 +80,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        info_cache=None,
     ):
         super(InfoServiceClientV2, self).__init__(
             server_address,
@@ -92,7 +95,11 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             pool_block=pool_block,
             over_client=over_client,
         )
-        self.info_cache = dict()
+        if not info_cache:
+            self.info_cache = dict()
+        else:
+            self.info_cache = info_cache
+
         if datastack_name is not None:
             ds_info = self.get_datastack_info(datastack_name=datastack_name)
             self._aligned_volume_name = ds_info["aligned_volume"]["name"]
