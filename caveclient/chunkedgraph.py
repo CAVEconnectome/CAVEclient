@@ -67,7 +67,11 @@ def root_id_int_list_check(
             raise ValueError(
                 "When passing a string for 'root_id' make sure the string can be converted to a uint64"
             )
-    elif isinstance(root_id, np.ndarray) or isinstance(root_id, list):
+    elif (
+        isinstance(root_id, np.ndarray)
+        or isinstance(root_id, list)
+        or isinstance(root_id, pd.core.arrays.integer.IntegerArray)
+    ):
         if make_unique:
             root_id = np.unique(root_id).astype(np.uint64)
         else:
