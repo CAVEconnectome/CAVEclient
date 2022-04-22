@@ -21,7 +21,6 @@ import pandas as pd
 import pytz
 import warnings
 import re
-import pickle5
 
 SERVER_KEY = "me_server_address"
 
@@ -354,6 +353,29 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
+
+    def get_segmentation_table_metadata(
+        self, table_name: str, datastack_name: str = None
+    ):
+        """get the metadata on the segmentation data from the production database
+
+        Args:
+            table_name (str): table to query
+            datastack_name (str, optional): datastack to query.
+                Defaults to None which will use what is set in the column.
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+
+        url = self._endpoints["segmentation_metadata"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        d = handle_response(response)
+        d["last_updated"] = convert_timestamp(d["last_updated"])
+        d["created"] = convert_timestamp(d["created"])
+        return d
 
     def get_version_metadata(self, version: int = None, datastack_name: str = None):
         """get metadata about a version
