@@ -566,6 +566,53 @@ class MaterializatonClientV2(ClientBase):
             suffixes = None
         return tables, suffixes
 
+    def query_new_production_annotations(
+        self,
+        table: str,
+        timestamp_start: datetime = None,
+        timestamp_end: datetime = None,
+        datastack_name: str = None,
+        merge_reference: bool = True
+    ):
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        url, data, query_args, encoding = self._format_query_components(
+            datastack_name,
+            0,
+            [table],
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            True,
+            True,
+            0,
+            None,
+            use_live=True,
+            filter_invalid=False,
+        )
+        if timestamp_start:
+            data['timestamp_start']=string_format_timestamp(timestamp_start)
+        if timestamp_end:
+            data['timestamp_end']=string_format_timestamp(timestamp_end)
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
+            params=query_args,
+            stream=False
+        )
+        response = handle_response(response, as_json=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter(action="ignore", category=FutureWarning)
+            warnings.simplefilter(action="ignore", category=DeprecationWarning)
+            df = pa.deserialize(response.content)
+            df = _convert_pyarrow_to_pandas(df)
+        return df
+
     def query_table(
         self,
         table: str,
@@ -728,6 +775,7 @@ class MaterializatonClientV2(ClientBase):
                     desired_resolution=desired_resolution,
                 )
                 df.attrs.update(attrs)
+                
             if split_positions:
                 return df
             else:
@@ -1101,7 +1149,7 @@ class MaterializatonClientV2(ClientBase):
                     )
                 )
 
-        # first we want to translate all these filters into the IDss at the
+        # first we want to translate all these filters into the IDs at the
         # most recent materialization
         with TimeIt("map_filters"):
             past_filters, future_map = self.map_filters(
