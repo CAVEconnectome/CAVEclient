@@ -566,53 +566,6 @@ class MaterializatonClientV2(ClientBase):
             suffixes = None
         return tables, suffixes
 
-    def query_new_production_annotations(
-        self,
-        table: str,
-        timestamp_start: datetime = None,
-        timestamp_end: datetime = None,
-        datastack_name: str = None,
-        merge_reference: bool = True
-    ):
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-
-        url, data, query_args, encoding = self._format_query_components(
-            datastack_name,
-            0,
-            [table],
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            True,
-            True,
-            0,
-            None,
-            use_live=True,
-            filter_invalid=False,
-        )
-        if timestamp_start:
-            data['timestamp_start']=string_format_timestamp(timestamp_start)
-        if timestamp_end:
-            data['timestamp_end']=string_format_timestamp(timestamp_end)
-        response = self.session.post(
-            url,
-            data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
-            params=query_args,
-            stream=False
-        )
-        response = handle_response(response, as_json=False)
-        with warnings.catch_warnings():
-            warnings.simplefilter(action="ignore", category=FutureWarning)
-            warnings.simplefilter(action="ignore", category=DeprecationWarning)
-            df = pa.deserialize(response.content)
-            df = _convert_pyarrow_to_pandas(df)
-        return df
-
     def query_table(
         self,
         table: str,
@@ -701,6 +654,7 @@ class MaterializatonClientV2(ClientBase):
                     post_filter=True,
                     metadata=metadata,
                     desired_resolution=desired_resolution,
+                    use_live=use_live,
                 )
         if materialization_version is None:
             materialization_version = self.version
@@ -775,7 +729,7 @@ class MaterializatonClientV2(ClientBase):
                     desired_resolution=desired_resolution,
                 )
                 df.attrs.update(attrs)
-                
+
             if split_positions:
                 return df
             else:
@@ -1128,67 +1082,16 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        with TimeIt("find_mat_version"):
-            # we want to find the most recent materialization
-            # in which the timestamp given is in the future
-            mds = self.get_versions_metadata()
-            materialization_version = None
-            # make sure the materialization's are increasing in ID/time
-            for md in sorted(mds, key=lambda x: x["id"]):
-                ts = md["time_stamp"]
-                if timestamp > ts:
-                    materialization_version = md["version"]
-                    timestamp_start = ts
-            # if none of the available versions are before
-            # this timestamp, then we cannot support the query
-            if materialization_version is None:
-                raise (
-                    ValueError(
-                        """The timestamp you passed is not recent enough
-                for the materialization versions that are available"""
-                    )
-                )
-
-        # first we want to translate all these filters into the IDs at the
-        # most recent materialization
-        with TimeIt("map_filters"):
-            past_filters, future_map = self.map_filters(
-                [filter_in_dict, filter_out_dict, filter_equal_dict],
-                timestamp,
-                timestamp_start,
-            )
-            past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
-            if past_equal_dict is not None:
-                # when doing a filter equal in the past
-                # we translate it to a filter_in, as 1 ID might
-                # be multiple IDs in the past.
-                # so we want to update the filter_in dict
-                cols = [col for col in past_equal_dict.keys()]
-                for col in cols:
-                    if col.endswith("root_id"):
-                        if past_filter_in_dict is None:
-                            past_filter_in_dict = {}
-                        past_filter_in_dict[col] = past_equal_dict.pop(col)
-                if len(past_equal_dict) == 0:
-                    past_equal_dict = None
-
-        tables, suffixes = self._resolve_merge_reference(
-            merge_reference, table, datastack_name, materialization_version
-        )
-        with TimeIt("package query"):
+        if use_live:
             url, data, query_args, encoding = self._format_query_components(
                 datastack_name,
-                materialization_version,
-                tables,
+                0,
+                [table],
                 None,
-                suffixes,
-                {table: past_filter_in_dict}
-                if past_filter_in_dict is not None
-                else None,
-                {table: past_filter_out_dict}
-                if past_filter_out_dict is not None
-                else None,
-                {table: past_equal_dict} if past_equal_dict is not None else None,
+                None,
+                {table: filter_in_dict} if filter_in_dict is not None else None,
+                {table: filter_out_dict} if filter_out_dict is not None else None,
+                {table: filter_equal_dict} if filter_equal_dict is not None else None,
                 {table: filter_spatial_dict}
                 if filter_spatial_dict is not None
                 else None,
@@ -1196,9 +1099,84 @@ class MaterializatonClientV2(ClientBase):
                 True,
                 offset,
                 limit,
+                use_live=True,
             )
-            logging.debug(f"query_args: {query_args}")
-            logging.debug(f"query data: {data}")
+        else:
+            with TimeIt("find_mat_version"):
+                # we want to find the most recent materialization
+                # in which the timestamp given is in the future
+                mds = self.get_versions_metadata()
+                materialization_version = None
+                # make sure the materialization's are increasing in ID/time
+                for md in sorted(mds, key=lambda x: x["id"]):
+                    ts = md["time_stamp"]
+                    if timestamp > ts:
+                        materialization_version = md["version"]
+                        timestamp_start = ts
+                # if none of the available versions are before
+                # this timestamp, then we cannot support the query
+                if materialization_version is None:
+                    raise (
+                        ValueError(
+                            """The timestamp you passed is not recent enough
+                    for the materialization versions that are available"""
+                        )
+                    )
+
+            # first we want to translate all these filters into the IDs at the
+            # most recent materialization
+            with TimeIt("map_filters"):
+                past_filters, future_map = self.map_filters(
+                    [filter_in_dict, filter_out_dict, filter_equal_dict],
+                    timestamp,
+                    timestamp_start,
+                )
+                (
+                    past_filter_in_dict,
+                    past_filter_out_dict,
+                    past_equal_dict,
+                ) = past_filters
+                if past_equal_dict is not None:
+                    # when doing a filter equal in the past
+                    # we translate it to a filter_in, as 1 ID might
+                    # be multiple IDs in the past.
+                    # so we want to update the filter_in dict
+                    cols = [col for col in past_equal_dict.keys()]
+                    for col in cols:
+                        if col.endswith("root_id"):
+                            if past_filter_in_dict is None:
+                                past_filter_in_dict = {}
+                            past_filter_in_dict[col] = past_equal_dict.pop(col)
+                    if len(past_equal_dict) == 0:
+                        past_equal_dict = None
+
+            tables, suffixes = self._resolve_merge_reference(
+                merge_reference, table, datastack_name, materialization_version
+            )
+            with TimeIt("package query"):
+                url, data, query_args, encoding = self._format_query_components(
+                    datastack_name,
+                    materialization_version,
+                    tables,
+                    None,
+                    suffixes,
+                    {table: past_filter_in_dict}
+                    if past_filter_in_dict is not None
+                    else None,
+                    {table: past_filter_out_dict}
+                    if past_filter_out_dict is not None
+                    else None,
+                    {table: past_equal_dict} if past_equal_dict is not None else None,
+                    {table: filter_spatial_dict}
+                    if filter_spatial_dict is not None
+                    else None,
+                    True,
+                    True,
+                    offset,
+                    limit,
+                )
+                logging.debug(f"query_args: {query_args}")
+                logging.debug(f"query data: {data}")
         with TimeIt("query materialize"):
             response = self.session.post(
                 url,
@@ -1237,23 +1215,7 @@ class MaterializatonClientV2(ClientBase):
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
-        # post process the dataframe to update all the root_ids columns
-        # with the most up to date get roots
-        df = self._update_rootids(df, timestamp, future_map)
 
-        # apply the original filters to remove rows
-        # from this result which are not relevant
-        if post_filter:
-            with TimeIt("post_filter"):
-                if filter_in_dict is not None:
-                    for col, val in filter_in_dict.items():
-                        df = df[df[col].isin(val)]
-                if filter_out_dict is not None:
-                    for col, val in filter_out_dict.items():
-                        df = df[~df[col].isin(val)]
-                if filter_equal_dict is not None:
-                    for col, val in filter_equal_dict.items():
-                        df = df[df[col] == val]
         if metadata:
             attrs = self._assemble_attributes(
                 table,
@@ -1273,6 +1235,26 @@ class MaterializatonClientV2(ClientBase):
                 desired_resolution=desired_resolution,
             )
             df.attrs.update(attrs)
+
+        if use_live:
+            return df
+        # post process the dataframe to update all the root_ids columns
+        # with the most up to date get roots
+        df = self._update_rootids(df, timestamp, future_map)
+
+        # apply the original filters to remove rows
+        # from this result which are not relevant
+        if post_filter:
+            with TimeIt("post_filter"):
+                if filter_in_dict is not None:
+                    for col, val in filter_in_dict.items():
+                        df = df[df[col].isin(val)]
+                if filter_out_dict is not None:
+                    for col, val in filter_out_dict.items():
+                        df = df[~df[col].isin(val)]
+                if filter_equal_dict is not None:
+                    for col, val in filter_equal_dict.items():
+                        df = df[df[col] == val]
 
         return df
 
