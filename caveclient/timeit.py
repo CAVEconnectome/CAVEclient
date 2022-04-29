@@ -1,6 +1,7 @@
+from time import time
 import builtins
 import logging
-from time import time
+logger = logging.getLogger(__name__)
 
 indent = 0
 
@@ -13,7 +14,7 @@ class TimeIt:
         self._start = None
 
     def __enter__(self):
-        logging.debug(f"start {self._message}")
+        logger.debug(f"start {self._message}")
         global indent
         if self._args:
             args_str = " ".join(str(x) for x in self._args)
@@ -26,4 +27,4 @@ class TimeIt:
     def __exit__(self, *args):
         global indent
         indent -= 2
-        logging.debug(f"end {self._message} -- {time()-self._start}")
+        logger.debug(f"end {self._message} -- {time()-self._start}")
