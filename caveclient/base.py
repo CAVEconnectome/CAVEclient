@@ -2,6 +2,7 @@ import urllib
 import requests
 import json
 import logging
+logger = logging.getLogger(__name__)
 import webbrowser
 
 from .session_config import patch_session
@@ -69,7 +70,7 @@ def _raise_for_status(r):
         raise requests.HTTPError(http_error_msg, response=r)
     warning = r.headers.get("Warning")
     if warning:
-        logging.warning(warning)
+        logger.warning(warning)
 
 
 def handle_response(response, as_json=True):

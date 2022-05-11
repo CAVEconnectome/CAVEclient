@@ -1,13 +1,14 @@
-import json
-import logging
-import requests
-import webbrowser
-import os
-from .endpoints import auth_endpoints_v1, default_global_server_address
-import urllib
 from .base import (
     handle_response,
 )
+import urllib
+from .endpoints import auth_endpoints_v1, default_global_server_address
+import os
+import webbrowser
+import requests
+import json
+import logging
+logger = logging.getLogger(__name__)
 
 default_token_location = "~/.cloudvolume/secrets"
 default_token_name = "cave-secret.json"
@@ -50,7 +51,8 @@ class AuthClient(object):
         if token_file is None:
             server = urllib.parse.urlparse(server_address).netloc
             server_file = server + "-cave-secret.json"
-            server_file_path = os.path.join(default_token_location, server_file)
+            server_file_path = os.path.join(
+                default_token_location, server_file)
             server_file_path = os.path.expanduser(server_file_path)
             if os.path.isfile(server_file_path):
                 token_file = server_file_path
@@ -70,7 +72,7 @@ class AuthClient(object):
                     _dep_file = os.path.expanduser(deprecated_file)
                     token = self._load_token(_dep_file, self._token_key)
                     if token is not None:
-                        logging.warning(
+                        logger.warning(
                             f"""file location {deprecated_file} is deprecated,
 rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                         )
@@ -79,7 +81,8 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         self._token = token
 
         self._server_address = server_address
-        self._default_endpoint_mapping = {"auth_server_address": self._server_address}
+        self._default_endpoint_mapping = {
+            "auth_server_address": self._server_address}
 
     @property
     def token(self):
