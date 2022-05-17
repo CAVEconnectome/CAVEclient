@@ -726,6 +726,57 @@ class ChunkedGraphClientV1(ClientBase):
         )
         return np.array(r["is_latest"], bool)
 
+    def is_valid_nodes(self, node_ids, start_timestamp=None, end_timestamp=None):
+        """Check whether nodes are valid for given timestamp range
+
+        Valid is defined as existing in the chunkedgraph. This makes no statement
+        about these IDs being roots, supervoxel or anything in-between. It also
+        does not take into account whether a root id has since been edited.
+
+        Parameters
+        ----------
+            node ids ([type]): node ids to check
+            start_timestamp (datetime.dateime, optional): timestamp to check whether these IDs were valid after this timestamp. Defaults to None (assumes now).
+            end_timestamp (datetime.dateime, optional): timestamp to check whether these IDs were valid before this timestamp. Defaults to None (assumes now).
+
+        Returns:
+            np.array[np.Boolean]: boolean array of whether these are valid IDs
+        """
+        node_ids = root_id_int_list_check(node_ids, make_unique=False)
+
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["valid_nodes"].format_map(endpoint_mapping)
+
+        if end_timestamp is None:
+            end_timestamp = self._default_timestamp
+
+        if start_timestamp is None:
+            start_timestamp = datetime.datetime(2000, 1, 1)
+
+        if start_timestamp is not None:
+            query_d = package_timestamp(
+                self._process_timestamp(start_timestamp), name="start_timestamp"
+            )
+        else:
+            query_d = {}
+
+        if end_timestamp is not None:
+            query_d.update(
+                package_timestamp(
+                    self._process_timestamp(end_timestamp), name="end_timestamp"
+                )
+            )
+
+        data = {"node_ids": node_ids}
+        r = handle_response(
+            self.session.get(
+                url, data=json.dumps(data, cls=BaseEncoder), params=query_d
+            )
+        )
+        valid_ids = np.array(r["valid_roots"], np.uint64)
+
+        return np.isin(node_ids, valid_ids)
+
     def get_root_timestamps(self, root_ids):
         """Retrieves timestamps when roots where created.
 

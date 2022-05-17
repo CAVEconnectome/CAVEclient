@@ -119,6 +119,7 @@ chunkedgraph_endpoints_v1 = {
     "root_timestamps": pcg_v1 + "/table/{table_id}/root_timestamps",
     "delta_roots": pcg_v1 + "/table/{table_id}/delta_roots",
     "preview_split": pcg_v1 + "/table/{table_id}/graph/split_preview",
+    "valid_nodes": pcg_v1 + "/table/{table_id}/valid_nodes",
 }
 
 chunkedgraph_api_versions = {
