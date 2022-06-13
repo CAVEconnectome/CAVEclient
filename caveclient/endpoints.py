@@ -186,6 +186,7 @@ auth_endpoints_v1 = {
     "refresh_token": v1_auth + "/refresh_token",
     "create_token": v1_auth + "/create_token",
     "get_users": v1_auth + "/user",
+    "get_group_users": v1_auth + "/group/{group_id}/user",
 }
 
 auth_api_versions = {

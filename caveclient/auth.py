@@ -8,6 +8,7 @@ import webbrowser
 import requests
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 
 default_token_location = "~/.cloudvolume/secrets"
@@ -51,8 +52,7 @@ class AuthClient(object):
         if token_file is None:
             server = urllib.parse.urlparse(server_address).netloc
             server_file = server + "-cave-secret.json"
-            server_file_path = os.path.join(
-                default_token_location, server_file)
+            server_file_path = os.path.join(default_token_location, server_file)
             server_file_path = os.path.expanduser(server_file_path)
             if os.path.isfile(server_file_path):
                 token_file = server_file_path
@@ -81,8 +81,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         self._token = token
 
         self._server_address = server_address
-        self._default_endpoint_mapping = {
-            "auth_server_address": self._server_address}
+        self._default_endpoint_mapping = {"auth_server_address": self._server_address}
 
     @property
     def token(self):
@@ -226,6 +225,26 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         response = requests.Session().get(
             url, headers=self.request_header, params=params
         )
+
+        return handle_response(response)
+
+    def get_group_users(self, group_id):
+        """Get users in a group
+
+        Parameters
+        ----------
+        group_id : int
+            ID value for a given group
+
+        Returns
+        -------
+        list
+            List of dicts of user ids. Returns empty list if group does not exist.
+        """
+        endpoint_mapping = self._default_endpoint_mapping
+        endpoint_mapping["group_id"] = group_id
+        url = auth_endpoints_v1["get_group_users"].format_map(endpoint_mapping)
+        response = requests.Session().get(url, headers=self.request_header)
 
         return handle_response(response)
 
