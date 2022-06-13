@@ -239,7 +239,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         Returns
         -------
         list
-            List of dicts of user ids
+            List of dicts of user ids. Returns empty list if group does not exist.
         """
         endpoint_mapping = self._default_endpoint_mapping
         endpoint_mapping["group_id"] = group_id
