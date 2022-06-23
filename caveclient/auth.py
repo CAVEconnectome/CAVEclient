@@ -126,17 +126,19 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         open : bool, optional
             If True, opens a web browser to the web page where you can generate a new token.
         """
-        auth_url = auth_endpoints_v1["create_token"].format_map(
+        auth_url = auth_endpoints_v1["get_token"].format_map(
             self._default_endpoint_mapping
         )
+        new_url = auth_endpoints_v1["create_token"].format_map(
+            self._default_endpoint_mapping
+    
         txt = f"""New Tokens need to be acquired by hand. Please follow the following steps:
-                1) Go to: {auth_url} to create a new token.
+                1) Go to {new_url} to make a new token. Go to: {auth_url} to read your existing tokens. 
                 2) Log in with your Google credentials and copy the token shown afterward.
                 3a) Save it to your computer with: client.auth.save_token(token="PASTE_YOUR_TOKEN_HERE")
                 or
                 3b) Set it for the current session only with client.auth.token = "PASTE_YOUR_TOKEN_HERE"
-                Note: If you need to save or load multiple tokens, please read the documentation for details.
-                Warning! Creating a new token by finishing step 2 will invalidate the previous token!"""
+                Warning!: If you make a new token it will invalidate old tokens. Use the read url to retrieve an existing token."""
         print(txt)
         if open is True:
             webbrowser.open(auth_url)
