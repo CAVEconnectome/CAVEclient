@@ -603,6 +603,7 @@ class MaterializatonClientV2(ClientBase):
                     split_positions=split_positions,
                     post_filter=True,
                     metadata=metadata,
+                    merge_reference=merge_reference,
                     desired_resolution=desired_resolution,
                 )
         if materialization_version is None:
