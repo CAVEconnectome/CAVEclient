@@ -21,6 +21,7 @@ from .base import (
 )
 from cachetools import cached, TTLCache
 import logging
+
 logger = logging.getLogger(__name__)
 
 SERVER_KEY = "me_server_address"
@@ -374,8 +375,7 @@ class MaterializatonClientV2(ClientBase):
         datetime.datetime
             Datetime when the materialization version was frozen.
         """
-        meta = self.get_version_metadata(
-            version=version, datastack_name=datastack_name)
+        meta = self.get_version_metadata(version=version, datastack_name=datastack_name)
         return convert_timestamp(meta["time_stamp"])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
@@ -586,8 +586,7 @@ class MaterializatonClientV2(ClientBase):
         """
         if timestamp is not None:
             if materialization_version is not None:
-                raise ValueError(
-                    "cannot specify timestamp and materialization version")
+                raise ValueError("cannot specify timestamp and materialization version")
             else:
                 return self.live_query(
                     table,
@@ -634,8 +633,7 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json",
-                     "Accept-Encoding": encoding},
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
         )
@@ -643,8 +641,7 @@ class MaterializatonClientV2(ClientBase):
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(
-                    action="ignore", category=DeprecationWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 if desired_resolution is None:
                     desired_resolution = self.desired_resolution
@@ -657,8 +654,7 @@ class MaterializatonClientV2(ClientBase):
                     vox_res = self.get_table_metadata(
                         table, datastack_name, materialization_version
                     )["voxel_resolution"]
-                    df = convert_position_columns(
-                        df, vox_res, desired_resolution)
+                    df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
                 attrs = self._assemble_attributes(
                     tables,
@@ -768,8 +764,7 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json",
-                     "Accept-Encoding": encoding},
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
         )
@@ -777,8 +772,7 @@ class MaterializatonClientV2(ClientBase):
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(
-                    action="ignore", category=DeprecationWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
 
             if metadata:
@@ -835,10 +829,8 @@ class MaterializatonClientV2(ClientBase):
             return filters, {}
         root_ids = np.unique(np.concatenate(root_ids))
 
-        filter_timed_end = self.cg_client.is_latest_roots(
-            root_ids, timestamp=timestamp)
-        filter_timed_start = self.cg_client.get_root_timestamps(
-            root_ids) < timestamp
+        filter_timed_end = self.cg_client.is_latest_roots(root_ids, timestamp=timestamp)
+        filter_timed_start = self.cg_client.get_root_timestamps(root_ids) < timestamp
         filter_timestamp = np.logical_and(filter_timed_start, filter_timed_end)
         if not np.all(filter_timestamp):
             roots_too_old = root_ids[~filter_timed_end]
@@ -871,8 +863,7 @@ class MaterializatonClientV2(ClientBase):
                             new_dict[col] = id_mapping["past_id_map"][root_ids]
                         else:
                             new_dict[col] = np.concatenate(
-                                [id_mapping["past_id_map"][v]
-                                    for v in root_ids]
+                                [id_mapping["past_id_map"][v] for v in root_ids]
                             )
                     else:
                         new_dict[col] = root_ids
@@ -900,8 +891,7 @@ class MaterializatonClientV2(ClientBase):
                 # use the future map to update rootIDs
                 if future_map is not None:
                     df[root_id_col].replace(future_map, inplace=True)
-                all_root_ids = np.append(
-                    all_root_ids, df[root_id_col].values.copy())
+                all_root_ids = np.append(all_root_ids, df[root_id_col].values.copy())
 
             uniq_root_ids = np.unique(all_root_ids)
 
@@ -935,8 +925,7 @@ class MaterializatonClientV2(ClientBase):
         logger.info(f"all_svid_lengths {all_svid_lengths}")
         with TimeIt("get_roots"):
             # find the up to date root_ids for those supervoxels
-            updated_root_ids = self.cg_client.get_roots(
-                all_svids, timestamp=timestamp)
+            updated_root_ids = self.cg_client.get_roots(all_svids, timestamp=timestamp)
             del all_svids
 
         # loop through the columns again replacing the root ids with their updated
@@ -949,7 +938,7 @@ class MaterializatonClientV2(ClientBase):
                 root_id_col = sv_col[: -len("supervoxel_id")] + "root_id"
                 root_ids = df[root_id_col].values.copy()
 
-                uroot_id = updated_root_ids[k: k + n_svids]
+                uroot_id = updated_root_ids[k : k + n_svids]
                 k += n_svids
                 root_ids[~is_latest_root] = uroot_id
                 # ran into an isssue with pyarrow producing read only columns
@@ -1124,8 +1113,7 @@ class MaterializatonClientV2(ClientBase):
         with TimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(
-                    action="ignore", category=DeprecationWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 if desired_resolution is not None:
                     df = df.copy()
@@ -1138,8 +1126,7 @@ class MaterializatonClientV2(ClientBase):
                         datastack_name=datastack_name,
                         version=materialization_version,
                     )["voxel_resolution"]
-                    df = convert_position_columns(
-                        df, vox_res, desired_resolution)
+                    df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
         # post process the dataframe to update all the root_ids columns
@@ -1193,9 +1180,10 @@ class MaterializatonClientV2(ClientBase):
         limit: int = None,
         offset: int = None,
         split_positions: bool = False,
+        desired_resolution: Iterable[float] = None,
+        materialization_version: int = None,
         synapse_table: str = None,
         datastack_name: str = None,
-        materialization_version: int = None,
         metadata: bool = True,
     ):
         """query synapses
@@ -1214,6 +1202,9 @@ class MaterializatonClientV2(ClientBase):
             offset (int, optional): number of synapses to offset query, Defaults to None (no offset).
             split_positions (bool, optional): whether to return positions as seperate x,y,z columns (faster)
                 defaults to False
+            desired_resolution : Iterable[float] or None, optional
+                If given, should be a list or array of the desired resolution you want queries returned in
+                useful for materialization queries.
             synapse_table (str, optional): synapse table to query. If None, defaults to self.synapse_table.
             datastack_name: (str, optional): datastack to query
             materialization_version (int, optional): version to query.
@@ -1260,6 +1251,7 @@ class MaterializatonClientV2(ClientBase):
             offset=offset,
             limit=limit,
             split_positions=split_positions,
+            desired_resolution=desired_resolution,
             materialization_version=materialization_version,
             timestamp=timestamp,
             datastack_name=datastack_name,
@@ -1275,7 +1267,9 @@ class MaterializatonClientV2(ClientBase):
         else:
             return df
 
-    def _assemble_attributes(self, tables, suffixes=None, desired_resolution=None, **kwargs):
+    def _assemble_attributes(
+        self, tables, suffixes=None, desired_resolution=None, **kwargs
+    ):
         if isinstance(tables, str):
             tables = [tables]
 
