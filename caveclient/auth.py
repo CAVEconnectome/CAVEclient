@@ -35,7 +35,7 @@ def write_token(token, filepath, key, overwrite=True):
 
     secrets[key] = token
 
-    secret_dir, _ = os.path.split(filepath)
+    secret_dir = os.path.dirname(filepath)
     if not os.path.exists(secret_dir):
         full_dir = os.path.expanduser(secret_dir)
         os.makedirs(full_dir)
@@ -169,7 +169,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                 if you want to create a new token, or have no token use ```self.get_new_token``` instead
                 or use this function with the keyword argument make_new=True"""
         print(txt)
-        if open is True:
+        if open:
             webbrowser.open(auth_url)
         return None
 
@@ -209,7 +209,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                 Note: If you need to save or load multiple tokens, please read the documentation for details.
                 Warning! Creating a new token by finishing step 2 will invalidate the previous token!"""
         print(txt)
-        if open is True:
+        if open:
             webbrowser.open(auth_url)
         return None
 
