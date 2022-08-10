@@ -4,8 +4,7 @@ import pytz
 import pandas as pd
 from IPython.display import HTML
 from .timeit import TimeIt
-from typing import Union
-from collections.abc import Iterable
+from typing import Union, Iterable
 import itertools
 import pyarrow as pa
 from datetime import datetime, timezone
@@ -33,8 +32,8 @@ def convert_position_columns(df, given_resolution, desired_resolution):
 
     Args:
         df (pd.DataFrame): dataframe to alter
-        given_resolution (Iterable(float)): what the given resolution is
-        desired_resoultion (Iterable(float)): what the desired resolution is
+        given_resolution (Iterable[float]): what the given resolution is
+        desired_resoultion (Iterable[float]): what the desired resolution is
 
     Returns:
         pd.DataFrame: [description]
