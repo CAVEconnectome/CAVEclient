@@ -8,6 +8,7 @@ import webbrowser
 import requests
 import json
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,28 @@ default_token_file = f"{default_token_location}/{default_token_name}"
 deprecated_token_files = [
     f"{default_token_location}/{f}" for f in deprecated_token_names
 ]
+
+
+def write_token(token, filepath, key, overwrite=True):
+
+    if os.path.exists(filepath):
+        with open(filepath, "r") as f:
+            secrets = json.load(f)
+
+        if overwrite is False and key in secrets:
+            raise ValueError(f'Key "{key}" already exists in token file "{filepath}"')
+    else:
+        secrets = {}
+
+    secrets[key] = token
+
+    secret_dir = os.path.dirname(filepath)
+    if not os.path.exists(secret_dir):
+        full_dir = os.path.expanduser(secret_dir)
+        os.makedirs(full_dir)
+
+    with open(filepath, "w") as f:
+        json.dump(secrets, f)
 
 
 class AuthClient(object):
@@ -52,10 +75,10 @@ class AuthClient(object):
         if token_file is None:
             server = urllib.parse.urlparse(server_address).netloc
             server_file = server + "-cave-secret.json"
-            server_file_path = os.path.join(default_token_location, server_file)
-            server_file_path = os.path.expanduser(server_file_path)
-            if os.path.isfile(server_file_path):
-                token_file = server_file_path
+            self._server_file_path = os.path.join(default_token_location, server_file)
+            self._server_file_path = os.path.expanduser(self._server_file_path)
+            if os.path.isfile(self._server_file_path):
+                token_file = self._server_file_path
             else:
                 token_file = default_token_file
         self._token_file = os.path.expanduser(token_file)
@@ -118,6 +141,54 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             token = None
         return token
 
+    def setup_token(self, make_new=True, open=True):
+        """Currently, returns instructions for getting your auth token based on the current settings and saving it to the local environment.
+        New OAuth tokens are currently not able to be retrieved programmatically.
+
+        Parameters
+        ----------
+        make_new : bool, optional
+            If True, will make a new token, else prompt you to open a page to
+            retrieve an existing token.
+        open : bool, optional
+            If True, opens a web browser to the web page where you can retrieve a token.
+        """
+        if make_new:
+            return self.get_new_token(open=open)
+
+        auth_url = auth_endpoints_v1["get_tokens"].format_map(
+            self._default_endpoint_mapping
+        )
+        txt = f"""Tokens need to be acquired by hand. Please follow the following steps:
+                1) Go to: {auth_url} to view a list of your existing tokens.
+                2) Log in with your Google credentials copy one of the tokens from the dictionary (the string under the key 'token').
+                3a) Save it to your computer with: client.auth.save_token(token="PASTE_YOUR_TOKEN_HERE")
+                or
+                3b) Set it for the current session only with client.auth.token = "PASTE_YOUR_TOKEN_HERE"
+                Note: If you need to save or load multiple tokens, please read the documentation for details.
+                if you want to create a new token, or have no token use ```self.get_new_token``` instead
+                or use this function with the keyword argument make_new=True"""
+        print(txt)
+        if open:
+            webbrowser.open(auth_url)
+        return None
+
+    def get_tokens(self):
+        """Get the tokens setup for this users
+
+        Returns
+        -------
+        list[dict]:
+            a list of dictionary of tokens, each with the keys
+            "id": the id of this token
+            "token": the token (str)
+            "user_id": the users id (should be your ID)
+        """
+        url = auth_endpoints_v1["get_tokens"].format_map(self._default_endpoint_mapping)
+        response = requests.Session().get(url, headers=self.request_header)
+
+        return handle_response(response)
+
     def get_new_token(self, open=False):
         """Currently, returns instructions for getting a new token based on the current settings and saving it to the local environment. New OAuth tokens are currently not able to be retrieved programmatically.
 
@@ -138,7 +209,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                 Note: If you need to save or load multiple tokens, please read the documentation for details.
                 Warning! Creating a new token by finishing step 2 will invalidate the previous token!"""
         print(txt)
-        if open is True:
+        if open:
             webbrowser.open(auth_url)
         return None
 
@@ -149,6 +220,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         overwrite=False,
         token_file=None,
         switch_token=True,
+        write_to_server_file=True,
     ):
         """Conveniently save a token in the correct format.
 
@@ -173,6 +245,9 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             Path to the token file, by default None. If None, uses the default file location specified above.
         switch_token : bool, optional
             If True, switch the auth client over into using the new token, by default True
+        write_to_server_file: bool, optional
+            If True, will write token to a server specific file to support this machine
+            interacting with multiple auth servers.
         """
         if token is None:
             token = self.token
@@ -185,26 +260,9 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         if save_token_file is None:
             raise ValueError("No token file is set")
 
-        if os.path.exists(save_token_file):
-            with open(save_token_file, "r") as f:
-                secrets = json.load(f)
-
-            if overwrite is False and token_key in secrets:
-                raise ValueError(
-                    f'Key "{token_key}" already exists in token file "{save_token_file}"'
-                )
-        else:
-            secrets = {}
-
-        secrets[token_key] = token
-
-        secret_dir, _ = os.path.split(save_token_file)
-        if not os.path.exists(secret_dir):
-            full_dir = os.path.expanduser(secret_dir)
-            os.makedirs(full_dir)
-
-        with open(save_token_file, "w") as f:
-            json.dump(secrets, f)
+        write_token(token, save_token_file, token_key, overwrite=overwrite)
+        if write_to_server_file:
+            write_token(token, self._server_file_path, token_key, overwrite=overwrite)
 
         if switch_token:
             self._token = token
