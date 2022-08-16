@@ -1029,9 +1029,29 @@ class MaterializatonClientV2(ClientBase):
             # make sure the materialization's are increasing in ID/time
             for md in sorted(mds, key=lambda x: x["id"]):
                 ts = md["time_stamp"]
-                if timestamp > ts:
+                if timestamp >= ts:
                     materialization_version = md["version"]
-                    timestamp_start = ts
+                    if timestamp == ts:
+                        # If timestamp equality to a version, use the standard query_table.
+                        return self.query_table(
+                            table=table,
+                            filter_in_dict=filter_in_dict,
+                            filter_out_dict=filter_out_dict,
+                            filter_equal_dict=filter_equal_dict,
+                            filter_spatial_dict=filter_spatial_dict,
+                            select_columns=select_columns,
+                            offset=offset,
+                            limit=limit,
+                            datastack_name=datastack_name,
+                            split_positions=split_positions,
+                            materialization_version=materialization_version,
+                            metadata=metadata,
+                            merge_reference=merge_reference,
+                            desired_resolution=desired_resolution,
+                            return_df=True,
+                        )
+                    else:
+                        timestamp_start = ts
             # if none of the available versions are before
             # this timestamp, then we cannot support the query
             if materialization_version is None:
