@@ -261,7 +261,7 @@ class AnnotationClientV2(ClientBase):
         aligned_volume_name: str = None,
         write_permission: str = "PRIVATE",
         read_permission: str = "PUBLIC",
-        warning_text: str = None
+        notice_text: str = None
     ):
         """Creates a new data table based on an existing schema
 
@@ -311,7 +311,7 @@ class AnnotationClientV2(ClientBase):
             PRIVATE: only you can read this table. Intended to be used for sorting out bugs.
             GROUP: only members that share a group with you can read (intended for within group vetting)
             PUBLIC: anyone with permissions to read this datastack can read this data (DEFAULT)
-        warning_text: str, optional
+        notice_text: str, optional
             Text the user will see when querying this table. Can be used to warn users of flaws,
             and uncertainty in the data, or to advertise citations that should be used with this table.
             Defaults to None, no text. If you want to remove text, send empty string. 
@@ -351,8 +351,8 @@ class AnnotationClientV2(ClientBase):
         }
         if user_id is not None:
             metadata["user_id"] = user_id
-        if warning_text is not None:
-            metadata["warning_text"]=warning_text
+        if notice_text is not None:
+            metadata["notice_text"]=notice_text
         if reference_table is not None:
             metadata["table_metadata"] = {
                 "reference_table": reference_table,
@@ -378,7 +378,7 @@ class AnnotationClientV2(ClientBase):
         read_permission: str = None,
         write_permission: str = None,
         user_id: int = None,
-        warning_text: str = None,
+        notice_text: str = None,
         aligned_volume_name: str = None
     ):
         """update the metadata on an existing table
@@ -406,7 +406,7 @@ class AnnotationClientV2(ClientBase):
                 Note, if you use this you will not be able to update the metadata on this table any longer
                 and depending on permissions may not be able to read or write to it 
                 Defaults to None. (will not update)
-            warning_text: str, optional
+            notice_text: str, optional
                 Text the user will see when querying this table. Can be used to warn users of flaws,
                 and uncertainty in the data, or to advertise citations that should be used with this table.
                 Defaults to None. (will not update)
@@ -441,8 +441,8 @@ class AnnotationClientV2(ClientBase):
             metadata["flat_segmentation_source"]=flat_segmentation_source            
         if user_id is not None:
             metadata["user_id"] = user_id
-        if warning_data is not None:
-            metadata["warning_data"] = warning_data
+        if notice_text is not None:
+            metadata["notice_text"] = notice_text
 
         data = {
             "table_name": table_name,
