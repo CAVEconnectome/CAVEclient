@@ -259,10 +259,9 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
 
         if save_token_file is None:
             raise ValueError("No token file is set")
-
-        write_token(token, save_token_file, token_key, overwrite=overwrite)
         if write_to_server_file:
             write_token(token, self._server_file_path, token_key, overwrite=overwrite)
+        write_token(token, save_token_file, token_key, overwrite=overwrite)
 
         if switch_token:
             self._token = token
