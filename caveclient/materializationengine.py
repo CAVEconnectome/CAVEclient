@@ -398,26 +398,42 @@ class MaterializatonClientV2(ClientBase):
             md["time_stamp"] = convert_timestamp(md["time_stamp"])
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
-
-    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
-    def get_table_metadata(
-        self, table_name: str, datastack_name=None, version: int = None
-    ):
-        """Get metadata about a table
+        """
 
         Parameters
         ----------
-        table_name (str):
-            name of table to mark for deletion
-        datastack_name: str or None, optional,
-            Name of the datastack_name.
-            If None, uses the one specified in the client.
+
 
 
         Returns
         -------
         json
             metadata about table
+        """
+
+    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
+    def get_table_metadata(
+        self, table_name: str, 
+        datastack_name=None, 
+        version: int = None,
+        log_warning: bool = True
+    ):
+        """Get metadata about a table
+
+        Args:
+            table_name (str):
+                name of table to mark for deletion
+            datastack_name: str or None, optional,
+                Name of the datastack_name.
+                If None, uses the one specified in the client.
+            version (int, optional): 
+                version to get. If None, uses the one specified in the client.
+            log_warning (bool, optional): 
+                whether to print out warnings to the logger. 
+                Defaults to True.
+
+        Returns:
+            dict: metadata dictionary for table
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -431,7 +447,7 @@ class MaterializatonClientV2(ClientBase):
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        metadata_d = handle_response(response)
+        metadata_d = handle_response(response, log_warning=log_warning)
         vx = metadata_d.pop("voxel_resolution_x", None)
         vy = metadata_d.pop("voxel_resolution_y", None)
         vz = metadata_d.pop("voxel_resolution_z", None)
@@ -500,6 +516,7 @@ class MaterializatonClientV2(ClientBase):
                 table_name=table,
                 datastack_name=datastack_name,
                 version=materialization_version,
+                log_warning=False
             )
             if md["reference_table"] is None:
                 target_table = None
@@ -628,7 +645,6 @@ class MaterializatonClientV2(ClientBase):
             offset,
             limit,
         )
-
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
@@ -651,7 +667,7 @@ class MaterializatonClientV2(ClientBase):
                             "desired resolution needs to be of length 3, for xyz"
                         )
                     vox_res = self.get_table_metadata(
-                        table, datastack_name, materialization_version
+                        table, datastack_name, materialization_version, log_warning=False
                     )["voxel_resolution"]
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
@@ -1144,6 +1160,7 @@ class MaterializatonClientV2(ClientBase):
                         table_name=table,
                         datastack_name=datastack_name,
                         version=materialization_version,
+                        log_warning=False
                     )["voxel_resolution"]
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
@@ -1299,7 +1316,7 @@ class MaterializatonClientV2(ClientBase):
         }
         if not join_query:
             attrs["join_query"] = False
-            meta = self.get_table_metadata(tables[0])
+            meta = self.get_table_metadata(tables[0], log_warning=False)
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
@@ -1317,7 +1334,7 @@ class MaterializatonClientV2(ClientBase):
                 suffixes = ["_x", "_y"]
             for (tname, jcol), s in zip(tables, suffixes):
                 table_attrs[tname] = {}
-                meta = self.get_table_metadata(tname)
+                meta = self.get_table_metadata(tname, log_warning=False)
                 for k, v in meta.items():
                     if re.match("^table", k):
                         table_attrs[tname][k] = v
