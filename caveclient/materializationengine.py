@@ -398,18 +398,6 @@ class MaterializatonClientV2(ClientBase):
             md["time_stamp"] = convert_timestamp(md["time_stamp"])
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
-        """
-
-        Parameters
-        ----------
-
-
-
-        Returns
-        -------
-        json
-            metadata about table
-        """
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_table_metadata(
