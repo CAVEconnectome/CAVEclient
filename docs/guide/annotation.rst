@@ -12,7 +12,7 @@ Getting existing tables
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 A list of the existing tables for the datastack can be found at with
-``get_tables``.
+:func:`~caveclient.annotationengine.AnnotationClientV2.get_tables`.
 
 .. code:: python
 
@@ -29,7 +29,7 @@ Downloading annotations
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 You can download the JSON representation of a data point through the
-``get_annotation`` method. This can be useful if you need to look up
+:func:`~caveclient.annotationengine.AnnotationClientV2.get_annotation` method. This can be useful if you need to look up
 information on unmaterialized data, or to see what a properly templated
 annotation looks like.
 
@@ -43,13 +43,38 @@ Create a new table
 ^^^^^^^^^^^^^^^^^^
 
 One can create a new table with a specified schema with the
-``create_table`` method:
+:func:`~caveclient.annotationengine.AnnotationClientV2.create_table` method:
 
 .. code:: python
 
    client.annotation.create_table(table_name='test_table',
-                                  schema_name='microns_func_coreg')
+                                  schema_name='microns_func_coreg',
+                                  voxel_resolution = [1,1,1],
+                                  description="some text to describe your table")
+The voxel resolution is the units your position columns will be uploaded in. 
+[1,1,1] would imply a nm location, where as [4,4,40] would correspond to voxels of that size.
+If you are uploading points from a neuroglancer session, you want this to match the units of that neuroglancer view.
 
+Note there are some optional metadata parameters to :func:`~caveclient.annotationengine.AnnotationClientV2.create_table`.
+
+* ``notice_text`` : This is text that will show up to users who access this data as a warning. This could be used to warn users that the data is not complete or checked yet, or to advertise that a particular publication should be cited when using this table. 
+* ``read_permission`` : one of "PRIVATE" which means only you can read data in this table.  "PUBLIC" (default) which means anyone can read this table that has read permissions to this dataset. So if and only if you can read the segmentation results of this data, you can read this table. "GROUP" which means that you must share a common group with this user for them to be able to read. We need to make a way to discover what groups you are in and who you share groups with. 
+* ``write_permission``: one of "PRIVATE" (default), which means only you can write to this table.  "PUBLIC" which means anyone can write to this table that has write permissions to this dataset. Note although this means anyone can add data, no annotations are ever truly overwritten. "GROUP" which means that you must share a common group with this user for them to be able to write. We need to make a way to discover what groups you are in and who you share groups with. 
+
+If you change your mind about what you want for metadata, some but not all fields can be updated with :func:`~caveclient.annotationengine.AnnotationClientV2.update_metadata`. This includes the description, the notice_text, and the permissions, but not the name, schema or voxel resolution. 
+
+.. code:: python
+    # to update description
+    client.annotation.update_metadata(table_name='test_table',
+                                      description="a new description for my table")
+    
+    # to make your table readable by anybody who can read this dataset
+    client.annotation.update_metadata(table_name='test_table',
+                                      notice_text="This table isn't done yet, don't trust it. Contact me")
+
+    # to make your table readable by anybody who can read this dataset
+    client.annotation.update_metadata(table_name='test_table',
+                                      read_permisison="PUBLIC")
 
 New data can be generated as a dict or list of dicts following the
 schema and uploaded with ``post_annotation``. For example, a
@@ -88,7 +113,7 @@ but then its up to you to assure that the IDs don't collide with other IDs.
 If you leave them blank then the service will assign the IDs for you.
 
 There is a similar method for updating 
-:func:`caveclient.annotationengine.AnnotationClientV2.update_annotation_df`
+:func:`~caveclient.annotationengine.AnnotationClientV2.update_annotation_df`
 
 Staged Annotations
 ^^^^^^^^^^^^^^^^^^
@@ -97,7 +122,7 @@ Staged anotations help ensure that the annotations you post follow the appropria
 The most common use case for staged annotations is to create a StagedAnnotation object for a given table, then add annotations to it individually or as a group, and finally upload to the annotation table.
 
 To get a StagedAnnotation object, you can start with either a table name or a schema name. Here, we'll assume that there's already a table called "my_table" that is running a "cell_type_local" schema.
-If we want to add new annotations to the table, we simply use the table name with ``stage_annotations``.
+If we want to add new annotations to the table, we simply use the table name with :func:`~caveclient.annotationengine.AnnotationClientV2.stage_annotations`.
 
 .. code:: python
 
@@ -136,7 +161,7 @@ Updating annotations requires knowing the annotation id of the annotation you ar
         pt_position=[100,100,10],
     )
 
-The ``update`` also informs the framework client to treat the annotations as an update and it will use the appropriate methods automatically when uploading with ``client.annotation.upload_staged_annotations``.
+The ``update`` also informs the framework client to treat the annotations as an update and it will use the appropriate methods automatically when uploading ``client.annotation.upload_staged_annotations``.
 
 If you want to specify ids when posting new annotations, ``id_field`` can be set to True when creating the StagedAnnotation object. This will enforce an ``id`` column but still post the data as new annotations.
 

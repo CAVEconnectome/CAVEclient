@@ -27,7 +27,7 @@ class AuthException(Exception):
     pass
 
 
-def _raise_for_status(r):
+def _raise_for_status(r, log_warning=True):
     http_error_msg = ""
     if isinstance(r.reason, bytes):
         # We attempt to decode utf-8 first because some servers
@@ -68,14 +68,15 @@ def _raise_for_status(r):
 
     if http_error_msg:
         raise requests.HTTPError(http_error_msg, response=r)
-    warning = r.headers.get("Warning")
-    if warning:
-        logger.warning(warning)
+    if log_warning:
+        warning = r.headers.get("Warning")
+        if warning:
+            logger.warning(warning)
 
 
-def handle_response(response, as_json=True):
+def handle_response(response, as_json=True, log_warning=True):
     """Deal with potential errors in endpoint response and return json for default case"""
-    _raise_for_status(response)
+    _raise_for_status(response, log_warning=log_warning)
     _check_authorization_redirect(response)
     if as_json:
         return response.json()
@@ -205,10 +206,10 @@ class ClientBase(object):
         return self._api_version
 
     @staticmethod
-    def raise_for_status(r):
+    def raise_for_status(r, log_warning=True):
         """Raises :class:`HTTPError`, if one occurred."""
 
-        _raise_for_status(r)
+        _raise_for_status(r, log_warning=log_warning)
 
 
 class ClientBaseWithDataset(ClientBase):

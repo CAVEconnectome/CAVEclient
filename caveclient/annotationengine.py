@@ -46,7 +46,8 @@ def AnnotationClient(
         If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.
     pool_maxsize : Int or None, optional
         Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
-
+    over_client: 
+        client to overwrite configuration with
     Returns
     -------
     ClientBaseWithDatastack
@@ -258,6 +259,9 @@ class AnnotationClientV2(ClientBase):
         flat_segmentation_source: str = None,
         user_id: int = None,
         aligned_volume_name: str = None,
+        write_permission: str = "PRIVATE",
+        read_permission: str = "PUBLIC",
+        notice_text: str = None
     ):
         """Creates a new data table based on an existing schema
 
@@ -296,7 +300,21 @@ class AnnotationClientV2(ClientBase):
             Otherwise, the table will be created with your userID in the user_id column.
         aligned_volume_name: str or None, optional,
             Name of the aligned_volume. If None, uses the one specified in the client.
-
+        write_permission: str, optional
+            What permissions to give the table for writing.  One of
+            PRIVATE: only you can write to this table (DEFAULT)
+            GROUP: only members that share a group with you can write (excluding some groups) 
+            PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done
+            by marking rows as deleted, so all data is always recoverable
+        read_permission: str, optional
+            What permissions to give the table for reading. One of
+            PRIVATE: only you can read this table. Intended to be used for sorting out bugs.
+            GROUP: only members that share a group with you can read (intended for within group vetting)
+            PUBLIC: anyone with permissions to read this datastack can read this data (DEFAULT)
+        notice_text: str, optional
+            Text the user will see when querying this table. Can be used to warn users of flaws,
+            and uncertainty in the data, or to advertise citations that should be used with this table.
+            Defaults to None, no text. If you want to remove text, send empty string. 
         Returns
         -------
         json
@@ -309,6 +327,12 @@ class AnnotationClientV2(ClientBase):
         voxel_res = [4,4,40]
         client.create_table("some_synapse_table", "synapse", description, voxel_res)
         """
+        if read_permission not in ["PRIVATE","GROUP","PUBLIC"]:
+            raise ValueError('read_permission must be one of PRIVATE GROUP or PUBLIC')
+        if write_permission not in ["PRIVATE", "GROUP", "PUBLIC"]:
+            raise ValueError('write_permission must be one of PRIVATE GROUP or PUBLIC')
+
+
         if aligned_volume_name is None:
             aligned_volume_name = self.aligned_volume_name
 
@@ -316,14 +340,19 @@ class AnnotationClientV2(ClientBase):
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
 
         url = self._endpoints["tables"].format_map(endpoint_mapping)
+
         metadata = {
             "description": description,
             "voxel_resolution_x": float(voxel_resolution[0]),
             "voxel_resolution_y": float(voxel_resolution[1]),
             "voxel_resolution_z": float(voxel_resolution[2]),
+            "read_permission": read_permission,
+            "write_permission": write_permission
         }
         if user_id is not None:
             metadata["user_id"] = user_id
+        if notice_text is not None:
+            metadata["notice_text"]=notice_text
         if reference_table is not None:
             metadata["table_metadata"] = {
                 "reference_table": reference_table,
@@ -335,11 +364,92 @@ class AnnotationClientV2(ClientBase):
         data = {
             "schema_type": schema_name,
             "table_name": table_name,
-            "metadata": metadata,
+            "metadata": metadata
         }
 
         response = self.session.post(url, json=data)
         return handle_response(response, as_json=False)
+
+    def update_metadata(
+        self,
+        table_name: str,
+        description: str = None,
+        flat_segmentation_source: str = None,
+        read_permission: str = None,
+        write_permission: str = None,
+        user_id: int = None,
+        notice_text: str = None,
+        aligned_volume_name: str = None
+    ):
+        """update the metadata on an existing table
+
+        Args:
+            table_name (str): name of table to update
+            description (str, optional): text description of the the table. 
+                Defaults to None (will not update).
+            flat_segmentation_source (str, optional): cloudpath to a flat segmentation associated with this table.
+                Defaults to None (will not update).
+            read_permission: str, optional
+                What permissions to give the table for reading. One of
+                PRIVATE: only you can read this table. Intended to be used for sorting out bugs.
+                GROUP: only members that share a group with you can read (intended for within group vetting)
+                PUBLIC: anyone with permissions to read this datastack can read this data
+                Defaults to None (will not update).
+            write_permission: str, optional
+                What permissions to give the table for writing.  One of
+                PRIVATE: only you can write to this table
+                GROUP: only members that share a group with you can write (excluding some groups) 
+                PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done
+                by marking rows as deleted, so all data is always recoverable
+                Defaults to None (will not update).
+            user_id (int, optional): change ownership of this table to this user_id.
+                Note, if you use this you will not be able to update the metadata on this table any longer
+                and depending on permissions may not be able to read or write to it 
+                Defaults to None. (will not update)
+            notice_text: str, optional
+                Text the user will see when querying this table. Can be used to warn users of flaws,
+                and uncertainty in the data, or to advertise citations that should be used with this table.
+                Defaults to None. (will not update)
+            aligned_volume_name : str or None, optional
+                Name of the aligned_volume. If None, uses the one specified in the client.
+        """
+        if read_permission is not None:
+            if read_permission not in ["PRIVATE","GROUP","PUBLIC"]:
+                raise ValueError('read_permission must be one of PRIVATE GROUP or PUBLIC')
+        if write_permission is not None:
+            if write_permission not in ["PRIVATE", "GROUP", "PUBLIC"]:
+                raise ValueError('write_permission must be one of PRIVATE GROUP or PUBLIC')
+
+
+        if aligned_volume_name is None:
+            aligned_volume_name = self.aligned_volume_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume_name
+
+        url = self._endpoints["tables"].format_map(endpoint_mapping)
+
+
+        metadata = {}
+        if description is not None:
+            metadata["description"]=description
+        if read_permission is not None:
+            metadata["read_permission"]=read_permission
+        if write_permission is not None:
+            metadata["write_permission"]=write_permission 
+        if flat_segmentation_source is not None:
+            metadata["flat_segmentation_source"]=flat_segmentation_source            
+        if user_id is not None:
+            metadata["user_id"] = user_id
+        if notice_text is not None:
+            metadata["notice_text"] = notice_text
+
+        data = {
+            "table_name": table_name,
+            "metadata": metadata
+        }
+        response = self.session.put(url, json=data)
+        return handle_response(response, as_json=True)
 
     def get_annotation(
         self,

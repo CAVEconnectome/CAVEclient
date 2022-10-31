@@ -55,7 +55,7 @@ class CAVEclient(object):
         datastack_name : str, optional
             Datastack name for the services. Almost all services need this and will not work if it is not passed.
         server_address : str or None
-            URL of the framework server. If None, chooses the default server www.dynamicannotationframework.com.
+            URL of the framework server. If None, chooses the default server global.daf-apis.com.
             Optional, defaults to None.
         auth_token_file : str or None
             Path to a json file containing the auth token. If None, uses the default location. See Auth client documentation.
@@ -127,7 +127,7 @@ class CAVEclientGlobal(object):
     Parameters
     ----------
     server_address : str or None
-        URL of the framework server. If None, chooses the default server www.dynamicannotationframework.com.
+        URL of the framework server. If None, chooses the default server global.daf-apis.com.
         Optional, defaults to None.
     auth_token_file : str or None
         Path to a json file containing the auth token. If None, uses the default location. See Auth client documentation.
@@ -300,7 +300,7 @@ class CAVEclientFull(CAVEclientGlobal):
     datastack_name : str, optional
         Datastack name for the services. Almost all services need this and will not work if it is not passed.
     server_address : str or None
-        URL of the framework server. If None, chooses the default server www.dynamicannotationframework.com.
+        URL of the framework server. If None, chooses the default server global.daf-apis.com.
         Optional, defaults to None.
     auth_token_file : str or None
         Path to a json file containing the auth token. If None, uses the default location. See Auth client documentation.
