@@ -954,6 +954,21 @@ class MaterializatonClientV2(ClientBase):
 
         return df
 
+    def injest_annotation_table(
+        self,
+        table_name: str,
+        datastack_name: str = None,
+    ):
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["ingest_annotation_table"].format_map(endpoint_mapping)
+        response = self.session.post(url)
+        return handle_response(response)
+
     def live_live_query(
         self,
         table: str,
@@ -969,6 +984,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         metadata: bool = True,
         merge_reference: bool = True,
+        suffixes: dict = None,
         desired_resolution: Iterable = None,
         return_pyarrow: bool = True,
     ):
@@ -1004,6 +1020,8 @@ class MaterializatonClientV2(ClientBase):
         if limit is not None:
             assert limit > 0
             data["limit"] = limit
+        if suffixes is not None:
+            data["suffixes"] = suffixes
         if return_pyarrow:
             encoding = ""
         else:
