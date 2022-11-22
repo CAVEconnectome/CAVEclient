@@ -954,7 +954,7 @@ class MaterializatonClientV2(ClientBase):
 
         return df
 
-    def injest_annotation_table(
+    def ingest_annotation_table(
         self,
         table_name: str,
         datastack_name: str = None,
