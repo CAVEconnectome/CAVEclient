@@ -30,6 +30,7 @@ materialization_common = {}
 mat_v2_api = "{me_server_address}/materialize/api/v2"
 mat_v3_api = "{me_server_address}/materialize/api/v3"
 materialization_endpoints_v2 = {
+    "get_api_versions": "{me_server_address}/api/versions",
     "simple_query": mat_v2_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/query",
     "join_query": mat_v2_api + "/datastack/{datastack_name}/version/{version}/query",
@@ -47,7 +48,7 @@ materialization_endpoints_v2 = {
     + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
     "segmentation_metadata": mat_v2_api
     + "/datastack/{datastack_name}/table/{table_name}/segmentation_metadata",
-    "live_live_query": mat_v3_api + "/datastack/{datastack_name}/query"
+    "live_live_query": mat_v3_api + "/datastack/{datastack_name}/query",
 }
 materialization_api_versions = {2: materialization_endpoints_v2}
 annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}
