@@ -83,15 +83,18 @@ To query a small table, you can just download the whole thing using
 which will return a dataframe of the table.
 
 Note however, some tables, such as the synapse table might be very large 200-300 million rows
-and the service will only return the first 200,000 results.
+and the service will only return the first 200,000 results, and not in a deterministic manner. 
+**NOTE! This API is not designed to enable enmass downloading of the entire synapse table
+there are more efficent ways of doing this. Contact your dataset administrator for more information
+if this is what you are looking to do.**
 
-To just get a preview, use the limit argument
+To just get a preview, use the limit argument (but note again that this won't be a reproducible set)
 
 .. code:: python
 
     df=client.materialize.query_table('my_table', limit=10)
 
-For many applications, you will want to filter the query in some way.
+For most applications, you will want to filter the query in some way.
 
 We offer three kinds of filters you can apply:  filter_equal, filter_in and filter_not_in. 
 For query_table each is specified as a dictionary where the keys are column names, 
@@ -124,6 +127,21 @@ You can recombine split-out position columns using :func:`~caveclient.materializ
                                       filter_equal_dict = {'post_pt_root_id': MYID},
                                       select_columns=['id','pre_pt_root_id', 'pre_pt_position'],
                                       split_columns=True)
+Desired Resolution
+^^^^^^^^^^^^^^^^^^
+Often you want to have position information in different units.  
+For example, to consider synapse locations or soma locations, you might want to have positions in nanometers or microns. 
+
+To create neuroglancer views, you might want positions in integer voxels of a size that aligns with the resolution you are used to using Neuroglancer at. 
+
+Annotation tables can be created and uploaded in varying resolutions according to whatever the user of the table felt was natural. 
+This information is available in the metadata for that table.  In addition, you may pass *desired_resolution* as a keyword argument 
+which will automatically convert all spatial positions into voxels of that size in nanometers.
+
+So if you want positions in nanometers, you would pass desired_resolution=[1,1,1].
+If you want positions in microns you would pass desired_resolution=[1000,1000,1000].
+If you want positions in 4,4,40nm voxel coordinates to use with cloud-volume or neuroglancer you would pass desired_resolution=[4,4,40].
+
 
 Spatial Filters
 ^^^^^^^^^^^^^^^
@@ -151,6 +169,10 @@ lets you specify pre and post synaptic partners as keyword arguments and boundin
 The defaults make reasonable assumptions about what you want to query, namely that the synapse_table is
 the table that the info service advertises, and that if you specify a bounding box, that you want the post_pt_position. 
 These can be overridden of course, but the above bounding box query is simplified to.
+
+**NOTE! This API is not designed to enable enmass downloading of the entire synapse table
+there are more efficent ways of doing this. Contact your dataset administrator for more information
+if this is what you are looking to do.**
 
 .. code:: python
 
