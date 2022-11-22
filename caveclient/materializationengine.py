@@ -987,6 +987,7 @@ class MaterializatonClientV2(ClientBase):
         suffixes: dict = None,
         desired_resolution: Iterable = None,
         return_pyarrow: bool = True,
+        allow_missing_lookups: bool = False
     ):
 
         timestamp = convert_timestamp(timestamp)
@@ -1000,7 +1001,7 @@ class MaterializatonClientV2(ClientBase):
         query_args = {}
         query_args["return_pyarrow"] = True
         query_args["merge_reference"] = False
-
+        query_args["allow_missing_lookups"]= allow_missing_lookups
         data["table"] = table
         data["timestamp"] = timestamp
         url = self._endpoints["live_live_query"].format_map(endpoint_mapping)
