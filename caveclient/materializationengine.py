@@ -959,6 +959,16 @@ class MaterializatonClientV2(ClientBase):
         table_name: str,
         datastack_name: str = None,
     ):
+        """Trigger supervoxel lookup and rootID looksup of new annotations in a table.
+
+
+        Args:
+            table_name (str): table to drigger
+            datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
+
+        Returns:
+            response: status code of response from server
+        """
         if datastack_name is None:
             datastack_name = self.datastack_name
 
@@ -973,6 +983,7 @@ class MaterializatonClientV2(ClientBase):
         self,
         table: str,
         timestamp: datetime,
+        joins=None,
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
@@ -983,13 +994,70 @@ class MaterializatonClientV2(ClientBase):
         datastack_name: str = None,
         split_positions: bool = False,
         metadata: bool = True,
-        merge_reference: bool = True,
         suffixes: dict = None,
         desired_resolution: Iterable = None,
-        return_pyarrow: bool = True,
-        allow_missing_lookups: bool = False
+        allow_missing_lookups: bool = False,
     ):
+        """Beta method for querying cave annotation tables with rootIDs and annotations at a particular
+        timestamp.  Note: this method requires more explicit mapping of filters and selection to table
+        as its designed to test a more general endpoint that should eventually support complex joins.
 
+        Args:
+            table (str): principle table to query
+            timestamp (datetime): timestamp to use for querying
+            joins (list): a list of joins, where each join is a list of [table1,column1, table2, column2]
+            filter_in_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to accept . Defaults to None.
+            filter_out_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to reject. Defaults to None.
+            filter_equal_dict (dict, optional):  a dictionary with tables as keys, values are dicts with column keys and values to equate. Defaults to None.
+            filter_spatial_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of 2x3 list of bounds. Defaults to None.
+            select_columns (_type_, optional): a dictionary with tables as keys, values are list of columns. Defaults to None.
+            offset (int, optional): value to offset query by. Defaults to None.
+            limit (int, optional): limit of query. Defaults to None.
+            datastack_name (str, optional): datastack to query. Defaults to set by client.
+            split_positions (bool, optional): whether to split positions into seperate columns, True is faster. Defaults to False.
+            metadata (bool, optional): whether to attach metadata to dataframe. Defaults to True.
+            suffixes (dict, optional): what suffixes to use on joins, keys are table_names, values are suffixes. Defaults to None.
+            desired_resolution (Iterable, optional): What resolution to convert position columns to. Defaults to None will use defaults.
+            allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
+        Example:
+         live_live_query("table_name",datetime.datetime.utcnow(),
+            joins=[[table_name, table_column, joined_table, joined_column],
+                     [joined_table, joincol2, third_table, joincol_third]]
+            suffixes={
+                "table_name":"suffix1",
+                "joined_table":"suffix2",
+                "third_table":"suffix3"
+            },
+            select_columns= {
+                "table_name":[ "column","names"],
+                "joined_table":["joined_colum"]
+            },
+            filter_in_dict= {
+                "table_name":{
+                    "column_name":[included,values]
+                }
+            },
+            filter_out_dict= {
+                "table_name":{
+                    "column_name":[excluded,values]
+                }
+            },
+            filter_equal_dict"={
+                "table_name":{
+                    "column_name":value
+                },
+            filter_spatial_dict"= {
+                "table_name": {
+                "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+            }
+        }
+        Returns:
+            pd.DataFrame: result of query
+        """
+        logging.warning(
+            "Deprecation: this method is to facilitate beta testing of this feature, \
+                        it will likely get removed in future versions. "
+        )
         timestamp = convert_timestamp(timestamp)
         return_df = True
         if datastack_name is None:
@@ -1001,11 +1069,12 @@ class MaterializatonClientV2(ClientBase):
         query_args = {}
         query_args["return_pyarrow"] = True
         query_args["merge_reference"] = False
-        query_args["allow_missing_lookups"]= allow_missing_lookups
+        query_args["allow_missing_lookups"] = allow_missing_lookups
         data["table"] = table
         data["timestamp"] = timestamp
         url = self._endpoints["live_live_query"].format_map(endpoint_mapping)
-
+        if joins is not None:
+            data["joins"] = joins
         if filter_in_dict is not None:
             data["filter_in_dict"] = filter_in_dict
         if filter_out_dict is not None:
@@ -1023,10 +1092,7 @@ class MaterializatonClientV2(ClientBase):
             data["limit"] = limit
         if suffixes is not None:
             data["suffixes"] = suffixes
-        if return_pyarrow:
-            encoding = ""
-        else:
-            encoding = "gzip"
+        encoding = ""
 
         response = self.session.post(
             url,
