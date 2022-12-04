@@ -1056,7 +1056,7 @@ class MaterializatonClientV2(ClientBase):
         """
         logging.warning(
             "Deprecation: this method is to facilitate beta testing of this feature, \
-                        it will likely get removed in future versions. "
+it will likely get removed in future versions. "
         )
         timestamp = convert_timestamp(timestamp)
         return_df = True
@@ -1074,7 +1074,7 @@ class MaterializatonClientV2(ClientBase):
         data["timestamp"] = timestamp
         url = self._endpoints["live_live_query"].format_map(endpoint_mapping)
         if joins is not None:
-            data["joins"] = joins
+            data["join_tables"] = joins
         if filter_in_dict is not None:
             data["filter_in_dict"] = filter_in_dict
         if filter_out_dict is not None:
