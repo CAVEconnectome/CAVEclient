@@ -1,4 +1,5 @@
 import re
+from urllib.error import HTTPError
 import warnings
 import pytz
 import pandas as pd
@@ -1131,25 +1132,30 @@ it will likely get removed in future versions. "
                 concatenate_position_columns(df, inplace=True)
 
         if metadata:
-            attrs = self._assemble_attributes(
-                table,
-                join_query=False,
-                filters={
-                    "inclusive": filter_in_dict,
-                    "exclusive": filter_out_dict,
-                    "equal": filter_equal_dict,
-                    "spatial": filter_spatial_dict,
-                },
-                select_columns=select_columns,
-                offset=offset,
-                limit=limit,
-                live_query=timestamp is not None,
-                timestamp=string_format_timestamp(timestamp),
-                materialization_version=None,
-                desired_resolution=desired_resolution,
-            )
-            df.attrs.update(attrs)
-
+            try:
+                attrs = self._assemble_attributes(
+                    table,
+                    join_query=False,
+                    filters={
+                        "inclusive": filter_in_dict,
+                        "exclusive": filter_out_dict,
+                        "equal": filter_equal_dict,
+                        "spatial": filter_spatial_dict,
+                    },
+                    select_columns=select_columns,
+                    offset=offset,
+                    limit=limit,
+                    live_query=timestamp is not None,
+                    timestamp=string_format_timestamp(timestamp),
+                    materialization_version=None,
+                    desired_resolution=desired_resolution,
+                )
+                df.attrs.update(attrs)
+            except HTTPError as e:
+                raise Exception(
+                    e.message
+                    + " Metadata could not be loaded, try with metadata=False if not needed"
+                )
         return df
 
     def live_query(
