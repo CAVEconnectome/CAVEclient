@@ -49,6 +49,8 @@ materialization_endpoints_v2 = {
     "segmentation_metadata": mat_v2_api
     + "/datastack/{datastack_name}/table/{table_name}/segmentation_metadata",
     "live_live_query": mat_v3_api + "/datastack/{datastack_name}/query",
+    "lookup_supervoxel_ids": mat_v2_api
+    + "/materialize/run/lookup_svid/datastack/{datastack_name}/{table_name}",
 }
 materialization_api_versions = {2: materialization_endpoints_v2}
 annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}
@@ -129,6 +131,7 @@ chunkedgraph_endpoints_v1 = {
     "preview_split": pcg_v1 + "/table/{table_id}/graph/split_preview",
     "valid_nodes": pcg_v1 + "/table/{table_id}/valid_nodes",
     "execute_split": pcg_v1 + "/table/{table_id}/split",
+    "undo": pcg_v1 + "/table/{table_id}/undo",
 }
 
 chunkedgraph_api_versions = {

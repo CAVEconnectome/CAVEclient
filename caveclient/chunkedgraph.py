@@ -425,6 +425,26 @@ class ChunkedGraphClientV1(ClientBase):
         )
         handle_response(response)
 
+    def undo_operation(self, operation_id):
+        """Undo an operation
+
+        Args:
+            operation_id (int): operation id to undo
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["undo"].format_map(endpoint_mapping)
+
+        data = {"operation_id": operation_id}
+        params = {"priority": False}
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            params=params,
+            headers={"Content-Type": "application/json"},
+        )
+        r = handle_response(response)
+        return r
+
     def execute_split(
         self,
         source_points,
@@ -461,10 +481,11 @@ class ChunkedGraphClientV1(ClientBase):
         data = package_split_data(
             root_id, source_points, sink_points, source_supervoxels, sink_supervoxels
         )
-
+        params = {"priority": False}
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
+            params=params,
             headers={"Content-Type": "application/json"},
         )
         r = handle_response(response)
