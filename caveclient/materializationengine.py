@@ -543,6 +543,7 @@ class MaterializatonClientV2(ClientBase):
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
+        get_counts: bool = False,
     ):
         """generic query on materialization tables
 
@@ -635,6 +636,8 @@ class MaterializatonClientV2(ClientBase):
             offset,
             limit,
         )
+        if get_counts:
+            query_args['count']=True
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
@@ -977,6 +980,31 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["ingest_annotation_table"].format_map(endpoint_mapping)
+        response = self.session.post(url)
+        return handle_response(response)
+
+    def lookup_supervoxel_ids(
+        self,
+        table_name: str,
+        datastack_name: str = None,
+    ):
+        """Trigger supervoxel lookups of new annotations in a table.
+
+
+        Args:
+            table_name (str): table to drigger
+            datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
+
+        Returns:
+            response: status code of response from server
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["lookup_supervoxel_ids"].format_map(endpoint_mapping)
         response = self.session.post(url)
         return handle_response(response)
 
