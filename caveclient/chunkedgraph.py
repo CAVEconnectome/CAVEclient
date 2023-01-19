@@ -668,12 +668,51 @@ class ChunkedGraphClientV1(ClientBase):
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
         data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
-        r = handle_response(self.session.post(url, data=data, params=params))
+        lineage_graph = handle_response(
+            self.session.post(url, data=data, params=params)
+        )
+
+        rm_node_ids = []
+        rm_node_idx = []
+        rm_link_idx = []
+
+        for node_idx, node in enumerate(lineage_graph["nodes"]):
+            if (
+                timestamp_past is not None
+                and node["timestamp"] < timestamp_past.timestamp()
+            ):
+                rm_node_ids.append(node["id"])
+                rm_node_idx.append(node_idx)
+            if (
+                timestamp_future is not None
+                and node["timestamp"] >= timestamp_future.timestamp()
+            ):
+                rm_node_ids.append(node["id"])
+                rm_node_idx.append(node_idx)
+
+        rm_node_ids = set(rm_node_ids)
+        for link_idx, link in enumerate(lineage_graph["links"]):
+            if link["source"] in rm_node_ids or link["target"] in rm_node_ids:
+                lineage_graph["links"].remove(link)
+                rm_link_idx.append(link_idx)
+
+        rm_link_idx = set(rm_link_idx)
+        rm_node_idx = set(rm_node_idx)
+        lineage_graph["links"] = [
+            link
+            for idx, link in enumerate(lineage_graph["links"])
+            if idx not in rm_link_idx
+        ]
+        lineage_graph["nodes"] = [
+            node
+            for idx, node in enumerate(lineage_graph["nodes"])
+            if idx not in rm_node_idx
+        ]
 
         if as_nx_graph:
-            return nx.node_link_graph(r)
+            return nx.node_link_graph(lineage_graph)
         else:
-            return r
+            return lineage_graph
 
     def get_latest_roots(self, root_id, timestamp_future=None):
         """Returns root ids that are the latest successors of a given root id.
