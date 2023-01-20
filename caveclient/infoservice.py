@@ -205,7 +205,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         )
 
     def get_datastacks_by_aligned_volume(
-        self, aligned_volume: str = None, use_stored=True
+        self, aligned_volume: str = None
     ):
         """Lookup what datastacks are associated with this aligned volume
 
