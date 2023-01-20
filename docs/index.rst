@@ -10,6 +10,7 @@ Welcome to CAVEclient's documentation!
    guide/authentication
    guide/annotation
    guide/chunkedgraph
+   guide/l2cache
    guide/info
    guide/schemas
    guide/state

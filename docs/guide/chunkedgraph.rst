@@ -70,6 +70,7 @@ option
 
 This will get all the level 2 IDs for this root, which correspond to the lowest chunk of the heirachy.
 An analogous option exists for :func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots`.
+This is useful to help find nodes to query within the :doc:`l2cache`, amongst other things.
 
 Other functions
 ^^^^^^^^^^^^^^^
