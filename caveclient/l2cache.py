@@ -1,12 +1,9 @@
 from .base import ClientBase, _api_endpoints, handle_response, BaseEncoder
 from .endpoints import (
-    l2cache_common,
     l2cache_api_versions,
     l2cache_endpoints_common,
-    l2cache_endpoints_v1,
 )
 from .auth import AuthClient
-import requests
 import json
 import warnings
 
@@ -35,8 +32,8 @@ def L2CacheClient(
         l2cache_api_versions,
         auth_header,
     )
-    L2CacheClient = client_mapping[api_version]
-    return L2CacheClient(
+    L2client = client_mapping[api_version]
+    return L2client(
         server_address=server_address,
         auth_header=auth_header,
         api_version=api_version,

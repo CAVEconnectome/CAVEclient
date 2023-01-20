@@ -1,12 +1,11 @@
+"""PyChunkedgraph service python interface"""
+from typing import Iterable
+from urllib.parse import urlencode
+import datetime
+import json
 import numpy as np
 import pandas as pd
-import requests
-import datetime
-import time
-import json
 import pytz
-from . import endpoints
-from . import infoservice
 from .endpoints import (
     chunkedgraph_api_versions,
     chunkedgraph_endpoints_common,
@@ -14,14 +13,11 @@ from .endpoints import (
 )
 from .base import (
     _api_endpoints,
-    _api_versions,
     ClientBase,
     BaseEncoder,
     handle_response,
 )
 from .auth import AuthClient
-from typing import Iterable
-from urllib.parse import urlencode
 import networkx as nx
 
 
@@ -63,7 +59,7 @@ def root_id_int_list_check(
     elif isinstance(root_id, str):
         try:
             root_id = np.uint64(root_id)
-        except ValueError:
+        except ValueError as esc:
             raise ValueError(
                 "When passing a string for 'root_id' make sure the string can be converted to a uint64"
             )
