@@ -74,6 +74,7 @@ infoservice_endpoints_v2 = {
     "aligned_volume_by_id": info_v2 + "/aligned_volume/id/{aligned_volume_id}",
     "datastacks": info_v2 + "/datastacks",
     "datastack_info": info_v2 + "/datastack/full/{datastack_name}",
+    "datastacks_from_aligned_volume": info_v2 + "/aligned_volume/{aligned_volume_name}/datastacks",
 }
 
 infoservice_api_versions = {1: infoservice_endpoints_v1, 2: infoservice_endpoints_v2}

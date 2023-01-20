@@ -204,6 +204,37 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "aligned_volume", datastack_name=datastack_name, use_stored=use_stored
         )
 
+    def get_datastacks_by_aligned_volume(
+        self, aligned_volume: str = None, use_stored=True
+    ):
+        """Lookup what datastacks are associated with this aligned volume
+
+        Args:
+            aligned_volume (str, optional): aligned volume to lookup. Defaults to None.
+
+        Raises:
+            ValueError: if no aligned volume is specified
+
+        Returns:
+            list: a list of datastack string
+        """
+
+        if aligned_volume is None:
+            aligned_volume = self._aligned_volume_name
+        if aligned_volume is None:
+            raise ValueError(
+                "Must specify aligned_volume_id or provide datastack_name in init"
+            )
+        print(aligned_volume)
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["aligned_volume_name"] = aligned_volume
+        url = self._endpoints["datastacks_from_aligned_volume"].format_map(
+            endpoint_mapping
+        )
+
+        response = self.session.get(url)
+        return handle_response(response)
+
     def get_aligned_volume_info_by_id(
         self, aligned_volume_id: int = None, use_stored=True
     ):
