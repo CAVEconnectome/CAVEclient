@@ -84,12 +84,18 @@ class L2CacheClientLegacy(ClientBase):
         return self._default_url_mapping.copy()
 
     def get_l2data(self, l2_ids, attributes=None):
-        """Gets the data for L2 ids
+        """Gets the attributed statistics data for L2 ids.
 
-        Returns
-        -------
-        dict
-            keys are l2 ids, values are data
+        Args:
+            l2_ids (list or np.ndarray): a list of level 2 ids
+            attributes (list, optional): a list of attributes to retrieve.
+             Defaults to None which will return all that are available.
+             Available stats are ['area_nm2', 'chunk_intersect_count',
+             'max_dt_nm', 'mean_dt_nm', 'pca', 'pca_val',
+            'rep_coord_nm', 'size_nm3']. See docs for more description.
+
+        Returns:
+            dict: keys are l2 ids, values are data
         """
 
         query_d = {"int64_as_str": False}
