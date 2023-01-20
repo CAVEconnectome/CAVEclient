@@ -64,6 +64,7 @@ Note there are some optional metadata parameters to :func:`~caveclient.annotatio
 If you change your mind about what you want for metadata, some but not all fields can be updated with :func:`~caveclient.annotationengine.AnnotationClientV2.update_metadata`. This includes the description, the notice_text, and the permissions, but not the name, schema or voxel resolution. 
 
 .. code:: python
+    
     # to update description
     client.annotation.update_metadata(table_name='test_table',
                                       description="a new description for my table")
