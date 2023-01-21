@@ -223,7 +223,8 @@ class MaterializatonClientV2(ClientBase):
             version = self.most_recent_version()
         self._version = version
         if cg_client is None:
-            self.cg_client = self.fc.chunkedgraph
+            if self.fc is not None:
+                self.cg_client = self.fc.chunkedgraph
         else:
             self.cg_client = cg_client
         self.synapse_table = synapse_table
@@ -637,7 +638,7 @@ class MaterializatonClientV2(ClientBase):
             limit,
         )
         if get_counts:
-            query_args['count']=True
+            query_args["count"] = True
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
@@ -1446,10 +1447,10 @@ it will likely get removed in future versions. "
         datastack_name: str = None,
         metadata: bool = True,
     ):
-        """Convience method for quering synapses. Will use the synapse table specified in the info service by default. 
+        """Convience method for quering synapses. Will use the synapse table specified in the info service by default.
         It will also remove autapses by default. NOTE: This is not designed to allow querying of the entire synapse table.
         A query with no filters will return only a limited number of rows (configured by the server) and will do so in a non-deterministic fashion.
-        Please contact your dataset administrator if you want access to the entire table. 
+        Please contact your dataset administrator if you want access to the entire table.
 
         Args:
             pre_ids (Union[int, Iterable, optional): pre_synaptic cell(s) to query. Defaults to None.
