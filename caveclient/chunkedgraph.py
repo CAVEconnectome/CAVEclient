@@ -50,6 +50,34 @@ def package_timestamp(timestamp, name="timestamp"):
     return query_d
 
 
+def package_split_data(
+    root_id, source_points, sink_points, source_supervoxels, sink_supervoxels
+):
+    """Create the data for preview or executed split operations"""
+    categories = ["sources", "sinks"]
+    pts = [source_points, sink_points]
+    svs = [source_supervoxels, sink_supervoxels]
+    for pt_list, sv_list in zip(pts, svs):
+        if sv_list is not None:
+            if len(pt_list) != len(sv_list):
+                raise ValueError(
+                    "If supervoxels are provided, they must have the same length as points"
+                )
+
+    data = {}
+    for cat, pt_list, sv_list in zip(categories, pts, svs):
+        if sv_list is None:
+            sv_list = [None] * len(pt_list)
+        sv_list = [x if x is not None else root_id for x in sv_list]
+
+        out = []
+        for svid, pt in zip(sv_list, pt_list):
+            out.append([svid, pt[0], pt[1], pt[2]])
+
+        data[cat] = out
+    return data
+
+
 def root_id_int_list_check(
     root_id,
     make_unique=False,
@@ -393,6 +421,72 @@ class ChunkedGraphClientV1(ClientBase):
         )
         handle_response(response)
 
+    def undo_operation(self, operation_id):
+        """Undo an operation
+
+        Args:
+            operation_id (int): operation id to undo
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["undo"].format_map(endpoint_mapping)
+
+        data = {"operation_id": operation_id}
+        params = {"priority": False}
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            params=params,
+            headers={"Content-Type": "application/json"},
+        )
+        r = handle_response(response)
+        return r
+
+    def execute_split(
+        self,
+        source_points,
+        sink_points,
+        root_id,
+        source_supervoxels=None,
+        sink_supervoxels=None,
+    ):
+        """Execute a multicut split based on points or supervoxels.
+
+        Parameters
+        ----------
+        source_points : array or list
+            Nx3 list or array of 3d points in nm coordinates for source points (red).
+        sink_points : array or list
+            Mx3 list or array of 3d points in nm coordinates for sink points (blue).
+        root_id : int
+            root id of object to do split preview.
+        source_supervoxels : array, list or None, optional
+            If providing source supervoxels, an N-length array of supervoxel ids or Nones matched to source points. If None, treats as a full array of Nones. By default None
+        sink_supervoxels : array, list or None, optional
+            If providing sink supervoxels, an M-length array of supervoxel ids or Nones matched to source points. If None, treats as a full array of Nones. By default None
+
+        Returns
+        -------
+        operation_id
+            Unique id of the split operation
+        new_root_ids
+            List of new root ids resulting from the split operation.
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["execute_split"].format_map(endpoint_mapping)
+
+        data = package_split_data(
+            root_id, source_points, sink_points, source_supervoxels, sink_supervoxels
+        )
+        params = {"priority": False}
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            params=params,
+            headers={"Content-Type": "application/json"},
+        )
+        r = handle_response(response)
+        return r["operation_id"], r["new_root_ids"]
+
     def preview_split(
         self,
         source_points,
@@ -433,27 +527,9 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["preview_split"].format_map(endpoint_mapping)
 
-        categories = ["sources", "sinks"]
-        pts = [source_points, sink_points]
-        svs = [source_supervoxels, sink_supervoxels]
-        for pt_list, sv_list in zip(pts, svs):
-            if sv_list is not None:
-                if len(pt_list) != len(sv_list):
-                    raise ValueError(
-                        "If supervoxels are provided, they must have the same length as points"
-                    )
-
-        data = {}
-        for cat, pt_list, sv_list in zip(categories, pts, svs):
-            if sv_list is None:
-                sv_list = [None] * len(pt_list)
-            sv_list = [x if x is not None else root_id for x in sv_list]
-
-            out = []
-            for svid, pt in zip(sv_list, pt_list):
-                out.append([svid, pt[0], pt[1], pt[2]])
-
-            data[cat] = out
+        data = package_split_data(
+            root_id, source_points, sink_points, source_supervoxels, sink_supervoxels
+        )
 
         response = self.session.post(
             url,

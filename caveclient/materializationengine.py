@@ -1,4 +1,5 @@
 import re
+from urllib.error import HTTPError
 import warnings
 import pytz
 import pandas as pd
@@ -542,6 +543,7 @@ class MaterializatonClientV2(ClientBase):
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
+        get_counts: bool = False,
     ):
         """generic query on materialization tables
 
@@ -634,6 +636,8 @@ class MaterializatonClientV2(ClientBase):
             offset,
             limit,
         )
+        if get_counts:
+            query_args['count']=True
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
@@ -979,6 +983,31 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url)
         return handle_response(response)
 
+    def lookup_supervoxel_ids(
+        self,
+        table_name: str,
+        datastack_name: str = None,
+    ):
+        """Trigger supervoxel lookups of new annotations in a table.
+
+
+        Args:
+            table_name (str): table to drigger
+            datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
+
+        Returns:
+            response: status code of response from server
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+        url = self._endpoints["lookup_supervoxel_ids"].format_map(endpoint_mapping)
+        response = self.session.post(url)
+        return handle_response(response)
+
     def live_live_query(
         self,
         table: str,
@@ -1131,25 +1160,30 @@ it will likely get removed in future versions. "
                 concatenate_position_columns(df, inplace=True)
 
         if metadata:
-            attrs = self._assemble_attributes(
-                table,
-                join_query=False,
-                filters={
-                    "inclusive": filter_in_dict,
-                    "exclusive": filter_out_dict,
-                    "equal": filter_equal_dict,
-                    "spatial": filter_spatial_dict,
-                },
-                select_columns=select_columns,
-                offset=offset,
-                limit=limit,
-                live_query=timestamp is not None,
-                timestamp=string_format_timestamp(timestamp),
-                materialization_version=None,
-                desired_resolution=desired_resolution,
-            )
-            df.attrs.update(attrs)
-
+            try:
+                attrs = self._assemble_attributes(
+                    table,
+                    join_query=False,
+                    filters={
+                        "inclusive": filter_in_dict,
+                        "exclusive": filter_out_dict,
+                        "equal": filter_equal_dict,
+                        "spatial": filter_spatial_dict,
+                    },
+                    select_columns=select_columns,
+                    offset=offset,
+                    limit=limit,
+                    live_query=timestamp is not None,
+                    timestamp=string_format_timestamp(timestamp),
+                    materialization_version=None,
+                    desired_resolution=desired_resolution,
+                )
+                df.attrs.update(attrs)
+            except HTTPError as e:
+                raise Exception(
+                    e.message
+                    + " Metadata could not be loaded, try with metadata=False if not needed"
+                )
         return df
 
     def live_query(
