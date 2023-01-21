@@ -137,7 +137,7 @@ def MaterializationClient(
         What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
         2: new api version, (i.e. minniev1.microns-daf.com)
         'latest': default to the most recent (current 2)
-    cg_client: caveclient.chunkedgraph.ChunkeGraphClient
+    cg_client: caveclient.chunkedgraph.ChunkedGraphClient
         chunkedgraph client for live materializations
     synapse_table: str
         default synapse table for queries
