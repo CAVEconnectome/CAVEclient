@@ -59,7 +59,7 @@ The areas and volume of each component can simply be added together to do this.
     import pandas as pd
     root_id = 648518346349541252
     lvl2nodes = client.chunkedgraph.get_leaves(root_id,stop_layer=2)
-    l2stats=client.l2cache.get_l2data(l2nodes, attributes=['size_nm3','area_nm2'])
+    l2stats=client.l2cache.get_l2data(lvl2nodes, attributes=['size_nm3','area_nm2'])
     l2df = pd.DataFrame(l2stats).T
     total_area_um2=l2df.area_nm2.sum()/(1000*1000)
     total_volume_um3 = l2df.size_nm3.sum()/(1000*1000*1000)
