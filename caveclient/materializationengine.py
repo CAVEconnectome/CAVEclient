@@ -987,6 +987,7 @@ class MaterializatonClientV2(ClientBase):
     def lookup_supervoxel_ids(
         self,
         table_name: str,
+        annotation_ids: list = None,
         datastack_name: str = None,
     ):
         """Trigger supervoxel lookups of new annotations in a table.
@@ -994,6 +995,8 @@ class MaterializatonClientV2(ClientBase):
 
         Args:
             table_name (str): table to drigger
+            annotation_ids: (list, optional): list of annotation ids to lookup. Default is None,
+                                              which will trigger lookup of entire table.
             datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
 
         Returns:
@@ -1002,11 +1005,15 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
+        if annotation_ids is not None:
+            data = {"ids": annotation_ids}
+        else:
+            data = None
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["lookup_supervoxel_ids"].format_map(endpoint_mapping)
-        response = self.session.post(url)
+        response = self.session.post(url, data=data)
         return handle_response(response)
 
     def live_live_query(
