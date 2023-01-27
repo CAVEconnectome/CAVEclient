@@ -1,9 +1,9 @@
 Level 2 Cache
 =============
-The chunkedgraph (see :doc:`chunkedgraph`) is a dynamic oct-tree connected components supervoxel graph.  As with any oct-tree, it is organized in hierarchical levels, with the bottom level 1 corresponding to the supervoxels of the segmentations, and the top level being the unique connected components of the supervoxel graph. The source code of this service can be found here ``https://github.com/seung-lab/pcgl2cache``
- 
+To understand the level 2 cache, you must understand the structure of the chunkedgraph so see :doc:`chunkedgraph`.  
+
 Nodes on the second level or layer of the graph, corresponds to all the supervoxels that are locally connected to one another within a single level 2 spatial "chunk" of the data. 
-The Level 2 Cache, is a service whose job it is to track and update relevant statistics about every level 2 node within the a chunkedgraph.  
+The Level 2 Cache, is a service whose job it is to track and update relevant statistics about every level 2 node within the a chunkedgraph. The source code of this service can be found  `here <https://github.com/seung-lab/pcgl2cache>`_.
 
 Finding Level 2 Nodes
 ^^^^^^^^^^^^^^^^^^^^^
@@ -39,11 +39,11 @@ The statistics that are available are
 
 Retrieving Level 2 Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Level 2 stats about nodes can be retreived using the :func:`~caveclient.l2cache.L2CacheClientLegacy.get_l2data` method.  It simply takes a list of level 2 nodes you want to retrieve.  Optionally you can specify only the attributes that you are interested in retrieving which will speed up the request.
+Level 2 stats about nodes can be retreived using the :func:`~caveclient.l2cache.L2CacheClientLegacy.get_l2data` method. It simply takes a list of level 2 nodes you want to retrieve. Optionally you can specify only the attributes that you are interested in retrieving which will speed up the request.
 
 Missing Data
 ^^^^^^^^^^^^
-The service is constantly watching for changes made to objects and recalculating stats on new level2 nodes that are created, in order to keep its database of statistics current. This however takes some time, and is subject to sporadic rare failures. If you request stats on a level 2 node which are not in the database, you will receive an empty dictionary for that node. This will immediately trigger the system to recalculate the statistics of that missing data, and so it should be available shortly (on the order of seconds) if systems are operational. Please note that PCA is not calculated for very small objects because it is not meaningful.  So if you are interested in differentiating whether PCA is not available because it hasn't been calculated, vs when its not available because it is not possible to calculate, you should ask for at least one other non PCA statistic as well. You will see that its availability correlates strongly with size_nm3. 
+The service is constantly watching for changes made to objects and recalculating stats on new level2 nodes that are created, in order to keep its database of statistics current. This however takes some time, and is subject to sporadic rare failures. If you request stats on a level 2 node which are not in the database, you will receive an empty dictionary for that node. This will immediately trigger the system to recalculate the statistics of that missing data, and so it should be available shortly (on the order of seconds) if systems are operational. Please note that PCA is not calculated for very small objects because it is not meaningful. So if you are interested in differentiating whether PCA is not available because it hasn't been calculated, vs when its not available because it is not possible to calculate, you should ask for at least one other non PCA statistic as well. You will see that its availability correlates strongly with size_nm3. 
 
 Use Cases
 ^^^^^^^^^
@@ -64,13 +64,13 @@ The areas and volume of each component can simply be added together to do this.
     total_area_um2=l2df.area_nm2.sum()/(1000*1000)
     total_volume_um3 = l2df.size_nm3.sum()/(1000*1000*1000)
     
-By utilizing the bounds argument of get_leaves, you can also do simple spatially restricted analysis of objects.  In fact, because you have data on each level2 node individually, you can segregate the neuron using any labelling of its topology. 
+By utilizing the bounds argument of get_leaves, you can also do simple spatially restricted analysis of objects. In fact, because you have data on each level2 node individually, you can segregate the neuron using any labelling of its topology. 
 
 Skeletonization
 ~~~~~~~~~~~~~~~
-Level 2 nodes have 'cross chunk' edges within the chunkedgraph which represent what level 2 nodes that object is locally connected to. This forms a graph between the level 2 nodes of the object that can be retreived using the chunkedgraph function :func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph`.  This graph represents a topological representation of the neuron at the resolution of individual chunks, and is gaurunteed to be fully connected, unlike a voxel or mesh representation of the neuron which can have gaps where there are defects in the segmentation volume or incorrectly inferred edges at self contact locations.
+Level 2 nodes have 'cross chunk' edges within the chunkedgraph which represent what level 2 nodes that object is locally connected to. This forms a graph between the level 2 nodes of the object that can be retreived using the chunkedgraph function :func:`~caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph`. This graph represents a topological representation of the neuron at the resolution of individual chunks, and is gaurunteed to be fully connected, unlike a voxel or mesh representation of the neuron which can have gaps where there are defects in the segmentation volume or incorrectly inferred edges at self contact locations.
 
-The level 2 graph can be turned into a skeleton representation of a neuron using a graph based TEASAR like algorithm as described for skeletonizing meshes in this documentation ``https://meshparty.readthedocs.io/en/latest/guide/skeletons.html``.  There is an implementation of this approach that utilizes the chunkedgraph and the L2cache if available here ``https://github.com/AllenInstitute/pcg_skel`` and on pypi as ``pcg-skel``. In this implementation the l2cache is used to more accurately place the level 2 nodes in space using the ``rep_coord_nm`` value. 
+The level 2 graph can be turned into a skeleton representation of a neuron using a graph based TEASAR like algorithm as described for skeletonizing meshes in this `MeshParty Documentation <https://meshparty.readthedocs.io/en/latest/guide/skeletons.html>`_. There is an implementation of this approach that utilizes the chunkedgraph and the L2cache if available `here <https://github.com/AllenInstitute/pcg_skel>`_ and on pypi as ``pcg-skel``. In this implementation the l2cache is used to more accurately place the level 2 nodes in space using the ``rep_coord_nm`` value. 
 
 Trajectory Distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~

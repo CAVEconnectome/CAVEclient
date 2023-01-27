@@ -1,7 +1,22 @@
 ChunkedGraph
 ============
+The chunkedgraph is a dynamic oct-tree connected components supervoxel graph.
 
-The ChunkedGraph client allows one to interact with the ChunkedGraph,
+.. figure:: images/2880px-Octree2.svg.png
+   :width: 600px
+
+A visual representation of an oct-tree (`Wikipedia (WhiteTimberwolf) <https://en.wikipedia.org/wiki/Octree>`_ `CC BY-SA 3.0 <http://creativecommons.org/licenses/by-sa/3.0/>`_)
+
+As with any oct-tree, it is organized in hierarchical levels, with the bottom level 1
+corresponding to the supervoxels of the segmentations, and the top level being the unique
+connected components of the supervoxel graph. 
+ 
+.. figure:: images/PCG_oct_tree.png
+   :width: 700px
+
+A figure illustrating the spatial chunking and editing of a the chunkedgraph. From `Dorkenwald et. al 2021 <https://doi.org/10.1038/s41592-021-01330-0>`_
+
+The ChunkedGraph client allows one to interact with the ChunkedGraph service,
 which stores and updates the supervoxel agglomeration graph. This is
 most often useful for looking up an object root id of a supervoxel or
 looking up supervoxels belonging to a root id. The ChunkedGraph client
