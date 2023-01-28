@@ -460,6 +460,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions,
         offset,
         limit,
+        desired_resolution,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -492,6 +493,8 @@ class MaterializatonClientV2(ClientBase):
         if limit is not None:
             assert limit > 0
             data["limit"] = limit
+        if desired_resolution is not None:
+            data["desired_resolution"] = desired_resolution
         if return_pyarrow:
             encoding = ""
         else:
@@ -636,6 +639,7 @@ class MaterializatonClientV2(ClientBase):
             True,
             offset,
             limit,
+            desired_resolution,
         )
         if get_counts:
             query_args["count"] = True
@@ -655,18 +659,19 @@ class MaterializatonClientV2(ClientBase):
                 if desired_resolution is None:
                     desired_resolution = self.desired_resolution
                 if desired_resolution is not None:
-                    df = df.copy()
-                    if len(desired_resolution) != 3:
-                        raise ValueError(
-                            "desired resolution needs to be of length 3, for xyz"
-                        )
-                    vox_res = self.get_table_metadata(
-                        table,
-                        datastack_name,
-                        materialization_version,
-                        log_warning=False,
-                    )["voxel_resolution"]
-                    df = convert_position_columns(df, vox_res, desired_resolution)
+                    if not df.attrs.get("data_resolution", None):
+                        df = df.copy()
+                        if len(desired_resolution) != 3:
+                            raise ValueError(
+                                "desired resolution needs to be of length 3, for xyz"
+                            )
+                        vox_res = self.get_table_metadata(
+                            table,
+                            datastack_name,
+                            materialization_version,
+                            log_warning=False,
+                        )["voxel_resolution"]
+                        df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
                 attrs = self._assemble_attributes(
                     tables,
@@ -708,6 +713,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         materialization_version: int = None,
         metadata: bool = True,
+        desired_resolution: np.array = None,
     ):
         """generic query on materialization tables
 
@@ -748,6 +754,9 @@ class MaterializatonClientV2(ClientBase):
                  If None defaults to one specified in client.
              metadata: (bool, optional) : toggle to return metadata
                  If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+             desired_resolution (Iterable, optional):
+                 What resolution to convert position columns to. Defaults to None will use defaults.
+
         Returns:
              pd.DataFrame: a pandas dataframe of results of query
 
@@ -756,7 +765,8 @@ class MaterializatonClientV2(ClientBase):
             materialization_version = self.version
         if datastack_name is None:
             datastack_name = self.datastack_name
-
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
         url, data, query_args, encoding = self._format_query_components(
             datastack_name,
             materialization_version,
@@ -771,6 +781,7 @@ class MaterializatonClientV2(ClientBase):
             True,
             offset,
             limit,
+            desired_resolution,
         )
 
         response = self.session.post(
@@ -1129,6 +1140,10 @@ it will likely get removed in future versions. "
             data["limit"] = limit
         if suffixes is not None:
             data["suffixes"] = suffixes
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
+        if desired_resolution is not None:
+            data["desired_resolution"] = desired_resolution
         encoding = ""
 
         response = self.session.post(
@@ -1144,26 +1159,24 @@ it will likely get removed in future versions. "
         )
         self.raise_for_status(response)
 
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
-
         with TimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 if desired_resolution is not None:
-                    df = df.copy()
-                    if len(desired_resolution) != 3:
-                        raise ValueError(
-                            "desired resolution needs to be of length 3, for xyz"
-                        )
-                    vox_res = self.get_table_metadata(
-                        table_name=table,
-                        datastack_name=datastack_name,
-                        log_warning=False,
-                    )["voxel_resolution"]
-                    df = convert_position_columns(df, vox_res, desired_resolution)
+                    if not df.attrs.get("data_resolution", None):
+                        df = df.copy()
+                        if len(desired_resolution) != 3:
+                            raise ValueError(
+                                "desired resolution needs to be of length 3, for xyz"
+                            )
+                        vox_res = self.get_table_metadata(
+                            table_name=table,
+                            datastack_name=datastack_name,
+                            log_warning=False,
+                        )["voxel_resolution"]
+                        df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
 
@@ -1357,6 +1370,7 @@ it will likely get removed in future versions. "
                 True,
                 offset,
                 limit,
+                desired_resolution,
             )
             logger.debug(f"query_args: {query_args}")
             logger.debug(f"query data: {data}")
@@ -1388,13 +1402,13 @@ it will likely get removed in future versions. "
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
                         )
-                    vox_res = self.get_table_metadata(
-                        table_name=table,
-                        datastack_name=datastack_name,
-                        version=materialization_version,
-                        log_warning=False,
-                    )["voxel_resolution"]
-                    df = convert_position_columns(df, vox_res, desired_resolution)
+                    # vox_res = self.get_table_metadata(
+                    #     table_name=table,
+                    #     datastack_name=datastack_name,
+                    #     version=materialization_version,
+                    #     log_warning=False,
+                    # )["voxel_resolution"]
+                    # df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
         # post process the dataframe to update all the root_ids columns
