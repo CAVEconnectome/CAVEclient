@@ -1013,12 +1013,14 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["lookup_supervoxel_ids"].format_map(endpoint_mapping)
-        response = self.session.post(url, 
-                data=json.dumps(data, cls=BaseEncoder),
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept-Encoding": "",
-                },)
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            headers={
+                "Content-Type": "application/json",
+                "Accept-Encoding": "",
+            },
+        )
         return handle_response(response)
 
     def live_live_query(
