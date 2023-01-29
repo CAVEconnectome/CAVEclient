@@ -139,7 +139,7 @@ class TestMatclient:
             body=pos_serialized.to_buffer().to_pybytes(),
             headers={
                 "content-type": "x-application/pyarrow",
-                "dataframe_resoluiont": "1, 1, 1",
+                "dataframe_resolution": "1, 1, 1",
             },
             match=[
                 responses.json_params_matcher(
