@@ -451,7 +451,7 @@ class MaterializatonClientV2(ClientBase):
         version,
         tables,
         select_columns,
-        suffixes,
+        suffix_map,
         filter_in_dict,
         filter_out_dict,
         filter_equal_dict,
@@ -485,11 +485,25 @@ class MaterializatonClientV2(ClientBase):
         if filter_spatial_dict is not None:
             data["filter_spatial_dict"] = filter_spatial_dict
         if select_columns is not None:
-            data["select_columns"] = select_columns
+            if isinstance(select_columns, list):
+                data["select_columns"] = select_columns
+            elif isinstance(select_columns, dict):
+                data["select_map"] = select_columns
+            else:
+                raise ValueError(
+                    "select columns should be a dictionary with tables as keys and values of column names in table (no suffixes)"
+                )
         if offset is not None:
             data["offset"] = offset
-        if suffixes is not None:
-            data["suffixes"] = suffixes
+        if suffix_map is not None:
+            if isinstance(suffix_map, list):
+                data["suffixes"] = suffix_map
+            elif isinstance(suffix_map, dict):
+                data["suffix_map"] = suffix_map
+            else:
+                raise ValueError(
+                    "suffixes should be a dictionary with tables as keys and values as suffixes"
+                )
         if limit is not None:
             assert limit > 0
             data["limit"] = limit
@@ -523,11 +537,13 @@ class MaterializatonClientV2(ClientBase):
             target_table = None
         if target_table is not None:
             tables = [[table, "target_id"], [md["reference_table"], "id"]]
-            suffixes = ("", "ref")
+
+            suffix_map = {table: "", md["reference_table"]: "_ref"}
         else:
             tables = [table]
-            suffixes = None
-        return tables, suffixes
+
+            suffix_map = None
+        return tables, suffix_map
 
     def query_table(
         self,
@@ -621,7 +637,7 @@ class MaterializatonClientV2(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
 
-        tables, suffixes = self._resolve_merge_reference(
+        tables, suffix_map = self._resolve_merge_reference(
             merge_reference, table, datastack_name, materialization_version
         )
 
@@ -630,7 +646,7 @@ class MaterializatonClientV2(ClientBase):
             materialization_version,
             tables,
             select_columns,
-            suffixes,
+            suffix_map,
             {table: filter_in_dict} if filter_in_dict is not None else None,
             {table: filter_out_dict} if filter_out_dict is not None else None,
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
@@ -659,7 +675,7 @@ class MaterializatonClientV2(ClientBase):
                 if desired_resolution is None:
                     desired_resolution = self.desired_resolution
                 if desired_resolution is not None:
-                    if not df.attrs.get("data_resolution", None):
+                    if not response.headers.get("dataframe_resolution", None):
                         df = df.copy()
                         if len(desired_resolution) != 3:
                             raise ValueError(
@@ -687,7 +703,10 @@ class MaterializatonClientV2(ClientBase):
                     live_query=timestamp is not None,
                     timestamp=string_format_timestamp(timestamp),
                     materialization_version=materialization_version,
-                    desired_resolution=desired_resolution,
+                    desired_resolution=response.headers.get(
+                        "dataframe_resolution", desired_resolution
+                    ),
+                    column_names=response.headers.get("column_names", None),
                 )
                 df.attrs.update(attrs)
             if split_positions:
@@ -713,7 +732,7 @@ class MaterializatonClientV2(ClientBase):
         split_positions: bool = False,
         materialization_version: int = None,
         metadata: bool = True,
-        desired_resolution: np.array = None,
+        desired_resolution: Iterable = None,
     ):
         """generic query on materialization tables
 
@@ -743,7 +762,7 @@ class MaterializatonClientV2(ClientBase):
              offset (int, optional): result offset to use. Defaults to None.
                  will only return top K results.
              limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-             suffixes (list[str], optional): suffixes to use for duplicate columns same order as tables
+             suffixes (dict, optional): suffixes to use for duplicate columns, keys are table names, values are the suffix
              datastack_name (str, optional): datastack to query.
                  If None defaults to one specified in client.
              return_df (bool, optional): whether to return as a dataframe
@@ -802,6 +821,9 @@ class MaterializatonClientV2(ClientBase):
                 attrs = self._assemble_attributes(
                     tables,
                     suffixes=suffixes,
+                    desired_resolution=response.headers.get(
+                        "dataframe_resolution", desired_resolution
+                    ),
                     filters={
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
@@ -814,6 +836,7 @@ class MaterializatonClientV2(ClientBase):
                     live_query=False,
                     timestamp=None,
                     materialization_version=materialization_version,
+                    column_names=response.headers.get("column_names", None),
                 )
                 df.attrs.update(attrs)
             if split_positions:
@@ -1165,18 +1188,19 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 if desired_resolution is not None:
-                    if not df.attrs.get("data_resolution", None):
+                    if not response.headers.get("dataframe_resolution", None):
                         df = df.copy()
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
                             )
                         vox_res = self.get_table_metadata(
-                            table_name=table,
-                            datastack_name=datastack_name,
+                            table,
+                            datastack_name,
                             log_warning=False,
                         )["voxel_resolution"]
                         df = convert_position_columns(df, vox_res, desired_resolution)
+
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
 
@@ -1197,7 +1221,9 @@ it will likely get removed in future versions. "
                     live_query=timestamp is not None,
                     timestamp=string_format_timestamp(timestamp),
                     materialization_version=None,
-                    desired_resolution=desired_resolution,
+                    desired_resolution=response.headers.get(
+                        "dataframe_resolution", desired_resolution
+                    ),
                 )
                 df.attrs.update(attrs)
             except HTTPError as e:
@@ -1346,7 +1372,7 @@ it will likely get removed in future versions. "
                 if len(past_equal_dict) == 0:
                     past_equal_dict = None
 
-        tables, suffixes = self._resolve_merge_reference(
+        tables, suffix_map = self._resolve_merge_reference(
             merge_reference, table, datastack_name, materialization_version
         )
         with TimeIt("package query"):
@@ -1355,7 +1381,7 @@ it will likely get removed in future versions. "
                 materialization_version,
                 tables,
                 None,
-                suffixes,
+                suffix_map,
                 {table: past_filter_in_dict}
                 if past_filter_in_dict is not None
                 else None,
@@ -1397,18 +1423,19 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 if desired_resolution is not None:
-                    df = df.copy()
-                    if len(desired_resolution) != 3:
-                        raise ValueError(
-                            "desired resolution needs to be of length 3, for xyz"
-                        )
-                    # vox_res = self.get_table_metadata(
-                    #     table_name=table,
-                    #     datastack_name=datastack_name,
-                    #     version=materialization_version,
-                    #     log_warning=False,
-                    # )["voxel_resolution"]
-                    # df = convert_position_columns(df, vox_res, desired_resolution)
+                    if not response.headers.get("dataframe_resolution", None):
+                        df = df.copy()
+                        if len(desired_resolution) != 3:
+                            raise ValueError(
+                                "desired resolution needs to be of length 3, for xyz"
+                            )
+                        vox_res = self.get_table_metadata(
+                            table,
+                            datastack_name,
+                            materialization_version,
+                            log_warning=False,
+                        )["voxel_resolution"]
+                        df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
         # post process the dataframe to update all the root_ids columns
@@ -1444,7 +1471,9 @@ it will likely get removed in future versions. "
                 live_query=timestamp is not None,
                 timestamp=string_format_timestamp(timestamp),
                 materialization_version=None,
-                desired_resolution=desired_resolution,
+                desired_resolution=response.headers.get(
+                    "dataframe_resolution", desired_resolution
+                ),
             )
             df.attrs.update(attrs)
 
