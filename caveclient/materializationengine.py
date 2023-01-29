@@ -1586,7 +1586,10 @@ it will likely get removed in future versions. "
     ):
         if isinstance(tables, str):
             tables = [tables]
-
+        if isinstance(desired_resolution, str):
+            desired_resolution = np.array([
+                float(r) for r in desired_resolution.split(", ")
+            ])
         join_query = len(tables) > 1
 
         attrs = {
