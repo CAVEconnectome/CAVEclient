@@ -1006,7 +1006,7 @@ class MaterializatonClientV2(ClientBase):
             datastack_name = self.datastack_name
 
         if annotation_ids is not None:
-            data = {"ids": annotation_ids}
+            data = {"annotation_ids": annotation_ids}
         else:
             data = None
         endpoint_mapping = self.default_url_mapping
