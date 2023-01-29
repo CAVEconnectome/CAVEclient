@@ -1008,12 +1008,17 @@ class MaterializatonClientV2(ClientBase):
         if annotation_ids is not None:
             data = {"annotation_ids": annotation_ids}
         else:
-            data = None
+            data = {}
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         url = self._endpoints["lookup_supervoxel_ids"].format_map(endpoint_mapping)
-        response = self.session.post(url, data=data)
+        response = self.session.post(url, 
+                data=json.dumps(data, cls=BaseEncoder),
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept-Encoding": "",
+                },)
         return handle_response(response)
 
     def live_live_query(
