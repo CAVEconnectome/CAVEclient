@@ -488,7 +488,7 @@ class MaterializatonClientV2(ClientBase):
             if isinstance(select_columns, list):
                 data["select_columns"] = select_columns
             elif isinstance(select_columns, dict):
-                data["select_map"] = select_columns
+                data["select_column_map"] = select_columns
             else:
                 raise ValueError(
                     "select columns should be a dictionary with tables as keys and values of column names in table (no suffixes)"
