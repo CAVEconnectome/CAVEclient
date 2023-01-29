@@ -101,7 +101,25 @@ class TestMatclient:
             "offset": 0,
             "limit": 1000,
         }
+        correct_query_data_with_desired_resolution = {
+            "filter_in_dict": {test_info["synapse_table"]: {"pre_pt_root_id": [500]}},
+            "filter_notin_dict": {
+                test_info["synapse_table"]: {"post_pt_root_id": [501]}
+            },
+            "filter_equal_dict": {test_info["synapse_table"]: {"size": 100}},
+            "offset": 0,
+            "limit": 1000,
+            "desired_resolution": [1, 1, 1],
+        }
         df = pd.read_pickle("tests/test_data/synapse_query_split.pkl")
+        df_pos = df.copy()
+        pos_cols = ["pre_pt_position", "ctr_pt_position", "post_pt_position"]
+        res = [4, 4, 40]
+        xyz = ["_x", "_y", "_z"]
+        for col in pos_cols:
+            for r, d in zip(res, xyz):
+                cx = col + d
+                df_pos[cx] = df_pos[cx] * r
 
         context = pa.default_serialization_context()
         serialized = context.serialize(df)
@@ -112,6 +130,22 @@ class TestMatclient:
             body=serialized.to_buffer().to_pybytes(),
             headers={"content-type": "x-application/pyarrow"},
             match=[responses.json_params_matcher(correct_query_data)],
+        )
+        context = pa.default_serialization_context()
+        pos_serialized = context.serialize(df_pos)
+        responses.add(
+            responses.POST,
+            url=url,
+            body=pos_serialized.to_buffer().to_pybytes(),
+            headers={
+                "content-type": "x-application/pyarrow",
+                "dataframe_resoluiont": "1, 1, 1",
+            },
+            match=[
+                responses.json_params_matcher(
+                    correct_query_data_with_desired_resolution
+                )
+            ],
         )
 
         meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
