@@ -333,7 +333,8 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
-
+        endpoint_mapping["version"] = version
+        
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
