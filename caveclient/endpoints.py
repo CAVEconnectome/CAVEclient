@@ -52,7 +52,33 @@ materialization_endpoints_v2 = {
     "lookup_supervoxel_ids": mat_v2_api
     + "/materialize/run/lookup_svid/datastack/{datastack_name}/{table_name}",
 }
-materialization_api_versions = {2: materialization_endpoints_v2}
+materialization_endpoints_v3 = {
+    "get_api_versions": "{me_server_address}/api/versions",
+    "simple_query": mat_v3_api
+    + "/datastack/{datastack_name}/version/{version}/table/{table_name}/query",
+    "join_query": mat_v3_api + "/datastack/{datastack_name}/version/{version}/query",
+    "table_count": mat_v3_api
+    + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
+    "versions": mat_v3_api + "/datastack/{datastack_name}/versions",
+    "version_metadata": mat_v3_api + "/datastack/{datastack_name}/version/{version}",
+    "tables": mat_v3_api + "/datastack/{datastack_name}/version/{version}/tables",
+    "metadata": mat_v3_api
+    + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
+    "versions_metadata": mat_v3_api + "/datastack/{datastack_name}/metadata",
+    "ingest_annotation_table": mat_v2_api
+    + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
+    "segmentation_metadata": mat_v3_api
+    + "/datastack/{datastack_name}/table/{table_name}/segmentation_metadata",
+    "live_live_query": mat_v3_api + "/datastack/{datastack_name}/query",
+    "lookup_supervoxel_ids": mat_v2_api
+    + "/materialize/run/lookup_svid/datastack/{datastack_name}/{table_name}",
+}
+
+materialization_api_versions = {
+    2: materialization_endpoints_v2,
+    3: materialization_endpoints_v3,
+}
+
 annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}
 
 # -------------------------------
@@ -74,7 +100,8 @@ infoservice_endpoints_v2 = {
     "aligned_volume_by_id": info_v2 + "/aligned_volume/id/{aligned_volume_id}",
     "datastacks": info_v2 + "/datastacks",
     "datastack_info": info_v2 + "/datastack/full/{datastack_name}",
-    "datastacks_from_aligned_volume": info_v2 + "/aligned_volume/{aligned_volume_name}/datastacks",
+    "datastacks_from_aligned_volume": info_v2
+    + "/aligned_volume/{aligned_volume_name}/datastacks",
 }
 
 infoservice_api_versions = {1: infoservice_endpoints_v1, 2: infoservice_endpoints_v2}
