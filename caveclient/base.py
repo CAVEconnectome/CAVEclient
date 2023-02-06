@@ -106,13 +106,13 @@ client=CAVEclient(server_address="{urlp.scheme +"://"+ urlp.netloc}")"""
         )
 
 
-def _api_versions(server_name, server_address, endpoints_common, auth_header):
+def _api_versions(server_name, server_address, endpoints_common, auth_header, verify=True):
     """Asks a server what API versions are available, if possible"""
     url_mapping = {server_name: server_address}
     url_base = endpoints_common.get("get_api_versions", None)
     if url_base is not None:
         url = url_base.format_map(url_mapping)
-        response = requests.get(url, headers=auth_header)
+        response = requests.get(url, headers=auth_header, verify=verify)
         _raise_for_status(response)
         return response.json()
     else:
@@ -127,12 +127,13 @@ def _api_endpoints(
     endpoint_versions,
     auth_header,
     fallback_version=None,
+    verify=True,
 ):
     "Gets the latest client API version"
     if api_version == "latest":
         try:
             avail_vs_server = _api_versions(
-                server_name, server_address, endpoints_common, auth_header
+                server_name, server_address, endpoints_common, auth_header, verify=verify
             )
             avail_vs_server = set(avail_vs_server)
         except:

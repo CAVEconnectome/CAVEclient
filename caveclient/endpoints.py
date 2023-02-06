@@ -26,7 +26,9 @@ annotation_endpoints_v2 = {
 }
 
 
-materialization_common = {}
+materialization_common = {
+    "get_api_versions": "{me_server_address}/materialize/api/versions"
+    }
 mat_v2_api = "{me_server_address}/materialize/api/v2"
 mat_v3_api = "{me_server_address}/materialize/api/v3"
 materialization_endpoints_v2 = {

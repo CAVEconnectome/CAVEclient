@@ -166,6 +166,7 @@ def MaterializationClient(
         materialization_api_versions,
         auth_header,
         fallback_version=2,
+        verify=verify
     )
 
     MatClient = client_mapping[api_version]
