@@ -1050,6 +1050,171 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url, data=data)
         return handle_response(response)
 
+    def synapse_query(
+        self,
+        pre_ids: Union[int, Iterable, np.ndarray] = None,
+        post_ids: Union[int, Iterable, np.ndarray] = None,
+        bounding_box=None,
+        bounding_box_column: str = "post_pt_position",
+        timestamp: datetime = None,
+        remove_autapses: bool = True,
+        include_zeros: bool = True,
+        limit: int = None,
+        offset: int = None,
+        split_positions: bool = False,
+        desired_resolution: Iterable[float] = None,
+        materialization_version: int = None,
+        synapse_table: str = None,
+        datastack_name: str = None,
+        metadata: bool = True,
+    ):
+        """Convience method for quering synapses. Will use the synapse table specified in the info service by default.
+        It will also remove autapses by default. NOTE: This is not designed to allow querying of the entire synapse table.
+        A query with no filters will return only a limited number of rows (configured by the server) and will do so in a non-deterministic fashion.
+        Please contact your dataset administrator if you want access to the entire table.
+
+        Args:
+            pre_ids (Union[int, Iterable, optional): pre_synaptic cell(s) to query. Defaults to None.
+            post_ids (Union[int, Iterable, optional): post synaptic cell(s) to query. Defaults to None.
+            timestamp (datetime.datetime, optional): timestamp to query (optional).
+                If passed recalculate query at timestamp, do not pass with materialization_verison
+            bounding_box: [[min_x, min_y, min_z],[max_x, max_y, max_z]] bounding box to filter
+                          synapse locations. Expressed in units of the voxel_resolution of this dataset (optional)
+            bounding_box_column (str, optional): which synapse location column to filter by (Default to "post_pt_position")
+            remove_autapses (bool, optional): post-hoc filter out synapses. Defaults to True.
+            include_zeros (bool, optional): whether to include synapses to/from id=0 (out of segmentation). Defaults to True.
+            limit (int, optional): number of synapses to limit, Defaults to None (server side limit applies)
+            offset (int, optional): number of synapses to offset query, Defaults to None (no offset).
+            split_positions (bool, optional): whether to return positions as seperate x,y,z columns (faster)
+                defaults to False
+            desired_resolution : Iterable[float] or None, optional
+                If given, should be a list or array of the desired resolution you want queries returned in
+                useful for materialization queries.
+            synapse_table (str, optional): synapse table to query. If None, defaults to self.synapse_table.
+            datastack_name: (str, optional): datastack to query
+            materialization_version (int, optional): version to query.
+                defaults to self.materialization_version if not specified
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+
+        """
+        filter_in_dict = {}
+        filter_equal_dict = {}
+        filter_out_dict = None
+        filter_equal_dict = {}
+        filter_spatial_dict = None
+        if synapse_table is None:
+            if self.synapse_table is None:
+                raise ValueError(
+                    "Must define synapse table in class init or pass to method"
+                )
+            synapse_table = self.synapse_table
+
+        if not include_zeros:
+            filter_out_dict = {"pre_pt_root_id": [0], "post_pt_root_id": [0]}
+
+        if pre_ids is not None:
+            if isinstance(pre_ids, (Iterable, np.ndarray)):
+                filter_in_dict["pre_pt_root_id"] = pre_ids
+            else:
+                filter_equal_dict["pre_pt_root_id"] = pre_ids
+
+        if post_ids is not None:
+            if isinstance(post_ids, (Iterable, np.ndarray)):
+                filter_in_dict["post_pt_root_id"] = post_ids
+            else:
+                filter_equal_dict["post_pt_root_id"] = post_ids
+        if bounding_box is not None:
+            filter_spatial_dict = {bounding_box_column: bounding_box}
+
+        df = self.query_table(
+            synapse_table,
+            filter_in_dict=filter_in_dict,
+            filter_out_dict=filter_out_dict,
+            filter_equal_dict=filter_equal_dict,
+            filter_spatial_dict=filter_spatial_dict,
+            offset=offset,
+            limit=limit,
+            split_positions=split_positions,
+            desired_resolution=desired_resolution,
+            materialization_version=materialization_version,
+            timestamp=timestamp,
+            datastack_name=datastack_name,
+            metadata=metadata,
+            merge_reference=False,
+        )
+
+        if metadata:
+            df.attrs["remove_autapses"] = remove_autapses
+
+        if remove_autapses:
+            return df.query("pre_pt_root_id!=post_pt_root_id")
+        else:
+            return df
+
+    def _assemble_attributes(
+        self, tables, suffixes=None, desired_resolution=None, **kwargs
+    ):
+        if isinstance(tables, str):
+            tables = [tables]
+        if isinstance(desired_resolution, str):
+            desired_resolution = np.array(
+                [float(r) for r in desired_resolution.split(", ")]
+            )
+        join_query = len(tables) > 1
+
+        attrs = {
+            "datastack_name": self.datastack_name,
+        }
+        if not join_query:
+            attrs["join_query"] = False
+            meta = self.get_table_metadata(tables[0], log_warning=False)
+            for k, v in meta.items():
+                if re.match("^table", k):
+                    attrs[k] = v
+                else:
+                    attrs[f"table_{k}"] = v
+            if desired_resolution is None:
+                attrs["dataframe_resolution"] = attrs["table_voxel_resolution"]
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
+        else:
+            attrs["join_query"] = True
+            attrs["tables"] = {}
+            table_attrs = attrs["tables"]
+            if suffixes is None:
+                suffixes = ["_x", "_y"]
+            for (tname, jcol), s in zip(tables, suffixes):
+                table_attrs[tname] = {}
+                meta = self.get_table_metadata(tname, log_warning=False)
+                for k, v in meta.items():
+                    if re.match("^table", k):
+                        table_attrs[tname][k] = v
+                    else:
+                        table_attrs[tname][f"table_{k}"] = v
+                table_attrs[tname]["join_column"] = jcol
+                table_attrs[tname]["suffix"] = s
+
+            if desired_resolution is None:
+                res = []
+                for tn in attrs["tables"]:
+                    res.append(attrs["tables"][tn]["table_voxel_resolution"])
+                if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
+                    attrs["dataframe_resolution"] = res[0]
+                else:
+                    attrs["dataframe_resolution"] = "mixed_resolutions"
+            else:
+                attrs["dataframe_resolution"] = desired_resolution
+
+        attrs.update(kwargs)
+        return attrs
+
+
+class MaterializatonClientV3(MaterializatonClientV2):
+    def __init__(self, *args, **kwargs):
+        super(MaterializatonClientV2, self).__init__(*args, **kwargs)
+        self.api_version = 3
+
     def live_live_query(
         self,
         table: str,
@@ -1479,164 +1644,9 @@ it will likely get removed in future versions. "
 
         return df
 
-    def synapse_query(
-        self,
-        pre_ids: Union[int, Iterable, np.ndarray] = None,
-        post_ids: Union[int, Iterable, np.ndarray] = None,
-        bounding_box=None,
-        bounding_box_column: str = "post_pt_position",
-        timestamp: datetime = None,
-        remove_autapses: bool = True,
-        include_zeros: bool = True,
-        limit: int = None,
-        offset: int = None,
-        split_positions: bool = False,
-        desired_resolution: Iterable[float] = None,
-        materialization_version: int = None,
-        synapse_table: str = None,
-        datastack_name: str = None,
-        metadata: bool = True,
-    ):
-        """Convience method for quering synapses. Will use the synapse table specified in the info service by default.
-        It will also remove autapses by default. NOTE: This is not designed to allow querying of the entire synapse table.
-        A query with no filters will return only a limited number of rows (configured by the server) and will do so in a non-deterministic fashion.
-        Please contact your dataset administrator if you want access to the entire table.
 
-        Args:
-            pre_ids (Union[int, Iterable, optional): pre_synaptic cell(s) to query. Defaults to None.
-            post_ids (Union[int, Iterable, optional): post synaptic cell(s) to query. Defaults to None.
-            timestamp (datetime.datetime, optional): timestamp to query (optional).
-                If passed recalculate query at timestamp, do not pass with materialization_verison
-            bounding_box: [[min_x, min_y, min_z],[max_x, max_y, max_z]] bounding box to filter
-                          synapse locations. Expressed in units of the voxel_resolution of this dataset (optional)
-            bounding_box_column (str, optional): which synapse location column to filter by (Default to "post_pt_position")
-            remove_autapses (bool, optional): post-hoc filter out synapses. Defaults to True.
-            include_zeros (bool, optional): whether to include synapses to/from id=0 (out of segmentation). Defaults to True.
-            limit (int, optional): number of synapses to limit, Defaults to None (server side limit applies)
-            offset (int, optional): number of synapses to offset query, Defaults to None (no offset).
-            split_positions (bool, optional): whether to return positions as seperate x,y,z columns (faster)
-                defaults to False
-            desired_resolution : Iterable[float] or None, optional
-                If given, should be a list or array of the desired resolution you want queries returned in
-                useful for materialization queries.
-            synapse_table (str, optional): synapse table to query. If None, defaults to self.synapse_table.
-            datastack_name: (str, optional): datastack to query
-            materialization_version (int, optional): version to query.
-                defaults to self.materialization_version if not specified
-            metadata: (bool, optional) : toggle to return metadata
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-
-        """
-        filter_in_dict = {}
-        filter_equal_dict = {}
-        filter_out_dict = None
-        filter_equal_dict = {}
-        filter_spatial_dict = None
-        if synapse_table is None:
-            if self.synapse_table is None:
-                raise ValueError(
-                    "Must define synapse table in class init or pass to method"
-                )
-            synapse_table = self.synapse_table
-
-        if not include_zeros:
-            filter_out_dict = {"pre_pt_root_id": [0], "post_pt_root_id": [0]}
-
-        if pre_ids is not None:
-            if isinstance(pre_ids, (Iterable, np.ndarray)):
-                filter_in_dict["pre_pt_root_id"] = pre_ids
-            else:
-                filter_equal_dict["pre_pt_root_id"] = pre_ids
-
-        if post_ids is not None:
-            if isinstance(post_ids, (Iterable, np.ndarray)):
-                filter_in_dict["post_pt_root_id"] = post_ids
-            else:
-                filter_equal_dict["post_pt_root_id"] = post_ids
-        if bounding_box is not None:
-            filter_spatial_dict = {bounding_box_column: bounding_box}
-
-        df = self.query_table(
-            synapse_table,
-            filter_in_dict=filter_in_dict,
-            filter_out_dict=filter_out_dict,
-            filter_equal_dict=filter_equal_dict,
-            filter_spatial_dict=filter_spatial_dict,
-            offset=offset,
-            limit=limit,
-            split_positions=split_positions,
-            desired_resolution=desired_resolution,
-            materialization_version=materialization_version,
-            timestamp=timestamp,
-            datastack_name=datastack_name,
-            metadata=metadata,
-            merge_reference=False,
-        )
-
-        if metadata:
-            df.attrs["remove_autapses"] = remove_autapses
-
-        if remove_autapses:
-            return df.query("pre_pt_root_id!=post_pt_root_id")
-        else:
-            return df
-
-    def _assemble_attributes(
-        self, tables, suffixes=None, desired_resolution=None, **kwargs
-    ):
-        if isinstance(tables, str):
-            tables = [tables]
-        if isinstance(desired_resolution, str):
-            desired_resolution = np.array([
-                float(r) for r in desired_resolution.split(", ")
-            ])
-        join_query = len(tables) > 1
-
-        attrs = {
-            "datastack_name": self.datastack_name,
-        }
-        if not join_query:
-            attrs["join_query"] = False
-            meta = self.get_table_metadata(tables[0], log_warning=False)
-            for k, v in meta.items():
-                if re.match("^table", k):
-                    attrs[k] = v
-                else:
-                    attrs[f"table_{k}"] = v
-            if desired_resolution is None:
-                attrs["dataframe_resolution"] = attrs["table_voxel_resolution"]
-            else:
-                attrs["dataframe_resolution"] = desired_resolution
-        else:
-            attrs["join_query"] = True
-            attrs["tables"] = {}
-            table_attrs = attrs["tables"]
-            if suffixes is None:
-                suffixes = ["_x", "_y"]
-            for (tname, jcol), s in zip(tables, suffixes):
-                table_attrs[tname] = {}
-                meta = self.get_table_metadata(tname, log_warning=False)
-                for k, v in meta.items():
-                    if re.match("^table", k):
-                        table_attrs[tname][k] = v
-                    else:
-                        table_attrs[tname][f"table_{k}"] = v
-                table_attrs[tname]["join_column"] = jcol
-                table_attrs[tname]["suffix"] = s
-
-            if desired_resolution is None:
-                res = []
-                for tn in attrs["tables"]:
-                    res.append(attrs["tables"][tn]["table_voxel_resolution"])
-                if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
-                    attrs["dataframe_resolution"] = res[0]
-                else:
-                    attrs["dataframe_resolution"] = "mixed_resolutions"
-            else:
-                attrs["dataframe_resolution"] = desired_resolution
-
-        attrs.update(kwargs)
-        return attrs
-
-
-client_mapping = {2: MaterializatonClientV2, "latest": MaterializatonClientV2}
+client_mapping = {
+    2: MaterializatonClientV2,
+    3: MaterializatonClientV3,
+    "latest": MaterializatonClientV2,
+}
