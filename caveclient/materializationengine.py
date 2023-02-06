@@ -1018,6 +1018,252 @@ class MaterializatonClientV2(ClientBase):
         response = self.session.post(url)
         return handle_response(response)
 
+    def live_query(
+        self,
+        table: str,
+        timestamp: datetime,
+        filter_in_dict=None,
+        filter_out_dict=None,
+        filter_equal_dict=None,
+        filter_spatial_dict=None,
+        select_columns=None,
+        offset: int = None,
+        limit: int = None,
+        datastack_name: str = None,
+        split_positions: bool = False,
+        post_filter: bool = True,
+        metadata: bool = True,
+        merge_reference: bool = True,
+        desired_resolution: Iterable = None,
+    ):
+        """generic query on materialization tables
+
+        Args:
+            table: 'str'
+            timestamp (datetime.datetime): time to materialize (in utc)
+                pass datetime.datetime.utcnow() for present time
+            filter_in_dict (dict , optional):
+                keys are column names, values are allowed entries.
+                Defaults to None.
+            filter_out_dict (dict, optional):
+                keys are column names, values are not allowed entries.
+                Defaults to None.
+            filter_equal_dict (dict, optional):
+                inner layer: keys are column names, values are specified entry.
+                Defaults to None.
+            filter_spatial (dict, optional):
+                inner layer: keys are column names, values are bounding boxes
+                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
+                             Expressed in units of the voxel_resolution of this dataset.
+                             Defaults to None
+            offset (int, optional): offset in query result
+            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
+            select_columns (list of str, optional): columns to select. Defaults to None.
+            suffixes: (list[str], optional): suffixes to use on duplicate columns
+            offset (int, optional): result offset to use. Defaults to None.
+                will only return top K results.
+            datastack_name (str, optional): datastack to query.
+                If None defaults to one specified in client.
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
+            post_filter (bool, optional): whether to filter down the result based upon the filters specified
+                if false, it will return the query with present root_ids in the root_id columns,
+                but the rows will reflect the filters translated into their past IDs.
+                So if, for example, a cell had a false merger split off since the last materialization.
+                those annotations on that incorrect portion of the cell will be included if this is False,
+                but will be filtered down if this is True. (Default=True)
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+            merge_reference: (bool, optional) : toggle to automatically join reference table
+                If True, metadata will be queries and if its a reference table it will perform a join
+                on the reference table to return the rows of that
+            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
+                If None, defaults to one specified in client, if that is None then points are returned
+                as stored in the table and should be in the resolution specified in the table metadata
+
+        Returns:
+        pd.DataFrame: a pandas dataframe of results of query
+
+        """
+        timestamp = convert_timestamp(timestamp)
+        return_df = True
+        if self.cg_client is None:
+            raise ValueError("You must have a cg_client to run live_query")
+
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        with TimeIt("find_mat_version"):
+            # we want to find the most recent materialization
+            # in which the timestamp given is in the future
+            mds = self.get_versions_metadata()
+            materialization_version = None
+            # make sure the materialization's are increasing in ID/time
+            for md in sorted(mds, key=lambda x: x["id"]):
+                ts = md["time_stamp"]
+                if timestamp >= ts:
+                    materialization_version = md["version"]
+                    if timestamp == ts:
+                        # If timestamp equality to a version, use the standard query_table.
+                        return self.query_table(
+                            table=table,
+                            filter_in_dict=filter_in_dict,
+                            filter_out_dict=filter_out_dict,
+                            filter_equal_dict=filter_equal_dict,
+                            filter_spatial_dict=filter_spatial_dict,
+                            select_columns=select_columns,
+                            offset=offset,
+                            limit=limit,
+                            datastack_name=datastack_name,
+                            split_positions=split_positions,
+                            materialization_version=materialization_version,
+                            metadata=metadata,
+                            merge_reference=merge_reference,
+                            desired_resolution=desired_resolution,
+                            return_df=True,
+                        )
+                    else:
+                        timestamp_start = ts
+            # if none of the available versions are before
+            # this timestamp, then we cannot support the query
+            if materialization_version is None:
+                raise (
+                    ValueError(
+                        """The timestamp you passed is not recent enough
+                for the materialization versions that are available"""
+                    )
+                )
+
+        # first we want to translate all these filters into the IDss at the
+        # most recent materialization
+        with TimeIt("map_filters"):
+            past_filters, future_map = self.map_filters(
+                [filter_in_dict, filter_out_dict, filter_equal_dict],
+                timestamp,
+                timestamp_start,
+            )
+            past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
+            if past_equal_dict is not None:
+                # when doing a filter equal in the past
+                # we translate it to a filter_in, as 1 ID might
+                # be multiple IDs in the past.
+                # so we want to update the filter_in dict
+                cols = [col for col in past_equal_dict.keys()]
+                for col in cols:
+                    if col.endswith("root_id"):
+                        if past_filter_in_dict is None:
+                            past_filter_in_dict = {}
+                        past_filter_in_dict[col] = past_equal_dict.pop(col)
+                if len(past_equal_dict) == 0:
+                    past_equal_dict = None
+
+        tables, suffix_map = self._resolve_merge_reference(
+            merge_reference, table, datastack_name, materialization_version
+        )
+        with TimeIt("package query"):
+            url, data, query_args, encoding = self._format_query_components(
+                datastack_name,
+                materialization_version,
+                tables,
+                None,
+                suffix_map,
+                {table: past_filter_in_dict}
+                if past_filter_in_dict is not None
+                else None,
+                {table: past_filter_out_dict}
+                if past_filter_out_dict is not None
+                else None,
+                {table: past_equal_dict} if past_equal_dict is not None else None,
+                {table: filter_spatial_dict}
+                if filter_spatial_dict is not None
+                else None,
+                True,
+                True,
+                offset,
+                limit,
+                desired_resolution,
+            )
+            logger.debug(f"query_args: {query_args}")
+            logger.debug(f"query data: {data}")
+        with TimeIt("query materialize"):
+            response = self.session.post(
+                url,
+                data=json.dumps(data, cls=BaseEncoder),
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept-Encoding": encoding,
+                },
+                params=query_args,
+                stream=~return_df,
+                verify=self.verify,
+            )
+            self.raise_for_status(response)
+
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
+
+        with TimeIt("deserialize"):
+            with warnings.catch_warnings():
+                warnings.simplefilter(action="ignore", category=FutureWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
+                df = pa.deserialize(response.content)
+                if desired_resolution is not None:
+                    if not response.headers.get("dataframe_resolution", None):
+                        df = df.copy()
+                        if len(desired_resolution) != 3:
+                            raise ValueError(
+                                "desired resolution needs to be of length 3, for xyz"
+                            )
+                        vox_res = self.get_table_metadata(
+                            table,
+                            datastack_name,
+                            materialization_version,
+                            log_warning=False,
+                        )["voxel_resolution"]
+                        df = convert_position_columns(df, vox_res, desired_resolution)
+            if not split_positions:
+                concatenate_position_columns(df, inplace=True)
+        # post process the dataframe to update all the root_ids columns
+        # with the most up to date get roots
+        df = self._update_rootids(df, timestamp, future_map)
+
+        # apply the original filters to remove rows
+        # from this result which are not relevant
+        if post_filter:
+            with TimeIt("post_filter"):
+                if filter_in_dict is not None:
+                    for col, val in filter_in_dict.items():
+                        df = df[df[col].isin(val)]
+                if filter_out_dict is not None:
+                    for col, val in filter_out_dict.items():
+                        df = df[~df[col].isin(val)]
+                if filter_equal_dict is not None:
+                    for col, val in filter_equal_dict.items():
+                        df = df[df[col] == val]
+        if metadata:
+            attrs = self._assemble_attributes(
+                table,
+                join_query=False,
+                filters={
+                    "inclusive": filter_in_dict,
+                    "exclusive": filter_out_dict,
+                    "equal": filter_equal_dict,
+                    "spatial": filter_spatial_dict,
+                },
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                live_query=timestamp is not None,
+                timestamp=string_format_timestamp(timestamp),
+                materialization_version=None,
+                desired_resolution=response.headers.get(
+                    "dataframe_resolution", desired_resolution
+                ),
+            )
+            df.attrs.update(attrs)
+
+        return df
+
     def lookup_supervoxel_ids(
         self,
         table_name: str,
@@ -1395,252 +1641,6 @@ it will likely get removed in future versions. "
                     e.message
                     + " Metadata could not be loaded, try with metadata=False if not needed"
                 )
-        return df
-
-    def live_query(
-        self,
-        table: str,
-        timestamp: datetime,
-        filter_in_dict=None,
-        filter_out_dict=None,
-        filter_equal_dict=None,
-        filter_spatial_dict=None,
-        select_columns=None,
-        offset: int = None,
-        limit: int = None,
-        datastack_name: str = None,
-        split_positions: bool = False,
-        post_filter: bool = True,
-        metadata: bool = True,
-        merge_reference: bool = True,
-        desired_resolution: Iterable = None,
-    ):
-        """generic query on materialization tables
-
-        Args:
-            table: 'str'
-            timestamp (datetime.datetime): time to materialize (in utc)
-                pass datetime.datetime.utcnow() for present time
-            filter_in_dict (dict , optional):
-                keys are column names, values are allowed entries.
-                Defaults to None.
-            filter_out_dict (dict, optional):
-                keys are column names, values are not allowed entries.
-                Defaults to None.
-            filter_equal_dict (dict, optional):
-                inner layer: keys are column names, values are specified entry.
-                Defaults to None.
-            filter_spatial (dict, optional):
-                inner layer: keys are column names, values are bounding boxes
-                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                             Expressed in units of the voxel_resolution of this dataset.
-                             Defaults to None
-            offset (int, optional): offset in query result
-            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-            select_columns (list of str, optional): columns to select. Defaults to None.
-            suffixes: (list[str], optional): suffixes to use on duplicate columns
-            offset (int, optional): result offset to use. Defaults to None.
-                will only return top K results.
-            datastack_name (str, optional): datastack to query.
-                If None defaults to one specified in client.
-            split_positions (bool, optional): whether to break position columns into x,y,z columns
-                default False, if False data is returned as one column with [x,y,z] array (slower)
-            post_filter (bool, optional): whether to filter down the result based upon the filters specified
-                if false, it will return the query with present root_ids in the root_id columns,
-                but the rows will reflect the filters translated into their past IDs.
-                So if, for example, a cell had a false merger split off since the last materialization.
-                those annotations on that incorrect portion of the cell will be included if this is False,
-                but will be filtered down if this is True. (Default=True)
-            metadata: (bool, optional) : toggle to return metadata
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-            merge_reference: (bool, optional) : toggle to automatically join reference table
-                If True, metadata will be queries and if its a reference table it will perform a join
-                on the reference table to return the rows of that
-            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
-                If None, defaults to one specified in client, if that is None then points are returned
-                as stored in the table and should be in the resolution specified in the table metadata
-
-        Returns:
-        pd.DataFrame: a pandas dataframe of results of query
-
-        """
-        timestamp = convert_timestamp(timestamp)
-        return_df = True
-        if self.cg_client is None:
-            raise ValueError("You must have a cg_client to run live_query")
-
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-
-        with TimeIt("find_mat_version"):
-            # we want to find the most recent materialization
-            # in which the timestamp given is in the future
-            mds = self.get_versions_metadata()
-            materialization_version = None
-            # make sure the materialization's are increasing in ID/time
-            for md in sorted(mds, key=lambda x: x["id"]):
-                ts = md["time_stamp"]
-                if timestamp >= ts:
-                    materialization_version = md["version"]
-                    if timestamp == ts:
-                        # If timestamp equality to a version, use the standard query_table.
-                        return self.query_table(
-                            table=table,
-                            filter_in_dict=filter_in_dict,
-                            filter_out_dict=filter_out_dict,
-                            filter_equal_dict=filter_equal_dict,
-                            filter_spatial_dict=filter_spatial_dict,
-                            select_columns=select_columns,
-                            offset=offset,
-                            limit=limit,
-                            datastack_name=datastack_name,
-                            split_positions=split_positions,
-                            materialization_version=materialization_version,
-                            metadata=metadata,
-                            merge_reference=merge_reference,
-                            desired_resolution=desired_resolution,
-                            return_df=True,
-                        )
-                    else:
-                        timestamp_start = ts
-            # if none of the available versions are before
-            # this timestamp, then we cannot support the query
-            if materialization_version is None:
-                raise (
-                    ValueError(
-                        """The timestamp you passed is not recent enough
-                for the materialization versions that are available"""
-                    )
-                )
-
-        # first we want to translate all these filters into the IDss at the
-        # most recent materialization
-        with TimeIt("map_filters"):
-            past_filters, future_map = self.map_filters(
-                [filter_in_dict, filter_out_dict, filter_equal_dict],
-                timestamp,
-                timestamp_start,
-            )
-            past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
-            if past_equal_dict is not None:
-                # when doing a filter equal in the past
-                # we translate it to a filter_in, as 1 ID might
-                # be multiple IDs in the past.
-                # so we want to update the filter_in dict
-                cols = [col for col in past_equal_dict.keys()]
-                for col in cols:
-                    if col.endswith("root_id"):
-                        if past_filter_in_dict is None:
-                            past_filter_in_dict = {}
-                        past_filter_in_dict[col] = past_equal_dict.pop(col)
-                if len(past_equal_dict) == 0:
-                    past_equal_dict = None
-
-        tables, suffix_map = self._resolve_merge_reference(
-            merge_reference, table, datastack_name, materialization_version
-        )
-        with TimeIt("package query"):
-            url, data, query_args, encoding = self._format_query_components(
-                datastack_name,
-                materialization_version,
-                tables,
-                None,
-                suffix_map,
-                {table: past_filter_in_dict}
-                if past_filter_in_dict is not None
-                else None,
-                {table: past_filter_out_dict}
-                if past_filter_out_dict is not None
-                else None,
-                {table: past_equal_dict} if past_equal_dict is not None else None,
-                {table: filter_spatial_dict}
-                if filter_spatial_dict is not None
-                else None,
-                True,
-                True,
-                offset,
-                limit,
-                desired_resolution,
-            )
-            logger.debug(f"query_args: {query_args}")
-            logger.debug(f"query data: {data}")
-        with TimeIt("query materialize"):
-            response = self.session.post(
-                url,
-                data=json.dumps(data, cls=BaseEncoder),
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept-Encoding": encoding,
-                },
-                params=query_args,
-                stream=~return_df,
-                verify=self.verify,
-            )
-            self.raise_for_status(response)
-
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
-
-        with TimeIt("deserialize"):
-            with warnings.catch_warnings():
-                warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
-                if desired_resolution is not None:
-                    if not response.headers.get("dataframe_resolution", None):
-                        df = df.copy()
-                        if len(desired_resolution) != 3:
-                            raise ValueError(
-                                "desired resolution needs to be of length 3, for xyz"
-                            )
-                        vox_res = self.get_table_metadata(
-                            table,
-                            datastack_name,
-                            materialization_version,
-                            log_warning=False,
-                        )["voxel_resolution"]
-                        df = convert_position_columns(df, vox_res, desired_resolution)
-            if not split_positions:
-                concatenate_position_columns(df, inplace=True)
-        # post process the dataframe to update all the root_ids columns
-        # with the most up to date get roots
-        df = self._update_rootids(df, timestamp, future_map)
-
-        # apply the original filters to remove rows
-        # from this result which are not relevant
-        if post_filter:
-            with TimeIt("post_filter"):
-                if filter_in_dict is not None:
-                    for col, val in filter_in_dict.items():
-                        df = df[df[col].isin(val)]
-                if filter_out_dict is not None:
-                    for col, val in filter_out_dict.items():
-                        df = df[~df[col].isin(val)]
-                if filter_equal_dict is not None:
-                    for col, val in filter_equal_dict.items():
-                        df = df[df[col] == val]
-        if metadata:
-            attrs = self._assemble_attributes(
-                table,
-                join_query=False,
-                filters={
-                    "inclusive": filter_in_dict,
-                    "exclusive": filter_out_dict,
-                    "equal": filter_equal_dict,
-                    "spatial": filter_spatial_dict,
-                },
-                select_columns=select_columns,
-                offset=offset,
-                limit=limit,
-                live_query=timestamp is not None,
-                timestamp=string_format_timestamp(timestamp),
-                materialization_version=None,
-                desired_resolution=response.headers.get(
-                    "dataframe_resolution", desired_resolution
-                ),
-            )
-            df.attrs.update(attrs)
-
         return df
 
 
