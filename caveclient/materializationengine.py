@@ -1458,7 +1458,7 @@ class MaterializatonClientV2(ClientBase):
 
 class MaterializatonClientV3(MaterializatonClientV2):
     def __init__(self, *args, **kwargs):
-        super(MaterializatonClientV2, self).__init__(*args, **kwargs)
+        super(MaterializatonClientV3, self).__init__(*args, **kwargs)
 
     def live_live_query(
         self,
