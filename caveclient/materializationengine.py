@@ -1213,7 +1213,6 @@ class MaterializatonClientV2(ClientBase):
 class MaterializatonClientV3(MaterializatonClientV2):
     def __init__(self, *args, **kwargs):
         super(MaterializatonClientV2, self).__init__(*args, **kwargs)
-        self.api_version = 3
 
     def live_live_query(
         self,
