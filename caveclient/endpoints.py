@@ -57,14 +57,14 @@ materialization_endpoints_v3 = {
     "simple_query": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/query",
     "join_query": mat_v3_api + "/datastack/{datastack_name}/version/{version}/query",
-    "table_count": mat_v3_api
+    "table_count": mat_v2_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
-    "versions": mat_v3_api + "/datastack/{datastack_name}/versions",
-    "version_metadata": mat_v3_api + "/datastack/{datastack_name}/version/{version}",
-    "tables": mat_v3_api + "/datastack/{datastack_name}/version/{version}/tables",
-    "metadata": mat_v3_api
+    "versions": mat_v2_api + "/datastack/{datastack_name}/versions",
+    "version_metadata": mat_v2_api + "/datastack/{datastack_name}/version/{version}",
+    "tables": mat_v2_api + "/datastack/{datastack_name}/version/{version}/tables",
+    "metadata": mat_v2_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
-    "versions_metadata": mat_v3_api + "/datastack/{datastack_name}/metadata",
+    "versions_metadata": mat_v2_api + "/datastack/{datastack_name}/metadata",
     "ingest_annotation_table": mat_v2_api
     + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
     "segmentation_metadata": mat_v3_api

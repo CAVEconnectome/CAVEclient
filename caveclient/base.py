@@ -2,6 +2,7 @@ import urllib
 import requests
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 import webbrowser
 
@@ -9,6 +10,7 @@ from .session_config import patch_session
 import numpy as np
 import datetime
 import pandas as pd
+
 
 class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -124,6 +126,7 @@ def _api_endpoints(
     endpoints_common,
     endpoint_versions,
     auth_header,
+    fallback_version=None,
 ):
     "Gets the latest client API version"
     if api_version == "latest":
@@ -138,7 +141,10 @@ def _api_endpoints(
         avail_vs_client = set(endpoint_versions.keys())
 
         if avail_vs_server is None:
-            api_version = max(avail_vs_client)
+            if fallback_version is None:
+                api_version = max(avail_vs_client)
+            else:
+                api_version = fallback_version
         else:
             api_version = max(avail_vs_client.intersection(avail_vs_server))
 
