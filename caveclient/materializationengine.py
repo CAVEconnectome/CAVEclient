@@ -166,7 +166,7 @@ def MaterializationClient(
         materialization_api_versions,
         auth_header,
         fallback_version=2,
-        verify=verify
+        verify=verify,
     )
 
     MatClient = client_mapping[api_version]
@@ -329,14 +329,15 @@ class MaterializatonClientV2(ClientBase):
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
-
+        if version is None:
+            version = self.version
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["version"] = version
-        
-        url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
+        url = self._endpoints["table_count"].format_map(endpoint_mapping)
+  
         response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
@@ -540,9 +541,9 @@ class MaterializatonClientV2(ClientBase):
             target_table = None
         if target_table is not None:
             tables = [[table, "target_id"], [md["reference_table"], "id"]]
-            if (self._api_version==2):
-                suffix_map = ["", "_ref"]
-            elif self._api_version>2:
+            if self._api_version == 2:
+                suffix_map = ["", "ref"]
+            elif self._api_version > 2:
                 suffix_map = {table: "", md["reference_table"]: "_ref"}
         else:
             tables = [table]
