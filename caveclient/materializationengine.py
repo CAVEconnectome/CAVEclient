@@ -678,11 +678,12 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                df = df.copy()
                 if desired_resolution is None:
                     desired_resolution = self.desired_resolution
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-                        df = df.copy()
+                        
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1199,8 +1200,9 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                df = df.copy()
                 if desired_resolution is not None:
-                    df = df.copy()
+                    
                     if len(desired_resolution) != 3:
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
@@ -1430,9 +1432,10 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-                        df = df.copy()
+                        
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1820,9 +1823,10 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
+                df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-                        df = df.copy()
+                        
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
