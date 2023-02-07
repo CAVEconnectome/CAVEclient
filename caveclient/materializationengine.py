@@ -540,8 +540,10 @@ class MaterializatonClientV2(ClientBase):
             target_table = None
         if target_table is not None:
             tables = [[table, "target_id"], [md["reference_table"], "id"]]
-
-            suffix_map = {table: "", md["reference_table"]: "_ref"}
+            if (self._api_version==2):
+                suffix_map = ["", "_ref"]
+            elif self._api_version>2:
+                suffix_map = {table: "", md["reference_table"]: "_ref"}
         else:
             tables = [table]
 
