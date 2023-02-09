@@ -47,6 +47,7 @@ def InfoServiceClient(
         infoservice_common,
         infoservice_api_versions,
         auth_header,
+        verify=verify
     )
 
     InfoClient = client_mapping[api_version]

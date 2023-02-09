@@ -129,6 +129,7 @@ def ChunkedGraphClient(
         chunkedgraph_endpoints_common,
         chunkedgraph_api_versions,
         auth_header,
+        verify=verify
     )
 
     ChunkedClient = client_mapping[api_version]
