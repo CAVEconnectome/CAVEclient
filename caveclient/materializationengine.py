@@ -337,7 +337,7 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping["version"] = version
 
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
-  
+
         response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
@@ -617,6 +617,8 @@ class MaterializatonClientV2(ClientBase):
         pd.DataFrame: a pandas dataframe of results of query
 
         """
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
         if timestamp is not None:
             if materialization_version is not None:
                 raise ValueError("cannot specify timestamp and materialization version")
@@ -679,11 +681,9 @@ class MaterializatonClientV2(ClientBase):
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = pa.deserialize(response.content)
                 df = df.copy()
-                if desired_resolution is None:
-                    desired_resolution = self.desired_resolution
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-                        
+
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1147,7 +1147,8 @@ it will likely get removed in future versions. "
         return_df = True
         if datastack_name is None:
             datastack_name = self.datastack_name
-
+        if desired_resolution is None:
+            desired_resolution = self.default_resolution
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         data = {}
@@ -1202,7 +1203,7 @@ it will likely get removed in future versions. "
                 df = pa.deserialize(response.content)
                 df = df.copy()
                 if desired_resolution is not None:
-                    
+
                     if len(desired_resolution) != 3:
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
@@ -1317,7 +1318,8 @@ it will likely get removed in future versions. "
 
         if datastack_name is None:
             datastack_name = self.datastack_name
-
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
         with TimeIt("find_mat_version"):
             # we want to find the most recent materialization
             # in which the timestamp given is in the future
@@ -1435,7 +1437,7 @@ it will likely get removed in future versions. "
                 df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-                        
+
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1826,7 +1828,7 @@ it will likely get removed in future versions. "
                 df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-                        
+
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
