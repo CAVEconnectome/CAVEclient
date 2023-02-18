@@ -465,6 +465,7 @@ class MaterializatonClientV2(ClientBase):
         offset,
         limit,
         desired_resolution,
+        use_view=False,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -474,8 +475,12 @@ class MaterializatonClientV2(ClientBase):
         query_args["return_pyarrow"] = return_pyarrow
         query_args["split_positions"] = split_positions
         if len(tables) == 1:
-            endpoint_mapping["table_name"] = tables[0]
-            url = self._endpoints["simple_query"].format_map(endpoint_mapping)
+            if use_view:
+                endpoint_mapping["view_name"] = tables[0]
+                url = self._endpoints["view_query"].format_map(endpoint_mapping)
+            else:
+                endpoint_mapping["table_name"] = tables[0]
+                url = self._endpoints["simple_query"].format_map(endpoint_mapping)
         else:
             data["tables"] = tables
             url = self._endpoints["join_query"].format_map(endpoint_mapping)
@@ -1627,7 +1632,7 @@ it will likely get removed in future versions. "
             return df
 
     def _assemble_attributes(
-        self, tables, suffixes=None, desired_resolution=None, **kwargs
+        self, tables, suffixes=None, desired_resolution=None, is_view=False, **kwargs
     ):
         if isinstance(tables, str):
             tables = [tables]
@@ -1642,7 +1647,10 @@ it will likely get removed in future versions. "
         }
         if not join_query:
             attrs["join_query"] = False
-            meta = self.get_table_metadata(tables[0], log_warning=False)
+            if is_view:
+                meta = self.get_table_metadata(tables[0], log_warning=False)
+            else:
+                meta = self.get_view_metadata(tables[0], log_warning=False)
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
@@ -1871,6 +1879,173 @@ it will likely get removed in future versions. "
                     + " Metadata could not be loaded, try with metadata=False if not needed"
                 )
         return df
+
+    def get_views(self, version: int = None, datastack_name: str = None):
+        """get all available views for a version
+
+        Args:
+            version (int, optional): version to query.
+                                     Defaults to None. (will version set by client)
+            datastack_name (str, optional): datastack to query. Defaults to None.
+                                            (will use datastack set by client)
+
+        Returns:
+            list[str]: a list of views
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if version is None:
+            version = self.version
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = version 
+        url = self._endpoints["get_views"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response)
+        return response.json()
+
+    def get_view_metadata(self, view_name: str, log_warning: bool = True):
+        """get metadata for a view"""
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["view_name"] = view_name
+        url = self._endpoints["get_view_metadata"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response, log_warning=log_warning)
+        return response.json()
+
+    def query_view(
+        self,
+        view_name: str,
+        filter_in_dict=None,
+        filter_out_dict=None,
+        filter_equal_dict=None,
+        filter_spatial_dict=None,
+        select_columns=None,
+        offset: int = None,
+        limit: int = None,
+        datastack_name: str = None,
+        return_df: bool = True,
+        split_positions: bool = False,
+        materialization_version: int = None,
+        metadata: bool = True,
+        merge_reference: bool = True,
+        desired_resolution: Iterable = None,
+        get_counts: bool = False,
+    ):
+        """generic query on a view
+
+            Args:
+            table: 'str'
+
+            filter_in_dict (dict , optional):
+                keys are column names, values are allowed entries.
+                Defaults to None.
+            filter_out_dict (dict, optional):
+                keys are column names, values are not allowed entries.
+                Defaults to None.
+            filter_equal_dict (dict, optional):
+                inner layer: keys are column names, values are specified entry.
+                Defaults to None.
+            filter_spatial (dict, optional):
+                inner layer: keys are column names, values are bounding boxes
+                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
+                             Expressed in units of the voxel_resolution of this dataset.
+            offset (int, optional): offset in query result
+            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
+            select_columns (list of str, optional): columns to select. Defaults to None.
+            suffixes: (list[str], optional): suffixes to use on duplicate columns
+            offset (int, optional): result offset to use. Defaults to None.
+                will only return top K results.
+            datastack_name (str, optional): datastack to query.
+                If None defaults to one specified in client.
+            return_df (bool, optional): whether to return as a dataframe
+                default True, if False, data is returned as json (slower)
+            split_positions (bool, optional): whether to break position columns into x,y,z columns
+                default False, if False data is returned as one column with [x,y,z] array (slower)
+            materialization_version (int, optional): version to query.
+                If None defaults to one specified in client.
+            metadata: (bool, optional) : toggle to return metadata (default True)
+                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+            merge_reference: (bool, optional) : toggle to automatically join reference table
+                If True, metadata will be queries and if its a reference table it will perform a join
+                on the reference table to return the rows of that
+            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
+                If None, defaults to one specified in client, if that is None then points are returned
+                as stored in the table and should be in the resolution specified in the table metadata
+        Returns:
+        pd.DataFrame: a pandas dataframe of results of query
+        """
+
+        if desired_resolution is None:
+            desired_resolution = self.desired_resolution
+        if materialization_version is None:
+            materialization_version = self.version
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        url, data, query_args, encoding = self._format_query_components(
+            datastack_name,
+            materialization_version,
+            [view_name],
+            select_columns,
+            None,
+            {view_name: filter_in_dict} if filter_in_dict is not None else None,
+            {view_name: filter_out_dict} if filter_out_dict is not None else None,
+            {view_name: filter_equal_dict} if filter_equal_dict is not None else None,
+            {view_name: filter_spatial_dict}
+            if filter_spatial_dict is not None
+            else None,
+            return_df,
+            True,
+            offset,
+            limit,
+            desired_resolution,
+            use_view=True,
+        )
+        if get_counts:
+            query_args["count"] = True
+        response = self.session.post(
+            url,
+            data=json.dumps(data, cls=BaseEncoder),
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
+            params=query_args,
+            stream=~return_df,
+        )
+        self.raise_for_status(response)
+        if return_df:
+            with warnings.catch_warnings():
+                warnings.simplefilter(action="ignore", category=FutureWarning)
+                warnings.simplefilter(action="ignore", category=DeprecationWarning)
+                df = pa.deserialize(response.content)
+                df = df.copy()
+
+            if metadata:
+                attrs = self._assemble_attributes(
+                    [view_name],
+                    filters={
+                        "inclusive": filter_in_dict,
+                        "exclusive": filter_out_dict,
+                        "equal": filter_equal_dict,
+                        "spatial": filter_spatial_dict,
+                    },
+                    select_columns=select_columns,
+                    offset=offset,
+                    limit=limit,
+                    live_query=False,
+                    timestamp=None,
+                    materialization_version=materialization_version,
+                    desired_resolution=response.headers.get(
+                        "dataframe_resolution", desired_resolution
+                    ),
+                    column_names=response.headers.get("column_names", None),
+                )
+                df.attrs.update(attrs)
+            if split_positions:
+                return df
+            else:
+                return concatenate_position_columns(df, inplace=True)
+        else:
+            return response.json()
 
 
 client_mapping = {
