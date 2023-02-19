@@ -1648,9 +1648,9 @@ it will likely get removed in future versions. "
         if not join_query:
             attrs["join_query"] = False
             if is_view:
-                meta = self.get_table_metadata(tables[0], log_warning=False)
-            else:
                 meta = self.get_view_metadata(tables[0], log_warning=False)
+            else:
+                meta = self.get_table_metadata(tables[0], log_warning=False)
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
