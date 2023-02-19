@@ -129,7 +129,7 @@ def ChunkedGraphClient(
         chunkedgraph_endpoints_common,
         chunkedgraph_api_versions,
         auth_header,
-        verify=verify
+        verify=verify,
     )
 
     ChunkedClient = client_mapping[api_version]
@@ -986,6 +986,19 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["delta_roots"].format_map(endpoint_mapping)
         r = handle_response(self.session.get(url, params=params))
         return np.array(r["old_roots"]), np.array(r["new_roots"])
+
+    def get_oldest_timestamp(self):
+        """Get the oldest timestamp in the database
+
+        Returns
+        -------
+        datetime.datetime
+            Oldest timestamp in the database
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["oldest_timestamp"].format_map(endpoint_mapping)
+        response = handle_response(self.session.get(url))
+        return datetime.datetime.fromisoformat(response["iso"])
 
     @property
     def cloudvolume_path(self):
