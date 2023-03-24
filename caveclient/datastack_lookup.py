@@ -1,6 +1,8 @@
 import os
 import json
 from . import auth
+import logging
+logger = logging.getLogger(__name__)
 
 DEFAULT_LOCATION = auth.default_token_location
 DEFAULT_DATASTACK_FILE = 'cave_datastack_to_server_map.json'
@@ -29,7 +31,7 @@ def handle_server_address(datastack, server_address, filename=None, write=False)
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
             write_map(data, filename)
-            print(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datatsack '{datastack}'")
+            logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datatsack '{datastack}'")
         return server_address
     else:
         return data.get(datastack)
@@ -52,6 +54,6 @@ def reset_server_address_cache(datastack, filename=None):
         datastack = [datastack]
     for ds in datastack:
         data.pop(ds, None)
-        print(f'Wiping {ds} from datastack-to-server cache')
+        logger.warning(f"Wiping '{ds}' from datastack-to-server cache")
     write_map(data, filename)
     
