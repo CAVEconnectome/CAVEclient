@@ -7,6 +7,7 @@ from .jsonservice import JSONService
 from .materializationengine import MaterializationClient
 from .l2cache import L2CacheClient
 from .endpoints import default_global_server_address
+from .datastack_lookup import handle_server_address
 
 DEFAULT_RETRIES = 3
 
@@ -29,6 +30,7 @@ class CAVEclient(object):
         pool_block=None,
         desired_resolution=None,
         info_cache=None,
+        write_server_cache=True,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -77,7 +79,13 @@ class CAVEclient(object):
             useful for materialization queries.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
+        write_server_cache: bool, optional
+            If True, write the map between datastack and server address to a local cache file that is used to look up server addresses if not provided. Optional, defaults to True.
         """
+        server_address = handle_server_address(datastack_name, server_address, overwrite=write_server_cache)
+        if server_address is None:
+            raise ValueError('server_address must be provided or datastack_name must be provided with a valid server address in the server address cache')
+
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
                 server_address=server_address,
