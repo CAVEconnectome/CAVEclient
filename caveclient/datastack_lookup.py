@@ -31,7 +31,7 @@ def handle_server_address(datastack, server_address, filename=None, write=False)
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
             write_map(data, filename)
-            logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datatsack '{datastack}'")
+            logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'")
         return server_address
     else:
         return data.get(datastack)
