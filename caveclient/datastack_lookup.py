@@ -18,8 +18,8 @@ def read_map(filename = None):
 def write_map(data, filename = None):
     if filename is None:
         filename = os.path.join(DEFAULT_LOCATION, DEFAULT_DATASTACK_FILE)
-    if not os.path.exists(DEFAULT_LOCATION):
-        os.makedirs( os.path.expanduser(DEFAULT_LOCATION)) 
+    if not os.path.exists(os.path.expanduser(DEFAULT_LOCATION)):
+        os.makedirs(os.path.expanduser(DEFAULT_LOCATION)) 
     with open(os.path.expanduser(filename), 'w') as f:
         json.dump(data, f)
     print("Updated stored datastack server map")
