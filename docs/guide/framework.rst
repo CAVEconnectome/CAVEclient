@@ -56,7 +56,22 @@ This gives you access to the full range of client functions.
 .. code:: python
 
     client = CAVEclient(datastack_name='my_datastack')
-    
+
+Using Other Server Addresses
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If your data is hosted by a different global server, you specify its address when initializing the client.
+
+.. code:: python
+
+    client = CAVEclient(datastack_name='my_datastack', server_address='http://global.myserver.com')
+
+By default, if you pass both a server address and a datastack, the client will store the mapping from datastack to server address
+in the same location as the default for authentication tokens.
+Once stored, the client will automatically use the correct server address for the datastack if none is provided.
+You can override storing the server address by passing ``write_server_address=False``.
+Datastacks can be removed from the cache using `caveclient.datastack_lookup.reset_server_address_cache(datastack_name)`.
+
 
 Accessing specific clients
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
