@@ -83,8 +83,6 @@ class CAVEclient(object):
             If True, write the map between datastack and server address to a local cache file that is used to look up server addresses if not provided. Optional, defaults to True.
         """
         server_address = handle_server_address(datastack_name, server_address, overwrite=write_server_cache)
-        if server_address is None:
-            raise ValueError('server_address must be provided or datastack_name must be provided with a valid server address in the server address cache')
 
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
