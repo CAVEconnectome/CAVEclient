@@ -22,16 +22,22 @@ def write_map(data, filename = None):
         filename = os.path.join(DEFAULT_LOCATION, DEFAULT_DATASTACK_FILE)
     if not os.path.exists(os.path.expanduser(DEFAULT_LOCATION)):
         os.makedirs(os.path.expanduser(DEFAULT_LOCATION)) 
+    if os.path.exists(os.path.expanduser(filename)):
+        if not os.access(os.path.expanduser(filename), os.W_OK):
+            logging.warn(f'Did not write cache — file {os.path.expanduser(filename)} is not writeable')
+            return False
     with open(os.path.expanduser(filename), 'w') as f:
         json.dump(data, f)
+    return True
 
 def handle_server_address(datastack, server_address, filename=None, write=False):
     data = read_map(filename)
     if server_address is not None:
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
-            write_map(data, filename)
-            logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'")
+            wrote = write_map(data, filename)
+            if wrote:
+                logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'")
         return server_address
     else:
         return data.get(datastack)
