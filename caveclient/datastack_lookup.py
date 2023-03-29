@@ -17,21 +17,43 @@ def read_map(filename = None):
     except:
         return {}
 
+def is_writable(filename):
+    # File exists but is not writeable
+    if os.path.exists(os.path.expanduser(filename)):
+        if not os.access(os.path.expanduser(filename), os.W_OK):
+            return False
+    else: 
+        try:
+            # File does not exist so make the directories if possible
+            if not os.path.exists(os.path.expanduser(DEFAULT_LOCATION)):
+                os.makedirs(os.path.expanduser(DEFAULT_LOCATION)) 
+            with open(os.path.expanduser(filename), 'w') as f:
+                if not f.writable():
+                    return False
+        except IOError:
+            return False
+    return True
+
 def write_map(data, filename = None):
     if filename is None:
         filename = os.path.join(DEFAULT_LOCATION, DEFAULT_DATASTACK_FILE)
-    if not os.path.exists(os.path.expanduser(DEFAULT_LOCATION)):
-        os.makedirs(os.path.expanduser(DEFAULT_LOCATION)) 
-    with open(os.path.expanduser(filename), 'w') as f:
-        json.dump(data, f)
+
+    if is_writable(filename): 
+        with open(os.path.expanduser(filename), 'w') as f:
+            json.dump(data, f)
+        return True
+    else:
+        logging.warn(f'Did not write cache — file {os.path.expanduser(filename)} is not writeable')
+        return False
 
 def handle_server_address(datastack, server_address, filename=None, write=False):
     data = read_map(filename)
     if server_address is not None:
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
-            write_map(data, filename)
-            logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'")
+            wrote = write_map(data, filename)
+            if wrote:
+                logger.warning(f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'")
         return server_address
     else:
         return data.get(datastack)
