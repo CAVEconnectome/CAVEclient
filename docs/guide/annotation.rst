@@ -37,7 +37,7 @@ annotation looks like.
 
     table_name = all_tables[0]['table_name']      # 'ais_analysis_soma'
     annotation_id = 100
-    client.annotation.get_annotation(annotation_id=annotation_id, table_name=table_name)
+    client.annotation.get_annotation(annotation_ids=annotation_id, table_name=table_name)
 
 Create a new table
 ^^^^^^^^^^^^^^^^^^
