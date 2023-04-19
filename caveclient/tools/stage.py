@@ -54,6 +54,8 @@ class StagedAnnotations(object):
                 "No table resolution set. Coordinates cannot be scaled automatically."
             )
 
+        self._uploaded = False
+
         if name is None:
             self.name = self._ref_class
         else:
@@ -169,7 +171,10 @@ class StagedAnnotations(object):
         )
 
     def clear_annotations(self):
+        """Reset the annotation stage to an empty state and reset the uploaded status to False.
+        """
         self._anno_list = []
+        self.reset_uploaded_status()
 
     def _process_annotation(self, anno, flat=False):
         dflat = attrs.asdict(anno, filter=lambda a, v: v is not None)
@@ -186,6 +191,8 @@ class StagedAnnotations(object):
                 jsonschema.validate(d, self._schema)
                 if not isinstance(d.get("id"), int) and self._id_field:
                     raise jsonschema.ValidationError('"id" field must be an integer.')
+                if self._uploaded:
+                    Warning('Adding annotations to an already uploaded annotation stage.')
                 self._anno_list.append(inner_self)
 
         return AddAndValidate
@@ -242,3 +249,8 @@ class StagedAnnotations(object):
             else:
                 dout[k] = v
         return dout
+
+    def reset_uploaded_status(self):
+        """ Reset the uploaded status of the annotation stage.
+        """
+        self._uploaded = False

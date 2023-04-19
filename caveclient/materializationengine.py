@@ -1610,7 +1610,10 @@ it will likely get removed in future versions. "
         }
         if not join_query:
             attrs["join_query"] = False
-            meta = self.get_table_metadata(tables[0], log_warning=False)
+            try:
+                meta = self.get_table_metadata(tables[0], log_warning=False)
+            except:
+                meta = self.fc.annotation.get_table_metadata(tables[0])
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
@@ -1628,7 +1631,10 @@ it will likely get removed in future versions. "
                 suffixes = ["_x", "_y"]
             for (tname, jcol), s in zip(tables, suffixes):
                 table_attrs[tname] = {}
-                meta = self.get_table_metadata(tname, log_warning=False)
+                try:
+                    meta = self.get_table_metadata(tname, log_warning=False)
+                except:
+                    meta = self.fc.annotation.get_table_metadata(tables[0])
                 for k, v in meta.items():
                     if re.match("^table", k):
                         table_attrs[tname][k] = v
