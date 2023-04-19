@@ -1632,9 +1632,9 @@ it will likely get removed in future versions. "
             for (tname, jcol), s in zip(tables, suffixes):
                 table_attrs[tname] = {}
                 try:
-                    meta = self.get_table_metadata(tables[0], log_warning=False)
+                    meta = self.get_table_metadata(tname, log_warning=False)
                 except:
-                    meta = self.fc.annotation.get_table_metadata(tables[0])
+                    meta = self.fc.annotation.get_table_metadata(tname)
                 for k, v in meta.items():
                     if re.match("^table", k):
                         table_attrs[tname][k] = v
