@@ -5,7 +5,6 @@ from .endpoints import (
 )
 from .auth import AuthClient
 import json
-import warnings
 
 server_key = "l2cache_server_address"
 
@@ -72,7 +71,6 @@ class L2CacheClientLegacy(ClientBase):
             pool_block=pool_block,
             over_client=over_client,
         )
-        warnings.warn("L2Cache is in an experimental stage", UserWarning)
         self._default_url_mapping["table_id"] = table_name
         self._available_attributes = None
 

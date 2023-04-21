@@ -33,7 +33,6 @@ def format_graphene(objurl):
         objurl_out = None
     return objurl_out
 
-
 def format_cloudvolume(objurl):
     qry = urlparse(objurl)
     if qry.scheme == "graphene":

@@ -38,5 +38,5 @@ def myclient():
 
     responses.add(responses.GET, url, json=test_info, status=200)
 
-    client = CAVEclient(TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER)
+    client = CAVEclient(TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False)
     return client

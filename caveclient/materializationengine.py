@@ -1497,38 +1497,6 @@ it will likely get removed in future versions. "
 
         return df
 
-    def lookup_supervoxel_ids(
-        self,
-        table_name: str,
-        annotation_ids: list = None,
-        datastack_name: str = None,
-    ):
-        """Trigger supervoxel lookups of new annotations in a table.
-
-
-        Args:
-            table_name (str): table to drigger
-            annotation_ids: (list, optional): list of annotation ids to lookup. Default is None,
-                                              which will trigger lookup of entire table.
-            datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
-
-        Returns:
-            response: status code of response from server
-        """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-
-        if annotation_ids is not None:
-            data = {"ids": annotation_ids}
-        else:
-            data = None
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["table_name"] = table_name
-        url = self._endpoints["lookup_supervoxel_ids"].format_map(endpoint_mapping)
-        response = self.session.post(url, data=data)
-        return handle_response(response)
-
     def synapse_query(
         self,
         pre_ids: Union[int, Iterable, np.ndarray] = None,
@@ -1647,10 +1615,15 @@ it will likely get removed in future versions. "
         }
         if not join_query:
             attrs["join_query"] = False
+
             if is_view:
                 meta = self.get_view_metadata(tables[0], log_warning=False)
             else:
-                meta = self.get_table_metadata(tables[0], log_warning=False)
+                try:
+                    meta = self.get_table_metadata(tables[0], log_warning=False)
+                except:
+                    meta = self.fc.annotation.get_table_metadata(tables[0])
+
             for k, v in meta.items():
                 if re.match("^table", k):
                     attrs[k] = v
@@ -1668,7 +1641,10 @@ it will likely get removed in future versions. "
                 suffixes = ["_x", "_y"]
             for (tname, jcol), s in zip(tables, suffixes):
                 table_attrs[tname] = {}
-                meta = self.get_table_metadata(tname, log_warning=False)
+                try:
+                    meta = self.get_table_metadata(tname, log_warning=False)
+                except:
+                    meta = self.fc.annotation.get_table_metadata(tname)
                 for k, v in meta.items():
                     if re.match("^table", k):
                         table_attrs[tname][k] = v

@@ -166,6 +166,7 @@ chunkedgraph_endpoints_v1 = {
     "valid_nodes": pcg_v1 + "/table/{table_id}/valid_nodes",
     "execute_split": pcg_v1 + "/table/{table_id}/split",
     "undo": pcg_v1 + "/table/{table_id}/undo",
+    "oldest_timestamp": pcg_v1 + "/table/{table_id}/oldest_timestamp",
 }
 
 chunkedgraph_api_versions = {
