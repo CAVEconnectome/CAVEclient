@@ -64,8 +64,10 @@ materialization_endpoints_v3 = {
     "versions": mat_v2_api + "/datastack/{datastack_name}/versions",
     "version_metadata": mat_v2_api + "/datastack/{datastack_name}/version/{version}",
     "tables": mat_v2_api + "/datastack/{datastack_name}/version/{version}/tables",
-    "metadata": mat_v2_api
+    "metadata": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
+    "all_tables_metadata": mat_v3_api
+    + "/datastack/{datastack_name}/version/{version}/tables/metadata",
     "versions_metadata": mat_v2_api + "/datastack/{datastack_name}/metadata",
     "ingest_annotation_table": mat_v2_api
     + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
