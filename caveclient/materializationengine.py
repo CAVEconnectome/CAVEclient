@@ -1998,6 +1998,7 @@ it will likely get removed in future versions. "
             if metadata:
                 attrs = self._assemble_attributes(
                     [view_name],
+                    is_view=True,
                     filters={
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
