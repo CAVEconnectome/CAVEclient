@@ -10,10 +10,8 @@ ALLOW_COLUMN_TYPES = ["integer", "boolean", "string", "float"]
 def bound_pt_position(pt):
     return f"{pt}_position"
 
-
 def bound_pt_root_id(pt):
     return f"{pt}_root_id"
-
 
 def add_with_suffix(namesA, namesB, suffix):
     all_names = []
@@ -40,6 +38,13 @@ def combine_names(tableA, namesA, tableB, namesB, suffixes):
 
     return final_namesA + final_namesB, table_map, rename_map
 
+def get_all_metadata(client):
+    tables = client.materialize.get_tables()
+    meta = client.materialize.get_tables_metadata()
+    return {
+        tn: md
+        for tn, md in zip(tables, meta)
+    }
 
 def is_list_like(x):
     if isinstance(x, str):
@@ -56,6 +61,20 @@ def update_spatial_dict(spatial_dict):
         nm = re.match('(.*)_bbox$', k).groups()[0]
         new_dict[nm] = spatial_dict[k]
     return new_dict
+
+def filter_empty(filter_dict):
+    new_dict = {}
+    for k, v in filter_dict.items():
+        if is_list_like(v) and len(v) == 0:
+            continue
+        new_dict[k] = v
+    return new_dict
+
+def replace_empty_with_none(filter_dict):
+    if len(filter_dict) == 0:
+        return None
+    else:
+        return filter_dict
 
 _schema_cache = TTLCache(maxsize=128, ttl=86_400)
 
@@ -101,8 +120,7 @@ def get_col_info(
 
 _table_cache = TTLCache(maxsize=128, ttl=86_400)
 
-
-def _table_key(table_name, client, **kwargs):
+def _table_key(table_name, meta, client, **kwargs):
     merge_schema = kwargs.get("merge_schema", True)
     allow_types = kwargs.get("allow_types", ALLOW_COLUMN_TYPES)
     key = keys.hashkey(table_name, merge_schema, str(allow_types))
@@ -111,7 +129,7 @@ def _table_key(table_name, client, **kwargs):
 
 @cached(cache=_table_cache, key=_table_key)
 def get_table_info(
-    tn, client, allow_types=ALLOW_COLUMN_TYPES, merge_schema=True, suffixes=["", "_ref"]
+    tn, meta, client, allow_types=ALLOW_COLUMN_TYPES, merge_schema=True, suffixes=["", "_ref"]
 ):
     """Get the point column and additional columns from a table
 
@@ -133,7 +151,6 @@ def get_table_info(
     column_map
         Dict mapping columns to table names
     """
-    meta = table_metadata(tn, client)
     ref_table = meta.get("reference_table")
     if ref_table is None or merge_schema is False:
         schema = meta["schema"]
@@ -245,20 +262,20 @@ def make_kwargs_mixin(client):
                 ]
             )
             if len(tables) == 1:
-                filter_equal_dict = attrs.asdict(
+                filter_equal_dict = filter_empty(attrs.asdict(
                     self,
                     filter=lambda a, v: is_list_like(v) == False
                     and v is not None
                     and a.metadata.get("is_bbox", False) == False
                     and a.metadata.get("is_meta", False) == False,
-                )
-                filter_in_dict = attrs.asdict(
+                ))
+                filter_in_dict = filter_empty(attrs.asdict(
                     self,
                     filter=lambda a, v: is_list_like(v) == True
                     and v is not None
                     and a.metadata.get("is_bbox", False) == False
                     and a.metadata.get("is_meta", False) == False,
-                )
+                ))
                 spatial_dict = update_spatial_dict(
                     attrs.asdict(
                         self,
@@ -269,25 +286,25 @@ def make_kwargs_mixin(client):
                 )
             else:
                 filter_equal_dict = {
-                    tn: attrs.asdict(
+                    tn: filter_empty(attrs.asdict(
                         self,
                         filter=lambda a, v: is_list_like(v) == False
                         and v is not None
                         and a.metadata.get("is_bbox", False) == False
                         and a.metadata.get("is_meta", False) == False
                         and a.metadata.get("table") == tn,
-                    )
+                    ))
                     for tn in tables
                 }
                 filter_in_dict = {
-                    tn: attrs.asdict(
+                    tn: filter_empty(attrs.asdict(
                         self,
                         filter=lambda a, v: is_list_like(v) == True
                         and v is not None
                         and a.metadata.get("is_bbox", False) == False
                         and a.metadata.get("is_meta", False) == False
                         and a.metadata.get("table") == tn,
-                    )
+                    ))
                     for tn in tables
                 }
                 spatial_dict = {
@@ -304,19 +321,14 @@ def make_kwargs_mixin(client):
                 }
 
             self.filter_kwargs = {
-                "filter_equal_dict": {
-                    k: v for k, v in filter_equal_dict.items() if v is not None
-                },
-                "filter_in_dict": {
-                    k: v for k, v in filter_in_dict.items() if len(v) > 0
-                },
-                "filter_spatial_dict": {
-                    k: v for k, v in spatial_dict.items() if len(v) > 0
-                },
+                "filter_equal_dict": replace_empty_with_none(filter_empty(filter_equal_dict)),
+                "filter_in_dict": replace_empty_with_none(filter_empty(filter_in_dict)),
+                "filter_spatial_dict": replace_empty_with_none(filter_empty(spatial_dict)),
             }
+            
             keys_to_pop = []
             for k in self.filter_kwargs.keys():
-                if len(self.filter_kwargs[k]) == 0:
+                if self.filter_kwargs[k] is None:
                     keys_to_pop.append(k)
             for k in keys_to_pop:
                 self.filter_kwargs.pop(k)
@@ -419,9 +431,9 @@ def make_kwargs_mixin(client):
     return MakeQueryKwargs
 
 
-def make_query_filter(table_name, client):
+def make_query_filter(table_name, meta, client):
     pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc = get_table_info(
-        table_name, client
+        table_name, meta, client
     )
     class_vals = make_class_vals(
         pts, val_cols, all_unbd_pts, table_map, rename_map, table_list
@@ -436,9 +448,10 @@ def make_query_filter(table_name, client):
 class TableManager(object):
     def __init__(self, client):
         self._client = client
-        self._tables = sorted(client.materialize.get_tables())
+        self._table_metadata = get_all_metadata(self._client)
+        self._tables = sorted(list(self._table_metadata.keys()))
         for tn in self._tables:
-            setattr(self, tn, make_query_filter(tn, client)) 
+            setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client)) 
 
     def __getitem__(self, key):
         return getattr(self, key)
