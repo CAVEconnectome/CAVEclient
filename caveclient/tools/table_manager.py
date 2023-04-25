@@ -446,6 +446,8 @@ def make_query_filter(table_name, meta, client):
 
 
 class TableManager(object):
+    """Use schema definitions to generate query filters for each table.
+    """
     def __init__(self, client):
         self._client = client
         self._table_metadata = get_all_metadata(self._client)
