@@ -1153,7 +1153,7 @@ it will likely get removed in future versions. "
         if datastack_name is None:
             datastack_name = self.datastack_name
         if desired_resolution is None:
-            desired_resolution = self.default_resolution
+            desired_resolution = self.desired_resolution
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         data = {}
@@ -1874,7 +1874,7 @@ it will likely get removed in future versions. "
             version = self.version
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["version"] = version 
+        endpoint_mapping["version"] = version
         url = self._endpoints["get_views"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
