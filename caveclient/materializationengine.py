@@ -1993,7 +1993,7 @@ it will likely get removed in future versions. "
         self.raise_for_status(response)
         return response.json()
 
-    def get_cell_id(self, root_ids, id_table=None, point_column='pt', mixed_timestamps=False, timestamp=None, materialization_version=None):
+    def get_cell_ids(self, root_ids, id_table=None, point_column='pt', mixed_timestamps=False, timestamp=None, materialization_version=None):
         """Look up cell ids from root ids based on a table of cells ids, usually a nucleus table, if cell ids exist.
         The best performance comes from using root ids at a single materialization version or timestamp, but a mixed collection of root ids from unknown times can also be used.
 
