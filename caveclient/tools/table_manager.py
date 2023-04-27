@@ -25,6 +25,14 @@ def add_with_suffix(namesA, namesB, suffix):
             all_names.append(name)
     return all_names, rename_map
 
+def pop_empty(filter_dict):
+    keys_to_pop = []
+    for k in filter_dict.keys():
+        if filter_dict[k] is None:
+            keys_to_pop.append(k)
+    for k in keys_to_pop:
+        filter_dict.pop(k)
+    return filter_dict
 
 def combine_names(tableA, namesA, tableB, namesB, suffixes):
     table_map = {}
@@ -261,77 +269,56 @@ def make_kwargs_mixin(client):
                     if x.metadata.get("table")
                 ]
             )
-            if len(tables) == 1:
-                filter_equal_dict = filter_empty(attrs.asdict(
+            filter_equal_dict = {
+                tn: filter_empty(attrs.asdict(
                     self,
                     filter=lambda a, v: is_list_like(v) == False
                     and v is not None
                     and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False,
+                    and a.metadata.get("is_meta", False) == False
+                    and a.metadata.get("table") == tn,
                 ))
-                filter_in_dict = filter_empty(attrs.asdict(
+                for tn in tables
+            }
+            filter_in_dict = {
+                tn: filter_empty(attrs.asdict(
                     self,
                     filter=lambda a, v: is_list_like(v) == True
                     and v is not None
                     and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False,
+                    and a.metadata.get("is_meta", False) == False
+                    and a.metadata.get("table") == tn,
                 ))
-                spatial_dict = update_spatial_dict(
-                    attrs.asdict(
-                        self,
-                        filter=lambda a, v: a.metadata.get("is_bbox", False)
-                        and a.metadata.get("is_meta", False) == False
-                        and v is not None,
+                for tn in tables
+            }
+            spatial_dict = {
+                tn: update_spatial_dict(
+                        attrs.asdict(
+                            self,
+                            filter=lambda a, v: a.metadata.get("is_bbox", False)
+                            and v is not None
+                            and a.metadata.get("is_meta", False) == False
+                            and a.metadata.get("table") == tn,
                     )
                 )
-            else:
-                filter_equal_dict = {
-                    tn: filter_empty(attrs.asdict(
-                        self,
-                        filter=lambda a, v: is_list_like(v) == False
-                        and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
-                        and a.metadata.get("table") == tn,
-                    ))
-                    for tn in tables
-                }
-                filter_in_dict = {
-                    tn: filter_empty(attrs.asdict(
-                        self,
-                        filter=lambda a, v: is_list_like(v) == True
-                        and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
-                        and a.metadata.get("table") == tn,
-                    ))
-                    for tn in tables
-                }
-                spatial_dict = {
-                    tn: update_spatial_dict(
-                            attrs.asdict(
-                                self,
-                                filter=lambda a, v: a.metadata.get("is_bbox", False)
-                                and v is not None
-                                and a.metadata.get("is_meta", False) == False
-                                and a.metadata.get("table") == tn,
-                        )
-                    )
-                    for tn in tables
-                }
+                for tn in tables
+            }
 
-            self.filter_kwargs = {
+            self.filter_kwargs_live = {
                 "filter_equal_dict": replace_empty_with_none(filter_empty(filter_equal_dict)),
                 "filter_in_dict": replace_empty_with_none(filter_empty(filter_in_dict)),
                 "filter_spatial_dict": replace_empty_with_none(filter_empty(spatial_dict)),
             }
+            if len(tables)==2:
+                self.filter_kwargs_mat = self.filter_kwargs_live
+            else:
+                self.filter_kwargs_mat = {
+                    k: replace_empty_with_none(self.filter_kwargs_live[k].get(list(tables)[0],[])) 
+                    for k in ["filter_equal_dict", "filter_in_dict", "filter_spatial_dict"] if self.filter_kwargs_live[k] is not None
+                }
             
-            keys_to_pop = []
-            for k in self.filter_kwargs.keys():
-                if self.filter_kwargs[k] is None:
-                    keys_to_pop.append(k)
-            for k in keys_to_pop:
-                self.filter_kwargs.pop(k)
+            pop_empty(self.filter_kwargs_live)
+            pop_empty(self.filter_kwargs_mat)
 
             if len(tables) == 1:
                 self.joins_kwargs = {"joins": None}
@@ -372,7 +359,7 @@ def make_kwargs_mixin(client):
                     timestamp=timestamp,
                     get_counts=get_counts,
                     metadata=metadata,
-                    **self.filter_kwargs,
+                    **self.filter_kwargs_mat,
                 )
             else:
                 qry_table = self._reference_table
@@ -386,7 +373,7 @@ def make_kwargs_mixin(client):
                     desired_resolution=desired_resolution,
                     suffixes={self._reference_table: "_ref", self._base_table: ""},
                     metadata=metadata,
-                    **self.filter_kwargs,
+                    **self.filter_kwargs_mat,
                 )
 
         def live_query(
@@ -410,7 +397,7 @@ def make_kwargs_mixin(client):
                     desired_resolution=desired_resolution,
                     allow_missing_lookups=allow_missing_lookups,
                     metadata=metadata,
-                    **self.filter_kwargs,
+                    **self.filter_kwargs_live,
                 )
             else:
                 qry_table = self._reference_table
@@ -424,7 +411,7 @@ def make_kwargs_mixin(client):
                     suffixes={self._reference_table: "_ref", self._base_table: ""},
                     allow_missing_lookups=allow_missing_lookups,
                     metadata=metadata,
-                    **self.filter_kwargs,
+                    **self.filter_kwargs_live,
                     **self.joins_kwargs,
                 )
 
