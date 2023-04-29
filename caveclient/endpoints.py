@@ -78,6 +78,10 @@ materialization_endpoints_v3 = {
     "get_view_metadata": mat_v3_api + "/datastack/{datastack_name}/views/{view_name}/metadata",
     "view_query": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/views/{view_name}/query",
+    "view_schema": mat_v3_api
+    + "/datastack/{datastack_name}/version/{version}/views/{view_name}/schema",
+    "view_schemas": mat_v3_api
+    + "/datastack/{datastack_name}/version/{version}/views/schemas",
 }
 
 materialization_api_versions = {
