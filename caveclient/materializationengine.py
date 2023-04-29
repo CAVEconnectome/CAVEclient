@@ -405,6 +405,7 @@ class MaterializatonClientV2(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
+    
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_table_metadata(
         self,
@@ -1672,6 +1673,47 @@ class MaterializatonClientV3(MaterializatonClientV2):
     def __init__(self, *args, **kwargs):
         super(MaterializatonClientV3, self).__init__(*args, **kwargs)
 
+    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
+    def get_tables_metadata(
+        self,
+        datastack_name=None,
+        version: int = None,
+        log_warning: bool = True,
+    ):
+        """Get metadata about a table
+
+        Args:
+            datastack_name: str or None, optional,
+                Name of the datastack_name.
+                If None, uses the one specified in the client.
+            version (int, optional):
+                version to get. If None, uses the one specified in the client.
+            log_warning (bool, optional):
+                whether to print out warnings to the logger.
+                Defaults to True.
+
+        Returns:
+            dict: metadata dictionary for table
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if version is None:
+            version = self.version
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = version
+
+        url = self._endpoints["all_tables_metadata"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        all_metadata = handle_response(response, log_warning=log_warning)
+        for metadata_d in all_metadata:
+            vx = metadata_d.pop("voxel_resolution_x", None)
+            vy = metadata_d.pop("voxel_resolution_y", None)
+            vz = metadata_d.pop("voxel_resolution_z", None)
+            metadata_d["voxel_resolution"] = [vx, vy, vz]
+        return all_metadata
+    
     def live_live_query(
         self,
         table: str,
