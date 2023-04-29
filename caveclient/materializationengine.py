@@ -1931,6 +1931,67 @@ it will likely get removed in future versions. "
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
+    def get_view_schema(
+        self,
+        view_name: str,
+        materialization_version: int = None,
+        datastack_name: str = None,
+        log_warning: bool = True,
+    ):
+        """get schema for a view
+
+        Args:
+            view_name (str): name of view to query
+            materialization_version (int, optional): version to query.
+                                        Defaults to None. (will version set by client)
+            log_warning (bool, optional): whether to log warnings. Defaults to True.
+        Returns:
+            dict: schema of view
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if materialization_version is None:
+            materialization_version = self.version
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["view_name"] = view_name
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = materialization_version
+
+        url = self._endpoints["view_schema"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response, log_warning=log_warning)
+        return response.json()
+
+    def get_view_schemas(
+        self,
+        materialization_version: int = None,
+        datastack_name: str = None,
+        log_warning: bool = True,
+    ):
+        """get schemas for all views
+
+        Args:
+            materialization_version (int, optional): version to query.
+                                        Defaults to None. (will version set by client)
+            log_warning (bool, optional): whether to log warnings. Defaults to True.
+        Returns:
+            dict: schemas of all views
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if materialization_version is None:
+            materialization_version = self.version
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["version"] = materialization_version
+
+        url = self._endpoints["view_schemas"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response, log_warning=log_warning)
+        return response.json()
+
     def query_view(
         self,
         view_name: str,
