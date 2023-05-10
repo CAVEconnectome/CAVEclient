@@ -433,7 +433,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
     def _make_cloudvolume(self, cloudpath, use_client_secret=True, **kwargs):
         try:
             import cloudvolume
-        except:
+        except ImportError:
             raise ImportError(
                 "Could not import cloudvolume. Make sure it is installed. See https://pypi.org/project/cloud-volume for more info."
             )
