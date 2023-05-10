@@ -770,7 +770,9 @@ class MaterializatonClientV2(ClientBase):
                               as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                               Expressed in units of the voxel_resolution of this dataset.
                  Defaults to None
-             select_columns (list of str, optional): columns to select. Defaults to None.
+             select_columns (dict of lists of str, optional): keys are table names,values are the list of columns from that table.
+               Defaults to None, which will select all tables.  Will be passed to server as select_column_maps.
+               Passing a list will be passed as select_columns which is deprecated.
              offset (int, optional): result offset to use. Defaults to None.
                  will only return top K results.
              limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
@@ -1618,13 +1620,15 @@ it will likely get removed in future versions. "
 
             if is_view:
                 meta = self.get_view_metadata(
-                    tables[0], log_warning=False, materialization_version=materialization_version
+                    tables[0],
+                    log_warning=False,
+                    materialization_version=materialization_version,
                 )
             else:
                 try:
-                    meta = self.get_table_metadata(tables[0], 
-                                                   log_warning=False,
-                                                   version=materialization_version)
+                    meta = self.get_table_metadata(
+                        tables[0], log_warning=False, version=materialization_version
+                    )
                 except HTTPError:
                     meta = self.fc.annotation.get_table_metadata(tables[0])
 
