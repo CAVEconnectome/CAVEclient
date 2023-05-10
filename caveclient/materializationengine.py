@@ -1398,7 +1398,7 @@ it will likely get removed in future versions. "
                 datastack_name,
                 materialization_version,
                 tables,
-                None,
+                select_columns,
                 suffix_map,
                 {table: past_filter_in_dict}
                 if past_filter_in_dict is not None
