@@ -5,6 +5,8 @@ from cachetools import cached, TTLCache, keys
 
 # json schema column types that can act as potential columns for looking at tables
 ALLOW_COLUMN_TYPES = ["integer", "boolean", "string", "float"]
+SPATIAL_POINT_TYPES = ['SpatialPoint']
+
 # Helper functions for turning schema field names ot column names
 
 def bound_pt_position(pt):
@@ -25,6 +27,14 @@ def add_with_suffix(namesA, namesB, suffix):
             all_names.append(name)
     return all_names, rename_map
 
+def pop_empty(filter_dict):
+    keys_to_pop = []
+    for k in filter_dict.keys():
+        if filter_dict[k] is None:
+            keys_to_pop.append(k)
+    for k in keys_to_pop:
+        filter_dict.pop(k)
+    return filter_dict
 
 def combine_names(tableA, namesA, tableB, namesB, suffixes):
     table_map = {}
@@ -38,13 +48,18 @@ def combine_names(tableA, namesA, tableB, namesB, suffixes):
 
     return final_namesA + final_namesB, table_map, rename_map
 
-def get_all_metadata(client):
+def get_all_table_metadata(client):
     tables = client.materialize.get_tables()
     meta = client.materialize.get_tables_metadata()
     return {
         tn: md
         for tn, md in zip(tables, meta)
     }
+
+def get_all_view_metadata(client):
+    views = client.materialize.get_views()
+    view_schema = client.materialize.get_view_schemas()
+    return views, view_schema
 
 def is_list_like(x):
     if isinstance(x, str):
@@ -126,6 +141,42 @@ def _table_key(table_name, meta, client, **kwargs):
     key = keys.hashkey(table_name, merge_schema, str(allow_types))
     return key
 
+
+def get_view_info(view_name, meta, schema, allow_types=ALLOW_COLUMN_TYPES, spatial_types=SPATIAL_POINT_TYPES):
+    """Assemble
+
+    Parameters
+    ----------
+    view_name : _type_
+        _description_
+    meta : _type_
+        _description_
+    schema : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    desc = meta.get("description", "")
+    is_live = meta.get("live_compatible", False)
+    pts = []
+    vals = [k for k,v in schema.items() if v['type'] in allow_types]
+    unbd_pts = [k for k,v in schema.items() if v['type'] in spatial_types]
+    column_map = {k: view_name for k in vals + unbd_pts}
+    rename_map = {}
+    return (
+        pts,
+        vals,
+        unbd_pts,
+        column_map,
+        rename_map,
+        [view_name, None],
+        desc,
+        is_live
+    )
+   
 
 @cached(cache=_table_cache, key=_table_key)
 def get_table_info(
@@ -212,7 +263,7 @@ def table_metadata(table_name, client):
     return meta
 
 
-def make_class_vals(pts, val_cols, unbd_pts, table_map, rename_map, table_list):
+def make_class_vals(pts, val_cols, unbd_pts, table_map, rename_map, table_list, raw_points=False):
     class_vals = {
         "_reference_table": attrs.field(
             init=False, default=table_list[1], metadata={"is_meta": True}
@@ -240,19 +291,25 @@ def make_class_vals(pts, val_cols, unbd_pts, table_map, rename_map, table_list):
         )
     for pt in pts + unbd_pts:
         pt_name_orig = rename_map.get(pt, pt)
-        class_vals[f"{bound_pt_position(pt)}_bbox"] = attrs.field(
+        if raw_points:
+            bbox_name_orig = pt_name_orig
+            bbox_name = pt
+        else:
+            bbox_name_orig = f"{bound_pt_position(pt_name_orig)}_bbox"
+            bbox_name = f"{bound_pt_position(pt)}_bbox"
+        class_vals[bbox_name] = attrs.field(
             default=None,
             metadata={
                 "is_bbox": True,
                 "table": table_map[pt],
-                "original_name": f"{bound_pt_position(pt_name_orig)}_bbox",
+                "original_name": bbox_name_orig,
             },
         )
     return class_vals
 
 
-def make_kwargs_mixin(client):
-    class MakeQueryKwargs(object):
+def make_kwargs_mixin(client, is_view=False, live_compatible=True):
+    class BaseQueryKwargs(object):
         def __attrs_post_init__(self):
             tables = set(
                 [
@@ -261,77 +318,56 @@ def make_kwargs_mixin(client):
                     if x.metadata.get("table")
                 ]
             )
-            if len(tables) == 1:
-                filter_equal_dict = filter_empty(attrs.asdict(
+            filter_equal_dict = {
+                tn: filter_empty(attrs.asdict(
                     self,
                     filter=lambda a, v: is_list_like(v) == False
                     and v is not None
                     and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False,
+                    and a.metadata.get("is_meta", False) == False
+                    and a.metadata.get("table") == tn,
                 ))
-                filter_in_dict = filter_empty(attrs.asdict(
+                for tn in tables
+            }
+            filter_in_dict = {
+                tn: filter_empty(attrs.asdict(
                     self,
                     filter=lambda a, v: is_list_like(v) == True
                     and v is not None
                     and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False,
+                    and a.metadata.get("is_meta", False) == False
+                    and a.metadata.get("table") == tn,
                 ))
-                spatial_dict = update_spatial_dict(
-                    attrs.asdict(
-                        self,
-                        filter=lambda a, v: a.metadata.get("is_bbox", False)
-                        and a.metadata.get("is_meta", False) == False
-                        and v is not None,
+                for tn in tables
+            }
+            spatial_dict = {
+                tn: update_spatial_dict(
+                        attrs.asdict(
+                            self,
+                            filter=lambda a, v: a.metadata.get("is_bbox", False)
+                            and v is not None
+                            and a.metadata.get("is_meta", False) == False
+                            and a.metadata.get("table") == tn,
                     )
                 )
-            else:
-                filter_equal_dict = {
-                    tn: filter_empty(attrs.asdict(
-                        self,
-                        filter=lambda a, v: is_list_like(v) == False
-                        and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
-                        and a.metadata.get("table") == tn,
-                    ))
-                    for tn in tables
-                }
-                filter_in_dict = {
-                    tn: filter_empty(attrs.asdict(
-                        self,
-                        filter=lambda a, v: is_list_like(v) == True
-                        and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
-                        and a.metadata.get("table") == tn,
-                    ))
-                    for tn in tables
-                }
-                spatial_dict = {
-                    tn: update_spatial_dict(
-                            attrs.asdict(
-                                self,
-                                filter=lambda a, v: a.metadata.get("is_bbox", False)
-                                and v is not None
-                                and a.metadata.get("is_meta", False) == False
-                                and a.metadata.get("table") == tn,
-                        )
-                    )
-                    for tn in tables
-                }
+                for tn in tables
+            }
 
-            self.filter_kwargs = {
+            self.filter_kwargs_live = {
                 "filter_equal_dict": replace_empty_with_none(filter_empty(filter_equal_dict)),
                 "filter_in_dict": replace_empty_with_none(filter_empty(filter_in_dict)),
                 "filter_spatial_dict": replace_empty_with_none(filter_empty(spatial_dict)),
             }
+            if len(tables)==2:
+                self.filter_kwargs_mat = self.filter_kwargs_live
+            else:
+                self.filter_kwargs_mat = {
+                    k: replace_empty_with_none(self.filter_kwargs_live[k].get(list(tables)[0],[])) 
+                    for k in ["filter_equal_dict", "filter_in_dict", "filter_spatial_dict"] if self.filter_kwargs_live[k] is not None
+                }
             
-            keys_to_pop = []
-            for k in self.filter_kwargs.keys():
-                if self.filter_kwargs[k] is None:
-                    keys_to_pop.append(k)
-            for k in keys_to_pop:
-                self.filter_kwargs.pop(k)
+            pop_empty(self.filter_kwargs_live)
+            pop_empty(self.filter_kwargs_mat)
 
             if len(tables) == 1:
                 self.joins_kwargs = {"joins": None}
@@ -347,89 +383,115 @@ def make_kwargs_mixin(client):
                     [self._base_table, "id"],
                 ]
 
-        def query(
-            self,
-            select_columns=None,
-            offset=None,
-            limit=None,
-            split_positions=False,
-            materialization_version=None,
-            timestamp=None,
-            metadata=True,
-            desired_resolution=None,
-            get_counts=False,
-        ):
-            if self._reference_table is None:
-                qry_table = self._base_table
-                return client.materialize.query_table(
-                    qry_table,
-                    select_columns=select_columns,
-                    offset=offset,
-                    limit=limit,
-                    split_positions=split_positions,
-                    materialization_version=materialization_version,
+    if not is_view:
+        class TableQueryKwargs(BaseQueryKwargs):
+            def query(
+                self,
+                select_columns=None,
+                offset=None,
+                limit=None,
+                split_positions=False,
+                materialization_version=None,
+                timestamp=None,
+                metadata=True,
+                desired_resolution=None,
+                get_counts=False,
+            ):
+                if self._reference_table is None:
+                    qry_table = self._base_table
+                    return client.materialize.query_table(
+                        qry_table,
+                        select_columns=select_columns,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        materialization_version=materialization_version,
+                        desired_resolution=desired_resolution,
+                        timestamp=timestamp,
+                        get_counts=get_counts,
+                        metadata=metadata,
+                        **self.filter_kwargs_mat,
+                    )
+                else:
+                    qry_table = self._reference_table
+                    return client.materialize.join_query(
+                        tables=self.basic_join,
+                        select_columns=select_columns,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        materialization_version=materialization_version,
+                        desired_resolution=desired_resolution,
+                        suffixes={self._reference_table: "_ref", self._base_table: ""},
+                        metadata=metadata,
+                        **self.filter_kwargs_mat,
+                    )
+
+            def live_query(
+                self,
+                timestamp,
+                offset=None,
+                limit=None,
+                split_positions=False,
+                metadata=True,
+                desired_resolution=None,
+                allow_missing_lookups=False,
+            ):
+                if self._reference_table is None:
+                    qry_table = self._base_table
+                    return client.materialize.live_live_query(
+                        table=qry_table,
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        desired_resolution=desired_resolution,
+                        allow_missing_lookups=allow_missing_lookups,
+                        metadata=metadata,
+                        **self.filter_kwargs_live,
+                    )
+                else:
+                    qry_table = self._reference_table
+                    return client.materialize.live_live_query(
+                        table=qry_table,
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        desired_resolution=desired_resolution,
+                        suffixes={self._reference_table: "_ref", self._base_table: ""},
+                        allow_missing_lookups=allow_missing_lookups,
+                        metadata=metadata,
+                        **self.filter_kwargs_live,
+                        **self.joins_kwargs,
+                    )
+        return TableQueryKwargs
+    else:
+        class ViewQueryKwargs(BaseQueryKwargs):
+            def query(
+                self,
+                select_columns=None,
+                offset=None,
+                limit=None,
+                split_positions=False,
+                materialization_version=None,
+                metadata=True,
+                desired_resolution=None,
+                get_counts=False,
+            ):
+                return client.materialize.query_view(
+                    self._base_table,
+                    metadata=metadata,
                     desired_resolution=desired_resolution,
-                    timestamp=timestamp,
+                    materialization_version=materialization_version,
+                    split_positions=split_positions,
+                    limit=limit,
+                    offset=offset,
+                    select_columns = select_columns,
                     get_counts=get_counts,
-                    metadata=metadata,
-                    **self.filter_kwargs,
+                    **self.filter_kwargs_mat,
                 )
-            else:
-                qry_table = self._reference_table
-                return client.materialize.join_query(
-                    tables=self.basic_join,
-                    select_columns=select_columns,
-                    offset=offset,
-                    limit=limit,
-                    split_positions=split_positions,
-                    materialization_version=materialization_version,
-                    desired_resolution=desired_resolution,
-                    suffixes={self._reference_table: "_ref", self._base_table: ""},
-                    metadata=metadata,
-                    **self.filter_kwargs,
-                )
-
-        def live_query(
-            self,
-            timestamp,
-            offset=None,
-            limit=None,
-            split_positions=False,
-            metadata=True,
-            desired_resolution=None,
-            allow_missing_lookups=False,
-        ):
-            if self._reference_table is None:
-                qry_table = self._base_table
-                return client.materialize.live_live_query(
-                    table=qry_table,
-                    timestamp=timestamp,
-                    offset=offset,
-                    limit=limit,
-                    split_positions=split_positions,
-                    desired_resolution=desired_resolution,
-                    allow_missing_lookups=allow_missing_lookups,
-                    metadata=metadata,
-                    **self.filter_kwargs,
-                )
-            else:
-                qry_table = self._reference_table
-                return client.materialize.live_live_query(
-                    table=qry_table,
-                    timestamp=timestamp,
-                    offset=offset,
-                    limit=limit,
-                    split_positions=split_positions,
-                    desired_resolution=desired_resolution,
-                    suffixes={self._reference_table: "_ref", self._base_table: ""},
-                    allow_missing_lookups=allow_missing_lookups,
-                    metadata=metadata,
-                    **self.filter_kwargs,
-                    **self.joins_kwargs,
-                )
-
-    return MakeQueryKwargs
-
+    return ViewQueryKwargs
 
 def make_query_filter(table_name, meta, client):
     pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc = get_table_info(
@@ -444,16 +506,42 @@ def make_query_filter(table_name, meta, client):
     QueryFilter.__doc__ = desc
     return QueryFilter
 
+def make_query_filter_view(view_name, meta, schema, client):
+    pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc, live_compatible= get_view_info(
+        view_name, meta, schema
+    )
+    class_vals = make_class_vals(
+        pts, val_cols, all_unbd_pts, table_map, rename_map, table_list
+    )
+    ViewQueryFilter = attrs.make_class(
+        view_name, class_vals, bases=(make_kwargs_mixin(client, is_view=True, live_compatible=live_compatible),)
+    )
+    ViewQueryFilter.__doc__ = desc
+    return ViewQueryFilter
 
 class TableManager(object):
     """Use schema definitions to generate query filters for each table.
     """
     def __init__(self, client):
         self._client = client
-        self._table_metadata = get_all_metadata(self._client)
+        self._table_metadata = get_all_table_metadata(self._client)
         self._tables = sorted(list(self._table_metadata.keys()))
         for tn in self._tables:
             setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client)) 
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+    
+    def __repr__(self):
+        return str(self._tables)
+
+class ViewManager(object):
+    def __init__(self, client):
+        self._client = client
+        self._view_metadata, view_schema = get_all_view_metadata(self._client)
+        self._views = sorted(list(self._view_metadata.keys()))
+        for vn in self._views:
+            setattr(self, vn, make_query_filter_view(vn, self._view_metadata[vn], view_schema[vn], client))
 
     def __getitem__(self, key):
         return getattr(self, key)
