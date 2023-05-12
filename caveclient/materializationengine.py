@@ -421,7 +421,6 @@ class MaterializatonClientV2(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
-    
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_table_metadata(
         self,
@@ -787,7 +786,9 @@ class MaterializatonClientV2(ClientBase):
                               as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                               Expressed in units of the voxel_resolution of this dataset.
                  Defaults to None
-             select_columns (list of str, optional): columns to select. Defaults to None.
+             select_columns (dict of lists of str, optional): keys are table names,values are the list of columns from that table.
+               Defaults to None, which will select all tables.  Will be passed to server as select_column_maps.
+               Passing a list will be passed as select_columns which is deprecated.
              offset (int, optional): result offset to use. Defaults to None.
                  will only return top K results.
              limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
@@ -1414,7 +1415,7 @@ it will likely get removed in future versions. "
                 datastack_name,
                 materialization_version,
                 tables,
-                None,
+                select_columns,
                 suffix_map,
                 {table: past_filter_in_dict}
                 if past_filter_in_dict is not None
@@ -1626,7 +1627,7 @@ it will likely get removed in future versions. "
                 [float(r) for r in desired_resolution.split(", ")]
             )
         join_query = len(tables) > 1
-
+        materialization_version = kwargs.get("materialization_version", None)
         attrs = {
             "datastack_name": self.datastack_name,
         }
@@ -1634,11 +1635,17 @@ it will likely get removed in future versions. "
             attrs["join_query"] = False
 
             if is_view:
-                meta = self.get_view_metadata(tables[0], log_warning=False)
+                meta = self.get_view_metadata(
+                    tables[0],
+                    log_warning=False,
+                    materialization_version=materialization_version,
+                )
             else:
                 try:
-                    meta = self.get_table_metadata(tables[0], log_warning=False)
-                except:
+                    meta = self.get_table_metadata(
+                        tables[0], log_warning=False, version=materialization_version
+                    )
+                except HTTPError:
                     meta = self.fc.annotation.get_table_metadata(tables[0])
 
             for k, v in meta.items():
@@ -1660,7 +1667,7 @@ it will likely get removed in future versions. "
                 table_attrs[tname] = {}
                 try:
                     meta = self.get_table_metadata(tname, log_warning=False)
-                except:
+                except HTTPError:
                     meta = self.fc.annotation.get_table_metadata(tname)
                 for k, v in meta.items():
                     if re.match("^table", k):
@@ -1729,7 +1736,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
             vz = metadata_d.pop("voxel_resolution_z", None)
             metadata_d["voxel_resolution"] = [vx, vy, vz]
         return all_metadata
-    
+
     def live_live_query(
         self,
         table: str,

@@ -12,8 +12,7 @@ from .endpoints import (
     default_global_server_address,
 )
 from .format_utils import (
-    output_map_raw,
-    output_map_precomputed,
+    output_map,
     format_raw,
 )
 
@@ -169,7 +168,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         datastack_name=None,
         use_stored=True,
         format_for="raw",
-        output_map=output_map_raw,
+        output_map=output_map,
     ):
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -258,7 +257,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "local_server",
             datastack_name=datastack_name,
             use_stored=use_stored,
-            output_map=output_map_raw,
+            output_map=output_map,
         )
 
     def annotation_endpoint(self, datastack_name=None, use_stored=True):
@@ -335,7 +334,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             datastack_name=datastack_name,
             use_stored=use_stored,
             format_for=format_for,
-            output_map=output_map_precomputed,
+            output_map=output_map,
         )
 
     def segmentation_source(
@@ -364,7 +363,8 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "segmentation_source",
             datastack_name=datastack_name,
             use_stored=use_stored,
-            output_map=output_map_raw,
+            output_map=output_map,
+            format_for=format_for,
         )
 
     def refresh_stored_data(self):
@@ -387,19 +387,16 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "viewer_resolution_x",
             datastack_name=datastack_name,
             use_stored=use_stored,
-            format_for="raw",
         )
         vy = self._get_property(
             "viewer_resolution_y",
             datastack_name=datastack_name,
             use_stored=use_stored,
-            format_for="raw",
         )
         vz = self._get_property(
             "viewer_resolution_z",
             datastack_name=datastack_name,
             use_stored=use_stored,
-            format_for="raw",
         )
         return np.array([vx, vy, vz])
 
@@ -409,7 +406,6 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "viewer_site",
             datastack_name=datastack_name,
             use_stored=use_stored,
-            format_for="raw",
         )
 
     def image_cloudvolume(self, **kwargs):
@@ -420,7 +416,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
 
         Requires cloudvolume to be installed, which is not included by default.
         """
-        return self._make_cloudvolume(self.image_source(), **kwargs)
+        return self._make_cloudvolume(self.image_source(format_for='cloudvolume'), **kwargs)
 
     def segmentation_cloudvolume(self, use_client_secret=True, **kwargs):
         """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
@@ -431,13 +427,13 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         Requires cloudvolume to be installed, which is not included by default.
         """
         return self._make_cloudvolume(
-            self.segmentation_source(), use_client_secret=use_client_secret, **kwargs
+            self.segmentation_source(format_for='cloudvolume'), use_client_secret=use_client_secret, **kwargs
         )
 
     def _make_cloudvolume(self, cloudpath, use_client_secret=True, **kwargs):
         try:
             import cloudvolume
-        except:
+        except ImportError:
             raise ImportError(
                 "Could not import cloudvolume. Make sure it is installed. See https://pypi.org/project/cloud-volume for more info."
             )
