@@ -20,7 +20,7 @@ from .base import (
     handle_response,
 )
 from cachetools import cached, TTLCache
-from .tools.table_manager import TableManager
+from .tools.table_manager import TableManager, ViewManager
 import logging
 
 logger = logging.getLogger(__name__)
@@ -295,6 +295,7 @@ class MaterializatonClientV2(ClientBase):
         self.synapse_table = synapse_table
         self.desired_resolution = desired_resolution
         self._tables = None
+        self._views = None
 
     @property
     def datastack_name(self):
@@ -351,6 +352,12 @@ class MaterializatonClientV2(ClientBase):
         if self._tables is None:
             self._tables = TableManager(self.fc)
         return self._tables
+    
+    @property
+    def views(self):
+        if self._views is None:
+            self._views = ViewManager(self.fc)
+        return self._views
 
     def get_tables(self, datastack_name=None, version=None):
         """Gets a list of table names for a datastack
