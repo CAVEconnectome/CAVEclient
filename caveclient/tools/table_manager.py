@@ -49,8 +49,13 @@ def combine_names(tableA, namesA, tableB, namesB, suffixes):
     return final_namesA + final_namesB, table_map, rename_map
 
 def get_all_table_metadata(client):
-    tables = client.materialize.get_tables()
     meta = client.materialize.get_tables_metadata()
+    tables = []
+    for m in meta:
+        if m.get('annotation_table'):
+            tables.append(m['annotation_table'])
+        else:
+            tables.append(m['table_name'])
     return {
         tn: md
         for tn, md in zip(tables, meta)
