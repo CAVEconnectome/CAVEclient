@@ -840,6 +840,73 @@ class ChunkedGraphClientV1(ClientBase):
         )
         return np.array(r["is_latest"], bool)
 
+    def suggest_latest_roots(
+        self,
+        root_id,
+        timestamp=None,
+        stop_layer=None,
+        return_all=False,
+        return_fraction_overlap=False,
+    ):
+        """Suggest latest roots for a given root id, based on overlap of component chunk ids.
+        Note that edits change chunk ids, and so this effectively measures the fraction of unchanged chunks
+        at a given chunk layer, which sets the size scale of chunks. Higher layers are coarser.
+
+        Parameters
+        ----------
+        root_id : int64
+            Root id of the potentially outdated object.
+        timestamp : datetime, optional
+            Datetime at which "latest" roots are being computed, by default None. If None, the current time is used.
+            Note that this has to be a timestamp after the creation of the root_id.
+        stop_layer : int, optional
+            Chunk level at which to compute overlap, by default None.
+            No value will take the 4th from the top layer, which emphasizes speed and should work well for larger objects.
+            Lower values are slower but more fine-grained.
+        return_all : bool, optional
+            If True, return all current ids sorted from most overlap to least, by default False. If False, only the top is returned.
+        return_fraction_overlap : bool, optional
+            If True, return all fractions sorted by most overlap to least, by default False. If False, only the topmost value is returned.
+        """
+        curr_ids = self.get_latest_roots(root_id, timestamp_future=timestamp)
+        if root_id in curr_ids:
+            if return_all:
+                if return_fraction_overlap:
+                    return [root_id], [1]
+                else:
+                    return [root_id]
+            else:
+                if return_fraction_overlap:
+                    return root_id, 1
+                else:
+                    return root_id
+
+        delta_layers = 4
+        if stop_layer is None:
+            stop_layer = self.segmentation_info.get("graph", {}).get("n_layers", 6) - delta_layers
+
+        chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+        chunk_list = np.array(
+            [
+                len(
+                    np.intersect1d(
+                        chunks_orig,
+                        self.get_leaves(oid, stop_layer=stop_layer),
+                        assume_unique=True,
+                    )
+                )
+                / len(chunks_orig)
+                for oid in curr_ids
+            ]
+        )
+        order = np.argsort(chunk_list)[::-1]
+        if not return_all:
+            order = order[0]
+        if return_fraction_overlap:
+            return curr_ids[order], chunk_list[order]
+        else:
+            return curr_ids[order]
+
     def is_valid_nodes(self, node_ids, start_timestamp=None, end_timestamp=None):
         """Check whether nodes are valid for given timestamp range
 
