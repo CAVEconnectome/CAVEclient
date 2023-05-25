@@ -861,8 +861,9 @@ class ChunkedGraphClientV1(ClientBase):
             Note that this has to be a timestamp after the creation of the root_id.
         stop_layer : int, optional
             Chunk level at which to compute overlap, by default None.
-            No value will take the 4th from the top layer, which emphasizes speed and should work well for larger objects.
+            No value will take the 4th from the top layer, which emphasizes speed and works well for larger objects.
             Lower values are slower but more fine-grained.
+            Values under 2 (i.e. supervoxels) are not recommended except in extremely fine grained scenarios.
         return_all : bool, optional
             If True, return all current ids sorted from most overlap to least, by default False. If False, only the top is returned.
         return_fraction_overlap : bool, optional
@@ -884,7 +885,8 @@ class ChunkedGraphClientV1(ClientBase):
         delta_layers = 4
         if stop_layer is None:
             stop_layer = self.segmentation_info.get("graph", {}).get("n_layers", 6) - delta_layers
-
+        stop_layer = max(1, stop_layer)
+        
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
         chunk_list = np.array(
             [
