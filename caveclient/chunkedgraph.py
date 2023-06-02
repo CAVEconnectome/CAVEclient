@@ -82,7 +82,7 @@ def root_id_int_list_check(
     root_id,
     make_unique=False,
 ):
-    if isinstance(root_id, int) or isinstance(root_id, np.uint64):
+    if isinstance(root_id, int) or isinstance(root_id, np.uint64) or isinstance(root_id, np.int64):
         root_id = [root_id]
     elif isinstance(root_id, str):
         try:
