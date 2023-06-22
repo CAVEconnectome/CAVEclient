@@ -4,7 +4,7 @@ import warnings
 import pytz
 import pandas as pd
 from IPython.display import HTML
-from .timeit import TimeIt
+from .mytimer import MyTimeIt
 from typing import Union, Iterable
 import itertools
 import pyarrow as pa
@@ -957,7 +957,7 @@ class MaterializatonClientV2(ClientBase):
             df = df.copy()
 
         sv_columns = [c for c in df.columns if c.endswith("supervoxel_id")]
-        with TimeIt("is_latest_roots"):
+        with MyTimeIt("is_latest_roots"):
             all_root_ids = np.empty(0, dtype=np.int64)
 
             # go through the columns and collect all the root_ids to check
@@ -986,7 +986,7 @@ class MaterializatonClientV2(ClientBase):
             all_is_latest = []
             all_svid_lengths = []
             for sv_col in sv_columns:
-                with TimeIt(f"find svids {sv_col}"):
+                with MyTimeIt(f"find svids {sv_col}"):
                     root_id_col = sv_col[: -len("supervoxel_id")] + "root_id"
                     svids = df[sv_col].values
                     root_ids = df[root_id_col]
@@ -999,7 +999,7 @@ class MaterializatonClientV2(ClientBase):
         logger.info(f"num zero svids: {np.sum(all_svids==0)}")
         logger.info(f"all_svids dtype {all_svids.dtype}")
         logger.info(f"all_svid_lengths {all_svid_lengths}")
-        with TimeIt("get_roots"):
+        with MyTimeIt("get_roots"):
             # find the up to date root_ids for those supervoxels
             updated_root_ids = self.cg_client.get_roots(all_svids, timestamp=timestamp)
             del all_svids
@@ -1010,7 +1010,7 @@ class MaterializatonClientV2(ClientBase):
         for is_latest_root, n_svids, sv_col in zip(
             all_is_latest, all_svid_lengths, sv_columns
         ):
-            with TimeIt(f"replace_roots {sv_col}"):
+            with MyTimeIt(f"replace_roots {sv_col}"):
                 root_id_col = sv_col[: -len("supervoxel_id")] + "root_id"
                 root_ids = df[root_id_col].values.copy()
 
@@ -1219,7 +1219,7 @@ it will likely get removed in future versions. "
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
 
-        with TimeIt("deserialize"):
+        with MyTimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
@@ -1343,7 +1343,7 @@ it will likely get removed in future versions. "
             datastack_name = self.datastack_name
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
-        with TimeIt("find_mat_version"):
+        with MyTimeIt("find_mat_version"):
             # we want to find the most recent materialization
             # in which the timestamp given is in the future
             mds = self.get_versions_metadata()
@@ -1386,7 +1386,7 @@ it will likely get removed in future versions. "
 
         # first we want to translate all these filters into the IDss at the
         # most recent materialization
-        with TimeIt("map_filters"):
+        with MyTimeIt("map_filters"):
             past_filters, future_map = self.map_filters(
                 [filter_in_dict, filter_out_dict, filter_equal_dict],
                 timestamp,
@@ -1410,7 +1410,7 @@ it will likely get removed in future versions. "
         tables, suffix_map = self._resolve_merge_reference(
             merge_reference, table, datastack_name, materialization_version
         )
-        with TimeIt("package query"):
+        with MyTimeIt("package query"):
             url, data, query_args, encoding = self._format_query_components(
                 datastack_name,
                 materialization_version,
@@ -1435,7 +1435,7 @@ it will likely get removed in future versions. "
             )
             logger.debug(f"query_args: {query_args}")
             logger.debug(f"query data: {data}")
-        with TimeIt("query materialize"):
+        with MyTimeIt("query materialize"):
             response = self.session.post(
                 url,
                 data=json.dumps(data, cls=BaseEncoder),
@@ -1452,7 +1452,7 @@ it will likely get removed in future versions. "
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
 
-        with TimeIt("deserialize"):
+        with MyTimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
@@ -1481,7 +1481,7 @@ it will likely get removed in future versions. "
         # apply the original filters to remove rows
         # from this result which are not relevant
         if post_filter:
-            with TimeIt("post_filter"):
+            with MyTimeIt("post_filter"):
                 if filter_in_dict is not None:
                     for col, val in filter_in_dict.items():
                         df = df[df[col].isin(val)]
@@ -1873,7 +1873,7 @@ it will likely get removed in future versions. "
         )
         self.raise_for_status(response)
 
-        with TimeIt("deserialize"):
+        with MyTimeIt("deserialize"):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)

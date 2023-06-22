@@ -1,12 +1,13 @@
 from time import time
-import builtins
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 indent = 0
 
 
-class TimeIt:
+class MyTimeIt:
     def __init__(self, message="", *args, **kwargs):
         self._message = message
         self._args = args
