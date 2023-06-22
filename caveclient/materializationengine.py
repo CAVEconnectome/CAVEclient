@@ -109,6 +109,68 @@ def string_format_timestamp(ts):
     else:
         return ts
 
+def _get_cell_ids(root_ids, client, id_table=None, point_column="pt", timestamp=None, materialization_version=None):
+    root_ids = np.array(root_ids)
+    timestamp_map = {
+        dt: oid
+        for dt, oid in zip(client.chunkedgraph.get_root_timestamps(root_ids), root_ids)
+    }
+    
+    # If no timestamp is specified, get and reverse sort all valid timestamps starting from now
+    if timestamp is None and materialization_version is None:
+        now = datetime.now(tz=pytz.UTC)
+        all_timestamps = np.sort(
+            np.append(np.array(list(timestamp_map.keys())), [now])
+        )[::-1]
+    elif timestamp is None and materialization_version is not None:
+        timestamp = client.materialize.get_timestamp(materialization_version)
+        all_timestamps = [timestamp]
+    else:
+        all_timestamps = [timestamp]
+        
+    if id_table is None:
+        id_table = client.info.get_datastack_info()["soma_table"]
+
+    # Query the id table for the roots at the most recent timestamp and drop any duplicates, because they can't be resolved.
+    # If a timestamp is specified, just run the query on the specified root ids at that timestamp.
+    first_ts = all_timestamps[0]
+    if timestamp is None:
+        now_root_ids = client.chunkedgraph.get_latest_roots(
+            root_ids, timestamp_future=first_ts
+        )
+    else:
+        now_root_ids = root_ids
+        
+    soma_df = client.materialize.tables[id_table](
+        **{f"{point_column}_root_id": now_root_ids}
+    ).query(timestamp=first_ts)
+    soma_df.drop_duplicates(subset=f"{point_column}_root_id", keep=False, inplace=True)
+
+    # Initialize a list of found ids with -1, which will be the null value
+    found_ids = np.full(len(root_ids), -1)
+
+    # Now going in reverse order of timestamps, keep checking roots until either out of root ids or out of timestamps.
+    for ts in all_timestamps:
+        if ts == first_ts:
+            soma_df["root_id"] = soma_df[f"{point_column}_root_id"]
+        else:
+            # If already found the root id for this timestamp, move on to the next timestamp
+            if np.all(found_ids[root_ids == timestamp_map.get(ts)] > 0):
+                continue
+            soma_df["root_id"] = client.chunkedgraph.get_roots(
+                soma_df[f"{point_column}_supervoxel_id"], timestamp=ts
+            )
+        ts_mapping = (
+            soma_df.drop_duplicates("root_id", keep=False)
+            .query("root_id in @root_ids")[["root_id", "id"]]
+            .values
+        )
+        for row in ts_mapping:
+            found_ids[root_ids == row[0]] = row[1]
+        if np.all(found_ids >= 0):
+            break
+    return found_ids
+
 
 def MaterializationClient(
     server_address,
@@ -1948,6 +2010,53 @@ it will likely get removed in future versions. "
         response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
+
+    def get_cell_ids(self, root_ids, id_table=None, point_column='pt', mixed_timestamps=False, timestamp=None, materialization_version=None):
+        """Look up cell ids from root ids based on a table of cells ids, usually a nucleus table, if cell ids exist.
+        The best performance comes from using root ids at a single materialization version or timestamp, but a mixed collection of root ids from unknown times can also be used.
+
+        Parameters
+        ----------
+        root_ids : list or array
+            N-length list of root ids to look up
+        id_table : str, optional
+            Name of the table to use for looking up cell ids, by default None.
+            If None, the default soma table for the datastack will be used.
+        point_column : str, optional
+            Name of the point value in the id table, by default 'pt'.
+            This corresponds to the prefix in "pt_root_id" or "pt_supervoxel_id".
+        mixed_timestamps : bool, optional
+            If True, does not assume that root ids come from any single point in time, by default False.
+            Setting mixed_timestamps to True overrides timestamp or materialization_version arguments.
+        timestamp : datetime.datetime, optional
+            Timestamp which all root ids come from, by default None.
+            If specified, all root ids must be valid at this timestamp or an error will be raised.
+            Ignored if mixed_timestamps is True.
+        materialization_version : int, optional
+            Materialization version which all root ids come from, by default None.
+            If not specified, the latest materialization version will be used.
+            Ignored if mixed_timestamps is True.
+
+        Returns
+        -------
+        cell_ids : np.array
+            N-length list of cell ids. Values are -1 for cells without a unique cell id.
+        """
+        if mixed_timestamps:
+            timestamp=None
+            materialization_version=None
+        else:
+            if materialization_version is None and timestamp is None:
+                materialization_version = self.version
+        cell_ids = _get_cell_ids(
+            root_ids,
+            self.fc,
+            id_table=id_table,
+            point_column=point_column,
+            timestamp=timestamp,
+            materialization_version=materialization_version,
+        )
+        return cell_ids         
 
 
     def get_view_metadata(
