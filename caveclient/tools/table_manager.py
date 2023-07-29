@@ -2,8 +2,6 @@ import attrs
 import warnings
 import re
 from cachetools import cached, TTLCache, keys
-import logging
-logger = logging.getLogger(__name__)
 
 # json schema column types that can act as potential columns for looking at tables
 ALLOW_COLUMN_TYPES = ["integer", "boolean", "string", "float"]
@@ -328,10 +326,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
             filter_equal_dict = {
                 tn: filter_empty(attrs.asdict(
                     self,
-                    filter=lambda a, v: is_list_like(v) == False
+                    filter=lambda a, v: is_list_like(v) is False
                     and v is not None
-                    and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False
+                    and a.metadata.get("is_bbox", False) is False
+                    and a.metadata.get("is_meta", False) is False
                     and a.metadata.get("table") == tn,
                 ))
                 for tn in tables
@@ -339,10 +337,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
             filter_in_dict = {
                 tn: filter_empty(attrs.asdict(
                     self,
-                    filter=lambda a, v: is_list_like(v) == True
+                    filter=lambda a, v: is_list_like(v) is True
                     and v is not None
-                    and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False
+                    and a.metadata.get("is_bbox", False) is False
+                    and a.metadata.get("is_meta", False) is False
                     and a.metadata.get("table") == tn,
                 ))
                 for tn in tables
@@ -369,8 +367,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 self.filter_kwargs_mat = self.filter_kwargs_live
             else:
                 self.filter_kwargs_mat = {
-                    k: replace_empty_with_none(self.filter_kwargs_live[k].get(list(tables)[0],[])) 
-                    for k in ["filter_equal_dict", "filter_in_dict", "filter_spatial_dict"] if self.filter_kwargs_live[k] is not None
+                    k: replace_empty_with_none(self.filter_kwargs_live[k].get(list(tables)[0],[]))   # noqa: E501
+                    for k in ["filter_equal_dict", "filter_in_dict", "filter_spatial_dict"] if self.filter_kwargs_live[k] is not None  # noqa: E501
                 }
             
             pop_empty(self.filter_kwargs_live)
@@ -404,9 +402,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
-                logger.warning(
-                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.query_table(
@@ -447,9 +442,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 allow_missing_lookups=False,
             ):
-                logger.warning(
-                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.live_live_query(
@@ -492,9 +484,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
-                logger.warning(
-                    "The `client.materialize.views` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 return client.materialize.query_view(
                     self._base_table,
                     metadata=metadata,
@@ -523,7 +512,7 @@ def make_query_filter(table_name, meta, client):
     return QueryFilter
 
 def make_query_filter_view(view_name, meta, schema, client):
-    pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc, live_compatible= get_view_info(
+    pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc, live_compatible = get_view_info(
         view_name, meta, schema
     )
     class_vals = make_class_vals(
