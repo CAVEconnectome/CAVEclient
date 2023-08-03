@@ -18,6 +18,7 @@ def L2CacheClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
+    verify=True,
 ):
     if auth_client is None:
         auth_client = AuthClient()
@@ -43,6 +44,7 @@ def L2CacheClient(
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
         over_client=over_client,
+        verify=verify,
     )
 
 
@@ -59,6 +61,7 @@ class L2CacheClientLegacy(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        verify=True,
     ):
         super(L2CacheClientLegacy, self).__init__(
             server_address,
@@ -70,6 +73,7 @@ class L2CacheClientLegacy(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            verify=verify,
         )
         self._default_url_mapping["table_id"] = table_name
         self._available_attributes = None
