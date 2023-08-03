@@ -104,7 +104,7 @@ So for example to query a synapse table for all synapses onto a neuron in flywir
 
 .. code:: python
 
-    synapse_table = client.info.get_datastack_info('synapse_table')
+    synapse_table = client.info.get_datastack_info()['synapse_table']
     df=client.materialize.query_table(synapse_table,
                                       filter_equal_dict = {'post_pt_root_id': MYID})
 
@@ -122,7 +122,7 @@ You can recombine split-out position columns using :func:`~caveclient.materializ
 
 .. code:: python
 
-    synapse_table = client.info.get_datastack_info('synapse_table')
+    synapse_table = client.info.get_datastack_info()['synapse_table']
     df=client.materialize.query_table(synapse_table,
                                       filter_equal_dict = {'post_pt_root_id': MYID},
                                       select_columns=['id','pre_pt_root_id', 'pre_pt_position'],
@@ -218,7 +218,7 @@ throughout the codebase.
 .. code:: python
 
     import datetime
-    synapse_table = client.info.get_datastack_info('synapse_table')
+    synapse_table = client.info.get_datastack_info()['synapse_table']
     df=client.materialize.live_query(synapse_table,
                                       datetime.datetime.utcnow(),
                                       filter_equal_dict = {'post_pt_root_id': MYID})
@@ -230,7 +230,7 @@ You can also pass a timestamp directly to query_table and it will call live_quer
 .. code:: python
 
     import datetime
-    synapse_table = client.info.get_datastack_info('synapse_table')
+    synapse_table = client.info.get_datastack_info()['synapse_table']
     df=client.materialize.query_table(synapse_table,
                                       timestamp=datetime.datetime.utcnow(),
                                       filter_equal_dict = {'post_pt_root_id': MYID})
@@ -251,7 +251,7 @@ Content-aware Interface (Experimental)
     This interface might have small but breaking changes in the near future.
 
 In order to make the querying interface more consistent across tables, we have introduced an additional alternative interface
-to filtering and querying data via the ```client.materialize.tables` object.
+to filtering and querying data via the ``client.materialize.tables`` object.
 When you instantiate this object, this object finds all of the existing tables and the list of their columns and lets you filter
 the tables as arguments in the function with suggestions.
 Moreover, the filtering arguments and the querying arguments are separated into two.
