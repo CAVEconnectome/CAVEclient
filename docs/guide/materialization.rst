@@ -259,14 +259,14 @@ Moreover, the filtering arguments and the querying arguments are separated into 
 Let's see how this works with a simplest example — downloading a table called `nucleus_detection_v0`.
 First, we reference the table as a function and then we run the query — this is exactly the same as `client.materialize.query_table('nucleus_detection_v0').
 
-... code:: python
+.. code:: python
     client = CAVEclient('minnie65_public')
     nuc_df = client.materialize.tables.nucleus_detection_v0().query()
 
 Where things differ is when we add filters.
 If we want to query based on a set of values for the field "id", for example, we add that as an argument:
 
-... code:: python
+.. code:: python
     my_ids = [373879, 111162]
     nuc_df = client.materialize.tables.nucleus_detection_v0(id=my_ids).query()
 
@@ -280,7 +280,7 @@ glance at the docstring with `client.materialize.tables.nucleus_detection_v0?`.
 If you need to specify the table programmatically, you can also use a dictionary-style approach to getting the table filtering function.
 For example, an equivalent version of the above line would be:
 
-... code:: python
+.. code:: python
     my_ids = [373879, 111162]
     my_table = 'nucleus_detection_v0'
     nuc_df = client.materialize.tables[my_table](id=my_ids).query()
@@ -290,7 +290,7 @@ In particular, the arguments that apply to `query` are: `select_columns`, `offse
 `timestamp`, `metadata`, `desired_resolution`, and `get_counts`.
 For example, to add a desired resolution and split positions in the above query, it would look like:
 
-... code:: python
+.. code:: python
     my_ids = [373879, 111162]
     nuc_df = client.materialize.tables.nucleus_detection_v0(
         id=my_ids
@@ -302,7 +302,7 @@ For example, to add a desired resolution and split positions in the above query,
 If you want to do a live query instead of a materialized query, the filtering remains identifical but we use the `live_query` function instead.
 The one required argument for `live_query` is the timestamp.
 
-... code:: python
+.. code:: python
     my_ids = [373879, 111162]
     nuc_df = client.materialize.tables.nucleus_detection_v0(
         id=my_ids
@@ -313,7 +313,7 @@ The one required argument for `live_query` is the timestamp.
 The live query functions have similar but slightly different arguments: `timestamp` (required), `offset`, `limit`, `split_positions`,
 `metadata`, `desired_resolution`, and `allow_missing_lookups`.
 
-... note::
+.. note::
     The way that IPython handles docstrings means that while you can use `?` to get the docstring of the filtering part of the function,
     you can't simply do something like `client.materialize.tables.nucleus_detection_v0().query?`. It will tell you the function can't be found,
     because technically the `query` function does not yet exist until the table filtering function is called.
