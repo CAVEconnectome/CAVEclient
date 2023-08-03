@@ -318,8 +318,8 @@ The one required argument for ``live_query`` is the timestamp.
 The live query functions have similar but slightly different arguments: ``timestamp`` (required), ``offset``, ``limit``, ``split_positions``,
 ``metadata``, ``desired_resolution``, and ``allow_missing_lookups``.
 
-Note that way that IPython handles docstrings means that while you can use `?` to get the docstring of the filtering part of the function,
-you can't simply do something like `client.materialize.tables.nucleus_detection_v0().query?`. It will tell you the function can't be found,
+Note that way that IPython handles docstrings means that while you can use ``?`` to get the docstring of the filtering part of the function,
+you can't simply do something like ``client.materialize.tables.nucleus_detection_v0().query?``. It will tell you the function can't be found,
 because technically the ``query`` function does not yet exist until the table filtering function is called.
 
 Instead, if you want to glimpse the docstring of the query or live_query functions, you need to split it into two lines:
@@ -329,5 +329,5 @@ Instead, if you want to glimpse the docstring of the query or live_query functio
     qry_func = client.materialize.tables.nucleus_detection_v0().query
     qry_func?
 
-Finally, if the project you are working with has views, a similar interface is available to them via ```client.materialize.views``.
+Finally, if the project you are working with has views, a similar interface is available to them via ``client.materialize.views``.
 Currently views are not compatible with live query, and so only the ``.query`` function is available.
