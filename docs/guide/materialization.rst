@@ -289,7 +289,7 @@ For example, an equivalent version of the above line would be:
     nuc_df = client.materialize.tables[my_table](id=my_ids).query()
  
 The ``query`` function can also take arguments relating to timestamps or formatting where they act just like in the other query method.
-In particular, the arguments that apply to ``query`` are: ``select_columns``, ``offset``, ``limit``, ``split_posiitons``, ``materialization_version``,
+In particular, the arguments that apply to ``query`` are: ``select_columns``, ``offset``, ``limit``, ``split_positions``, ``materialization_version``,
 ``timestamp``, ``metadata``, ``desired_resolution``, and ``get_counts``.
 For example, to add a desired resolution and split positions in the above query, it would look like:
 
@@ -318,17 +318,15 @@ The one required argument for ``live_query`` is the timestamp.
 The live query functions have similar but slightly different arguments: ``timestamp`` (required), ``offset``, ``limit``, ``split_positions``,
 ``metadata``, ``desired_resolution``, and ``allow_missing_lookups``.
 
-.. note ::
+Note that way that IPython handles docstrings means that while you can use `?` to get the docstring of the filtering part of the function,
+you can't simply do something like `client.materialize.tables.nucleus_detection_v0().query?`. It will tell you the function can't be found,
+because technically the ``query`` function does not yet exist until the table filtering function is called.
 
-    The way that IPython handles docstrings means that while you can use `?` to get the docstring of the filtering part of the function,
-    you can't simply do something like `client.materialize.tables.nucleus_detection_v0().query?`. It will tell you the function can't be found,
-    because technically the ``query`` function does not yet exist until the table filtering function is called.
+Instead, if you want to glimpse the docstring of the query or live_query functions, you need to split it into two lines:
+.. code:: python
 
-    Instead, if you want to glimpse the docstring of the query or live_query functions, you need to split it into two lines:
-    .. code:: python
-
-        qry_func = client.materialize.tables.nucleus_detection_v0().query
-        qry_func?
+    qry_func = client.materialize.tables.nucleus_detection_v0().query
+    qry_func?
 
 Finally, if the project you are working with has views, a similar interface is available to them via ```client.materialize.views``.
 Currently views are not compatible with live query, and so only the ``.query`` function is available.
