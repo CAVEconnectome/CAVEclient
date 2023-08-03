@@ -323,6 +323,7 @@ you can't simply do something like `client.materialize.tables.nucleus_detection_
 because technically the ``query`` function does not yet exist until the table filtering function is called.
 
 Instead, if you want to glimpse the docstring of the query or live_query functions, you need to split it into two lines:
+
 .. code:: python
 
     qry_func = client.materialize.tables.nucleus_detection_v0().query
