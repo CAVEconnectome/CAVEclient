@@ -251,13 +251,13 @@ Content-aware Interface (Experimental)
     This interface might have small but breaking changes in the near future.
 
 In order to make the querying interface more consistent across tables, we have introduced an additional alternative interface
-to filtering and querying data via the `client.materialize.tables` object.
+to filtering and querying data via the ```client.materialize.tables` object.
 When you instantiate this object, this object finds all of the existing tables and the list of their columns and lets you filter
 the tables as arguments in the function with suggestions.
 Moreover, the filtering arguments and the querying arguments are separated into two.
 
-Let's see how this works with a simplest example — downloading a table called `nucleus_detection_v0`.
-First, we reference the table as a function and then we run the query — this is exactly the same as `client.materialize.query_table('nucleus_detection_v0').
+Let's see how this works with a simplest example — downloading a table called ``nucleus_detection_v0``.
+First, we reference the table as a function and then we run the query — this is exactly the same as ``client.materialize.query_table('nucleus_detection_v0')``.
 
 .. code:: python
 
@@ -272,12 +272,12 @@ If we want to query based on a set of values for the field "id", for example, we
     my_ids = [373879, 111162]
     nuc_df = client.materialize.tables.nucleus_detection_v0(id=my_ids).query()
 
-Where `id=` queries the column based on the schema.
-These the values can be either individual elements (i.e. an integer or a string) or a list/array of elements.
+Where in this example the ``id=`` queries the column ``id`` based on the schema.
+These values can be either individual elements (i.e. an integer or a string) or a list/array of elements, and any field can be used.
 The tooling will automatically sort out how to format the filtering appropriately when running the query.
 Importantly, the filtering is identical between querying all types of tables and queries.
 To see the complete list of fields that can be queried, you can tab-autocomplete or in Jupyter or IPython
-glance at the docstring with `client.materialize.tables.nucleus_detection_v0?`.
+glance at the docstring with ``client.materialize.tables.nucleus_detection_v0?``.
 
 If you need to specify the table programmatically, you can also use a dictionary-style approach to getting the table filtering function.
 For example, an equivalent version of the above line would be:
@@ -288,9 +288,9 @@ For example, an equivalent version of the above line would be:
     my_table = 'nucleus_detection_v0'
     nuc_df = client.materialize.tables[my_table](id=my_ids).query()
  
-The `query` function can also take arguments relating to timestamps or formatting where they act just like in the other query method.
-In particular, the arguments that apply to `query` are: `select_columns`, `offset`, `limit`, `split_posiitons`, `materialization_version`,
-`timestamp`, `metadata`, `desired_resolution`, and `get_counts`.
+The ``query`` function can also take arguments relating to timestamps or formatting where they act just like in the other query method.
+In particular, the arguments that apply to ``query`` are: ``select_columns``, ``offset``, ``limit``, ``split_posiitons``, ``materialization_version``,
+``timestamp``, ``metadata``, ``desired_resolution``, and ``get_counts``.
 For example, to add a desired resolution and split positions in the above query, it would look like:
 
 .. code:: python
@@ -303,8 +303,8 @@ For example, to add a desired resolution and split positions in the above query,
         desired_resolution=[1,1,1],
     )
 
-If you want to do a live query instead of a materialized query, the filtering remains identifical but we use the `live_query` function instead.
-The one required argument for `live_query` is the timestamp.
+If you want to do a live query instead of a materialized query, the filtering remains identifical but we use the ``live_query`` function instead.
+The one required argument for ``live_query`` is the timestamp.
 
 .. code:: python
 
@@ -315,20 +315,20 @@ The one required argument for `live_query` is the timestamp.
         timestamp=datetime.datetime.utcnow(),
     )
 
-The live query functions have similar but slightly different arguments: `timestamp` (required), `offset`, `limit`, `split_positions`,
-`metadata`, `desired_resolution`, and `allow_missing_lookups`.
+The live query functions have similar but slightly different arguments: ``timestamp`` (required), ``offset``, ``limit``, ``split_positions``,
+``metadata``, ``desired_resolution``, and ``allow_missing_lookups``.
 
 .. note ::
 
     The way that IPython handles docstrings means that while you can use `?` to get the docstring of the filtering part of the function,
     you can't simply do something like `client.materialize.tables.nucleus_detection_v0().query?`. It will tell you the function can't be found,
-    because technically the `query` function does not yet exist until the table filtering function is called.
+    because technically the ``query`` function does not yet exist until the table filtering function is called.
 
     Instead, if you want to glimpse the docstring of the query or live_query functions, you need to split it into two lines:
     .. code:: python
 
-        qry_func = client.materialize.tables.allen_column_mtypes_v1(cell_type=['DTC']).query
+        qry_func = client.materialize.tables.nucleus_detection_v0().query
         qry_func?
 
-Finally, if the project you are working with has views, a similar interface is available to them via `client.materialize.views`.
-Currently views are not compatible with live query, and so only the `.query` function is available.
+Finally, if the project you are working with has views, a similar interface is available to them via ```client.materialize.views``.
+Currently views are not compatible with live query, and so only the ``.query`` function is available.
