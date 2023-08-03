@@ -563,4 +563,4 @@ class ViewManager(object):
         return getattr(self, key)
     
     def __repr__(self):
-        return str(self._tables)
+        return str(self._views)
