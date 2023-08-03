@@ -2,6 +2,8 @@ import attrs
 import warnings
 import re
 from cachetools import cached, TTLCache, keys
+import logging
+logger = logging.getLogger(__name__)
 
 # json schema column types that can act as potential columns for looking at tables
 ALLOW_COLUMN_TYPES = ["integer", "boolean", "string", "float"]
@@ -402,6 +404,9 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
+                logger.warning(
+                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
+                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.query_table(
@@ -442,6 +447,9 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 allow_missing_lookups=False,
             ):
+                logger.warning(
+                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
+                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.live_live_query(
@@ -484,6 +492,9 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
+                logger.warning(
+                    "The `client.materialize.views` interface is experimental and might experience breaking changes before the feature is stabilized."
+                )
                 return client.materialize.query_view(
                     self._base_table,
                     metadata=metadata,
