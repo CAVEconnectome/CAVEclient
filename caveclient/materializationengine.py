@@ -2,6 +2,7 @@ import re
 from urllib.error import HTTPError
 import warnings
 import pytz
+import string
 import pandas as pd
 from IPython.display import HTML
 from .mytimer import MyTimeIt
@@ -18,6 +19,7 @@ from .base import (
     BaseEncoder,
     _api_endpoints,
     handle_response,
+    assemble_voxel_resolution,
 )
 from cachetools import cached, TTLCache
 from .tools.table_manager import TableManager, ViewManager
@@ -27,6 +29,14 @@ logger = logging.getLogger(__name__)
 
 SERVER_KEY = "me_server_address"
 
+def _ascii_letters_reord(starting_letter):
+    start_, end_ = string.ascii_lowercase.split(starting_letter)
+    return starting_letter+end_+start_
+
+def _is_listlike(x):
+    if isinstance(x, str):
+        return False
+    return isinstance(x, Iterable)
 
 def convert_position_columns(df, given_resolution, desired_resolution):
     """function to take a dataframe with x,y,z position columns and convert
@@ -459,10 +469,6 @@ class MaterializatonClientV2(ClientBase):
 
         response = self.session.get(url)
         metadata_d = handle_response(response, log_warning=log_warning)
-        vx = metadata_d.pop("voxel_resolution_x", None)
-        vy = metadata_d.pop("voxel_resolution_y", None)
-        vz = metadata_d.pop("voxel_resolution_z", None)
-        metadata_d["voxel_resolution"] = [vx, vy, vz]
         return metadata_d
 
     def _format_query_components(
@@ -709,12 +715,14 @@ class MaterializatonClientV2(ClientBase):
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
                             )
-                        vox_res = self.get_table_metadata(
-                            table,
-                            datastack_name,
-                            materialization_version,
-                            log_warning=False,
-                        )["voxel_resolution"]
+                        vox_res = assemble_voxel_resolution(
+                            self.get_table_metadata(
+                                table,
+                                datastack_name,
+                                materialization_version,
+                                log_warning=False,
+                            )
+                        )
                         df = convert_position_columns(df, vox_res, desired_resolution)
             if metadata:
                 attrs = self._assemble_attributes(
@@ -1231,11 +1239,13 @@ it will likely get removed in future versions. "
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
                         )
-                    vox_res = self.get_table_metadata(
-                        table_name=table,
-                        datastack_name=datastack_name,
-                        log_warning=False,
-                    )["voxel_resolution"]
+                    vox_res = assemble_voxel_resolution(
+                        self.get_table_metadata(
+                            table_name=table,
+                            datastack_name=datastack_name,
+                            log_warning=False,
+                        )
+                    )
                     df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
@@ -1465,12 +1475,14 @@ it will likely get removed in future versions. "
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
                             )
-                        vox_res = self.get_table_metadata(
-                            table,
-                            datastack_name,
-                            materialization_version,
-                            log_warning=False,
-                        )["voxel_resolution"]
+                        vox_res = assemble_voxel_resolution(
+                            self.get_table_metadata(
+                                table,
+                                datastack_name,
+                                materialization_version,
+                                log_warning=False,
+                            )
+                        )
                         df = convert_position_columns(df, vox_res, desired_resolution)
             if not split_positions:
                 concatenate_position_columns(df, inplace=True)
@@ -1650,13 +1662,26 @@ it will likely get removed in future versions. "
 
             for k, v in meta.items():
                 if re.match("^table", k):
-                    attrs[k] = v
+                    if _is_listlike(v):
+                        for v_el, suffix in zip(v, _ascii_letters_reord('x')):
+                            attrs[f"{k}_{suffix}"] = v_el
+                    else:
+                        attrs[k] = v
                 else:
-                    attrs[f"table_{k}"] = v
+                    if _is_listlike(v):
+                        for v_el, suffix in zip(v, _ascii_letters_reord('x')):
+                            attrs[f"table_{k}_{suffix}"] = v_el
+                    else:
+                        attrs[f"table_{k}"] = v
             if desired_resolution is None:
-                attrs["dataframe_resolution"] = attrs["table_voxel_resolution"]
+                attrs["dataframe_resolution_x"] = attrs["table_voxel_resolution_x"]
+                attrs["dataframe_resolution_y"] = attrs["table_voxel_resolution_y"]
+                attrs["dataframe_resolution_z"] = attrs["table_voxel_resolution_z"]
+
             else:
-                attrs["dataframe_resolution"] = desired_resolution
+                attrs["dataframe_resolution_x"] = desired_resolution[0]
+                attrs["dataframe_resolution_y"] = desired_resolution[1]
+                attrs["dataframe_resolution_z"] = desired_resolution[2]
         else:
             attrs["join_query"] = True
             attrs["tables"] = {}
@@ -1671,9 +1696,17 @@ it will likely get removed in future versions. "
                     meta = self.fc.annotation.get_table_metadata(tname)
                 for k, v in meta.items():
                     if re.match("^table", k):
-                        table_attrs[tname][k] = v
+                        if _is_listlike(v):
+                            for v_el, suffix in zip(v, _ascii_letters_reord('x')):
+                                attrs[f"{k}_{suffix}"] = v_el
+                        else:
+                            attrs[k] = v
                     else:
-                        table_attrs[tname][f"table_{k}"] = v
+                        if _is_listlike(v):
+                            for v_el, suffix in zip(v, _ascii_letters_reord('x')):
+                                attrs[f"table_{k}_{suffix}"] = v_el
+                        else:
+                            attrs[f"table_{k}"] = v
                 table_attrs[tname]["join_column"] = jcol
                 table_attrs[tname]["suffix"] = s
 
@@ -1682,12 +1715,15 @@ it will likely get removed in future versions. "
                 for tn in attrs["tables"]:
                     res.append(attrs["tables"][tn]["table_voxel_resolution"])
                 if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
-                    attrs["dataframe_resolution"] = res[0]
+                    attrs["dataframe_resolution_x"] = res[0][0]
+                    attrs["dataframe_resolution_y"] = res[0][1]
+                    attrs["dataframe_resolution_z"] = res[0][2]
                 else:
                     attrs["dataframe_resolution"] = "mixed_resolutions"
             else:
-                attrs["dataframe_resolution"] = desired_resolution
-
+                attrs["dataframe_resolution_x"] = desired_resolution[0]
+                attrs["dataframe_resolution_y"] = desired_resolution[1]
+                attrs["dataframe_resolution_z"] = desired_resolution[2]
         attrs.update(kwargs)
         return attrs
 
@@ -1730,11 +1766,6 @@ class MaterializatonClientV3(MaterializatonClientV2):
 
         response = self.session.get(url)
         all_metadata = handle_response(response, log_warning=log_warning)
-        for metadata_d in all_metadata:
-            vx = metadata_d.pop("voxel_resolution_x", None)
-            vy = metadata_d.pop("voxel_resolution_y", None)
-            vz = metadata_d.pop("voxel_resolution_z", None)
-            metadata_d["voxel_resolution"] = [vx, vy, vz]
         return all_metadata
 
     def live_live_query(
@@ -1886,11 +1917,13 @@ it will likely get removed in future versions. "
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
                             )
-                        vox_res = self.get_table_metadata(
-                            table,
-                            datastack_name,
-                            log_warning=False,
-                        )["voxel_resolution"]
+                        vox_res = assemble_voxel_resolution(
+                            self.get_table_metadata(
+                                table,
+                                datastack_name,
+                                log_warning=False,
+                            )
+                        )
                         df = convert_position_columns(df, vox_res, desired_resolution)
 
             if not split_positions:
