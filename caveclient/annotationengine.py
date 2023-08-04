@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from .auth import AuthClient
-from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
+from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response, assemble_voxel_resolution
 from .endpoints import annotation_api_versions, annotation_common
 from .tools import stage
 
@@ -215,10 +215,6 @@ class AnnotationClientV2(ClientBase):
         url = self._endpoints["table_info"].format_map(endpoint_mapping)
         response = self.session.get(url)
         metadata_d = handle_response(response)
-        vx = metadata_d.pop("voxel_resolution_x")
-        vy = metadata_d.pop("voxel_resolution_y")
-        vz = metadata_d.pop("voxel_resolution_z")
-        metadata_d["voxel_resolution"] = [vx, vy, vz]
         return metadata_d
 
     def delete_table(self, table_name: str, aligned_volume_name: str = None):
@@ -792,7 +788,7 @@ class AnnotationClientV2(ClientBase):
             obj_name = table_name
             table_meta = self.get_table_metadata(table_name)
             schema_name = table_meta["schema_type"]
-            table_resolution = table_meta["voxel_resolution"]
+            table_resolution = assemble_voxel_resolution(table_meta)
         else:
             if schema_name is None:
                 raise ValueError("Must specify either table name or schema name")

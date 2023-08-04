@@ -11,6 +11,9 @@ import numpy as np
 import datetime
 import pandas as pd
 
+def assemble_voxel_resolution(md):
+    "Generate the voxel resolution list from metadata"
+    return [md[f"voxel_resolution_{ii}"] for ii in ["x", "y", "z"]]
 
 class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
