@@ -700,7 +700,8 @@ class MaterializatonClientV2(ClientBase):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
+                with pa.ipc.open_stream(response.content) as reader:
+                    df = reader.read_pandas()
                 df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
@@ -845,7 +846,10 @@ class MaterializatonClientV2(ClientBase):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
+                with pa.ipc.open_stream(response.content) as reader:
+                    df = reader.read_pandas()
+
+                
 
             if metadata:
                 attrs = self._assemble_attributes(
@@ -1223,7 +1227,8 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
+                with pa.ipc.open_stream(response.content) as reader:
+                    df = reader.read_pandas()
                 df = df.copy()
                 if desired_resolution is not None:
 
@@ -1456,7 +1461,8 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
+                with pa.ipc.open_stream(response.content) as reader:
+                    df = reader.read_pandas()
                 df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
@@ -1877,7 +1883,8 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
+                with pa.ipc.open_stream(response.content) as reader:
+                    df = reader.read_pandas()
                 df = df.copy()
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
@@ -2146,7 +2153,8 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = pa.deserialize(response.content)
+                with pa.ipc.open_stream(response.content) as reader:
+                    df = reader.read_pandas()
                 df = df.copy()
 
             if metadata:
