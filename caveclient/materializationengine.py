@@ -27,6 +27,25 @@ logger = logging.getLogger(__name__)
 
 SERVER_KEY = "me_server_address"
 
+def deserialize_query_response(response):
+    '''Deserialize pyarrow responses'''
+    content_type = response.headers.get("Content-Type")
+    if content_type == 'data.arrow':
+        with pa.ipc.open_stream(response.content) as reader:
+            df = reader.read_pandas()
+        return df
+    elif content_type == 'x-application/pyarrow':
+        try:
+            return pa.deserialize(response.content)
+        except NameError:
+            (
+                'Deserialization of this request requires an older version of Pyarrow (version 3 works).\
+                Update Materialization Deployment or locally downgrade Pyarrow.'
+            )
+    else:
+        raise ValueError(
+            f'Unknown response type: {response.headers.get("Content-Type")}'
+        )
 
 def convert_position_columns(df, given_resolution, desired_resolution):
     """function to take a dataframe with x,y,z position columns and convert
@@ -489,6 +508,7 @@ class MaterializatonClientV2(ClientBase):
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = return_pyarrow
+        query_args['arrow_format'] = return_pyarrow
         query_args["split_positions"] = split_positions
         if len(tables) == 1:
             if use_view:
@@ -535,7 +555,7 @@ class MaterializatonClientV2(ClientBase):
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
         if return_pyarrow:
-            encoding = ""
+            encoding = "lz4"
         else:
             encoding = "gzip"
 
@@ -591,6 +611,7 @@ class MaterializatonClientV2(ClientBase):
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
+        debug_mode: bool = False,
     ):
         """generic query on materialization tables
 
@@ -688,10 +709,15 @@ class MaterializatonClientV2(ClientBase):
         )
         if get_counts:
             query_args["count"] = True
+
+        headers = {"Content-Type": "application/json", "Accept-Encoding": encoding}
+
+        if debug_mode:
+            return url, json.dumps(data, cls=BaseEncoder), headers, query_args, ~return_df
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
+            headers=headers,
             params=query_args,
             stream=~return_df,
         )
@@ -700,9 +726,7 @@ class MaterializatonClientV2(ClientBase):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                with pa.ipc.open_stream(response.content) as reader:
-                    df = reader.read_pandas()
-                df = df.copy()
+                df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
 
@@ -846,10 +870,7 @@ class MaterializatonClientV2(ClientBase):
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                with pa.ipc.open_stream(response.content) as reader:
-                    df = reader.read_pandas()
-
-                
+                df = deserialize_query_response(response)
 
             if metadata:
                 attrs = self._assemble_attributes(
@@ -926,7 +947,7 @@ class MaterializatonClientV2(ClientBase):
                 too_recent_str = ""
 
             raise ValueError(
-                f"Timestamp incompatible with IDs: {too_old_str}{too_recent_str}use chunkedgraph client to find valid ID(s)"
+                f"Timestamp incompatible with IDs: {too_old_str}{too_recent_str} use chunkedgraph client to find valid ID(s)"
             )
 
         id_mapping = self.cg_client.get_past_ids(
@@ -1227,9 +1248,7 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                with pa.ipc.open_stream(response.content) as reader:
-                    df = reader.read_pandas()
-                df = df.copy()
+                df = deserialize_query_response(response)
                 if desired_resolution is not None:
 
                     if len(desired_resolution) != 3:
@@ -1461,9 +1480,7 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                with pa.ipc.open_stream(response.content) as reader:
-                    df = reader.read_pandas()
-                df = df.copy()
+                df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
 
@@ -1883,9 +1900,7 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                with pa.ipc.open_stream(response.content) as reader:
-                    df = reader.read_pandas()
-                df = df.copy()
+                df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
 
@@ -2153,9 +2168,7 @@ it will likely get removed in future versions. "
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                with pa.ipc.open_stream(response.content) as reader:
-                    df = reader.read_pandas()
-                df = df.copy()
+                df = deserialize_query_response(response)
 
             if metadata:
                 attrs = self._assemble_attributes(
