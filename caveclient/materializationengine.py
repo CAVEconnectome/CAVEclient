@@ -611,7 +611,6 @@ class MaterializatonClientV2(ClientBase):
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
-        debug_mode: bool = False,
     ):
         """generic query on materialization tables
 
@@ -712,8 +711,6 @@ class MaterializatonClientV2(ClientBase):
 
         headers = {"Content-Type": "application/json", "Accept-Encoding": encoding}
 
-        if debug_mode:
-            return url, json.dumps(data, cls=BaseEncoder), headers, query_args, ~return_df
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
