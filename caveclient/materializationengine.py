@@ -555,7 +555,7 @@ class MaterializatonClientV2(ClientBase):
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
         if return_pyarrow:
-            encoding = "lz4"
+            encoding = "zstd"
         else:
             encoding = "gzip"
 
