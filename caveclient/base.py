@@ -16,6 +16,8 @@ class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray) or isinstance(obj, pd.Series):
             return obj.tolist()
+        if isinstance(obj, set):
+            return list(obj)
         if isinstance(obj, np.uint64):
             return int(obj)
         if isinstance(obj, np.int64):
