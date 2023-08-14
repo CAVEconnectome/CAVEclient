@@ -1,5 +1,6 @@
 from .base import (
     ClientBase,
+    BaseEncoder,
     _api_versions,
     _api_endpoints,
     handle_response,
@@ -164,7 +165,7 @@ class JSONServiceV1(ClientBase):
             url_mapping["state_id"] = state_id
             url = self._endpoints["upload_state_w_id"].format_map(url_mapping)
 
-        response = self.session.post(url, data=json.dumps(json_state))
+        response = self.session.post(url, data=json.dumps(json_state, cls=BaseEncoder))
         handle_response(response, as_json=False)
         response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
