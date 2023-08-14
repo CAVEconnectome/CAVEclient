@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import datetime
 import numpy as np
+from io import BytesIO
 
 
 def test_info_d(myclient):
@@ -27,6 +28,15 @@ def binary_body_match(body):
 
 class TestChunkedgraphException(Exception):
     """Error to raise is bad values make it to chunkedgraph"""
+
+
+def serialize_dataframe(df, compression="zstd"):
+    batch = pa.RecordBatch.from_pandas(df)
+    sink = pa.BufferOutputStream()
+    opt = pa.ipc.IpcWriteOptions(compression=compression)
+    with pa.ipc.new_stream(sink, batch.schema, options=opt) as writer:
+        writer.write_batch(batch)
+    return BytesIO(sink.getvalue().to_pybytes())
 
 
 class TestMatclient:
@@ -89,7 +99,11 @@ class TestMatclient:
 
         responses.add(responses.GET, url=syn_md_url, json=self.synapse_metadata)
 
-        query_d = {"return_pyarrow": True, "split_positions": True}
+        query_d = {
+            "return_pyarrow": True,
+            "split_positions": True,
+            "arrow_format": True,
+        }
         query_string = urlencode(query_d)
         url = url + "?" + query_string
         correct_query_data = {
@@ -121,24 +135,20 @@ class TestMatclient:
                 cx = col + d
                 df_pos[cx] = df_pos[cx] * r
 
-        context = pa.default_serialization_context()
-        serialized = context.serialize(df)
+        responses.add(
+            responses.POST,
+            url=url,
+            body=serialize_dataframe(df),
+            headers={"content-type": "data.arrow"},
+            match=[responses.json_params_matcher(correct_query_data)],
+        )
 
         responses.add(
             responses.POST,
             url=url,
-            body=serialized.to_buffer().to_pybytes(),
-            headers={"content-type": "x-application/pyarrow"},
-            match=[responses.json_params_matcher(correct_query_data)],
-        )
-        context = pa.default_serialization_context()
-        pos_serialized = context.serialize(df_pos)
-        responses.add(
-            responses.POST,
-            url=url,
-            body=pos_serialized.to_buffer().to_pybytes(),
+            body=serialize_dataframe(df_pos),
             headers={
-                "content-type": "x-application/pyarrow",
+                "content-type": "data.arrow",
                 "dataframe_resolution": "1, 1, 1",
             },
             match=[
@@ -332,8 +342,6 @@ class TestMatclient:
         )
         df = pd.read_pickle("tests/test_data/live_query_before.pkl")
 
-        context = pa.default_serialization_context()
-        serialized = context.serialize(df)
         correct_query_data = {
             "filter_in_dict": {
                 test_info["synapse_table"]: {"pre_pt_root_id": [100, 103]}
@@ -342,8 +350,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialized.to_buffer().to_pybytes(),
-            headers={"content-type": "x-application/pyarrow"},
+            body=serialize_dataframe(df),
+            headers={"content-type": "data.arrow"},
             match=[responses.json_params_matcher(correct_query_data)],
         )
         correct_query_data = {
@@ -354,8 +362,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialized.to_buffer().to_pybytes(),
-            headers={"content-type": "x-application/pyarrow"},
+            body=serialize_dataframe(df),
+            headers={"content-type": "data.arrow"},
             match=[responses.json_params_matcher(correct_query_data)],
         )
         correct_query_data = {
@@ -366,8 +374,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialized.to_buffer().to_pybytes(),
-            headers={"content-type": "x-application/pyarrow"},
+            body=serialize_dataframe(df),
+            headers={"content-type": "data.arrow"},
             match=[responses.json_params_matcher(correct_query_data)],
         )
 
@@ -406,7 +414,11 @@ class TestMatclient:
 
         endpoint_mapping["table_name"] = "cell_types"
         url = self.endpoints["simple_query"].format_map(endpoint_mapping)
-        query_d = {"return_pyarrow": True, "split_positions": True}
+        query_d = {
+            "return_pyarrow": True,
+            "split_positions": True,
+            "arrow_format": True,
+        }
         query_string = urlencode(query_d)
         url = url + "?" + query_string
 
@@ -417,8 +429,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialized.to_buffer().to_pybytes(),
-            headers={"content-type": "x-application/pyarrow"},
+            body=serialize_dataframe(df),
+            headers={"content-type": "data.arrow"},
             match=[responses.json_params_matcher(correct_query_data)],
         )
         dfq = myclient.materialize.live_query(
@@ -432,8 +444,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialized.to_buffer().to_pybytes(),
-            headers={"content-type": "x-application/pyarrow"},
+            body=serialize_dataframe(df),
+            headers={"content-type": "data.arrow"},
             match=[responses.json_params_matcher(correct_query_data)],
         )
         dfq = myclient.materialize.live_query(
