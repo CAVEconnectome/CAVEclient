@@ -61,6 +61,11 @@ def _raise_for_status(r, log_warning=True):
                         webbrowser.open(json_data["data"]["tos_form_url"])
 
     elif 500 <= r.status_code < 600:
+        try:
+            d = json.loads(r.content)
+            reason = d.get("message", reason)
+        except json.decoder.JSONDecodeError:
+            pass
         http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
             r.status_code,
             reason,
