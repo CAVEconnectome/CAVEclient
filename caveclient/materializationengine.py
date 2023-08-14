@@ -502,7 +502,7 @@ class MaterializatonClientV2(ClientBase):
         limit,
         desired_resolution,
         use_view=False,
-        random_sample: float = None,
+        random_sample: int = None,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -615,7 +615,7 @@ class MaterializatonClientV2(ClientBase):
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
-        random_sample: float = None,
+        random_sample: int = None,
     ):
         """generic query on materialization tables
 
@@ -659,7 +659,7 @@ class MaterializatonClientV2(ClientBase):
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
-            random_sample: (float, optional) : percentage of rows to sample from table (0-100) float.
+            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -791,7 +791,7 @@ class MaterializatonClientV2(ClientBase):
         materialization_version: int = None,
         metadata: bool = True,
         desired_resolution: Iterable = None,
-        random_sample: float = None,
+        random_sample: int = None,
     ):
         """generic query on materialization tables
 
@@ -836,7 +836,7 @@ class MaterializatonClientV2(ClientBase):
                  If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
              desired_resolution (Iterable, optional):
                  What resolution to convert position columns to. Defaults to None will use defaults.
-             random_sample: (float, optional) : percentage of rows to sample from table (0-100) float.
+             random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Returns:
              pd.DataFrame: a pandas dataframe of results of query
 
@@ -1315,7 +1315,7 @@ it will likely get removed in future versions. "
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
-        random_sample: float = None,
+        random_sample: int = None,
     ):
         """generic query on materialization tables
 
@@ -1361,7 +1361,7 @@ it will likely get removed in future versions. "
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
-            random_sample: (float, optional) : percentage of rows to sample from table (0-100) float.
+            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -2093,7 +2093,7 @@ it will likely get removed in future versions. "
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
-        random_sample: float = None,
+        random_sample: int = None,
     ):
         """generic query on a view
 
@@ -2135,7 +2135,7 @@ it will likely get removed in future versions. "
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
-            random_sample: (float, optional) : if given, will do a tablesample of the table with the given fraction (0-100)
+            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
         """
