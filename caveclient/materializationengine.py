@@ -27,25 +27,27 @@ logger = logging.getLogger(__name__)
 
 SERVER_KEY = "me_server_address"
 
+
 def deserialize_query_response(response):
-    '''Deserialize pyarrow responses'''
+    """Deserialize pyarrow responses"""
     content_type = response.headers.get("Content-Type")
-    if content_type == 'data.arrow':
+    if content_type == "data.arrow":
         with pa.ipc.open_stream(response.content) as reader:
             df = reader.read_pandas()
         return df
-    elif content_type == 'x-application/pyarrow':
+    elif content_type == "x-application/pyarrow":
         try:
             return pa.deserialize(response.content)
         except NameError:
             (
-                'Deserialization of this request requires an older version of Pyarrow (version 3 works).\
-                Update Materialization Deployment or locally downgrade Pyarrow.'
+                "Deserialization of this request requires an older version of Pyarrow (version 3 works).\
+                Update Materialization Deployment or locally downgrade Pyarrow."
             )
     else:
         raise ValueError(
             f'Unknown response type: {response.headers.get("Content-Type")}'
         )
+
 
 def convert_position_columns(df, given_resolution, desired_resolution):
     """function to take a dataframe with x,y,z position columns and convert
@@ -303,13 +305,12 @@ class MaterializatonClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-
     @property
     def tables(self):
         if self._tables is None:
             self._tables = TableManager(self.fc)
         return self._tables
-    
+
     @property
     def views(self):
         if self._views is None:
@@ -501,6 +502,7 @@ class MaterializatonClientV2(ClientBase):
         limit,
         desired_resolution,
         use_view=False,
+        random_sample: float = None,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -508,8 +510,10 @@ class MaterializatonClientV2(ClientBase):
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = return_pyarrow
-        query_args['arrow_format'] = return_pyarrow
+        query_args["arrow_format"] = return_pyarrow
         query_args["split_positions"] = split_positions
+        if random_sample:
+            query_args["random_sample"] = random_sample
         if len(tables) == 1:
             if use_view:
                 endpoint_mapping["view_name"] = tables[0]
@@ -611,6 +615,7 @@ class MaterializatonClientV2(ClientBase):
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
+        random_sample: float = None,
     ):
         """generic query on materialization tables
 
@@ -654,6 +659,7 @@ class MaterializatonClientV2(ClientBase):
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
+            random_sample: (float, optional) : percentage of rows to sample from table (0-100) float.
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -680,6 +686,7 @@ class MaterializatonClientV2(ClientBase):
                     metadata=metadata,
                     merge_reference=merge_reference,
                     desired_resolution=desired_resolution,
+                    random_sample=random_sample,
                 )
         if materialization_version is None:
             materialization_version = self.version
@@ -705,6 +712,7 @@ class MaterializatonClientV2(ClientBase):
             offset,
             limit,
             desired_resolution,
+            random_sample=random_sample,
         )
         if get_counts:
             query_args["count"] = True
@@ -783,6 +791,7 @@ class MaterializatonClientV2(ClientBase):
         materialization_version: int = None,
         metadata: bool = True,
         desired_resolution: Iterable = None,
+        random_sample: float = None,
     ):
         """generic query on materialization tables
 
@@ -827,7 +836,7 @@ class MaterializatonClientV2(ClientBase):
                  If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
              desired_resolution (Iterable, optional):
                  What resolution to convert position columns to. Defaults to None will use defaults.
-
+             random_sample: (float, optional) : percentage of rows to sample from table (0-100) float.
         Returns:
              pd.DataFrame: a pandas dataframe of results of query
 
@@ -853,6 +862,7 @@ class MaterializatonClientV2(ClientBase):
             offset,
             limit,
             desired_resolution,
+            random_sample=random_sample,
         )
 
         response = self.session.post(
@@ -1305,6 +1315,7 @@ it will likely get removed in future versions. "
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
+        random_sample: float = None,
     ):
         """generic query on materialization tables
 
@@ -1350,7 +1361,7 @@ it will likely get removed in future versions. "
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
-
+            random_sample: (float, optional) : percentage of rows to sample from table (0-100) float.
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
 
@@ -1392,6 +1403,7 @@ it will likely get removed in future versions. "
                             merge_reference=merge_reference,
                             desired_resolution=desired_resolution,
                             return_df=True,
+                            random_sample=random_sample,
                         )
                     else:
                         timestamp_start = ts
@@ -1453,6 +1465,7 @@ it will likely get removed in future versions. "
                 offset,
                 limit,
                 desired_resolution,
+                random_sample=random_sample,
             )
             logger.debug(f"query_args: {query_args}")
             logger.debug(f"query data: {data}")
@@ -2080,6 +2093,7 @@ it will likely get removed in future versions. "
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
+        random_sample: float = None,
     ):
         """generic query on a view
 
@@ -2121,6 +2135,7 @@ it will likely get removed in future versions. "
             desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
                 If None, defaults to one specified in client, if that is None then points are returned
                 as stored in the table and should be in the resolution specified in the table metadata
+            random_sample: (float, optional) : if given, will do a tablesample of the table with the given fraction (0-100)
         Returns:
         pd.DataFrame: a pandas dataframe of results of query
         """
@@ -2150,6 +2165,7 @@ it will likely get removed in future versions. "
             limit,
             desired_resolution,
             use_view=True,
+            random_sample=random_sample,
         )
         if get_counts:
             query_args["count"] = True
