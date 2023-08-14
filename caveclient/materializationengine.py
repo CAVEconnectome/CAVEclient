@@ -1137,6 +1137,7 @@ class MaterializatonClientV2(ClientBase):
         suffixes: dict = None,
         desired_resolution: Iterable = None,
         allow_missing_lookups: bool = False,
+        random_sample: int = None,
     ):
         """Beta method for querying cave annotation tables with rootIDs and annotations at a particular
         timestamp.  Note: this method requires more explicit mapping of filters and selection to table
@@ -1159,6 +1160,7 @@ class MaterializatonClientV2(ClientBase):
             suffixes (dict, optional): what suffixes to use on joins, keys are table_names, values are suffixes. Defaults to None.
             desired_resolution (Iterable, optional): What resolution to convert position columns to. Defaults to None will use defaults.
             allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
+            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Example:
          live_live_query("table_name",datetime.datetime.utcnow(),
             joins=[[table_name, table_column, joined_table, joined_column],
@@ -1211,6 +1213,8 @@ it will likely get removed in future versions. "
         query_args["return_pyarrow"] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
+        if random_sample:
+            query_args["random_sample"] = random_sample
         data["table"] = table
         data["timestamp"] = timestamp
         url = self._endpoints["live_live_query"].format_map(endpoint_mapping)
