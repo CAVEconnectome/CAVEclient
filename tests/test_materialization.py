@@ -36,7 +36,7 @@ def serialize_dataframe(df, compression="zstd"):
     opt = pa.ipc.IpcWriteOptions(compression=compression)
     with pa.ipc.new_stream(sink, batch.schema, options=opt) as writer:
         writer.write_batch(batch)
-    return BytesIO(sink.getvalue().to_pybytes())
+    return BytesIO(sink.getvalue().to_pybytes()).getvalue()
 
 
 class TestMatclient:
@@ -139,7 +139,7 @@ class TestMatclient:
             responses.POST,
             url=url,
             body=serialize_dataframe(df),
-            headers={"content-type": "data.arrow"},
+            content_type="data.arrow",
             match=[responses.json_params_matcher(correct_query_data)],
         )
 
@@ -147,8 +147,8 @@ class TestMatclient:
             responses.POST,
             url=url,
             body=serialize_dataframe(df_pos),
+            content_type="data.arrow",
             headers={
-                "content-type": "data.arrow",
                 "dataframe_resolution": "1, 1, 1",
             },
             match=[
@@ -351,7 +351,7 @@ class TestMatclient:
             responses.POST,
             url=url,
             body=serialize_dataframe(df),
-            headers={"content-type": "data.arrow"},
+            content_type="data.arrow",
             match=[responses.json_params_matcher(correct_query_data)],
         )
         correct_query_data = {
@@ -362,8 +362,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
+            content_type="data.arrow",
             body=serialize_dataframe(df),
-            headers={"content-type": "data.arrow"},
             match=[responses.json_params_matcher(correct_query_data)],
         )
         correct_query_data = {
@@ -375,7 +375,7 @@ class TestMatclient:
             responses.POST,
             url=url,
             body=serialize_dataframe(df),
-            headers={"content-type": "data.arrow"},
+            content_type="data.arrow",
             match=[responses.json_params_matcher(correct_query_data)],
         )
 
@@ -409,8 +409,6 @@ class TestMatclient:
         assert np.all(dfq.post_pt_root_id == dfr.post_pt_root_id)
 
         df_ct = pd.read_pickle("tests/test_data/cell_types.pkl")
-        context = pa.default_serialization_context()
-        serialized = context.serialize(df_ct)
 
         endpoint_mapping["table_name"] = "cell_types"
         url = self.endpoints["simple_query"].format_map(endpoint_mapping)
@@ -429,8 +427,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialize_dataframe(df),
-            headers={"content-type": "data.arrow"},
+            body=serialize_dataframe(df_ct),
+            content_type="data.arrow",
             match=[responses.json_params_matcher(correct_query_data)],
         )
         dfq = myclient.materialize.live_query(
@@ -444,8 +442,8 @@ class TestMatclient:
         responses.add(
             responses.POST,
             url=url,
-            body=serialize_dataframe(df),
-            headers={"content-type": "data.arrow"},
+            body=serialize_dataframe(df_ct),
+            content_type="data.arrow",
             match=[responses.json_params_matcher(correct_query_data)],
         )
         dfq = myclient.materialize.live_query(
