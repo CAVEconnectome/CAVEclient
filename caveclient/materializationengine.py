@@ -1211,6 +1211,7 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
+        query_args['arrow_format'] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         if random_sample:
@@ -1865,6 +1866,7 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
+        query_args['arrow_format'] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         query_args["allow_invalid_root_ids"] = allow_invalid_root_ids
@@ -1895,7 +1897,7 @@ it will likely get removed in future versions. "
             desired_resolution = self.desired_resolution
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
-        encoding = ""
+        encoding = "zstd"
 
         response = self.session.post(
             url,
