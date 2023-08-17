@@ -78,4 +78,5 @@ output_map = {
     "cloudvolume": format_cloudvolume,
     "neuroglancer": format_neuroglancer,
     "cave_explorer": format_cave_explorer,
+    "cave-explorer": format_cave_explorer,
 }

@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 SERVER_KEY = "me_server_address"
 
+DEFAULT_COMPRESSION = "zstd"
 
 def deserialize_query_response(response):
     """Deserialize pyarrow responses"""
@@ -559,7 +560,7 @@ class MaterializatonClientV2(ClientBase):
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
         if return_pyarrow:
-            encoding = "zstd"
+            encoding = DEFAULT_COMPRESSION
         else:
             encoding = "gzip"
 
@@ -1211,6 +1212,7 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
+        query_args['arrow_format'] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         if random_sample:
@@ -1237,7 +1239,7 @@ it will likely get removed in future versions. "
             data["limit"] = limit
         if suffixes is not None:
             data["suffixes"] = suffixes
-        encoding = ""
+        encoding = DEFAULT_COMPRESSION
 
         response = self.session.post(
             url,
@@ -1865,6 +1867,7 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
+        query_args['arrow_format'] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         query_args["allow_invalid_root_ids"] = allow_invalid_root_ids
@@ -1895,7 +1898,7 @@ it will likely get removed in future versions. "
             desired_resolution = self.desired_resolution
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
-        encoding = ""
+        encoding = DEFAULT_COMPRESSION
 
         response = self.session.post(
             url,
