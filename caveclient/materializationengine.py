@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 SERVER_KEY = "me_server_address"
 
+DEFAULT_COMPRESSION = "zstd"
 
 def deserialize_query_response(response):
     """Deserialize pyarrow responses"""
@@ -559,7 +560,7 @@ class MaterializatonClientV2(ClientBase):
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
         if return_pyarrow:
-            encoding = "zstd"
+            encoding = DEFAULT_COMPRESSION
         else:
             encoding = "gzip"
 
@@ -1238,7 +1239,7 @@ it will likely get removed in future versions. "
             data["limit"] = limit
         if suffixes is not None:
             data["suffixes"] = suffixes
-        encoding = ""
+        encoding = DEFAULT_COMPRESSION
 
         response = self.session.post(
             url,
@@ -1897,7 +1898,7 @@ it will likely get removed in future versions. "
             desired_resolution = self.desired_resolution
         if desired_resolution is not None:
             data["desired_resolution"] = desired_resolution
-        encoding = "zstd"
+        encoding = DEFAULT_COMPRESSION
 
         response = self.session.post(
             url,
