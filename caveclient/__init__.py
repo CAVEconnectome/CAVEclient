@@ -1,3 +1,3 @@
-__version__ = "5.10.2"
+__version__ = "5.11.0"
 
 from .frameworkclient import CAVEclient
