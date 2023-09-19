@@ -496,6 +496,7 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict,
         filter_equal_dict,
         filter_spatial_dict,
+        filter_regex_dict,
         return_pyarrow,
         split_positions,
         offset,
@@ -533,6 +534,8 @@ class MaterializatonClientV2(ClientBase):
             data["filter_equal_dict"] = filter_equal_dict
         if filter_spatial_dict is not None:
             data["filter_spatial_dict"] = filter_spatial_dict
+        if filter_regex_dict is not None:
+            data["filter_regex_dict"] = filter_regex_dict
         if select_columns is not None:
             if isinstance(select_columns, list):
                 data["select_columns"] = select_columns
@@ -603,6 +606,7 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
+        filter_regex_dict=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -635,6 +639,8 @@ class MaterializatonClientV2(ClientBase):
                 inner layer: keys are column names, values are bounding boxes
                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                              Expressed in units of the voxel_resolution of this dataset.
+            filter_regex_dict (dict, optional):
+                inner layer: keys are column names, values are regex strings
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -677,6 +683,7 @@ class MaterializatonClientV2(ClientBase):
                     filter_out_dict=filter_out_dict,
                     filter_equal_dict=filter_equal_dict,
                     filter_spatial_dict=filter_spatial_dict,
+                    filter_regex_dict=filter_regex_dict,
                     select_columns=select_columns,
                     offset=offset,
                     limit=limit,
@@ -707,6 +714,7 @@ class MaterializatonClientV2(ClientBase):
             {table: filter_out_dict} if filter_out_dict is not None else None,
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
             {table: filter_spatial_dict} if filter_spatial_dict is not None else None,
+            {table: filter_regex_dict} if filter_regex_dict is not None else None,
             return_df,
             True,
             offset,
@@ -754,6 +762,7 @@ class MaterializatonClientV2(ClientBase):
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
                         "spatial": filter_spatial_dict,
+                        "regex": filter_regex_dict,
                     },
                     select_columns=select_columns,
                     offset=offset,
@@ -781,6 +790,7 @@ class MaterializatonClientV2(ClientBase):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
+        filter_regex_dict=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -817,6 +827,10 @@ class MaterializatonClientV2(ClientBase):
                               as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                               Expressed in units of the voxel_resolution of this dataset.
                  Defaults to None
+            filter_regex_dict (dict of dicts, optional):
+                outer layer: keys are table names:
+                inner layer: keys are column names, values are regex strings
+                Defaults to None
              select_columns (dict of lists of str, optional): keys are table names,values are the list of columns from that table.
                Defaults to None, which will select all tables.  Will be passed to server as select_column_maps.
                Passing a list will be passed as select_columns which is deprecated.
@@ -857,6 +871,7 @@ class MaterializatonClientV2(ClientBase):
             filter_out_dict,
             filter_equal_dict,
             filter_spatial_dict,
+            filter_regex_dict,
             return_df,
             True,
             offset,
@@ -891,6 +906,7 @@ class MaterializatonClientV2(ClientBase):
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
                         "spatial": filter_spatial_dict,
+                        "regex": filter_regex_dict,
                     },
                     select_columns=select_columns,
                     offset=offset,
@@ -1151,6 +1167,7 @@ class MaterializatonClientV2(ClientBase):
             filter_out_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to reject. Defaults to None.
             filter_equal_dict (dict, optional):  a dictionary with tables as keys, values are dicts with column keys and values to equate. Defaults to None.
             filter_spatial_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of 2x3 list of bounds. Defaults to None.
+            filter_regex_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of regex strings. Defaults to None.
             select_columns (_type_, optional): a dictionary with tables as keys, values are list of columns. Defaults to None.
             offset (int, optional): value to offset query by. Defaults to None.
             limit (int, optional): limit of query. Defaults to None.
@@ -1192,6 +1209,9 @@ class MaterializatonClientV2(ClientBase):
                 "table_name": {
                 "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
             }
+            filter_regex_dict"= {
+                "table_name": {
+                "column_name": "regex_string"
         }
         Returns:
             pd.DataFrame: result of query
@@ -1310,6 +1330,7 @@ it will likely get removed in future versions. "
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
+        filter_regex_dict=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -1341,6 +1362,8 @@ it will likely get removed in future versions. "
                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                              Expressed in units of the voxel_resolution of this dataset.
                              Defaults to None
+            filter_regex_dict (dict, optional):
+                inner layer: keys are column names, values are regex strings
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -1397,6 +1420,7 @@ it will likely get removed in future versions. "
                             filter_out_dict=filter_out_dict,
                             filter_equal_dict=filter_equal_dict,
                             filter_spatial_dict=filter_spatial_dict,
+                            filter_regex_dict=filter_regex_dict,
                             select_columns=select_columns,
                             offset=offset,
                             limit=limit,
@@ -1464,6 +1488,7 @@ it will likely get removed in future versions. "
                 {table: filter_spatial_dict}
                 if filter_spatial_dict is not None
                 else None,
+                {table: filter_regex_dict} if filter_regex_dict is not None else None,
                 True,
                 True,
                 offset,
@@ -1537,6 +1562,7 @@ it will likely get removed in future versions. "
                     "exclusive": filter_out_dict,
                     "equal": filter_equal_dict,
                     "spatial": filter_spatial_dict,
+                    "regex": filter_regex_dict,
                 },
                 select_columns=select_columns,
                 offset=offset,
@@ -1783,6 +1809,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
+        filter_regex_dict=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -1806,6 +1833,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
             filter_out_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to reject. Defaults to None.
             filter_equal_dict (dict, optional):  a dictionary with tables as keys, values are dicts with column keys and values to equate. Defaults to None.
             filter_spatial_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of 2x3 list of bounds. Defaults to None.
+            filter_regex_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of regex strings. Defaults to None.
             select_columns (_type_, optional): a dictionary with tables as keys, values are list of columns. Defaults to None.
             offset (int, optional): value to offset query by. Defaults to None.
             limit (int, optional): limit of query. Defaults to None.
@@ -1845,7 +1873,11 @@ class MaterializatonClientV3(MaterializatonClientV2):
                 },
             filter_spatial_dict"= {
                 "table_name": {
-                "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+                    "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+            }
+            filter_regex_dict"= {
+                "table_name": {
+                    "column_name": "regex"
             }
         }
         Returns:
@@ -1882,6 +1914,8 @@ it will likely get removed in future versions. "
             data["filter_equal_dict"] = filter_equal_dict
         if filter_spatial_dict is not None:
             data["filter_spatial_dict"] = filter_spatial_dict
+        if filter_regex_dict is not None:
+            data["filter_regex_dict"] = filter_regex_dict
         if select_columns is not None:
             data["select_columns"] = select_columns
         if offset is not None:
@@ -1942,6 +1976,7 @@ it will likely get removed in future versions. "
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
                         "spatial": filter_spatial_dict,
+                        "regex": filter_regex_dict,
                     },
                     select_columns=select_columns,
                     offset=offset,
@@ -2086,6 +2121,7 @@ it will likely get removed in future versions. "
         filter_out_dict=None,
         filter_equal_dict=None,
         filter_spatial_dict=None,
+        filter_regex_dict=None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -2117,6 +2153,8 @@ it will likely get removed in future versions. "
                 inner layer: keys are column names, values are bounding boxes
                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                              Expressed in units of the voxel_resolution of this dataset.
+            filter_regex_dict (dict, optional):
+                inner layer: keys are column names, values are regex strings.
             offset (int, optional): offset in query result
             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
             select_columns (list of str, optional): columns to select. Defaults to None.
@@ -2163,6 +2201,7 @@ it will likely get removed in future versions. "
             {view_name: filter_spatial_dict}
             if filter_spatial_dict is not None
             else None,
+            {view_name: filter_regex_dict} if filter_regex_dict is not None else None,
             return_df,
             True,
             offset,
@@ -2196,6 +2235,7 @@ it will likely get removed in future versions. "
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
                         "spatial": filter_spatial_dict,
+                        "regex": filter_regex_dict,
                     },
                     select_columns=select_columns,
                     offset=offset,
