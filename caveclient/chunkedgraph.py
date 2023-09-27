@@ -82,7 +82,11 @@ def root_id_int_list_check(
     root_id,
     make_unique=False,
 ):
-    if isinstance(root_id, int) or isinstance(root_id, np.uint64) or isinstance(root_id, np.int64):
+    if (
+        isinstance(root_id, int)
+        or isinstance(root_id, np.uint64)
+        or isinstance(root_id, np.int64)
+    ):
         root_id = [root_id]
     elif isinstance(root_id, str):
         try:
@@ -332,10 +336,8 @@ class ChunkedGraphClientV1(ClientBase):
         response = self.session.get(url, params=params)
 
         d = handle_response(response)
-        df = pd.DataFrame(d)
-        df["timestamp"] = df["timestamp"].map(
-            lambda x: datetime.datetime.fromtimestamp(x / 1000, pytz.UTC)
-        )
+        df = pd.DataFrame(json.loads(d))
+        df['timestamp'] = df['timestamp'].apply(lambda x: datetime.datetime.fromtimestamp(x, tz=datetime.timezone.utc))
         return df
 
     def get_tabular_change_log(self, root_ids, filtered=True):
@@ -884,9 +886,12 @@ class ChunkedGraphClientV1(ClientBase):
 
         delta_layers = 4
         if stop_layer is None:
-            stop_layer = self.segmentation_info.get("graph", {}).get("n_layers", 6) - delta_layers
+            stop_layer = (
+                self.segmentation_info.get("graph", {}).get("n_layers", 6)
+                - delta_layers
+            )
         stop_layer = max(1, stop_layer)
-        
+
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
         chunk_list = np.array(
             [
