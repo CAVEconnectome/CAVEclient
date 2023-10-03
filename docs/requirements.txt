@@ -88,7 +88,7 @@ typing-extensions==4.7.1
     # via ipython
 tzdata==2023.3
     # via pandas
-urllib3==2.0.4
+urllib3==2.0.6
     # via
     #   -r requirements.txt
     #   requests
