@@ -35,7 +35,6 @@ def package_timestamp(timestamp, name="timestamp"):
 
 
 class TestChunkedgraph:
-
     _default_endpoint_map = {
         "cg_server_address": TEST_LOCAL_SERVER,
         "table_id": test_info["segmentation_source"].split("/")[-1],
@@ -798,3 +797,13 @@ class TestChunkedgraph:
 
         base_resolution = myclient.chunkedgraph.base_resolution
         assert np.all(base_resolution == [8, 8, 40])
+
+    @responses.activate
+    def test_is_valid_nodes(self, myclient):
+        query_nodes = [91070075234304972, 91070075234296549]
+        out = myclient.chunkedgraph.is_valid_nodes(query_nodes)
+        assert np.all(out)
+
+        query_nodes = [0, -1]
+        out = myclient.chunkedgraph.is_valid_nodes(query_nodes)
+        assert not np.any(out)
