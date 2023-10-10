@@ -888,6 +888,8 @@ class ChunkedGraphClientV1(ClientBase):
         stop_layer = max(1, stop_layer)
         
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+        if not chunks_orig:
+            return [] if return_all else None
         chunk_list = np.array(
             [
                 len(
