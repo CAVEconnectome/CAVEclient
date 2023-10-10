@@ -774,7 +774,7 @@ class ChunkedGraphClientV1(ClientBase):
         root_id : int
             Object root id
         timestamp_future : datetime.datetime or None, optional
-            Cutoff for the search going forwards in time. By default, None.
+            Timestamp to suggest IDs from (note can be in the past relative to the root). By default, None.
 
         Returns
         -------
@@ -783,16 +783,34 @@ class ChunkedGraphClientV1(ClientBase):
         """
         root_id = root_id_int_list_check(root_id, make_unique=True)
 
-        timestamp_past = self.get_root_timestamps(root_id).min()
+        timestamp_root = self.get_root_timestamps(root_id).min()
+        # if timestamp_future is None
+        # or if timestamp_root is less than timestamp_future
 
-        lineage_graph = self.get_lineage_graph(
-            root_id, timestamp_past=timestamp_past, timestamp_future=timestamp_future, as_nx_graph=True
-        )
-
-        out_degree_dict = dict(lineage_graph.out_degree)
-        nodes = np.array(list(out_degree_dict.keys()))
-        out_degrees = np.array(list(out_degree_dict.values()))
-        return nodes[out_degrees == 0]
+        if timestamp_future is None or timestamp_root < timestamp_future:
+            lineage_graph = self.get_lineage_graph(
+                root_id,
+                timestamp_past=timestamp_root,
+                timestamp_future=timestamp_future,
+                as_nx_graph=True,
+            )
+            # then we want the leaves of the tree
+            out_degree_dict = dict(lineage_graph.out_degree)
+            nodes = np.array(list(out_degree_dict.keys()))
+            out_degrees = np.array(list(out_degree_dict.values()))
+            return nodes[out_degrees == 0]
+        else:
+            lineage_graph = self.get_lineage_graph(
+                root_id,
+                timestamp_past=timestamp_future,
+                timestamp_future=timestamp_root,
+                as_nx_graph=True,
+            )
+            # then we want to roots of the tree
+            in_degree_dict = dict(lineage_graph.in_degree)
+            nodes = np.array(list(in_degree_dict.keys()))
+            in_degrees = np.array(list(in_degree_dict.values()))
+            return nodes[in_degrees == 0]
 
     def get_original_roots(self, root_id, timestamp_past=None):
         """Returns root ids that are the latest successors of a given root id.
