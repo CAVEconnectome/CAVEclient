@@ -747,6 +747,20 @@ class ChunkedGraphClientV1(ClientBase):
         data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
         r = handle_response(self.session.post(url, data=data, params=params))
 
+        bad_ids = []
+        for node in r["nodes"]:
+            node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
+            node_ts = node_ts.astimezone(datetime.timezone.utc)
+            if (node_ts > timestamp_future) or (node_ts < timestamp_past):
+                bad_ids.append(node["id"])
+
+        r["nodes"] = [node for node in r["nodes"] if node["id"] not in bad_ids]
+        r["links"] = [
+            link
+            for link in r["links"]
+            if link["source"] not in bad_ids and link["target"] not in bad_ids
+        ]
+
         if as_nx_graph:
             return nx.node_link_graph(r)
         else:
@@ -774,21 +788,6 @@ class ChunkedGraphClientV1(ClientBase):
         lineage_graph = self.get_lineage_graph(
             root_id, timestamp_past=timestamp_past, timestamp_future=timestamp_future
         )
-        bad_ids = []
-        for node in lineage_graph["nodes"]:
-            node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
-            node_ts = node_ts.astimezone(datetime.timezone.utc)
-            if (node_ts > timestamp_future) or (node_ts < timestamp_past):
-                bad_ids.append(node["id"])
-
-        lineage_graph["nodes"] = [
-            node for node in lineage_graph["nodes"] if node["id"] not in bad_ids
-        ]
-        lineage_graph["links"] = [
-            link
-            for link in lineage_graph["links"]
-            if link["source"] not in bad_ids and link["target"] not in bad_ids
-        ]
 
         lineage_graph = nx.node_link_graph(lineage_graph)
 
