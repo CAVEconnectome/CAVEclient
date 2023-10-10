@@ -82,7 +82,11 @@ def root_id_int_list_check(
     root_id,
     make_unique=False,
 ):
-    if isinstance(root_id, int) or isinstance(root_id, np.uint64) or isinstance(root_id, np.int64):
+    if (
+        isinstance(root_id, int)
+        or isinstance(root_id, np.uint64)
+        or isinstance(root_id, np.int64)
+    ):
         root_id = [root_id]
     elif isinstance(root_id, str):
         try:
@@ -768,11 +772,25 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_past = self.get_root_timestamps(root_id).min()
 
         lineage_graph = self.get_lineage_graph(
-            root_id,
-            timestamp_past=timestamp_past,
-            timestamp_future=timestamp_future,
-            as_nx_graph=True,
+            root_id, timestamp_past=timestamp_past, timestamp_future=timestamp_future
         )
+        bad_ids = []
+        for node in lineage_graph["nodes"]:
+            node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
+            node_ts = node_ts.astimezone(datetime.timezone.utc)
+            if (node_ts > timestamp_future) or (node_ts < timestamp_past):
+                bad_ids.append(node["id"])
+
+        lineage_graph["nodes"] = [
+            node for node in lineage_graph["nodes"] if node["id"] not in bad_ids
+        ]
+        lineage_graph["links"] = [
+            link
+            for link in lineage_graph["links"]
+            if link["source"] not in bad_ids and link["target"] not in bad_ids
+        ]
+
+        lineage_graph = nx.node_link_graph(lineage_graph)
 
         out_degree_dict = dict(lineage_graph.out_degree)
         nodes = np.array(list(out_degree_dict.keys()))
@@ -884,16 +902,21 @@ class ChunkedGraphClientV1(ClientBase):
 
         delta_layers = 4
         if stop_layer is None:
-            stop_layer = self.segmentation_info.get("graph", {}).get("n_layers", 6) - delta_layers
+            stop_layer = (
+                self.segmentation_info.get("graph", {}).get("n_layers", 6)
+                - delta_layers
+            )
         stop_layer = max(1, stop_layer)
-        
+
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
         while len(chunks_orig) == 0:
             stop_layer -= 1
             if stop_layer == 1:
-                raise ValueError(f'There were no children for root_id={root_id} at level 2, something is wrong with the chunkedgraph')
+                raise ValueError(
+                    f"There were no children for root_id={root_id} at level 2, something is wrong with the chunkedgraph"
+                )
             chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
-            
+
         chunk_list = np.array(
             [
                 len(
