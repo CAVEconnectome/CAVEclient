@@ -2,6 +2,7 @@ from re import A, match
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
 import pytest
 import responses
+from responses.matchers import json_params_matcher
 import pytz
 import numpy as np
 from caveclient.endpoints import (
@@ -381,7 +382,7 @@ class TestChunkedgraph:
             responses.POST,
             status=200,
             url=url,
-            match=[responses.json_params_matcher({"new_lvl2_ids": chunkid_list})],
+            match=[json_params_matcher({"new_lvl2_ids": chunkid_list})],
         )
 
         myclient.chunkedgraph.remesh_level2_chunks(chunk_ids)
@@ -403,7 +404,7 @@ class TestChunkedgraph:
             status=200,
             url=url,
             json={"is_latest": is_latest_list},
-            match=[responses.json_params_matcher({"node_ids": root_id_list})],
+            match=[json_params_matcher({"node_ids": root_id_list})],
         )
 
         qis_latest = myclient.chunkedgraph.is_latest_roots(root_ids)
@@ -445,7 +446,7 @@ class TestChunkedgraph:
             status=200,
             url=qurl,
             json=id_map_str,
-            match=[responses.json_params_matcher({"root_ids": root_id_list})],
+            match=[json_params_matcher({"root_ids": root_id_list})],
         )
 
         qid_map = myclient.chunkedgraph.get_past_ids(
@@ -620,7 +621,7 @@ class TestChunkedgraph:
             url=url,
             body=json.dumps(response_data),
             match=[
-                responses.json_params_matcher(
+                json_params_matcher(
                     {"sources": qdata_svid["sources"], "sinks": qdata_svid["sinks"]}
                 )
             ],
@@ -800,10 +801,32 @@ class TestChunkedgraph:
 
     @responses.activate
     def test_is_valid_nodes(self, myclient):
+
+        endpoint_mapping = self._default_endpoint_map
+        url = chunkedgraph_endpoints_v1["valid_nodes"].format_map(endpoint_mapping)
         query_nodes = [91070075234304972, 91070075234296549]
+        data = {"node_ids": query_nodes}
+        return_data = {"valid_roots": query_nodes}
+        responses.add(
+            responses.GET,
+            status=200,
+            url=url,
+            json=return_data,
+            match=[json_params_matcher(data)],
+        )
+
         out = myclient.chunkedgraph.is_valid_nodes(query_nodes)
         assert np.all(out)
 
         query_nodes = [0, -1]
+        data = {"node_ids": [0, 18446744073709551615]}
+        return_data = {"valid_roots": []}
+        responses.add(
+            responses.GET,
+            status=200,
+            url=url,
+            json=return_data,
+            match=[json_params_matcher(data)],
+        )
         out = myclient.chunkedgraph.is_valid_nodes(query_nodes)
         assert not np.any(out)
