@@ -786,10 +786,8 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_past = self.get_root_timestamps(root_id).min()
 
         lineage_graph = self.get_lineage_graph(
-            root_id, timestamp_past=timestamp_past, timestamp_future=timestamp_future
+            root_id, timestamp_past=timestamp_past, timestamp_future=timestamp_future, as_nx_graph=True
         )
-
-        lineage_graph = nx.node_link_graph(lineage_graph)
 
         out_degree_dict = dict(lineage_graph.out_degree)
         nodes = np.array(list(out_degree_dict.keys()))
