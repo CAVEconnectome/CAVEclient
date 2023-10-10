@@ -888,6 +888,12 @@ class ChunkedGraphClientV1(ClientBase):
         stop_layer = max(1, stop_layer)
         
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+        while len(chunks_orig) == 0:
+            stop_layer -= 1
+            if stop_layer == 1:
+                raise ValueError(f'There were no children for root_id={root_id} at level 2, something is wrong with the chunkedgraph')
+            chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+            
         chunk_list = np.array(
             [
                 len(
