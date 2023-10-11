@@ -751,7 +751,11 @@ class ChunkedGraphClientV1(ClientBase):
         for node in r["nodes"]:
             node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
             node_ts = node_ts.astimezone(datetime.timezone.utc)
-            if (node_ts > timestamp_future) or (node_ts < timestamp_past):
+            if (
+                (node_ts < timestamp_past) if timestamp_past is not None else False
+            ) or (
+                (node_ts > timestamp_future) if timestamp_future is not None else False
+            ):
                 bad_ids.append(node["id"])
 
         r["nodes"] = [node for node in r["nodes"] if node["id"] not in bad_ids]
@@ -801,16 +805,23 @@ class ChunkedGraphClientV1(ClientBase):
             return nodes[out_degrees == 0]
         else:
             lineage_graph = self.get_lineage_graph(
-                root_id,
-                timestamp_past=timestamp_future,
-                timestamp_future=timestamp_root,
-                as_nx_graph=True,
+                root_id, timestamp_future=timestamp_root
             )
-            # then we want to roots of the tree
-            in_degree_dict = dict(lineage_graph.in_degree)
-            nodes = np.array(list(in_degree_dict.keys()))
-            in_degrees = np.array(list(in_degree_dict.values()))
-            return nodes[in_degrees == 0]
+            nodes = []
+            for link in lineage_graph["links"]:
+                source_node = next(
+                    n for n in lineage_graph["nodes"] if n["id"] == link["source"]
+                )
+                target_node = next(
+                    n for n in lineage_graph["nodes"] if n["id"] == link["target"]
+                )
+                source_ts = datetime.datetime.fromtimestamp(source_node["timestamp"])
+                source_ts = source_ts.astimezone(datetime.timezone.utc)
+                target_ts = datetime.datetime.fromtimestamp(target_node["timestamp"])
+                target_ts = target_ts.astimezone(datetime.timezone.utc)
+                if (source_ts < timestamp_future) and (target_ts > timestamp_future):
+                    nodes.append(source_node['id'])
+            return nodes
 
     def get_original_roots(self, root_id, timestamp_past=None):
         """Returns root ids that are the latest successors of a given root id.
@@ -903,6 +914,7 @@ class ChunkedGraphClientV1(ClientBase):
             If True, return all fractions sorted by most overlap to least, by default False. If False, only the topmost value is returned.
         """
         curr_ids = self.get_latest_roots(root_id, timestamp_future=timestamp)
+
         if root_id in curr_ids:
             if return_all:
                 if return_fraction_overlap:
