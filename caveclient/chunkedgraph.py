@@ -713,7 +713,13 @@ class ChunkedGraphClientV1(ClientBase):
         return r.json()
 
     def get_lineage_graph(
-        self, root_id, timestamp_past=None, timestamp_future=None, as_nx_graph=False
+        self,
+        root_id,
+        timestamp_past=None,
+        timestamp_future=None,
+        as_nx_graph=False,
+        exclude_links_to_future=False,
+        exclude_links_to_past=False,
     ):
         """Returns the lineage graph for a root id, optionally cut off in the past or the future.
 
@@ -727,6 +733,10 @@ class ChunkedGraphClientV1(ClientBase):
             Cutoff for the lineage graph going forwards in time. By default, None.
         as_nx_graph: bool
             if True, a networkx graph is returned
+        exclude_links_to_future: bool
+            if True, links from nodes before timestamp_future to after timestamp_future are removed
+        exclude_links_to_past: bool
+            if True, links from nodes before timestamp_past to after timestamp_past are removed
 
         Returns
         -------
@@ -747,23 +757,30 @@ class ChunkedGraphClientV1(ClientBase):
         data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
         r = handle_response(self.session.post(url, data=data, params=params))
 
-        bad_ids = []
-        for node in r["nodes"]:
-            node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
-            node_ts = node_ts.astimezone(datetime.timezone.utc)
-            if (
-                (node_ts < timestamp_past) if timestamp_past is not None else False
-            ) or (
-                (node_ts > timestamp_future) if timestamp_future is not None else False
-            ):
-                bad_ids.append(node["id"])
+        if exclude_links_to_future or exclude_links_to_past:
+            bad_ids = []
+            for node in r["nodes"]:
+                node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
+                node_ts = node_ts.astimezone(datetime.timezone.utc)
+                if (
+                    exclude_links_to_past and (node_ts < timestamp_past)
+                    if timestamp_past is not None
+                    else False
+                ):
+                    bad_ids.append(node["id"])
+                if (
+                    exclude_links_to_future and (node_ts > timestamp_future)
+                    if timestamp_future is not None
+                    else False
+                ):
+                    bad_ids.append(node["id"])
 
-        r["nodes"] = [node for node in r["nodes"] if node["id"] not in bad_ids]
-        r["links"] = [
-            link
-            for link in r["links"]
-            if link["source"] not in bad_ids and link["target"] not in bad_ids
-        ]
+            r["nodes"] = [node for node in r["nodes"] if node["id"] not in bad_ids]
+            r["links"] = [
+                link
+                for link in r["links"]
+                if link["source"] not in bad_ids and link["target"] not in bad_ids
+            ]
 
         if as_nx_graph:
             return nx.node_link_graph(r)
@@ -796,6 +813,7 @@ class ChunkedGraphClientV1(ClientBase):
                 root_id,
                 timestamp_past=timestamp_root,
                 timestamp_future=timestamp_future,
+                exclude_links_to_future=True,
                 as_nx_graph=True,
             )
             # then we want the leaves of the tree
@@ -804,24 +822,18 @@ class ChunkedGraphClientV1(ClientBase):
             out_degrees = np.array(list(out_degree_dict.values()))
             return nodes[out_degrees == 0]
         else:
+            # then timestamp_future is in fact in the past
             lineage_graph = self.get_lineage_graph(
-                root_id, timestamp_future=timestamp_root
+                root_id,
+                timestamp_future=timestamp_root,
+                timestamp_past=timestamp_future,
+                as_nx_graph=True,
             )
-            nodes = []
-            for link in lineage_graph["links"]:
-                source_node = next(
-                    n for n in lineage_graph["nodes"] if n["id"] == link["source"]
-                )
-                target_node = next(
-                    n for n in lineage_graph["nodes"] if n["id"] == link["target"]
-                )
-                source_ts = datetime.datetime.fromtimestamp(source_node["timestamp"])
-                source_ts = source_ts.astimezone(datetime.timezone.utc)
-                target_ts = datetime.datetime.fromtimestamp(target_node["timestamp"])
-                target_ts = target_ts.astimezone(datetime.timezone.utc)
-                if (source_ts < timestamp_future) and (target_ts > timestamp_future):
-                    nodes.append(source_node['id'])
-            return nodes
+            in_degree_dict = dict(lineage_graph.in_degree)
+            nodes = np.array(list(in_degree_dict.keys()))
+            in_degrees = np.array(list(in_degree_dict.values()))
+            return nodes[in_degrees == 0]
+
 
     def get_original_roots(self, root_id, timestamp_past=None):
         """Returns root ids that are the latest successors of a given root id.
