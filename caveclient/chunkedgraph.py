@@ -812,9 +812,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         timestamp_root = self.get_root_timestamps(root_id).min()
         if timestamp_future is not None:
-            logger.warning(
-                "timestamp_future is deprecated, use timestamp instead"
-            )
+            logger.warning("timestamp_future is deprecated, use timestamp instead")
             timestamp = timestamp_future
 
         if timestamp is None:
@@ -938,7 +936,7 @@ class ChunkedGraphClientV1(ClientBase):
         return_fraction_overlap : bool, optional
             If True, return all fractions sorted by most overlap to least, by default False. If False, only the topmost value is returned.
         """
-        curr_ids = self.get_latest_roots(root_id, timestamp_future=timestamp)
+        curr_ids = self.get_latest_roots(root_id, timestamp=timestamp)
 
         if root_id in curr_ids:
             if return_all:
