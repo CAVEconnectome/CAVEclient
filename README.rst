@@ -20,3 +20,7 @@ Can be installed from pypi
 Documentation
 #############
 You can find full documentation on readthedocs (https://caveclient.readthedocs.io).
+
+Usage examples
+##############
+- Tutorial notebook for accessing the FlyWire Connectome dataset: https://github.com/seung-lab/FlyConnectome/blob/main/CAVE%20tutorial.ipynb
