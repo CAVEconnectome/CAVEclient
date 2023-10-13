@@ -819,7 +819,7 @@ class ChunkedGraphClientV1(ClientBase):
             timestamp = datetime.datetime.now(datetime.timezone.utc)
         elif timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
-            
+
         # or if timestamp_root is less than timestamp_future
         if (timestamp is None) or (timestamp_root < timestamp):
             lineage_graph = self.get_lineage_graph(
