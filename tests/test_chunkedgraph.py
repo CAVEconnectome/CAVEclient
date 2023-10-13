@@ -47,7 +47,7 @@ class TestChunkedgraph:
         url = chunkedgraph_endpoints_v1["get_roots"].format_map(endpoint_mapping)
         svids = np.array([97557743795364048, 75089979126506763], dtype=np.uint64)
         root_ids = np.array([864691135217871271, 864691135566275148], dtype=np.uint64)
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         query_d = package_timestamp(now)
         qurl = url + "?" + urlencode(query_d)
         responses.add(
@@ -231,7 +231,7 @@ class TestChunkedgraph:
         endpoint_mapping = self._default_endpoint_map
         url = chunkedgraph_endpoints_v1["delta_roots"].format_map(endpoint_mapping)
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         timestamp_past = now - datetime.timedelta(days=1)
         query_d = package_timestamp(timestamp_past, name="timestamp_past")
         query_d.update(package_timestamp(now, name="timestamp_future"))
@@ -434,7 +434,7 @@ class TestChunkedgraph:
                 "864691136577570580": [864691136721486702, 864691133958789149],
             },
         }
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         timestamp_past = now - datetime.timedelta(days=7)
 
         query_d = package_timestamp(timestamp_past, name="timestamp_past")
@@ -470,7 +470,7 @@ class TestChunkedgraph:
         url = chunkedgraph_endpoints_v1["handle_lineage_graph"].format_map(
             endpoint_mapping
         )
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         timestamp_past = now - datetime.timedelta(days=7)
 
         query_d = package_timestamp(timestamp_past, name="timestamp_past")

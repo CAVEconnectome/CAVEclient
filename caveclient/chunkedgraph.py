@@ -204,7 +204,7 @@ class ChunkedGraphClientV1(ClientBase):
             if self._default_timestamp is not None:
                 return self._default_timestamp
             else:
-                return datetime.datetime.utcnow()
+                return datetime.datetime.now(datetime.timezone.utc)
         else:
             return timestamp
 
@@ -816,11 +816,10 @@ class ChunkedGraphClientV1(ClientBase):
             timestamp = timestamp_future
 
         if timestamp is None:
-            timestamp = datetime.datetime.utcnow()
+            timestamp = datetime.datetime.now(datetime.timezone.utc)
 
         # or if timestamp_root is less than timestamp_future
-
-        if timestamp is None or timestamp_root < timestamp:
+        if (timestamp is None) or (timestamp_root < timestamp):
             lineage_graph = self.get_lineage_graph(
                 root_id,
                 timestamp_past=timestamp_root,
@@ -1114,14 +1113,16 @@ class ChunkedGraphClientV1(ClientBase):
     def get_delta_roots(
         self,
         timestamp_past: datetime.datetime,
-        timestamp_future: datetime.datetime = datetime.datetime.utcnow(),
+        timestamp_future: datetime.datetime = datetime.datetime.now(
+            datetime.timezone.utc
+        ),
     ):
         """get the list of roots that have changed between timetamp_past and timestamp_future
 
 
         Args:
             timestamp_past (datetime.datetime): past timepoint to query
-            timestamp_future (datetime.datetime, optional): future timepoint to query. Defaults to datetime.datetime.utcnow().
+            timestamp_future (datetime.datetime, optional): future timepoint to query. Defaults to datetime.datetime.now(datetime.timezone.utc).
 
         Returns:
             old_roots (np.ndarray): roots that have expired in that interval

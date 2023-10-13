@@ -111,7 +111,7 @@ def concatenate_position_columns(df, inplace=False):
 
 def convert_timestamp(ts: datetime):
     if ts == "now":
-        ts = datetime.utcnow()
+        ts = datetime.now(timezone.utc)
 
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
@@ -1181,7 +1181,7 @@ class MaterializatonClientV2(ClientBase):
             allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
             random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Example:
-         live_live_query("table_name",datetime.datetime.utcnow(),
+         live_live_query("table_name",datetime.datetime.now(datetime.timezone.utc),
             joins=[[table_name, table_column, joined_table, joined_column],
                      [joined_table, joincol2, third_table, joincol_third]]
             suffixes={
@@ -1350,7 +1350,7 @@ it will likely get removed in future versions. "
         Args:
             table: 'str'
             timestamp (datetime.datetime): time to materialize (in utc)
-                pass datetime.datetime.utcnow() for present time
+                pass datetime.datetime.now(datetime.timezone.utc) for present time
             filter_in_dict (dict , optional):
                 keys are column names, values are allowed entries.
                 Defaults to None.
@@ -1850,7 +1850,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
             allow_invalid_root_ids (bool, optional): If True, ignore root ids not valid at the given timestamp, otherwise raise an Error. Defaults to False.
             random_sample (int, optional): If given, will do a tablesample of the table to return that many annotations
         Example:
-         live_live_query("table_name",datetime.datetime.utcnow(),
+         live_live_query("table_name",datetime.datetime.now(datetime.timezone.utc),
             joins=[[table_name, table_column, joined_table, joined_column],
                      [joined_table, joincol2, third_table, joincol_third]]
             suffixes={
