@@ -29,6 +29,7 @@ SERVER_KEY = "me_server_address"
 
 DEFAULT_COMPRESSION = "zstd"
 
+
 def deserialize_query_response(response):
     """Deserialize pyarrow responses"""
     content_type = response.headers.get("Content-Type")
@@ -1232,7 +1233,7 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
-        query_args['arrow_format'] = True
+        query_args["arrow_format"] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         if random_sample:
@@ -1822,6 +1823,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
         desired_resolution: Iterable = None,
         allow_missing_lookups: bool = False,
         allow_invalid_root_ids: bool = False,
+        random_sample: int = None,
     ):
         """Beta method for querying cave annotation tables with rootIDs and annotations at a particular
         timestamp.  Note: this method requires more explicit mapping of filters and selection to table
@@ -1846,6 +1848,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
             desired_resolution (Iterable, optional): What resolution to convert position columns to. Defaults to None will use defaults.
             allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
             allow_invalid_root_ids (bool, optional): If True, ignore root ids not valid at the given timestamp, otherwise raise an Error. Defaults to False.
+            random_sample (int, optional): If given, will do a tablesample of the table to return that many annotations
         Example:
          live_live_query("table_name",datetime.datetime.utcnow(),
             joins=[[table_name, table_column, joined_table, joined_column],
@@ -1899,10 +1902,12 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
-        query_args['arrow_format'] = True
+        query_args["arrow_format"] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         query_args["allow_invalid_root_ids"] = allow_invalid_root_ids
+        if random_sample:
+            query_args["random_sample"] = random_sample
         data["table"] = table
         data["timestamp"] = timestamp
 
@@ -2258,6 +2263,29 @@ it will likely get removed in future versions. "
                 return concatenate_position_columns(df, inplace=True)
         else:
             return response.json()
+
+    def get_unique_string_values(self, table: str, datastack_name: str = None):
+        """get unique string values for a table
+
+            Args:
+            table: 'str'
+            datastack_name (str, optional): datastack to query.
+                If None defaults to one specified in client.
+
+        Returns:
+        dict[str]: a dictionary of column names and unique values
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table
+
+        url = self._endpoints["unique_string_values"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response)
+        return response.json()
 
 
 client_mapping = {

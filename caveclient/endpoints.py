@@ -85,6 +85,8 @@ materialization_endpoints_v3 = {
     + "/datastack/{datastack_name}/version/{version}/views/{view_name}/schema",
     "view_schemas": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/views/schemas",
+    "unique_string_values": mat_v3_api
+    + "/datastack/{datastack_name}/table/{table_name}/unique_string_values",
 }
 
 materialization_api_versions = {
