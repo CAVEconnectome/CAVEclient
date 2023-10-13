@@ -813,8 +813,7 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_root = self.get_root_timestamps(root_id).min()
         if timestamp_future is not None:
             logger.warning(
-                "timestamp_future is deprecated, use timestamp instead",
-                DeprecationWarning,
+                "timestamp_future is deprecated, use timestamp instead"
             )
             timestamp = timestamp_future
 
