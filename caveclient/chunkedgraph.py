@@ -84,11 +84,7 @@ def root_id_int_list_check(
     root_id,
     make_unique=False,
 ):
-    if (
-        isinstance(root_id, int)
-        or isinstance(root_id, np.uint64)
-        or isinstance(root_id, np.int64)
-    ):
+   isinstance(root_id, (int, np.uint64, np.int64)):
         root_id = [root_id]
     elif isinstance(root_id, str):
         try:
@@ -737,8 +733,10 @@ class ChunkedGraphClientV1(ClientBase):
             if True, a networkx graph is returned
         exclude_links_to_future: bool
             if True, links from nodes before timestamp_future to after timestamp_future are removed
+            if False, the link(s) which has one node before timestamp and one node after timestamp is kept
         exclude_links_to_past: bool
             if True, links from nodes before timestamp_past to after timestamp_past are removed
+            if False, the link(s) which has one node before timestamp and one node after timestamp is kept
 
         Returns
         -------
