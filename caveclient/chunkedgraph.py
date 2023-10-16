@@ -84,7 +84,7 @@ def root_id_int_list_check(
     root_id,
     make_unique=False,
 ):
-   if isinstance(root_id, (int, np.uint64, np.int64)):
+    if isinstance(root_id, (int, np.uint64, np.int64)):
         root_id = [root_id]
     elif isinstance(root_id, str):
         try:
@@ -812,7 +812,7 @@ class ChunkedGraphClientV1(ClientBase):
         if timestamp_future is not None:
             logger.warning("timestamp_future is deprecated, use timestamp instead")
             timestamp = timestamp_future
-        
+
         if timestamp is None:
             timestamp = datetime.datetime.now(datetime.timezone.utc)
         elif timestamp.tzinfo is None:
