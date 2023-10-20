@@ -265,3 +265,12 @@ l2cache_endpoints_v1 = {
 }
 
 l2cache_api_versions = {1: l2cache_endpoints_v1}
+
+functionmodel_common = "{functionalmodel_server_address/functionalmodel"
+functionmodel_v1 = "{functionalmodel_server_address}/functionalmodel/api/v1"
+functionmodel_endpoints_common = {
+    "dataset_units": functionmodel_v1 + "/datasets/{dataset_name}/units"
+}
+functionmodel_endpoints_v1 = functionmodel_endpoints_common
+
+functionalmodel_api_versions = {1: functionmodel_endpoints_v1}
