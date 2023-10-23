@@ -423,11 +423,12 @@ class MaterializatonClientV2(ClientBase):
         return convert_timestamp(meta["time_stamp"])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
-    def get_versions_metadata(self, datastack_name=None):
+    def get_versions_metadata(self, datastack_name=None, expired=False):
         """get the metadata for all the versions that are presently available and valid
 
         Args:
             datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
+            expired (bool, optional): whether to include expired versions. Defaults to False.
 
         Returns:
             list[dict]: a list of metadata dictionaries
@@ -437,7 +438,8 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        query_args = {"expired": expired}
+        response = self.session.get(url, params=query_args)
         d = handle_response(response)
         for md in d:
             md["time_stamp"] = convert_timestamp(md["time_stamp"])
