@@ -292,7 +292,7 @@ class MaterializatonClientV2(ClientBase):
         versions = self.get_versions(datastack_name=datastack_name)
         return np.max(np.array(versions))
 
-    def get_versions(self, datastack_name=None):
+    def get_versions(self, datastack_name=None, expired=False):
         """get versions available
 
         Args:
@@ -303,7 +303,8 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        query_args = {"expired": expired}
+        response = self.session.get(url, params=query_args)
         self.raise_for_status(response)
         return response.json()
 
