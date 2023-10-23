@@ -69,7 +69,7 @@ materialization_endpoints_v3 = {
     "all_tables_metadata": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/tables/metadata",
     "versions_metadata": mat_v3_api + "/datastack/{datastack_name}/metadata",
-    "ingest_annotation_table": mat_v3_api
+    "ingest_annotation_table": mat_v2_api
     + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
     "segmentation_metadata": mat_v3_api
     + "/datastack/{datastack_name}/table/{table_name}/segmentation_metadata",
