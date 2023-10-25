@@ -284,7 +284,7 @@ class ChunkedGraphClientV1(ClientBase):
         Parameters
         ----------
         root_id : int
-            Object root id to look up
+            Object root ID to look up.
 
         Returns
         -------
@@ -319,7 +319,7 @@ class ChunkedGraphClientV1(ClientBase):
         include_undo: bool = True,
         timestamp_end: datetime.datetime = None,
     ):
-        """Get operation details for a User ID.
+        """Get operation details for a user ID.
 
         Parameters
         ----------
@@ -335,7 +335,7 @@ class ChunkedGraphClientV1(ClientBase):
         Returns
         -------
         pd.DataFrame
-            Dataframe with the following columns:
+            DataFrame with the following columns:
 
             "operation_id": int
                 Identifier for the operation.
@@ -454,8 +454,7 @@ class ChunkedGraphClientV1(ClientBase):
         return np.int64(handle_response(response)["leaf_ids"])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)):
-        """Perform a merge on the chunkeded graph.
-
+        """Perform a merge on the chunked graph.
 
         Parameters
         ----------
@@ -730,7 +729,6 @@ class ChunkedGraphClientV1(ClientBase):
         return centroids, l2_path, failed_l2_ids
 
     def get_subgraph(self, root_id, bounds):
-        # re-write the old docstring below using better grammar and numpydoc formatting
         """Get subgraph of root id within a bounding box.
 
         Parameters
@@ -1088,7 +1086,8 @@ class ChunkedGraphClientV1(ClientBase):
         return_all=False,
         return_fraction_overlap=False,
     ):
-        """Suggest latest roots for a given root id, based on overlap of component
+        """
+        Suggest latest roots for a given root id, based on overlap of component
         chunk IDs. Note that edits change chunk IDs, and so this effectively measures
         the fraction of unchanged chunks at a given chunk layer, which sets the size
         scale of chunks. Higher layers are coarser.
