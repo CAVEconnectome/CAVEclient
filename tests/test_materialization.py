@@ -6,6 +6,7 @@ from caveclient.endpoints import (
 )
 import pandas as pd
 import responses
+from responses.matchers import json_params_matcher
 import pyarrow as pa
 from urllib.parse import urlencode
 from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
@@ -26,7 +27,7 @@ def binary_body_match(body):
     return match
 
 
-class TestChunkedgraphException(Exception):
+class ChunkedgraphTestException(Exception):
     """Error to raise is bad values make it to chunkedgraph"""
 
 
@@ -140,7 +141,7 @@ class TestMatclient:
             url=url,
             body=serialize_dataframe(df),
             content_type="data.arrow",
-            match=[responses.json_params_matcher(correct_query_data)],
+            match=[json_params_matcher(correct_query_data)],
         )
 
         responses.add(
@@ -151,11 +152,7 @@ class TestMatclient:
             headers={
                 "dataframe_resolution": "1, 1, 1",
             },
-            match=[
-                responses.json_params_matcher(
-                    correct_query_data_with_desired_resolution
-                )
-            ],
+            match=[json_params_matcher(correct_query_data_with_desired_resolution)],
         )
 
         meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
@@ -221,7 +218,7 @@ class TestMatclient:
         ### live query test
         def my_get_roots(self, supervoxel_ids, timestamp=None, stop_layer=None):
             if 0 in supervoxel_ids:
-                raise TestChunkedgraphException(
+                raise ChunkedgraphTestException(
                     ("should not call get roots on svid =0")
                 )
             if timestamp == good_time:
@@ -269,7 +266,7 @@ class TestMatclient:
             self, root_ids, timestamp_past=None, timestamp_future=None
         ):
             if 0 in root_ids:
-                raise TestChunkedgraphException(("should not past_ids on svid =0"))
+                raise ChunkedgraphTestException(("should not past_ids on svid =0"))
             id_map = {201: [100], 103: [103], 203: [101, 102]}
             return {
                 "future_id_map": {},
@@ -278,7 +275,7 @@ class TestMatclient:
 
         def mock_is_latest_roots(self, root_ids, timestamp=None):
             if 0 in root_ids:
-                raise TestChunkedgraphException(
+                raise ChunkedgraphTestException(
                     ("should not call is_latest on svid =0")
                 )
             if timestamp == good_time:
@@ -352,7 +349,7 @@ class TestMatclient:
             url=url,
             body=serialize_dataframe(df),
             content_type="data.arrow",
-            match=[responses.json_params_matcher(correct_query_data)],
+            match=[json_params_matcher(correct_query_data)],
         )
         correct_query_data = {
             "filter_in_dict": {
@@ -364,7 +361,7 @@ class TestMatclient:
             url=url,
             content_type="data.arrow",
             body=serialize_dataframe(df),
-            match=[responses.json_params_matcher(correct_query_data)],
+            match=[json_params_matcher(correct_query_data)],
         )
         correct_query_data = {
             "filter_in_dict": {
@@ -376,7 +373,7 @@ class TestMatclient:
             url=url,
             body=serialize_dataframe(df),
             content_type="data.arrow",
-            match=[responses.json_params_matcher(correct_query_data)],
+            match=[json_params_matcher(correct_query_data)],
         )
 
         dfq = myclient.materialize.live_query(
@@ -429,7 +426,7 @@ class TestMatclient:
             url=url,
             body=serialize_dataframe(df_ct),
             content_type="data.arrow",
-            match=[responses.json_params_matcher(correct_query_data)],
+            match=[json_params_matcher(correct_query_data)],
         )
         dfq = myclient.materialize.live_query(
             "cell_types", good_time, split_positions=True
@@ -444,7 +441,7 @@ class TestMatclient:
             url=url,
             body=serialize_dataframe(df_ct),
             content_type="data.arrow",
-            match=[responses.json_params_matcher(correct_query_data)],
+            match=[json_params_matcher(correct_query_data)],
         )
         dfq = myclient.materialize.live_query(
             "cell_types",

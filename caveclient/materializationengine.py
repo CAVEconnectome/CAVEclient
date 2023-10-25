@@ -29,6 +29,7 @@ SERVER_KEY = "me_server_address"
 
 DEFAULT_COMPRESSION = "zstd"
 
+
 def deserialize_query_response(response):
     """Deserialize pyarrow responses"""
     content_type = response.headers.get("Content-Type")
@@ -110,7 +111,7 @@ def concatenate_position_columns(df, inplace=False):
 
 def convert_timestamp(ts: datetime):
     if ts == "now":
-        ts = datetime.utcnow()
+        ts = datetime.now(timezone.utc)
 
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
@@ -291,7 +292,7 @@ class MaterializatonClientV2(ClientBase):
         versions = self.get_versions(datastack_name=datastack_name)
         return np.max(np.array(versions))
 
-    def get_versions(self, datastack_name=None):
+    def get_versions(self, datastack_name=None, expired=False):
         """get versions available
 
         Args:
@@ -302,7 +303,8 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        query_args = {"expired": expired}
+        response = self.session.get(url, params=query_args)
         self.raise_for_status(response)
         return response.json()
 
@@ -421,11 +423,12 @@ class MaterializatonClientV2(ClientBase):
         return convert_timestamp(meta["time_stamp"])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
-    def get_versions_metadata(self, datastack_name=None):
+    def get_versions_metadata(self, datastack_name=None, expired=False):
         """get the metadata for all the versions that are presently available and valid
 
         Args:
             datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
+            expired (bool, optional): whether to include expired versions. Defaults to False.
 
         Returns:
             list[dict]: a list of metadata dictionaries
@@ -435,7 +438,8 @@ class MaterializatonClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        query_args = {"expired": expired}
+        response = self.session.get(url, params=query_args)
         d = handle_response(response)
         for md in d:
             md["time_stamp"] = convert_timestamp(md["time_stamp"])
@@ -1180,7 +1184,7 @@ class MaterializatonClientV2(ClientBase):
             allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
             random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
         Example:
-         live_live_query("table_name",datetime.datetime.utcnow(),
+         live_live_query("table_name",datetime.datetime.now(datetime.timezone.utc),
             joins=[[table_name, table_column, joined_table, joined_column],
                      [joined_table, joincol2, third_table, joincol_third]]
             suffixes={
@@ -1232,7 +1236,7 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
-        query_args['arrow_format'] = True
+        query_args["arrow_format"] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         if random_sample:
@@ -1349,7 +1353,7 @@ it will likely get removed in future versions. "
         Args:
             table: 'str'
             timestamp (datetime.datetime): time to materialize (in utc)
-                pass datetime.datetime.utcnow() for present time
+                pass datetime.datetime.now(datetime.timezone.utc) for present time
             filter_in_dict (dict , optional):
                 keys are column names, values are allowed entries.
                 Defaults to None.
@@ -1822,6 +1826,7 @@ class MaterializatonClientV3(MaterializatonClientV2):
         desired_resolution: Iterable = None,
         allow_missing_lookups: bool = False,
         allow_invalid_root_ids: bool = False,
+        random_sample: int = None,
     ):
         """Beta method for querying cave annotation tables with rootIDs and annotations at a particular
         timestamp.  Note: this method requires more explicit mapping of filters and selection to table
@@ -1846,8 +1851,9 @@ class MaterializatonClientV3(MaterializatonClientV2):
             desired_resolution (Iterable, optional): What resolution to convert position columns to. Defaults to None will use defaults.
             allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
             allow_invalid_root_ids (bool, optional): If True, ignore root ids not valid at the given timestamp, otherwise raise an Error. Defaults to False.
+            random_sample (int, optional): If given, will do a tablesample of the table to return that many annotations
         Example:
-         live_live_query("table_name",datetime.datetime.utcnow(),
+         live_live_query("table_name",datetime.datetime.now(datetime.timezone.utc),
             joins=[[table_name, table_column, joined_table, joined_column],
                      [joined_table, joincol2, third_table, joincol_third]]
             suffixes={
@@ -1899,10 +1905,12 @@ it will likely get removed in future versions. "
         data = {}
         query_args = {}
         query_args["return_pyarrow"] = True
-        query_args['arrow_format'] = True
+        query_args["arrow_format"] = True
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         query_args["allow_invalid_root_ids"] = allow_invalid_root_ids
+        if random_sample:
+            query_args["random_sample"] = random_sample
         data["table"] = table
         data["timestamp"] = timestamp
 
@@ -2258,6 +2266,29 @@ it will likely get removed in future versions. "
                 return concatenate_position_columns(df, inplace=True)
         else:
             return response.json()
+
+    def get_unique_string_values(self, table: str, datastack_name: str = None):
+        """get unique string values for a table
+
+            Args:
+            table: 'str'
+            datastack_name (str, optional): datastack to query.
+                If None defaults to one specified in client.
+
+        Returns:
+        dict[str]: a dictionary of column names and unique values
+        """
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table
+
+        url = self._endpoints["unique_string_values"].format_map(endpoint_mapping)
+        response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response)
+        return response.json()
 
 
 client_mapping = {

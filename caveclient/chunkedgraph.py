@@ -1,6 +1,7 @@
 """PyChunkedgraph service python interface"""
 import datetime
 import json
+import logging
 from typing import Iterable
 from urllib.parse import urlencode
 
@@ -17,7 +18,10 @@ from .endpoints import (
     default_global_server_address,
 )
 
+
 SERVER_KEY = "cg_server_address"
+
+logger = logging.getLogger(__name__)
 
 
 def package_bounds(bounds):
@@ -78,11 +82,7 @@ def root_id_int_list_check(
     root_id,
     make_unique=False,
 ):
-    if (
-        isinstance(root_id, int)
-        or isinstance(root_id, np.uint64)
-        or isinstance(root_id, np.int64)
-    ):
+    if isinstance(root_id, (int, np.uint64, np.int64)):
         root_id = [root_id]
     elif isinstance(root_id, str):
         try:
@@ -198,7 +198,7 @@ class ChunkedGraphClientV1(ClientBase):
             if self._default_timestamp is not None:
                 return self._default_timestamp
             else:
-                return datetime.datetime.utcnow()
+                return datetime.datetime.now(datetime.timezone.utc)
         else:
             return timestamp
 
@@ -848,7 +848,13 @@ class ChunkedGraphClientV1(ClientBase):
         return r.json()
 
     def get_lineage_graph(
-        self, root_id, timestamp_past=None, timestamp_future=None, as_nx_graph=False
+        self,
+        root_id,
+        timestamp_past=None,
+        timestamp_future=None,
+        as_nx_graph=False,
+        exclude_links_to_future=False,
+        exclude_links_to_past=False,
     ):
         """
         Returns the lineage graph for a root ID, optionally cut off in the past or
@@ -869,6 +875,14 @@ class ChunkedGraphClientV1(ClientBase):
             Cutoff for the lineage graph going forwards in time. By default, None.
         as_nx_graph: bool
             If True, a NetworkX graph is returned.
+        exclude_links_to_future: bool
+            If True, links from nodes before `timestamp_future` to after
+            `timestamp_future` are removed. If False, the link(s) which has one node
+            before timestamp and one node after timestamp is kept.
+        exclude_links_to_past: bool
+            If True, links from nodes before `timestamp_past` to after `timestamp_past`
+            are removed. If False, the link(s) which has one node before timestamp and
+            one node after timestamp is kept.
 
         Returns
         -------
@@ -908,20 +922,53 @@ class ChunkedGraphClientV1(ClientBase):
         data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
         r = handle_response(self.session.post(url, data=data, params=params))
 
+        if exclude_links_to_future or exclude_links_to_past:
+            bad_ids = []
+            for node in r["nodes"]:
+                node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
+                node_ts = node_ts.astimezone(datetime.timezone.utc)
+                if (
+                    exclude_links_to_past and (node_ts < timestamp_past)
+                    if timestamp_past is not None
+                    else False
+                ):
+                    bad_ids.append(node["id"])
+                if (
+                    exclude_links_to_future and (node_ts > timestamp_future)
+                    if timestamp_future is not None
+                    else False
+                ):
+                    bad_ids.append(node["id"])
+
+            r["nodes"] = [node for node in r["nodes"] if node["id"] not in bad_ids]
+            r["links"] = [
+                link
+                for link in r["links"]
+                if link["source"] not in bad_ids and link["target"] not in bad_ids
+            ]
+
         if as_nx_graph:
             return nx.node_link_graph(r)
         else:
             return r
 
-    def get_latest_roots(self, root_id, timestamp_future=None):
-        """Returns root IDs that are the latest successors of a given root ID.
+    def get_latest_roots(self, root_id, timestamp=None, timestamp_future=None):
+        """
+        Returns root IDs that are related to the given `root_id` at a given
+        timestamp. Can be used to find the "latest" root IDs associated with an object.
+
 
         Parameters
         ----------
         root_id : int
             Object root ID.
+        timestamp : datetime.datetime or None, optional
+            Timestamp of where to query IDs from. If None then will assume you want
+            till now.
         timestamp_future : datetime.datetime or None, optional
-            Cutoff for the search going forwards in time. By default, None.
+            DEPRECATED name, use `timestamp` instead.
+            Timestamp to suggest IDs from (note can be in the past relative to the
+            root). By default, None.
 
         Returns
         -------
@@ -930,19 +977,42 @@ class ChunkedGraphClientV1(ClientBase):
         """
         root_id = root_id_int_list_check(root_id, make_unique=True)
 
-        timestamp_past = self.get_root_timestamps(root_id).min()
+        timestamp_root = self.get_root_timestamps(root_id).min()
+        if timestamp_future is not None:
+            logger.warning("timestamp_future is deprecated, use timestamp instead")
+            timestamp = timestamp_future
 
-        lineage_graph = self.get_lineage_graph(
-            root_id,
-            timestamp_past=timestamp_past,
-            timestamp_future=timestamp_future,
-            as_nx_graph=True,
-        )
+        if timestamp is None:
+            timestamp = datetime.datetime.now(datetime.timezone.utc)
+        elif timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
 
-        out_degree_dict = dict(lineage_graph.out_degree)
-        nodes = np.array(list(out_degree_dict.keys()))
-        out_degrees = np.array(list(out_degree_dict.values()))
-        return nodes[out_degrees == 0]
+        # or if timestamp_root is less than timestamp_future
+        if (timestamp is None) or (timestamp_root < timestamp):
+            lineage_graph = self.get_lineage_graph(
+                root_id,
+                timestamp_past=timestamp_root,
+                timestamp_future=timestamp,
+                exclude_links_to_future=True,
+                as_nx_graph=True,
+            )
+            # then we want the leaves of the tree
+            out_degree_dict = dict(lineage_graph.out_degree)
+            nodes = np.array(list(out_degree_dict.keys()))
+            out_degrees = np.array(list(out_degree_dict.values()))
+            return nodes[out_degrees == 0]
+        else:
+            # then timestamp is in fact in the past
+            lineage_graph = self.get_lineage_graph(
+                root_id,
+                timestamp_future=timestamp_root,
+                timestamp_past=timestamp,
+                as_nx_graph=True,
+            )
+            in_degree_dict = dict(lineage_graph.in_degree)
+            nodes = np.array(list(in_degree_dict.keys()))
+            in_degrees = np.array(list(in_degree_dict.values()))
+            return nodes[in_degrees == 0]
 
     def get_original_roots(self, root_id, timestamp_past=None):
         """Returns root IDs that are the latest successors of a given root ID.
@@ -1045,7 +1115,8 @@ class ChunkedGraphClientV1(ClientBase):
             If True, return all fractions sorted by most overlap to least, by default
             False. If False, only the top value is returned.
         """
-        curr_ids = self.get_latest_roots(root_id, timestamp_future=timestamp)
+        curr_ids = self.get_latest_roots(root_id, timestamp=timestamp)
+
         if root_id in curr_ids:
             if return_all:
                 if return_fraction_overlap:
@@ -1067,6 +1138,14 @@ class ChunkedGraphClientV1(ClientBase):
         stop_layer = max(1, stop_layer)
 
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+        while len(chunks_orig) == 0:
+            stop_layer -= 1
+            if stop_layer == 1:
+                raise ValueError(
+                    f"There were no children for root_id={root_id} at level 2, something is wrong with the chunkedgraph"
+                )
+            chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+
         chunk_list = np.array(
             [
                 len(
@@ -1228,7 +1307,9 @@ class ChunkedGraphClientV1(ClientBase):
     def get_delta_roots(
         self,
         timestamp_past: datetime.datetime,
-        timestamp_future: datetime.datetime = datetime.datetime.utcnow(),
+        timestamp_future: datetime.datetime = datetime.datetime.now(
+            datetime.timezone.utc
+        ),
     ):
         """
         Get the list of roots that have changed between `timetamp_past` and
@@ -1240,7 +1321,8 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_past : datetime.datetime
             Past timepoint to query
         timestamp_future : datetime.datetime, optional
-            Future timepoint to query. Default is now.
+            Future timepoint to query. Defaults to
+            ``datetime.datetime.now(datetime.timezone.utc)``.
 
         Returns
         -------

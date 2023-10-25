@@ -212,7 +212,7 @@ that is more recent that the most recent version available.  For convience, you 
 
 
 to automatically update the results of your query to a time in the future, such as now.
-For example, to pass now, use ```datetime.datetime.utcnow```.  Note all timestamps are in UTC
+For example, to pass now, use ```datetime.datetime.now(datetime.timezone.utc)```.  Note all timestamps are in UTC
 throughout the codebase. 
 
 .. code:: python
@@ -220,7 +220,7 @@ throughout the codebase.
     import datetime
     synapse_table = client.info.get_datastack_info()['synapse_table']
     df=client.materialize.live_query(synapse_table,
-                                      datetime.datetime.utcnow(),
+                                      datetime.datetime.now(datetime.timezone.utc),
                                       filter_equal_dict = {'post_pt_root_id': MYID})
 
 This will raise an ValueError exception if the IDs passed in your filters are not valid at the timestamp given
@@ -232,11 +232,11 @@ You can also pass a timestamp directly to query_table and it will call live_quer
     import datetime
     synapse_table = client.info.get_datastack_info()['synapse_table']
     df=client.materialize.query_table(synapse_table,
-                                      timestamp=datetime.datetime.utcnow(),
+                                      timestamp=datetime.datetime.now(datetime.timezone.utc),
                                       filter_equal_dict = {'post_pt_root_id': MYID})
 
 
-Also, keep in mind if you run multiple queries and at each time pass ``datetime.datetime.utcnow()``,
+Also, keep in mind if you run multiple queries and at each time pass ``datetime.datetime.now(datetime.timezone.utc)``,
 there is no gauruntee that the IDs will be consistent from query to query, as proofreading might be happening
 at any time.  For larger scale analysis constraining oneself to a materialized version will ensure consistent results.
 
@@ -312,7 +312,7 @@ The one required argument for ``live_query`` is the timestamp.
     nuc_df = client.materialize.tables.nucleus_detection_v0(
         id=my_ids
     ).live_query(
-        timestamp=datetime.datetime.utcnow(),
+        timestamp=datetime.datetime.now(datetime.timezone.utc),
     )
 
 The live query functions have similar but slightly different arguments: ``timestamp`` (required), ``offset``, ``limit``, ``split_positions``,
