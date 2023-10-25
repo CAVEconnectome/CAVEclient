@@ -494,8 +494,8 @@ class ChunkedGraphClientV1(ClientBase):
         Returns
         -------
         dict
-        # TODO not actually sure the return type here
         """
+        # TODO clarify what the return is here
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["undo"].format_map(endpoint_mapping)
 
