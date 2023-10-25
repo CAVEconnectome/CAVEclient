@@ -389,8 +389,8 @@ class ChunkedGraphClientV1(ClientBase):
             "operation_id": int
                 Identifier for the operation.
             "timestamp": int
-                Timestamp of the operation.
-                # TODO what format is this in?
+                Timestamp of the operation, provided in *milliseconds*. To convert to
+                datetime, use ``datetime.datetime.utcfromtimestamp(timestamp/1000)``.
             "user_id": int
                 User who performed the operation.
             "before_root_ids: list of int
