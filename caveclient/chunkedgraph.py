@@ -285,6 +285,11 @@ class ChunkedGraphClientV1(ClientBase):
         ----------
         root_id : int
             Object root ID to look up.
+        filtered : bool
+            Whether to filter the change log to only include splits and merges which
+            affect the final state of the object (`filtered=True`), as opposed to
+            including edit history for objects which as some point were split from
+            the query object `root_id` (`filtered=False`). Defaults to True.
 
         Returns
         -------
