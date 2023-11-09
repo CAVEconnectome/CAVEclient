@@ -1,5 +1,5 @@
 numpy
-pyarrow>=3,<12
+pyarrow>=3,<15
 requests
 urllib3
 pandas
