@@ -58,7 +58,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
     # via stack-data
-pyarrow==11.0.0
+pyarrow==14.0.1
     # via -r requirements.txt
 pygments==2.16.1
     # via ipython
