@@ -189,7 +189,7 @@ class JSONServiceV1(ClientBase):
         Parameters
         ----------
         json_state : dict
-            JSON-formatted Neuroglancer state
+            Dict representation of a neuroglancer state 
         state_id : int
             ID of a JSON state uploaded to the state service.
             Using a state_id is an admin feature.
