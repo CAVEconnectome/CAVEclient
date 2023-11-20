@@ -136,25 +136,31 @@ class JSONServiceV1(ClientBase):
     def ngl_url(self, new_ngl_url):
         self._ngl_url = new_ngl_url
 
-    def get_neuroglancer_info(self, ngl_url):
+    def get_neuroglancer_info(self, ngl_url=None):
         """Get the info field from a Neuroglancer deployment
 
         Parameters
         ----------
-        ngl_url : str
-            URL to a Neuroglancer deployment
+        ngl_url : str (optional)
+            URL to a Neuroglancer deployment.
+            If None, defaults to the value for the datastack or the client.
 
         Returns
         -------
         dict
             JSON-formatted info field from the Neuroglancer deployment
         """
-        url_mapping"ngl_url"] = ngl_url
+        if ngl_url is None:
+            ngl_url = self.ngl_url
+
+        url_mapping = self.default_url_mapping
+        url_mapping["ngl_url"] = ngl_url
         url = ngl_endpoints_common.get('get_info').format_map(url_mapping)
         response = self.session.get(url)
+        if response.status_code == 404:
+            return {}
         handle_response(response, as_json=False)
         return json.loads(response.content)
-
 
 
     def get_state_json(self, state_id):
@@ -215,6 +221,7 @@ class JSONServiceV1(ClientBase):
         response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
+
     def build_neuroglancer_url(self, state_id, ngl_url=None, target_site=None):
         """Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.
         If the datastack is specified, this is prepopulated from the info file field "viewer_site".
@@ -227,10 +234,9 @@ class JSONServiceV1(ClientBase):
         ngl_url : str
             Base url of a neuroglancer deployment. If None, defaults to the value for the datastack or the client.
             If no value is found, only the URL to the JSON state is returned.
-        target_site : str (optional)
+        target_site : 'seunglab' or 'cave-explorer' or 'mainline' or None
             Set this to 'seunglab' for a seunglab deployment, or 'cave-explorer'/'mainline' for a google main branch deployment.
-            If none, defaults to seunglab.
-
+            If None, checks the info field of the neuroglancer endpoint to determine which to use.
 
         Returns
         -------
@@ -239,8 +245,12 @@ class JSONServiceV1(ClientBase):
         """
         if ngl_url is None:
             ngl_url = self.ngl_url
-        if target_site is None:
-            target_site = "seunglab"
+        if target_site is None and ngl_url is not None:
+            ngl_info = self.get_neuroglancer_info(ngl_url)
+            if len(ngl_info) > 0:
+                target_site = 'cave-explorer'
+            else:
+                target_site = "seunglab"
 
         if ngl_url is None:
             ngl_url = ""
