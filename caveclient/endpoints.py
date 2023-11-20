@@ -263,3 +263,11 @@ l2cache_endpoints_v1 = {
 }
 
 l2cache_api_versions = {1: l2cache_endpoints_v1}
+
+# -------------------------------
+# ------ Neuroglancer endpoints
+# -------------------------------
+
+ngl_endpoints_common = {
+    'get_info': "{ngl_url}/version.json"
+}
