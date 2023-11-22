@@ -821,9 +821,10 @@ class ChunkedGraphClientV1(ClientBase):
             values are a dictionary of operation info for the operation. These
             dictionaries contain the following keys:
 
-            "added_edges": list of list of int
-                List of edges added by this operation. Each edge is a list of two node
-                IDs (source and target).
+            "added_edges"/"removed_edges": list of list of int
+                List of edges added (if a merge) or removed (if a split) by this 
+                operation. Each edge is a list of two supervoxel IDs (source and 
+                target).
             "roots": list of int
                 List of root IDs that were created by this operation.
             "sink_coords": list of list of int
