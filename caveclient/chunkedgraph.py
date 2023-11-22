@@ -324,7 +324,10 @@ class ChunkedGraphClientV1(ClientBase):
         include_undo: bool = True,
         timestamp_end: datetime.datetime = None,
     ):
-        """Get operation details for a user ID.
+        """
+        Get operation details for a user ID. Currently, this is only available to
+        admins.
+        
 
         Parameters
         ----------
@@ -340,7 +343,7 @@ class ChunkedGraphClientV1(ClientBase):
         Returns
         -------
         pd.DataFrame
-            DataFrame with the following columns:
+            DataFrame including the following columns:
 
             "operation_id": int
                 Identifier for the operation.
@@ -348,7 +351,6 @@ class ChunkedGraphClientV1(ClientBase):
                 Timestamp of the operation.
             "user_id": int
                 User who performed the operation.
-            # TODO not actually sure what the rest of the outputs are, not an admin
         """
 
         endpoint_mapping = self.default_url_mapping
