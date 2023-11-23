@@ -327,7 +327,7 @@ class ChunkedGraphClientV1(ClientBase):
         """
         Get operation details for a user ID. Currently, this is only available to
         admins.
-        
+
 
         Parameters
         ----------
@@ -834,13 +834,11 @@ class ChunkedGraphClientV1(ClientBase):
                 points placed by the user when specifying the operation. Each sink
                 coordinate is a list of three integers (x, y, z), corresponding to
                 spatial coordinates in segmentation voxel space.
-                # TODO make sure this is the correct specification
             "source_coords": list of list of int
                 List of source coordinates for this operation. The source is one of the
                 points placed by the user when specifying the operation. Each source
                 coordinate is a list of three integers (x, y, z), corresponding to
                 spatial coordinates in segmentation voxel space.
-                # TODO make sure this is the correct specification
             "timestamp": str
                 Timestamp of the operation.
             "user": str
