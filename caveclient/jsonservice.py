@@ -157,8 +157,11 @@ class JSONServiceV1(ClientBase):
         url_mapping["ngl_url"] = ngl_url
         url = ngl_endpoints_common.get('get_info').format_map(url_mapping)
         response = self.session.get(url)
+        # Not all neuroglancer deployments have a version.json,
+        # so return empty if not found rather than throw error.
         if response.status_code == 404:
             return {}
+
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
@@ -233,10 +236,11 @@ class JSONServiceV1(ClientBase):
             State id to retrieve
         ngl_url : str
             Base url of a neuroglancer deployment. If None, defaults to the value for the datastack or the client.
-            If no value is found, only the URL to the JSON state is returned.
+            As a fallback, a default deployment is used.
         target_site : 'seunglab' or 'cave-explorer' or 'mainline' or None
             Set this to 'seunglab' for a seunglab deployment, or 'cave-explorer'/'mainline' for a google main branch deployment.
             If None, checks the info field of the neuroglancer endpoint to determine which to use.
+            Default is None.
 
         Returns
         -------
@@ -244,7 +248,10 @@ class JSONServiceV1(ClientBase):
             The full URL requested
         """
         if ngl_url is None:
-            ngl_url = self.ngl_url
+            if self.ngl_url is not None:
+                ngl_url = self.ngl_url
+            else:
+                ngl_url = ngl_endpoints_common['fallback_ngl_url']
         if target_site is None and ngl_url is not None:
             ngl_info = self.get_neuroglancer_info(ngl_url)
             if len(ngl_info) > 0:
@@ -252,10 +259,7 @@ class JSONServiceV1(ClientBase):
             else:
                 target_site = "seunglab"
 
-        if ngl_url is None:
-            ngl_url = ""
-            parameter_text = ""
-        elif target_site == "seunglab":
+        if target_site == "seunglab":
             if ngl_url[-1] == "/":
                 parameter_text = "?json_url="
             else:

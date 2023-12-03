@@ -268,6 +268,8 @@ l2cache_api_versions = {1: l2cache_endpoints_v1}
 # ------ Neuroglancer endpoints
 # -------------------------------
 
+fallback_ngl_endpoint = "https://neuroglancer.neuvue.io/"
 ngl_endpoints_common = {
-    'get_info': "{ngl_url}/version.json"
+    'get_info': "{ngl_url}/version.json",
+    'fallback_ngl_url': fallback_ngl_endpoint,
 }
