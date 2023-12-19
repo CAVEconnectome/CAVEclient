@@ -10,13 +10,31 @@ from .endpoints import (
     jsonservice_common,
     jsonservice_api_versions,
     default_global_server_address,
+    ngl_endpoints_common,
 )
 import requests
+import numpy as np
+import numbers
 import json
 import re
 
 server_key = "json_server_address"
 
+
+def neuroglancer_json_encoder(obj):
+    """JSON encoder for neuroglancer states.
+    Differs from normal in that it expresses ints as strings"""
+    if isinstance(obj, numbers.Integral):
+        return str(obj)
+    if isinstance(obj, np.integer):
+        return str(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return list(obj)
+    elif isinstance(obj, (set, frozenset)):
+        return list(obj)
+    raise TypeError
 
 def JSONService(
     server_address=None,
@@ -118,6 +136,36 @@ class JSONServiceV1(ClientBase):
     def ngl_url(self, new_ngl_url):
         self._ngl_url = new_ngl_url
 
+    def get_neuroglancer_info(self, ngl_url=None):
+        """Get the info field from a Neuroglancer deployment
+
+        Parameters
+        ----------
+        ngl_url : str (optional)
+            URL to a Neuroglancer deployment.
+            If None, defaults to the value for the datastack or the client.
+
+        Returns
+        -------
+        dict
+            JSON-formatted info field from the Neuroglancer deployment
+        """
+        if ngl_url is None:
+            ngl_url = self.ngl_url
+
+        url_mapping = self.default_url_mapping
+        url_mapping["ngl_url"] = ngl_url
+        url = ngl_endpoints_common.get('get_info').format_map(url_mapping)
+        response = self.session.get(url)
+        # Not all neuroglancer deployments have a version.json,
+        # so return empty if not found rather than throw error.
+        if response.status_code == 404:
+            return {}
+
+        handle_response(response, as_json=False)
+        return json.loads(response.content)
+
+
     def get_state_json(self, state_id):
         """Download a Neuroglancer JSON state
 
@@ -144,7 +192,7 @@ class JSONServiceV1(ClientBase):
         Parameters
         ----------
         json_state : dict
-            JSON-formatted Neuroglancer state
+            Dict representation of a neuroglancer state 
         state_id : int
             ID of a JSON state uploaded to the state service.
             Using a state_id is an admin feature.
@@ -165,12 +213,19 @@ class JSONServiceV1(ClientBase):
             url_mapping["state_id"] = state_id
             url = self._endpoints["upload_state_w_id"].format_map(url_mapping)
 
-        response = self.session.post(url, data=json.dumps(json_state, cls=BaseEncoder))
+        response = self.session.post(
+            url,
+            data=json.dumps(
+                json_state,
+                default=neuroglancer_json_encoder,
+            )
+        )
         handle_response(response, as_json=False)
         response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
-    def build_neuroglancer_url(self, state_id, ngl_url=None):
+
+    def build_neuroglancer_url(self, state_id, ngl_url=None, target_site=None):
         """Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.
         If the datastack is specified, this is prepopulated from the info file field "viewer_site".
         If no ngl_url is specified in either the function or the client, only the JSON state url is returned.
@@ -181,7 +236,11 @@ class JSONServiceV1(ClientBase):
             State id to retrieve
         ngl_url : str
             Base url of a neuroglancer deployment. If None, defaults to the value for the datastack or the client.
-            If no value is found, only the URL to the JSON state is returned.
+            As a fallback, a default deployment is used.
+        target_site : 'seunglab' or 'cave-explorer' or 'mainline' or None
+            Set this to 'seunglab' for a seunglab deployment, or 'cave-explorer'/'mainline' for a google main branch deployment.
+            If None, checks the info field of the neuroglancer endpoint to determine which to use.
+            Default is None.
 
         Returns
         -------
@@ -189,14 +248,27 @@ class JSONServiceV1(ClientBase):
             The full URL requested
         """
         if ngl_url is None:
-            ngl_url = self.ngl_url
-        if ngl_url is None:
-            ngl_url = ""
-            parameter_text = ""
-        elif ngl_url[-1] == "/":
-            parameter_text = "?json_url="
-        else:
-            parameter_text = "/?json_url="
+            if self.ngl_url is not None:
+                ngl_url = self.ngl_url
+            else:
+                ngl_url = ngl_endpoints_common['fallback_ngl_url']
+        if target_site is None and ngl_url is not None:
+            ngl_info = self.get_neuroglancer_info(ngl_url)
+            if len(ngl_info) > 0:
+                target_site = 'cave-explorer'
+            else:
+                target_site = "seunglab"
+
+        if target_site == "seunglab":
+            if ngl_url[-1] == "/":
+                parameter_text = "?json_url="
+            else:
+                parameter_text = "/?json_url="
+        elif target_site == "cave-explorer" or target_site == "mainline":
+            if ngl_url[-1] == "/":
+                parameter_text = "#!middleauth+"
+            else:
+                parameter_text = "/#!middleauth+"
 
         url_mapping = self.default_url_mapping
         url_mapping["state_id"] = state_id
