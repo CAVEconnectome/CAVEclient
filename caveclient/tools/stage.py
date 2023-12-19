@@ -119,11 +119,11 @@ class StagedAnnotations(object):
         if len(missing_cols) > 0 or len(additional_cols) > 0:
             if len(missing_cols) == 0:
                 raise ValueError(
-                    f"Schema needs columns not in dataframe: {additional_cols}."
+                    f"Dataframe has columns that are not in schema:  {additional_cols}."
                 )
             if len(additional_cols) == 0:
                 raise ValueError(
-                    f"Dataframe has columns that do not match fields: {missing_cols}."
+                    f"Schema needs columns not in dataframe: {missing_cols}."
                 )
             raise ValueError(
                 f"Schema needs columns not in dataframe: {missing_cols} and dataframe has columns that do not match fields: {additional_cols}."
