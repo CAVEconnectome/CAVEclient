@@ -241,7 +241,7 @@ class JSONServiceV1(ClientBase):
         -------
         None
         """
-        if os.exists(filename) and not overwrite:
+        if os.path.exists(filename) and not overwrite:
             raise ValueError("File exists and overwrite is False")
         with open(filename, "w") as f:
             json.dump(json_state, f, default=neuroglancer_json_encoder)
