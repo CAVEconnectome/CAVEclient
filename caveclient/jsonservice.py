@@ -12,6 +12,7 @@ from .endpoints import (
     default_global_server_address,
     ngl_endpoints_common,
 )
+import os
 import requests
 import numpy as np
 import numbers
@@ -224,11 +225,37 @@ class JSONServiceV1(ClientBase):
         response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
+    def save_state_json_local(self, json_state, filename, overwrite=False):
+        """Save a Neuroglancer JSON state to a JSON file locally.
+        
+        Parameters
+        ----------
+        json_state : dict
+            Dict representation of a neuroglancer state
+        filename : str
+            Filename to save the state to
+        overwrite : bool
+            Whether to overwrite the file if it exists. Default False.
 
-    def build_neuroglancer_url(self, state_id, ngl_url=None, target_site=None):
+        Returns
+        -------
+        None
+        """
+        if os.exists(filename) and not overwrite:
+            raise ValueError("File exists and overwrite is False")
+        with open(filename, "w") as f:
+            json.dump(json_state, f, default=neuroglancer_json_encoder)
+
+    def build_neuroglancer_url(
+            self,
+            state_id,
+            ngl_url=None,
+            target_site=None,
+            static_url=False,
+        ):
         """Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.
         If the datastack is specified, this is prepopulated from the info file field "viewer_site".
-        If no ngl_url is specified in either the function or the client, only the JSON state url is returned.
+        If no ngl_url is specified in either the function or the client, a fallback neuroglancer deployment is used.
 
         Parameters
         ----------
@@ -238,9 +265,11 @@ class JSONServiceV1(ClientBase):
             Base url of a neuroglancer deployment. If None, defaults to the value for the datastack or the client.
             As a fallback, a default deployment is used.
         target_site : 'seunglab' or 'cave-explorer' or 'mainline' or None
-            Set this to 'seunglab' for a seunglab deployment, or 'cave-explorer'/'mainline' for a google main branch deployment.
+            Set this to 'seunglab' for a seunglab deployment, or either 'cave-explorer'/'mainline' for a google main branch deployment.
             If None, checks the info field of the neuroglancer endpoint to determine which to use.
             Default is None.
+        static_url : bool
+            If True, treats "state_id" as a static URL directly to the JSON and does not use the state service.
 
         Returns
         -------
@@ -252,6 +281,7 @@ class JSONServiceV1(ClientBase):
                 ngl_url = self.ngl_url
             else:
                 ngl_url = ngl_endpoints_common['fallback_ngl_url']
+
         if target_site is None and ngl_url is not None:
             ngl_info = self.get_neuroglancer_info(ngl_url)
             if len(ngl_info) > 0:
@@ -264,16 +294,24 @@ class JSONServiceV1(ClientBase):
                 parameter_text = "?json_url="
             else:
                 parameter_text = "/?json_url="
+            auth_text = ""
         elif target_site == "cave-explorer" or target_site == "mainline":
             if ngl_url[-1] == "/":
-                parameter_text = "#!middleauth+"
+                parameter_text = "#!"
             else:
-                parameter_text = "/#!middleauth+"
+                parameter_text = "/#!"
+            auth_text = "middleauth+"
+        else:
+            target_site_error = "A specified target_site must be one of 'seunglab', 'cave-explorer' or 'mainline'"
+            raise ValueError(target_site_error)
 
-        url_mapping = self.default_url_mapping
-        url_mapping["state_id"] = state_id
-        get_state_url = self._endpoints["get_state"].format_map(url_mapping)
-        url = ngl_url + parameter_text + get_state_url
+        if static_url:
+            url = ngl_url + parameter_text + state_id
+        else:
+            url_mapping = self.default_url_mapping
+            url_mapping["state_id"] = state_id
+            get_state_url = self._endpoints["get_state"].format_map(url_mapping)
+            url = ngl_url + parameter_text + auth_text + get_state_url
         return url
 
 
