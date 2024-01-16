@@ -5,6 +5,7 @@ from .endpoints import (
 )
 from .auth import AuthClient
 import json
+from urllib.parse import urlparse
 
 server_key = "l2cache_server_address"
 
@@ -134,6 +135,41 @@ class L2CacheClientLegacy(ClientBase):
         if self._available_attributes is None:
             self._available_attributes = list(self.cache_metadata().keys())
         return self._available_attributes
+
+    def table_mapping(self):
+        """Retrieves table mappings for l2 cache.
+        Parameters
+        ----------
+
+        Returns
+        -------
+        dict
+            keys are pcg table names, values are dicts with fields `l2cache_id` and `cv_path`.
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["l2cache_table_mapping"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        return handle_response(response)
+
+    def has_cache(self, datastack_name=None):
+        """Checks if the l2 cache is available for the dataset
+
+        Parameters
+        ----------
+        datastack_name : str, optional
+            The name of the datastack to check, by default None (if None, uses the client's datastack)
+
+        Returns
+        -------
+        bool
+            True if the l2 cache is available, False otherwise
+        """
+        seg_source = self.fc.info.segmentation_source(datastack_name=datastack_name)
+        if urlparse(seg_source).scheme != "graphene":
+            return False
+        table_name = self.fc.chunkedgraph.table_name
+        table_mapping = self.table_mapping()
+        return table_name in table_mapping
 
 
 client_mapping = {
