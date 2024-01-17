@@ -41,7 +41,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest
           pip install -r requirements.txt
-          if [ -f test_requirements.txt ]; then pip install -r test_requirements.txt; fi
+          pip install -r test_requirements.txt
 
       - name: Lint with flake8
         run: |
