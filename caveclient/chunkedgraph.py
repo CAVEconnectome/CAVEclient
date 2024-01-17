@@ -2,8 +2,7 @@
 import datetime
 import json
 import logging
-import sys
-from typing import Iterable, Union
+from typing import Iterable, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -18,11 +17,6 @@ from .endpoints import (
     chunkedgraph_endpoints_common,
     default_global_server_address,
 )
-
-# get the version of python at runtime, decide how to specify tuple types
-
-
-from typing import Tuple
 
 SERVER_KEY = "cg_server_address"
 
