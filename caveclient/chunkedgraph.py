@@ -21,7 +21,7 @@ from .endpoints import (
 
 # get the version of python at runtime, decide how to specify tuple types
 
-if sys.version_info < (3, 8):
+if sys.version_info <= (3, 8):
     from typing import Tuple as tuple
 
 SERVER_KEY = "cg_server_address"
