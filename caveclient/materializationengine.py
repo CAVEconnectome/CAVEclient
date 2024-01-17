@@ -640,7 +640,7 @@ class MaterializatonClientV2(ClientBase):
             filter_equal_dict (dict, optional):
                 inner layer: keys are column names, values are specified entry.
                 Defaults to None.
-            filter_spatial (dict, optional):
+            filter_spatial_dict (dict, optional):
                 inner layer: keys are column names, values are bounding boxes
                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
                              Expressed in units of the voxel_resolution of this dataset.
