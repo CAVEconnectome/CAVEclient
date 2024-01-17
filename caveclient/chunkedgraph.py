@@ -2,6 +2,7 @@
 import datetime
 import json
 import logging
+import sys
 from typing import Iterable
 from urllib.parse import urlencode
 
@@ -17,6 +18,11 @@ from .endpoints import (
     chunkedgraph_endpoints_common,
     default_global_server_address,
 )
+
+# get the version of python at runtime, decide how to specify tuple types
+
+if sys.version_info < (3, 8):
+    from typing import Tuple as tuple
 
 SERVER_KEY = "cg_server_address"
 
