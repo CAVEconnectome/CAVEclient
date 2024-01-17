@@ -2,8 +2,7 @@
 import datetime
 import json
 import logging
-import sys
-from typing import Iterable, Union
+from typing import Iterable, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -18,11 +17,6 @@ from .endpoints import (
     chunkedgraph_endpoints_common,
     default_global_server_address,
 )
-
-# get the version of python at runtime, decide how to specify tuple types
-
-if sys.version_info < (3, 8):
-    from typing import Tuple as tuple
 
 SERVER_KEY = "cg_server_address"
 
@@ -534,7 +528,7 @@ class ChunkedGraphClientV1(ClientBase):
         root_id,
         source_supervoxels=None,
         sink_supervoxels=None,
-    ) -> tuple[int, list]:
+    ) -> Tuple[int, list]:
         """Execute a multicut split based on points or supervoxels.
 
         Parameters
@@ -585,7 +579,7 @@ class ChunkedGraphClientV1(ClientBase):
         source_supervoxels=None,
         sink_supervoxels=None,
         return_additional_ccs=False,
-    ) -> tuple[list, list, bool, list]:
+    ) -> Tuple[list, list, bool, list]:
         """Get supervoxel connected components from a preview multicut split.
 
         Parameters
@@ -699,7 +693,7 @@ class ChunkedGraphClientV1(ClientBase):
 
     def find_path(
         self, root_id, src_pt, dst_pt, precision_mode=False
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Find a path between two locations on a root ID using the level 2 chunked
         graph.
@@ -749,7 +743,7 @@ class ChunkedGraphClientV1(ClientBase):
 
     def get_subgraph(
         self, root_id, bounds
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Get subgraph of root id within a bounding box.
 
         Parameters
@@ -1335,7 +1329,7 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_future: datetime.datetime = datetime.datetime.now(
             datetime.timezone.utc
         ),
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Get the list of roots that have changed between `timetamp_past` and
         `timestamp_future`.
