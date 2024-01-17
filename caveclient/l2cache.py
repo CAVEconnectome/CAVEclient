@@ -174,7 +174,7 @@ class L2CacheClientLegacy(ClientBase):
             table_mapping = self.table_mapping()
         except HTTPError as e:
             if e.response.status_code == 404:
-                warn(f"Table '{table_name}' does not have a l2 cache table mapping. Assuming no cache.")
+                warn(f"L2cache deployment '{self.server_address}/l2cache' does not have a l2 cache table mapping. Assuming no cache.")
                 return False
             else:
                 raise e
