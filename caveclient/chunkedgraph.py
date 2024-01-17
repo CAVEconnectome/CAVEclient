@@ -3,7 +3,7 @@ import datetime
 import json
 import logging
 import sys
-from typing import Iterable
+from typing import Iterable, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -873,7 +873,7 @@ class ChunkedGraphClientV1(ClientBase):
         as_nx_graph=False,
         exclude_links_to_future=False,
         exclude_links_to_past=False,
-    ) -> dict | nx.DiGraph:
+    ) -> Union[dict, nx.DiGraph]:
         """
         Returns the lineage graph for a root ID, optionally cut off in the past or
         the future.
