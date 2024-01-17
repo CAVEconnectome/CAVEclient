@@ -4,6 +4,8 @@ from .endpoints import (
     l2cache_endpoints_common,
 )
 from .auth import AuthClient
+from requests.exceptions import HTTPError
+from warnings import warn
 import json
 from urllib.parse import urlparse
 
@@ -168,7 +170,14 @@ class L2CacheClientLegacy(ClientBase):
         if urlparse(seg_source).scheme != "graphene":
             return False
         table_name = self.fc.chunkedgraph.table_name
-        table_mapping = self.table_mapping()
+        try:
+            table_mapping = self.table_mapping()
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                warn(f"Table '{table_name}' does not have a l2 cache table mapping. Assuming no cache.")
+                return {}
+            else:
+                raise e
         return table_name in table_mapping
 
 
