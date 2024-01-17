@@ -1,7 +1,8 @@
-from setuptools import setup, find_packages
-import re
-import os
 import codecs
+import os
+import re
+
+from setuptools import find_packages, setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -33,4 +34,5 @@ setup(
     include_package_data=True,
     install_requires=required,
     setup_requires=["pytest-runner"],
+    python_requires=">=3.7,<3.12",
 )
