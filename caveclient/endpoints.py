@@ -262,6 +262,7 @@ l2cache_v1 = "{l2cache_server_address}/l2cache/api/v1"
 l2cache_endpoints_v1 = {
     "l2cache_data": l2cache_v1 + "/table/{table_id}/attributes",
     "l2cache_meta": l2cache_v1 + "/attribute_metadata",
+    "l2cache_table_mapping": l2cache_v1 + "/table_mapping",
 }
 
 l2cache_api_versions = {1: l2cache_endpoints_v1}
