@@ -1,4 +1,6 @@
-# CAVEclient: One client for all services
+# Introduction
+
+## CAVEclient: one client for all services
 
 The CAVE Framework consists of a number of different services, each with
 a specific set of tasks that it can perform through REST endpoints. The
@@ -13,7 +15,7 @@ individual services has their own specific documentation as well.
 ## Global and Local Services
 
 There are two categories of data in CAVE: Global and local. Local
-services are associated with a single so-called \"datastack\", which
+services are associated with a single so-called **datastack**, which
 refers to a precise collection of imagery and segmentation data that
 function together. For example, EM imagery and a specific pychunkedgraph
 segmentation would be one datastack, while the same EM imagery but an
@@ -31,10 +33,10 @@ services are associated with a particular URL (by default
 
 Assuming that the services are on `http://globalv1.daf-apis.com` and
 authentication tokens are either not being used or set up with default
-values (see `authentication`{.interpreted-text role="doc"}), a simple
+values (see [Authentication](./authentication.md)), a simple
 CAVEclient that can only access global services can be initialized:
 
-``` python
+```python
 from caveclient import CAVEclient
 
 client = CAVEclient()
@@ -43,10 +45,9 @@ client = CAVEclient()
 Just to confirm that this works, let's see if we can get the EM image
 source from the InfoService. If you get a list of names of datastacks,
 all is good. If you have not yet set up an authentication token or you
-get an authentication error, look at `new-token`{.interpreted-text
-role="ref"} for information about how to set up your auth token.
+get an authentication error, look at [Getting a new token][getting-a-new-token] for information about how to set up your auth token.
 
-``` python
+```python
 client.info.get_datastacks()
 ```
 
@@ -54,7 +55,7 @@ If you have a specific datastack you want to use, you can inititialize
 your CAVEclient with it. This gives you access to the full range of
 client functions.
 
-``` python
+```python
 client = CAVEclient(datastack_name='my_datastack')
 ```
 
@@ -63,7 +64,7 @@ client = CAVEclient(datastack_name='my_datastack')
 If your data is hosted by a different global server, you specify its
 address when initializing the client.
 
-``` python
+```python
 client = CAVEclient(datastack_name='my_datastack', server_address='http://global.myserver.com')
 ```
 
@@ -82,9 +83,9 @@ Each client can be acccessed as a property of the main client. See the
 documentation at left for the capabilities of each. Assuming your client
 is named `client`, the subclients for each service are:
 
--   Authentication Service : `client.auth`
--   AnnotationEngine : `client.annotation`
--   PyChunkedGraph : `client.chunkedgraph`
--   InfoService : `client.info`
--   EM Annotation Schemas : `client.schemas`
--   JSON Neuroglancer State Service : `client.state`
+- Authentication Service : `client.auth`
+- AnnotationEngine : `client.annotation`
+- PyChunkedGraph : `client.chunkedgraph`
+- InfoService : `client.info`
+- EM Annotation Schemas : `client.schemas`
+- JSON Neuroglancer State Service : `client.state`

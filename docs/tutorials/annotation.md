@@ -9,9 +9,8 @@ do not include any root ids. An annotation client is accessed with
 
 ## Getting existing tables
 
-A list of the existing tables for the datastack can be found at with
-`~caveclient.annotationengine.AnnotationClientV2.get_tables`{.interpreted-text
-role="func"}.
+A list of the existing tables for the datastack can be found with
+[caveclient.annotationengine.AnnotationClientV2.get_tables][].
 
 ``` python
 all_tables = client.annotation.get_tables()

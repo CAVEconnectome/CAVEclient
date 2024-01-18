@@ -15,10 +15,10 @@ auth = client.auth
 print(f"My current token is: {auth.token}")
 ```
 
-## Getting a new token {#new-token}
+## Getting a new token
 
-To get a new token, you will need to manually aquire it. For
-convenience, the function `get_new_token()` provides instructions for
+To get a new token, you will need to manually acquire it. For
+convenience, the function [caveclient.auth.get_new_token()][] provides instructions for
 how to get and save the token.
 
 By default, the token is saved to
