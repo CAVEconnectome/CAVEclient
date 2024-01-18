@@ -7,11 +7,20 @@ edit_uri: edit/main/docs/
 nav:
   - Home: index.md
   - Installation: installation.md
-  - Usage: usage.md
   - Reference:
-    - reference/reference.md
-    - CAVEclient: reference/CAVEclient.md
-    - NodeGroupBy: reference/nodegroupby.md
+    - Annotation: reference/annotation.md
+    - Auth: reference/auth.md
+    - Base: reference/base.md
+    - Chunkedgraph: reference/chunkedgraph.md
+    - Annotation Schemas: reference/annotation_schemas.md
+    - Endpoints: reference/endpoints.md
+    - Format Utils: reference/format_utils.md
+    - Framework: reference/framework.md
+    - Info: reference/info.md
+    - JSON: reference/json.md
+    - L2 Cache: reference/l2_cache.md
+    - Materialization: reference/materialization.md
+    - Session Config: reference/session_config.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 theme:
