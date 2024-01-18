@@ -1,4 +1,6 @@
-# client.annotation
+---
+title: client.annotation
+---
 
 Note: the functionality described here will be accurate if the datastack you are using
 is using the most up-to-date version of the annotation engine. If something seems

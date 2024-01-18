@@ -1,4 +1,6 @@
-# Changelog
+---
+title: Changelog
+---
 
 5.1.0
 ----
