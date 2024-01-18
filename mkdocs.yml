@@ -106,8 +106,8 @@ plugins:
             allow_section_blank_line: false
             show_root_heading: true
             show_object_full_path: false
-            show_symbol_type_heading: true
-            show_symbol_type_toc: true
+            show_symbol_type_heading: false # whether to show "meth/func/etc" in the page
+            show_symbol_type_toc: false # whether to show "meth/func/etc" in the toc
             signature_crossrefs: true # https://mkdocstrings.github.io/python/usage/configuration/signatures/#signature_crossrefs
             members_order: alphabetical # can be source
             group_by_category: true  # order is attributes, classes, functions, modules

@@ -1,13 +1,15 @@
-from .base import ClientBase, _api_endpoints, handle_response, BaseEncoder
+import json
+from urllib.parse import urlparse
+from warnings import warn
+
+from requests.exceptions import HTTPError
+
+from .auth import AuthClient
+from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
 from .endpoints import (
     l2cache_api_versions,
     l2cache_endpoints_common,
 )
-from .auth import AuthClient
-from requests.exceptions import HTTPError
-from warnings import warn
-import json
-from urllib.parse import urlparse
 
 server_key = "l2cache_server_address"
 
@@ -86,16 +88,21 @@ class L2CacheClientLegacy(ClientBase):
         return self._default_url_mapping.copy()
 
     def get_l2data(self, l2_ids, attributes=None):
-        """Gets the attributed statistics data for L2 ids.
+        """
+        Gets the attributed statistics data for L2 ids.
 
-        Args:
-            l2_ids (list or np.ndarray): a list of level 2 ids
-            attributes (list, optional): a list of attributes to retrieve.
-                Defaults to None which will return all that are available.
-                Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_nm', 'pca', 'pca_val', 'rep_coord_nm', 'size_nm3']. See docs for more description.
+        Parameters
+        ----------
+        l2_ids : list or np.ndarray
+            a list of level 2 ids
+        attributes : list, optional
+            a list of attributes to retrieve. Defaults to None which will return all that are available.
+            Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_nm', 'pca', 'pca_val', 'rep_coord_nm', 'size_nm3']. See docs for more description.
 
-        Returns:
-            dict: keys are l2 ids, values are data
+        Returns
+        -------
+        dict
+            keys are l2 ids, values are data
         """
 
         query_d = {"int64_as_str": False}
@@ -174,7 +181,9 @@ class L2CacheClientLegacy(ClientBase):
             table_mapping = self.table_mapping()
         except HTTPError as e:
             if e.response.status_code == 404:
-                warn(f"L2cache deployment '{self.server_address}/l2cache' does not have a l2 cache table mapping. Assuming no cache.")
+                warn(
+                    f"L2cache deployment '{self.server_address}/l2cache' does not have a l2 cache table mapping. Assuming no cache."
+                )
                 return False
             else:
                 raise e

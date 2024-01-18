@@ -12,12 +12,12 @@ type(client.materialize)
 Extended documentation for all versions of the materialization client can be found
 [here](../extended_api/materialization.md).
 
-<!--  -->
 ::: caveclient.materializationengine.MaterializatonClientV3
     options:
         show_root_heading: false
         heading_level: 2
-        docstring_style: google
+        docstring_style: numpy
         inherited_members: true
         show_bases: false
         show_root_toc_entry: false
+        members_order: source
