@@ -2,10 +2,9 @@ name: dev docs
 
 on:
   # run this workflow when dev checks pass
-  workflow_run:
-    workflows: ["dev checks"]
-    types:
-      - completed
+  push:
+    branches:
+      - doc-overhaul
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
