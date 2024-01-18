@@ -1,0 +1,127 @@
+site_name: CAVEclient
+site_url: https://bdpedigo.github.io/CAVEclient/
+repo_url: https://github.com/bdpedigo/CAVEclient/
+repo_name: bdpedigo/CAVEclient
+edit_uri: edit/main/docs/
+#strict: true
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Reference:
+    - reference/reference.md
+    - CAVEclient: reference/CAVEclient.md
+    - NodeGroupBy: reference/nodegroupby.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
+theme:
+  name: material
+  language: en
+  #logo: assets/logo.png
+  palette:
+    scheme: preference
+    primary: indigo
+    accent: indigo
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.indexes
+    - navigation.instant
+    # - navigation.path
+    - navigation.prune
+    # - navigation.sections # toggle to have sections in side nav
+    # - navigation.tabs # toggle to mainly use top nav
+    - navigation.tabs.sticky
+    - content.action.edit
+    - content.action.view
+    - toc.follow
+    # - toc.integrate # whether to include the toc in the main nav bar to the left
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+markdown_extensions:
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.tabbed
+  - attr_list
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      linenums: false
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.details
+  - admonition
+  - toc:
+      baselevel: 2
+      permalink: true
+  - meta
+plugins:
+  - include-markdown
+  - search:
+      lang: en
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://pandas.pydata.org/pandas-docs/stable/objects.inv
+            - https://networkx.org/documentation/stable/objects.inv
+            - https://docs.scipy.org/doc/scipy/objects.inv
+          options:
+            show_source: false
+            docstring_style: numpy
+            docstring_section_style: spacy # list, table, spacy
+            docstring_options:
+              ignore_init_summary: false
+            merge_init_into_class: true
+            allow_section_blank_line: false
+            show_root_heading: true
+            show_object_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            members_order: alphabetical # can be source
+            group_by_category: true  # order is attributes, classes, functions, modules
+            summary: true
+            show_if_no_docstring: false
+            show_docstring_attributes: false
+            annotations_path: brief
+            show_signature: true
+            separate_signature: false
+            show_signature_annotations: false
+            unwrap_annotated: false
+            heading_level: 4
+  - autorefs
+  - section-index
+  # - git-authors: # this one is more email-based
+  #     show_contribution: true
+  #     authorship_threshold_percent: 5
+  - git-committers:
+      repository: bdpedigo/CAVEclient
+      branch: main
+  - git-revision-date-localized:
+      enable_creation_date: true
+  # - social:
+  #     cards_layout: default
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bdpedigo/CAVEclient
+      name: Github
+    - icon: material/email
+      link: "mailto:ben.pedigo@alleninstitute.org"
+  version:
+    provider: mike
+
+  # to enable disqus, uncomment the following and put your disqus id below
+  # disqus: disqus_id
+# uncomment the following and put your google tracking id below to enable GA
+#google_analytics:
+  #- UA-xxx
+  #- auto

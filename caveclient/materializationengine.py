@@ -1,27 +1,29 @@
-import re
-from urllib.error import HTTPError
-import warnings
-import pytz
-import pandas as pd
-from IPython.display import HTML
-from .mytimer import MyTimeIt
-from typing import Union, Iterable
 import itertools
-import pyarrow as pa
-from datetime import datetime, timezone
-import numpy as np
 import json
-from .endpoints import materialization_api_versions, materialization_common
+import logging
+import re
+import warnings
+from datetime import datetime, timezone
+from typing import Iterable, Union
+from urllib.error import HTTPError
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pytz
+from cachetools import TTLCache, cached
+from IPython.display import HTML
+
 from .auth import AuthClient
 from .base import (
-    ClientBase,
     BaseEncoder,
+    ClientBase,
     _api_endpoints,
     handle_response,
 )
-from cachetools import cached, TTLCache
+from .endpoints import materialization_api_versions, materialization_common
+from .mytimer import MyTimeIt
 from .tools.table_manager import TableManager, ViewManager
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -351,21 +353,7 @@ class MaterializatonClientV2(ClientBase):
         return response.json()
 
     def get_annotation_count(self, table_name: str, datastack_name=None, version=None):
-        """Get number of annotations in a table
-
-        Parameters
-        ----------
-        table_name (str):
-            name of table to mark for deletion
-        datastack_name: str or None, optional,
-            Name of the datastack_name. If None, uses the one specified in the client.
-        version: int or None, optional
-            the version to query, else get the tables in the most recent version
-        Returns
-        -------
-        int
-            number of annotations
-        """
+        
         if datastack_name is None:
             datastack_name = self.datastack_name
         if version is None:
@@ -626,7 +614,7 @@ class MaterializatonClientV2(ClientBase):
         get_counts: bool = False,
         random_sample: int = None,
     ):
-        """generic query on materialization tables
+        """Generic query on materialization tables
 
         Args:
             table: 'str'
@@ -747,7 +735,6 @@ class MaterializatonClientV2(ClientBase):
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -808,54 +795,61 @@ class MaterializatonClientV2(ClientBase):
         desired_resolution: Iterable = None,
         random_sample: int = None,
     ):
-        """generic query on materialization tables
+        """Generic query on materialization tables
 
-         Args:
-             tables: list of lists with length 2 or 'str'
-                 list of two lists: first entries are table names, second
-                                    entries are the columns used for the join
-             filter_in_dict (dict of dicts, optional):
-                 outer layer: keys are table names
-                 inner layer: keys are column names, values are allowed entries.
-                 Defaults to None.
-             filter_out_dict (dict of dicts, optional):
-                 outer layer: keys are table names
-                 inner layer: keys are column names, values are not allowed entries.
-                 Defaults to None.
-             filter_equal_dict (dict of dicts, optional):
-                 outer layer: keys are table names
-                 inner layer: keys are column names, values are specified entry.
-                 Defaults to None.
-             filter_spatial (dict of dicts, optional):
-                 outer layer: keys are table names:
-                 inner layer: keys are column names, values are bounding boxes
-                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                              Expressed in units of the voxel_resolution of this dataset.
-                 Defaults to None
+        Args:
+            tables: list of lists with length 2 or 'str' list of two lists: first
+                entries are table names, second entries are the columns used for the
+                join.
+            filter_in_dict (dict of dicts, optional):
+                outer layer: keys are table names
+                inner layer: keys are column names, values are allowed entries.
+                Defaults to None.
+            filter_out_dict (dict of dicts, optional):
+                outer layer: keys are table names
+                inner layer: keys are column names, values are not allowed entries.
+                Defaults to None.
+            filter_equal_dict (dict of dicts, optional):
+                outer layer: keys are table names
+                inner layer: keys are column names, values are specified entry.
+                Defaults to None.
+            filter_spatial (dict of dicts, optional):
+                outer layer: keys are table names, inner layer: keys are column names.
+                Values are bounding boxes as [[min_x, min_y,min_z],[max_x, max_y, max_z]],
+                expressed in units of the voxel_resolution of this dataset. Defaults to
+                None.
             filter_regex_dict (dict of dicts, optional):
-                outer layer: keys are table names:
-                inner layer: keys are column names, values are regex strings
-                Defaults to None
-             select_columns (dict of lists of str, optional): keys are table names,values are the list of columns from that table.
-               Defaults to None, which will select all tables.  Will be passed to server as select_column_maps.
-               Passing a list will be passed as select_columns which is deprecated.
-             offset (int, optional): result offset to use. Defaults to None.
-                 will only return top K results.
-             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-             suffixes (dict, optional): suffixes to use for duplicate columns, keys are table names, values are the suffix
-             datastack_name (str, optional): datastack to query.
-                 If None defaults to one specified in client.
-             return_df (bool, optional): whether to return as a dataframe
-                 default True, if False, data is returned as json (slower)
-             split_positions (bool, optional): whether to break position columns into x,y,z columns
-                 default False, if False data is returned as one column with [x,y,z] array (slower)
-             materialization_version (int, optional): version to query.
-                 If None defaults to one specified in client.
-             metadata: (bool, optional) : toggle to return metadata
-                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-             desired_resolution (Iterable, optional):
-                 What resolution to convert position columns to. Defaults to None will use defaults.
-             random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
+                outer layer: keys are table names. inner layer: keys are column names,
+                values are regex strings. Defaults to None
+            select_columns (dict of lists of str, optional):
+                keys are table names,values are the list of columns from that table.
+                Defaults to None, which will select all tables.  Will be passed to
+                server as select_column_maps. Passing a list will be passed as
+                select_columns which is deprecated.
+            offset (int, optional):
+                result offset to use. Defaults to None. Will only
+                return top K results.
+            limit (int, optional): maximum results to return (server will set upper
+                limit, see get_server_config)
+            suffixes (dict, optional): suffixes to use for duplicate columns, keys are
+                table names, values are the suffix
+            datastack_name (str, optional): datastack to query.
+                If None defaults to one specified in client.
+            return_df (bool, optional): whether to return as a dataframe
+                default True, if False, data is returned as json (slower)
+            split_positions (bool, optional): whether to break position columns into
+                x,y,z columns default False, if False data is returned as one column
+                with [x,y,z] array (slower)
+            materialization_version (int, optional): version to query.
+                If None defaults to one specified in client.
+            metadata: (bool, optional) : toggle to return metadata
+                If True (and return_df is also True), return table and query metadata
+                in the df.attr dictionary.
+            desired_resolution (Iterable, optional):
+                What resolution to convert position columns to. Defaults to None will
+                use defaults.
+            random_sample: (int, optional) : if given, will do a tablesample of the
+                table to return that many annotations
         Returns:
              pd.DataFrame: a pandas dataframe of results of query
 
@@ -1287,7 +1281,6 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
-
                     if len(desired_resolution) != 3:
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
@@ -1348,7 +1341,7 @@ it will likely get removed in future versions. "
         desired_resolution: Iterable = None,
         random_sample: int = None,
     ):
-        """generic query on materialization tables
+        """Generic query on materialization tables
 
         Args:
             table: 'str'
@@ -1528,7 +1521,6 @@ it will likely get removed in future versions. "
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1962,7 +1954,6 @@ it will likely get removed in future versions. "
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -2146,7 +2137,7 @@ it will likely get removed in future versions. "
         get_counts: bool = False,
         random_sample: int = None,
     ):
-        """generic query on a view
+        """Generic query on a view
 
             Args:
             table: 'str'
