@@ -290,11 +290,6 @@ be to update your analysis to future versions.
 
 ## Content-aware Interface (Experimental)
 
-::: warning
-::: title
-Warning
-:::
-
 As of version 5.8.0, we have introduced a new interface to query tables
 and views. This interface might have small but breaking changes in the
 near future.

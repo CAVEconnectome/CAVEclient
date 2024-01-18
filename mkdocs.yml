@@ -17,7 +17,7 @@ nav:
     - tutorials/info.md
     - tutorials/schemas.md
     - tutorials/state.md
-    # - tutorials/materialization.md
+    - tutorials/materialization.md
   - Glossary: glossary.md
   - Client API: 
     - client_api/overview.md
