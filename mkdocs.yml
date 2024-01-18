@@ -7,6 +7,17 @@ edit_uri: edit/main/docs/
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Tutorial:
+    - tutorials/intro.md
+    - tutorials/framework.md
+    - tutorials/authentication.md
+    - tutorials/annotation.md
+    - tutorials/chunkedgraph.md
+    - tutorials/l2cache.md
+    - tutorials/info.md
+    - tutorials/schemas.md
+    - tutorials/state.md
+    # - tutorials/materialization.md
   - Reference:
     - Annotation: reference/annotation.md
     - Auth: reference/auth.md
