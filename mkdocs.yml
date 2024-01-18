@@ -21,7 +21,11 @@ nav:
   - Glossary: glossary.md
   - Client API: 
     - client_api/overview.md
+    - client_api/annotation.md
+    - client_api/chunkedgraph.md
+    - client_api/l2cache.md
     - client_api/materialize.md
+    - client_api/state.md
   - Extended API:
     - Annotation: extended_api/annotation.md
     - Auth: extended_api/auth.md
@@ -144,11 +148,13 @@ extra:
       link: "mailto:ben.pedigo@alleninstitute.org"
   version:
     provider: mike
-  
   names: 
     title: CAVEclient
     package: caveclient
     main_branch: master
+  clients_api_paths:
+    annotation: ../client_api/annotation.md#caveclient.annotationengine.AnnotationClientV2
+    materialize: ../client_api/materialize.md#caveclient.materializationengine.MaterializatonClientV3
 
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id

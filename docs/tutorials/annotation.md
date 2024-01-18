@@ -10,7 +10,10 @@ do not include any root ids. An annotation client is accessed with
 ## Getting existing tables
 
 A list of the existing tables for the datastack can be found with
-[caveclient.annotationengine.AnnotationClientV2.get_tables][].
+<!-- [get_tables()][caveclient.annotationengine.{{ latest_clients.annotation }}.get_tables].
+
+[get_tables()](../client_api/materialize.md#caveclient.materializationengine.MaterializatonClientV3.get_tables_metadata). -->
+
 
 ``` python
 all_tables = client.annotation.get_tables()
@@ -30,8 +33,8 @@ Each table has three main properties that can be useful to know:
 ## Downloading annotations
 
 You can download the JSON representation of a data point through the
-`~caveclient.annotationengine.AnnotationClientV2.get_annotation`{.interpreted-text
-role="func"} method. This can be useful if you need to look up
+[get_annotation()][caveclient.annotationengine.{{ latest_clients.annotation }}.get_annotation] 
+method. This can be useful if you need to look up
 information on unmaterialized data, or to see what a properly templated
 annotation looks like.
 
@@ -44,8 +47,8 @@ client.annotation.get_annotation(annotation_ids=annotation_id, table_name=table_
 ## Create a new table
 
 One can create a new table with a specified schema with the
-`~caveclient.annotationengine.AnnotationClientV2.create_table`{.interpreted-text
-role="func"} method:
+[create_table()][caveclient.annotationengine.{{ latest_clients.annotation }}.create_table] 
+ method:
 
 ``` python
 client.annotation.create_table(table_name='test_table',
@@ -61,8 +64,7 @@ neuroglancer session, you want this to match the units of that
 neuroglancer view.
 
 Note there are some optional metadata parameters to
-`~caveclient.annotationengine.AnnotationClientV2.create_table`{.interpreted-text
-role="func"}.
+[create_table()][caveclient.annotationengine.{{ latest_clients.annotation }}.create_table] 
 
 -   `notice_text` : This is text that will show up to users who access
     this data as a warning. This could be used to warn users that the

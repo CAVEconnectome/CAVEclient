@@ -19,7 +19,7 @@ services are associated with a single so-called **datastack**, which
 refers to a precise collection of imagery and segmentation data that
 function together. For example, EM imagery and a specific pychunkedgraph
 segmentation would be one datastack, while the same EM imagery but an
-initial static segmentation would be another. Datastacks are refered to
+initial static segmentation would be another. Datastacks are referred to
 by a short name, for instance `pinky100_public_flat_v185`.
 
 Global services are those that are potentially shared across multiple
@@ -45,13 +45,14 @@ client = CAVEclient()
 Just to confirm that this works, let's see if we can get the EM image
 source from the InfoService. If you get a list of names of datastacks,
 all is good. If you have not yet set up an authentication token or you
-get an authentication error, look at [Getting a new token][getting-a-new-token] for information about how to set up your auth token.
+get an authentication error, look at [Getting a new token][getting-a-new-token] for
+information about how to set up your auth token.
 
 ```python
 client.info.get_datastacks()
 ```
 
-If you have a specific datastack you want to use, you can inititialize
+If you have a specific datastack you want to use, you can initialize
 your CAVEclient with it. This gives you access to the full range of
 client functions.
 
@@ -75,11 +76,13 @@ client will automatically use the correct server address for the
 datastack if none is provided. You can override storing the server
 address by passing `write_server_address=False`. Datastacks can be
 removed from the cache using
-[caveclient.datastack_lookup.reset_server_address_cache(datastack_name)]{.title-ref}.
+
+<!-- TODO: -->
+[caveclient.datastack_lookup.reset_server_address_cache(datastack_name)][caveclient.datastack_lookup.reset_server_address_cache].
 
 ## Accessing specific clients
 
-Each client can be acccessed as a property of the main client. See the
+Each client can be accessed as a property of the main client. See the
 documentation at left for the capabilities of each. Assuming your client
 is named `client`, the subclients for each service are:
 
