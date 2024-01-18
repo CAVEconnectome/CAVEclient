@@ -5,6 +5,7 @@ mkdocs-git-committers-plugin-2
 mkdocs-git-revision-date-localized-plugin
 mkdocs-include-markdown-plugin
 mkdocs-jupyter
+mkdocs-macros-plugin
 mkdocs-material
 mkdocs-material-extensions
 mkdocs-section-index

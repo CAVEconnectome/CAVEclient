@@ -18,7 +18,8 @@ nav:
     - tutorials/schemas.md
     - tutorials/state.md
     # - tutorials/materialization.md
-  - Reference:
+  - Glossary: glossary.md
+  - API Reference:
     - Annotation: reference/annotation.md
     - Auth: reference/auth.md
     - Base: reference/base.md
@@ -95,7 +96,7 @@ plugins:
           options:
             show_source: false
             docstring_style: numpy
-            docstring_section_style: spacy # list, table, spacy
+            docstring_section_style: table # list, table, spacy
             docstring_options:
               ignore_init_summary: false
             merge_init_into_class: true
@@ -108,24 +109,25 @@ plugins:
             members_order: alphabetical # can be source
             group_by_category: true  # order is attributes, classes, functions, modules
             summary: true
-            show_if_no_docstring: false
+            show_if_no_docstring: true 
             show_docstring_attributes: false
             annotations_path: brief
             show_signature: true
             separate_signature: false
             show_signature_annotations: false
             unwrap_annotated: false
-            heading_level: 4
+            heading_level: 1
+  - macros
   - autorefs
   - section-index
   # - git-authors: # this one is more email-based
   #     show_contribution: true
   #     authorship_threshold_percent: 5
-  - git-committers:
-      repository: bdpedigo/CAVEclient
-      branch: main
-  - git-revision-date-localized:
-      enable_creation_date: true
+  # - git-committers: 
+      # repository: bdpedigo/CAVEclient
+      # branch: main
+  # - git-revision-date-localized:
+  #     enable_creation_date: true
   # - social:
   #     cards_layout: default
 
@@ -138,6 +140,11 @@ extra:
       link: "mailto:ben.pedigo@alleninstitute.org"
   version:
     provider: mike
+  
+  names: 
+    title: CAVEclient
+    package: caveclient
+    main_branch: master
 
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id
