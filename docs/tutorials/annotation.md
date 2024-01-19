@@ -57,7 +57,7 @@ client.annotation.create_table(table_name='test_table',
 ```
 
 The voxel resolution is the units your position columns will be uploaded
-in. \[1,1,1\] would imply a nm location, where as \[4,4,40\] would
+in [1,1,1] would imply a nm location, where as [4,4,40] would
 correspond to voxels of that size. If you are uploading points from a
 neuroglancer session, you want this to match the units of that
 neuroglancer view.
@@ -107,9 +107,12 @@ client.annotation.update_metadata(table_name='test_table',
 
 New data can be generated as a dict or list of dicts following the
 schema and uploaded with `post_annotation`. For example, a
-`microns_func_coreg` point needs to have: \* `type` set to
-`microns_func_coreg` \* `pt` set to a dict with `position` as a key and
-the xyz location as a value. \* `func_id` set to an integer.
+`microns_func_coreg` point needs to have:
+
+- `type` set to `microns_func_coreg`
+- `pt` set to a dict with `position` as a key and
+  the xyz location as a value.
+- `func_id` set to an integer.
 
 The following could would create a new annotation and then upload it to
 the service. Note that you get back the annotation id(s) of what you
@@ -141,7 +144,7 @@ client.annotation.post_annotation_df('test_table', df)
 ```
 
 Note that here I specified the IDs of my annotations, which you can do,
-but then its up to you to assure that the IDs don\'t collide with other
+but then its up to you to assure that the IDs don't collide with other
 IDs. If you leave them blank then the service will assign the IDs for
 you.
 
@@ -158,7 +161,7 @@ for a given table, then add annotations to it individually or as a
 group, and finally upload to the annotation table.
 
 To get a StagedAnnotation object, you can start with either a table name
-or a schema name. Here, we\'ll assume that there\'s already a table
+or a schema name. Here, we'll assume that there's already a table
 called "my_table" that is running a "cell_type_local" schema. If we
 want to add new annotations to the table, we simply use the table name
 with [stage_annotations()]({{ client_api_paths.annotation }}.stage_annotations).

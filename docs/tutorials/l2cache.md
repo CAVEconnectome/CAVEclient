@@ -45,11 +45,11 @@ The statistics that are available are:
   chunk, and whose values represent how many
   voxels border that side of the chunk. Meant to
   help understand significant the borders with
-  other chunks are. Ordering is the \[\[x_bottom,
-  y_bottom, z_bottom\],\[x_top, y_top, z_top\]\]
-  where {xyz}\_bottom refers to the face which
+  other chunks are. Ordering is the [[x_bottom,
+  y_bottom, z_bottom],[x_top, y_top, z_top]]
+  where {xyz}_bottom refers to the face which
   has the smallest values for that dimension, and
-  {xyz}\_top refers to the face which has the
+  {xyz}_top refers to the face which has the
   largest.
 - **pca** A 3x3 matrix representing the principal
   components of the xyz point cloud of voxels for
