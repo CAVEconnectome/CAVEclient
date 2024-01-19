@@ -1,0 +1,5 @@
+---
+title: base
+---
+
+::: caveclient.base

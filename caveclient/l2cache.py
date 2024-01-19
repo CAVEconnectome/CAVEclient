@@ -1,10 +1,15 @@
-from .base import ClientBase, _api_endpoints, handle_response, BaseEncoder
+import json
+from urllib.parse import urlparse
+from warnings import warn
+
+from requests.exceptions import HTTPError
+
+from .auth import AuthClient
+from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
 from .endpoints import (
     l2cache_api_versions,
     l2cache_endpoints_common,
 )
-from .auth import AuthClient
-import json
 
 server_key = "l2cache_server_address"
 
@@ -83,16 +88,21 @@ class L2CacheClientLegacy(ClientBase):
         return self._default_url_mapping.copy()
 
     def get_l2data(self, l2_ids, attributes=None):
-        """Gets the attributed statistics data for L2 ids.
+        """
+        Gets the attributed statistics data for L2 ids.
 
-        Args:
-            l2_ids (list or np.ndarray): a list of level 2 ids
-            attributes (list, optional): a list of attributes to retrieve.
-                Defaults to None which will return all that are available.
-                Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_nm', 'pca', 'pca_val', 'rep_coord_nm', 'size_nm3']. See docs for more description.
+        Parameters
+        ----------
+        l2_ids : list or np.ndarray
+            a list of level 2 ids
+        attributes : list, optional
+            a list of attributes to retrieve. Defaults to None which will return all that are available.
+            Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_nm', 'pca', 'pca_val', 'rep_coord_nm', 'size_nm3']. See docs for more description.
 
-        Returns:
-            dict: keys are l2 ids, values are data
+        Returns
+        -------
+        dict
+            keys are l2 ids, values are data
         """
 
         query_d = {"int64_as_str": False}
@@ -134,6 +144,50 @@ class L2CacheClientLegacy(ClientBase):
         if self._available_attributes is None:
             self._available_attributes = list(self.cache_metadata().keys())
         return self._available_attributes
+
+    def table_mapping(self):
+        """Retrieves table mappings for l2 cache.
+        Parameters
+        ----------
+
+        Returns
+        -------
+        dict
+            keys are pcg table names, values are dicts with fields `l2cache_id` and `cv_path`.
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["l2cache_table_mapping"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        return handle_response(response)
+
+    def has_cache(self, datastack_name=None):
+        """Checks if the l2 cache is available for the dataset
+
+        Parameters
+        ----------
+        datastack_name : str, optional
+            The name of the datastack to check, by default None (if None, uses the client's datastack)
+
+        Returns
+        -------
+        bool
+            True if the l2 cache is available, False otherwise
+        """
+        seg_source = self.fc.info.segmentation_source(datastack_name=datastack_name)
+        if urlparse(seg_source).scheme != "graphene":
+            return False
+        table_name = self.fc.chunkedgraph.table_name
+        try:
+            table_mapping = self.table_mapping()
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                warn(
+                    f"L2cache deployment '{self.server_address}/l2cache' does not have a l2 cache table mapping. Assuming no cache."
+                )
+                return False
+            else:
+                raise e
+        return table_name in table_mapping
 
 
 client_mapping = {

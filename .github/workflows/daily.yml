@@ -1,0 +1,8 @@
+name: build status
+on:
+  schedule:
+    - cron: "8 15 * * *" # 7:08am PST
+  workflow_dispatch:
+jobs:
+  build:
+    uses: ./.github/workflows/dev.yml

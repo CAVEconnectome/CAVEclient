@@ -1,7 +1,8 @@
-import pandas as pd
 import os
-import numpy as np
 import time
+
+import numpy as np
+import pandas as pd
 
 from caveclient import annotationengine as ae
 
@@ -44,7 +45,6 @@ def insert_synapses(syn_df, datastack_name="pinky100", annotation_type="synapse"
 
 
 if __name__ == "__main__":
-
     print("LOADING synapses")
 
     time_start = time.time()

@@ -61,14 +61,14 @@ materialization_endpoints_v3 = {
     "join_query": mat_v3_api + "/datastack/{datastack_name}/version/{version}/query",
     "table_count": mat_v2_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/count",
-    "versions": mat_v2_api + "/datastack/{datastack_name}/versions",
-    "version_metadata": mat_v2_api + "/datastack/{datastack_name}/version/{version}",
+    "versions": mat_v3_api + "/datastack/{datastack_name}/versions",
+    "version_metadata": mat_v3_api + "/datastack/{datastack_name}/version/{version}",
     "tables": mat_v2_api + "/datastack/{datastack_name}/version/{version}/tables",
     "metadata": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/table/{table_name}/metadata",
     "all_tables_metadata": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/tables/metadata",
-    "versions_metadata": mat_v2_api + "/datastack/{datastack_name}/metadata",
+    "versions_metadata": mat_v3_api + "/datastack/{datastack_name}/metadata",
     "ingest_annotation_table": mat_v2_api
     + "/materialize/run/ingest_annotations/datastack/{datastack_name}/{table_name}",
     "segmentation_metadata": mat_v3_api
@@ -85,6 +85,8 @@ materialization_endpoints_v3 = {
     + "/datastack/{datastack_name}/version/{version}/views/{view_name}/schema",
     "view_schemas": mat_v3_api
     + "/datastack/{datastack_name}/version/{version}/views/schemas",
+    "unique_string_values": mat_v3_api
+    + "/datastack/{datastack_name}/table/{table_name}/unique_string_values",
 }
 
 materialization_api_versions = {
@@ -260,6 +262,17 @@ l2cache_v1 = "{l2cache_server_address}/l2cache/api/v1"
 l2cache_endpoints_v1 = {
     "l2cache_data": l2cache_v1 + "/table/{table_id}/attributes",
     "l2cache_meta": l2cache_v1 + "/attribute_metadata",
+    "l2cache_table_mapping": l2cache_v1 + "/table_mapping",
 }
 
 l2cache_api_versions = {1: l2cache_endpoints_v1}
+
+# -------------------------------
+# ------ Neuroglancer endpoints
+# -------------------------------
+
+fallback_ngl_endpoint = "https://neuroglancer.neuvue.io/"
+ngl_endpoints_common = {
+    'get_info': "{ngl_url}/version.json",
+    'fallback_ngl_url': fallback_ngl_endpoint,
+}
