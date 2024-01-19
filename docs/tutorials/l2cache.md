@@ -1,4 +1,6 @@
-# Level 2 Cache
+---
+title: Level 2 Cache
+---
 
 To understand the level 2 cache, you must understand the structure of
 the chunkedgraph so see [the chunkedgraph tutorial](chunkedgraph.md).

@@ -1,18 +1,18 @@
 # CAVEclient
 
-This repository supplies client side code to interact with microservices
-in the Connectome Annotation Versioning Engine (CAVE).
+CAVE is short for Connectome Annotation Versioning Engine. CAVE is a set of microservices
+that provide a framework for storing and versioning connectomics data and large sets of
+dynamic annotations, metadata, and segmentations. This repository supplies client-side
+code to easily interact with the microservices in CAVE.
 
 ## Installation
 
-Can be installed from pypi
+`CAVEclient` can be installed from PyPI:
 
-`pip install caveclient`
+```bash
+pip install caveclient
+```
 
 ## Documentation
 
 You can find full documentation on readthedocs (https://caveclient.readthedocs.io).
-
-## Usage examples
-
-Tutorial notebook for accessing the FlyWire Connectome dataset: https://github.com/seung-lab/FlyConnectome/blob/main/CAVE%20tutorial.ipynb

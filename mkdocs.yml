@@ -59,12 +59,12 @@ theme:
     # - navigation.path
     - navigation.prune
     # - navigation.sections # toggle to have sections in side nav
-    # - navigation.tabs # toggle to mainly use top nav
+    - navigation.tabs # toggle to mainly use top nav
     - navigation.tabs.sticky
     - content.action.edit
     - content.action.view
     - toc.follow
-    # - toc.integrate # whether to include the toc in the main nav bar to the left
+    - toc.integrate # whether to include the toc in the main nav bar to the left
     - navigation.top
     - search.suggest
     - search.highlight

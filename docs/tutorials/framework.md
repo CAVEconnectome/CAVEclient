@@ -1,4 +1,6 @@
-# Introduction
+---
+title: Introduction
+---
 
 ## CAVEclient: one client for all services
 

@@ -1,4 +1,6 @@
-# Authentication
+---
+title: Authentication
+---
 
 Authentication tokens are generally needed for programmatic access to
 our services. The AuthClient handles storing and loading your token or
@@ -9,7 +11,7 @@ token, you probably won't interact with this client very often, however
 it has some convenient features for saving new tokens the first time.
 Let's see if you have a token already. Probably not.
 
-``` python
+```python
 client = CAVEclient()
 auth = client.auth
 print(f"My current token is: {auth.token}")
@@ -28,11 +30,11 @@ By default, the token is saved to
 can come in handy. The following steps will save a token to the default
 location.
 
-``` python
+```python
 auth.get_new_token()
 ```
 
-``` python
+```python
 new_token = 'abcdef1234567890' #This is the text you see after you visit the website.
 auth.save_token(token=new_token)
 print(f"My token is now: {auth.token}")
@@ -55,7 +57,7 @@ when we initialize a new CAVEclient. If we wanted to use a different
 token file, token key, or even directly specify a token we could do so
 here.
 
-``` python
+```python
 client = CAVEclient(datastack_name)
 print(f"Now my basic token is: {client.auth.token}")
 

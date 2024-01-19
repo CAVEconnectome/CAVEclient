@@ -1,4 +1,6 @@
-# Materialization
+---
+title: Materialization
+---
 
 The Materialization client allows one to interact with the materialized
 annotation tables, that were posted to the annotation service
