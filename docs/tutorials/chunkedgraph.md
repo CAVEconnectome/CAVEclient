@@ -32,11 +32,10 @@ Usually in Neuroglancer, one never notices supervoxel ids, but they are
 important for programmatic work. In order to look up the root id for a
 location in space, one needs to use the supervoxel segmentation to get
 the associated supervoxel id. The ChunkedGraph client makes this easy
-using the
-`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id`{.interpreted-text
-role="func"} method.
+using the [client.chunkedgraph.get_root_id()]({{ client_api_paths.chunkedgraph }}.get_root_id)
+method.
 
-``` python
+```python
 sv_id = 104200755619042523
 client.chunkedgraph.get_root_id(supervoxel_id=sv_id)
 ```
@@ -48,10 +47,10 @@ particular moment in history. This can be useful for reproducible
 analysis. Note below that the root id for the same supervoxel is
 different than it is now.
 
-``` python
+```python
 import datetime
 
-# I looked up the UTC POSIX timestamp from a day in early 2019. 
+# I looked up the UTC POSIX timestamp from a day in early 2019.
 timestamp = datetime.datetime.utcfromtimestamp(1546595253)
 
 sv_id = 104200755619042523
@@ -59,11 +58,10 @@ client.chunkedgraph.get_root_id(supervoxel_id=sv_id, timestamp=timestamp)
 ```
 
 If you are doing this across lots of supervoxels (or any nodes) then you
-can do it more efficently in one request with
-`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots`{.interpreted-text
-role="func"}
+can do it more efficiently in one request with
+[client.chunkedgraph.get_roots()]({{ client_api_paths.chunkedgraph }}.get_roots)
 
-``` python
+```python
 node_ids = [104200755619042523, 104200755619042524,104200755619042525]
 root_ids = client.chunkedgraph.get_roots(node_ids)
 ```
@@ -72,11 +70,10 @@ root_ids = client.chunkedgraph.get_roots(node_ids)
 
 A root id is associated with a particular agglomeration of supervoxels,
 which can be found with the
-`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves`{.interpreted-text
-role="func"} method. A new root id is generated for every new change in
-the chunkedgraph, so time stamps do not apply.
+[client.chunkedgraph.get_leaves()]({{ client_api_paths.chunkedgraph }}.get_leaves) method.
+A new root id is generated for every new change in the chunkedgraph, so time stamps do not apply.
 
-``` python
+```python
 root_id = 648518346349541252
 client.chunkedgraph.get_leaves(root_id)
 ```
@@ -84,19 +81,17 @@ client.chunkedgraph.get_leaves(root_id)
 You can also query the chunkedgraph not all the way to the bottom, using
 the stop_layer option
 
-``` python
+```python
 root_id = 648518346349541252
 client.chunkedgraph.get_leaves(root_id,stop_layer=2)
 ```
 
 This will get all the level 2 IDs for this root, which correspond to the
-lowest chunk of the heirachy. An analogous option exists for
-`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots`{.interpreted-text
-role="func"}. This is useful to help find nodes to query within the
-`l2cache`{.interpreted-text role="doc"}, amongst other things.
+lowest chunk of the hierarchy. An analogous option exists for
+[client.chunkedgraph.get_roots()]({{ client_api_paths.chunkedgraph }}.get_roots).
+This is useful to help find nodes to query within the `l2cache`, amongst other things.
 
 ## Other functions
 
-There are a variety of other interesting functions to explore in the
-`~caveclient.chunkedgraph.ChunkedGraphClientV1`{.interpreted-text
-role="class"}
+There are a variety of other interesting functions to explore in
+[client.chunkedgraph]({{ client_api_paths.chunkedgraph }}).

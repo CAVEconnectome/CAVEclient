@@ -156,6 +156,7 @@ extra:
     main_branch: master
   client_api_paths:
     annotation: ../client_api/annotation.md#caveclient.annotationengine.AnnotationClientV2
+    auth: ../client_api/auth.md#caveclient.auth.AuthClient
     chunkedgraph: ../client_api/chunkedgraph.md#caveclient.chunkedgraph.ChunkedGraphClientV1
     materialize: ../client_api/materialize.md#caveclient.materializationengine.MaterializatonClientV3
     l2cache: ../client_api/l2cache.md#caveclient.l2cache.L2CacheClientLegacy

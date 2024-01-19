@@ -51,7 +51,7 @@ If we had wanted to use a different file or a different json key, we
 could have specified that in auth.save_token.
 
 Because we used the default values, this token is used automatically
-when we intialize a new CAVEclient. If we wanted to use a different
+when we initialize a new CAVEclient. If we wanted to use a different
 token file, token key, or even directly specify a token we could do so
 here.
 
