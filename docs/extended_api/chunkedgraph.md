@@ -1,1 +1,5 @@
+---
+title: chunkedgraph
+---
+
 ::: caveclient.chunkedgraph

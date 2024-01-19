@@ -1,4 +1,6 @@
-# Overview
+---
+title: Overview
+---
 
 The most common method of interacting with the CAVE Framework is by instantiating a
 client (`caveclient.CAVEclient`) and then using that client to interact with various

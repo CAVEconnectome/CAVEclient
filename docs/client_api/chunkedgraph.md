@@ -1,4 +1,6 @@
-# client.chunkedgraph
+---
+title: client.chunkedgraph
+---
 
 Note: the functionality described here will be accurate if the datastack you are using
 is using the most up-to-date version of the chunkedgraph engine. If something seems
@@ -14,10 +16,5 @@ Extended documentation for all versions of the chunkedgraph client can be found
 
 ::: caveclient.chunkedgraph.ChunkedGraphClientV1
     options:
-        show_root_heading: false
         heading_level: 2
-        docstring_style: numpy
-        inherited_members: true
         show_bases: false
-        show_root_toc_entry: false
-        members_order: source
