@@ -1,0 +1,128 @@
+# REF: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/#the-whole-ci-cd-workflow
+name: publish release
+
+on:
+  # run this workflow when manually triggered
+  workflow_dispatch:
+    inputs:
+      part:
+        description: "Semver part to bump (major, minor, patch)"
+        type: choice
+        required: true
+        default: "patch"
+        options: ["major", "minor", "patch"]
+      dry-run:
+        description: "Dry run"
+        type: boolean
+        required: true
+        default: true
+      skip-tests:
+        description: "Skip tests"
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        if: ${{ github.event.inputs.skip-tests == 'false' }}
+        uses: ./.github/workflows/dev.yml
+      - name: Skip tests
+        if: ${{ github.event.inputs.skip-tests == 'true' }}
+        run: echo "Skipping tests"
+
+  bump:
+    name: Bump version
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      VERSION: ${{ steps.get-version.outputs.VERSION }}
+      SHORT_VERSION: ${{ steps.get-version.outputs.SHORT_VERSION }}
+      MAJOR_VERSION: ${{ steps.get-version.outputs.MAJOR_VERSION }}
+      MINOR_VERSION: ${{ steps.get-version.outputs.MINOR_VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Get tags
+        run: git fetch --tags origin
+      - name: Configure git for github-actions[bot]
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Twine
+        run: pip install twine
+      - name: Install bumpversion
+        run: pip install bumpversion
+      - name: Bump version with bumpversion
+        run: |
+          bumpversion ${{ github.event.inputs.part }}
+      - name: Commit and push with tags
+        if: ${{ github.event.inputs.dry-run == 'false' }}
+        run: git push --follow-tags
+      - name: Get version
+        id: get-version
+        run: |
+
+          version="$(git describe --tags)"
+          # remove the leading v from version
+          version="${version:1}"
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          major_version="$(cut -d '.' -f 1 <<< $version)"
+          echo "MAJOR_VERSION=$major_version" >> $GITHUB_OUTPUT
+          minor_version="$(cut -d '.' -f 2 <<< $version)"
+          echo "MINOR_VERSION=$minor_version" >> $GITHUB_OUTPUT
+          short_version="$major_version.$minor_version"
+          echo "SHORT_VERSION=$short_version" >> $GITHUB_OUTPUT
+      - name: Show short version
+        run: echo ${{ steps.get-version.outputs.SHORT_VERSION }}
+
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    needs: bump
+
+    steps:
+      - name: Show version
+        run: echo ${{ needs.bump.outputs.VERSION }}
+      - uses: actions/checkout@v4
+        with:
+          # want this to be the version that was just bumped
+          ref: main
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: build sdist
+        run: python setup.py sdist
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish-to-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/networkframe
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish distribution to PyPI
+        if: ${{ github.event.inputs.dry-run == 'false' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
