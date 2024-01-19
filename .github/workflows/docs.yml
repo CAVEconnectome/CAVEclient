@@ -57,5 +57,4 @@ jobs:
 
       - name: Build and push docs
         run: |
-          cd caveclient
           mkdocs gh-deploy --force --remote-branch gh-pages --remote-name origin
