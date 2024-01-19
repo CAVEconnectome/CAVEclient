@@ -1,19 +1,17 @@
 # Materialization
 
 The Materialization client allows one to interact with the materialized
-annotation tables, that were posted to the annotation service 
+annotation tables, that were posted to the annotation service
 ([the annotations tutorial](./annotation.md)).
 
-To see the entire class visit the API doc
-`~caveclient.materializationengine.MaterializatonClientV2`{.interpreted-text
-role="class"}
+To see the entire class visit the [API doc]({{ client_api_paths.materialize }}).
 
 The service regularly looks up all annotations and the segids underneath
 all the boundspatialpoints. You can then query these tables to find out
 the IDs that underlie the annotations, or the annotations that now
 intersect with certain IDs.
 
-For example, one common pattern is that you have idenfied a cell based
+For example, one common pattern is that you have identified a cell based
 on the location of its cell body, and you have an annotation there.
 
 You want to know what are the inputs onto the cell, so you first query
@@ -34,8 +32,7 @@ specific IDs then you should be using a specific version that is tied to
 a timepoint where those IDs are valid.
 
 To see what versions are available, use the
-`~caveclient.materializationengine.MaterializatonClientV2.get_versions`{.interpreted-text
-role="func"}
+[client.materialize.get_versions()]({{ client_api_paths.materialize }}.get_versions) function.
 
 ```python
 client.materialize.get_versions()
@@ -44,10 +41,9 @@ client.materialize.get_versions()
 Each version has a timestamp it was run on as well as a date when it
 will expire. You can query all this metadata for a specific version
 using
-`~caveclient.materializationengine.MaterializatonClientV2.get_version_metadata`{.interpreted-text
-role="func"} or all versions using
-`~caveclient.materializationengine.MaterializatonClientV2.get_versions_metadata`{.interpreted-text
-role="func"}
+[client.materialize.get_version_metadata()]({{ client_api_paths.materialize }}.get_version_metadata) or
+all versions using
+[client.materialize.get_versions_metadata()]({{ client_api_paths.materialize }}.get_versions_metadata).
 
 To change the default version, alter the .version property of the
 materialization client.
@@ -61,28 +57,25 @@ or specify the version when making a particular call.
 ## Browsing versions
 
 To see what tables are available in a version you can use
-`~caveclient.materializationengine.MaterializatonClientV2.get_tables`{.interpreted-text
-role="func"}
+[client.materialize.get_tables()]({{ client_api_paths.materialize }}.get_tables).
 
 If you want to read about the description of what that table is, use the
 annotationengine client
-`~caveclient.annotationengine.AnnotationClientV2.get_table_metadata`{.interpreted-text
-role="func"}
+[client.materialize.get_table_metadata()]({{ client_api_paths.materialize }}.get_table_metadata).
 
 If you want to read more about the schema for the annotation table use
 the schema service
-`~caveclient.emannotationschemas.SchemaClientLegacy.schema_definition`{.interpreted-text
-role="func"}
+[caveclient.emannotationschemas.SchemaClientLegacy.schema_definition()][caveclient.emannotationschemas.SchemaClientLegacy.schema_definition].
 
 Note, the materialization service has a human readable webpage that
-links to the other services that might be more convienent for you to
+links to the other services that might be more convenient for you to
 browse, to get a link there in ipython display
 `client.materialize.homepage`
 
 for some important tables, the info service has a pointer to which table
 you should use in the metadata for the datastack.
-`` `client.info.get_datastack_info()['synapse_table'] ``[ and
-]{.title-ref}`client.info.get_datastack_info()['soma_table']`\`.
+`client.info.get_datastack_info()['synapse_table']` and
+`client.info.get_datastack_info()['soma_table']`.
 
 To see how many annotations are in a particular table use
 
@@ -93,18 +86,18 @@ nannotations=client.materialize.get_annotation_count('my_table')
 ## Querying tables
 
 To query a small table, you can just download the whole thing using
-`~caveclient.materializationengine.MaterializatonClientV2.query_table`{.interpreted-text
-role="func"} which will return a dataframe of the table.
+[client.materialize.query_table()]({{ client_api_paths.materialize }}.query_table) which will return a
+dataframe of the table.
 
 Note however, some tables, such as the synapse table might be very large
 200-300 million rows and the service will only return the first 200,000
 results, and not in a deterministic manner. **NOTE! This API is not
 designed to enable enmass downloading of the entire synapse table there
-are more efficent ways of doing this. Contact your dataset administrator
+are more efficient ways of doing this. Contact your dataset administrator
 for more information if this is what you are looking to do.**
 
 To just get a preview, use the limit argument (but note again that this
-won\'t be a reproducible set)
+won't be a reproducible set)
 
 ```python
 df=client.materialize.query_table('my_table', limit=10)
@@ -112,8 +105,8 @@ df=client.materialize.query_table('my_table', limit=10)
 
 For most applications, you will want to filter the query in some way.
 
-We offer three kinds of filters you can apply: filter_equal, filter_in
-and filter_not_in. For query_table each is specified as a dictionary
+We offer three kinds of filters you can apply: `filter_equal_dict`, `filter_in_dict`
+and `filter_out_dict`. For query_table each is specified as a dictionary
 where the keys are column names, and the values are a list of values (or
 single value in the case of filter_equal).
 
@@ -128,18 +121,17 @@ df=client.materialize.query_table(synapse_table,
 
 The speed of querying is affected by a number of factors, including the
 size of the data. To improve the performance of results, you can reduce
-the number of columns returned using select_colums.
+the number of columns returned using `select_columns`.
 
 So for example, if you are only interested in the root_ids and locations
 of pre_synaptic terminals you might limit the query with select_columns.
-Also, it is convient to return the with positions as a column of
-np.array(\[x,y,z\]) coordinates for many purposes. However, sometimes
-you might prefer to have them split out as seperate \_x, \_y, \_z
-columns. To enable this option use split_columns=True.
+Also, it is convenient to return the with positions as a column of
+`np.array([x,y,z])` coordinates for many purposes. However, sometimes
+you might prefer to have them split out as separate x, y, z
+columns. To enable this option use `split_columns=True`.
 split_columns=True is faster, as combining them is an extra step. You
 can recombine split-out position columns using
-`~caveclient.materializationengine.concatenate_position_columns`{.interpreted-text
-role="func"}
+[caveclient.materializationengine.concatenate_position_columns()][caveclient.materializationengine.concatenate_position_columns]
 
 ```python
 synapse_table = client.info.get_datastack_info()['synapse_table']
@@ -167,10 +159,10 @@ automatically convert all spatial positions into voxels of that size in
 nanometers.
 
 So if you want positions in nanometers, you would pass
-desired_resolution=\[1,1,1\]. If you want positions in microns you would
-pass desired_resolution=\[1000,1000,1000\]. If you want positions in
+`desired_resolution=[1,1,1]`. If you want positions in microns you would
+pass `desired_resolution=[1000,1000,1000]`. If you want positions in
 4,4,40nm voxel coordinates to use with cloud-volume or neuroglancer you
-would pass desired_resolution=\[4,4,40\].
+would pass `desired_resolution=[4,4,40]`.
 
 ## Spatial Filters
 
@@ -180,8 +172,7 @@ based upon being within a 3d bounding box.
 This is done by adding a filter_spatial_dict argument to query_table.
 The units of the bounding box should be in the units of the
 voxel_resolution of the table (which can be obtained from
-`~caveclient.materializationengine.MaterializatonClientV2.get_table_metadata`{.interpreted-text
-role="func"}).
+[client.materialize.get_table_metadata()]({{ client_api_paths.materialize }}.get_table_metadata)).
 
 ```python
 bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
@@ -195,16 +186,15 @@ df=client.materialize.query_table(synapse_table,
 
 For synapses in particular, we have a simplified method for querying
 them with a reduced syntax.
-`~caveclient.materializationengine.MaterializatonClientV2.synapse_query`{.interpreted-text
-role="func"} lets you specify pre and post synaptic partners as keyword
-arguments and bounding boxes. The defaults make reasonable assumptions
+[client.materialize.synapse_query()]({{ client_api_paths.materialize }}.synapse_query) lets you specify pre
+and post synaptic partners as keyword arguments and bounding boxes. The defaults make reasonable assumptions
 about what you want to query, namely that the synapse_table is the table
 that the info service advertises, and that if you specify a bounding
 box, that you want the post_pt_position. These can be overridden of
 course, but the above bounding box query is simplified to.
 
 **NOTE! This API is not designed to enable enmass downloading of the
-entire synapse table there are more efficent ways of doing this. Contact
+entire synapse table there are more efficient ways of doing this. Contact
 your dataset administrator for more information if this is what you are
 looking to do.**
 
@@ -221,10 +211,9 @@ that were present at the timestamp of the materialization. If you query
 the tables with an ID that is not valid during the time of the
 materialization you will get empty results.
 
-To check if root_ids are valid at your materialization\'s timestamp, you
+To check if root_ids are valid at your materialization's timestamp, you
 can use
-`~caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots`{.interpreted-text
-role="func"}
+[client.chunkedgraph.is_latest_roots()]({{ client_api_paths.chunkedgraph }}.is_latest_roots)
 
 ```python
 import numpy as np
@@ -236,8 +225,7 @@ assert(np.all(is_latest))
 If you need to lookup what happened to that ID, you can use the
 chunkedgraph lineage tree, to look into the future or the past,
 depending on your application you can use
-`~caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph`{.interpreted-text
-role="func"}
+[client.chunkedgraph.get_lineage_graph()]({{ client_api_paths.chunkedgraph }}.get_lineage_graph).
 
 Again, the ideal situation is that you have an annotation in the
 database which refers to your objects of interest, and querying that
@@ -246,13 +234,12 @@ materialization.
 
 However, sometimes you might be browsing and proofreadding the data and
 get an ID that is more recent that the most recent version available.
-For convience, you can use
-`~caveclient.materializationengine.MaterializatonClientV2.live_query`{.interpreted-text
-role="func"}.
+For convenience, you can use
+[client.materialize.live_query()]({{ client_api_paths.chunkedgraph }}.live_query).
 
 to automatically update the results of your query to a time in the
 future, such as now. For example, to pass now, use
-`` `datetime.datetime.now(datetime.timezone.utc) ``\`. Note all
+`datetime.datetime.now(datetime.timezone.utc)`. Note all
 timestamps are in UTC throughout the codebase.
 
 ```python
@@ -278,13 +265,13 @@ df=client.materialize.query_table(synapse_table,
 ```
 
 Also, keep in mind if you run multiple queries and at each time pass
-`datetime.datetime.now(datetime.timezone.utc)`, there is no gauruntee
+`datetime.datetime.now(datetime.timezone.utc)`, there is no guarantee
 that the IDs will be consistent from query to query, as proofreading
 might be happening at any time. For larger scale analysis constraining
 oneself to a materialized version will ensure consistent results.
 
 Versions have varying expiration times in order to support the tradeoff
-between recency and consistency, so before undertakin an analysis
+between recency and consistency, so before undertaking an analysis
 project consider what version you want to query and what your plan will
 be to update your analysis to future versions.
 
@@ -361,7 +348,7 @@ nuc_df = client.materialize.tables.nucleus_detection_v0(
 ```
 
 If you want to do a live query instead of a materialized query, the
-filtering remains identifical but we use the `live_query` function
+filtering remains identical but we use the `live_query` function
 instead. The one required argument for `live_query` is the timestamp.
 
 ```python
@@ -379,9 +366,9 @@ The live query functions have similar but slightly different arguments:
 
 Note that way that IPython handles docstrings means that while you can
 use `?` to get the docstring of the filtering part of the function, you
-can\'t simply do something like
+can't simply do something like
 `client.materialize.tables.nucleus_detection_v0().query?`. It will tell
-you the function can\'t be found, because technically the `query`
+you the function can't be found, because technically the `query`
 function does not yet exist until the table filtering function is
 called.
 
