@@ -77,7 +77,6 @@ datastack if none is provided. You can override storing the server
 address by passing `write_server_address=False`. Datastacks can be
 removed from the cache using
 
-<!-- TODO: -->
 [caveclient.datastack_lookup.reset_server_address_cache(datastack_name)][caveclient.datastack_lookup.reset_server_address_cache].
 
 ## Accessing specific clients

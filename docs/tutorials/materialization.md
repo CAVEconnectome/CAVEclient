@@ -1,8 +1,8 @@
 # Materialization
 
 The Materialization client allows one to interact with the materialized
-annotation tables, that were posted to the annotation service (see
-`annotation`{.interpreted-text role="doc"}).
+annotation tables, that were posted to the annotation service 
+([the annotations tutorial](./annotation.md)).
 
 To see the entire class visit the API doc
 `~caveclient.materializationengine.MaterializatonClientV2`{.interpreted-text
@@ -37,7 +37,7 @@ To see what versions are available, use the
 `~caveclient.materializationengine.MaterializatonClientV2.get_versions`{.interpreted-text
 role="func"}
 
-``` python
+```python
 client.materialize.get_versions()
 ```
 
@@ -52,7 +52,7 @@ role="func"}
 To change the default version, alter the .version property of the
 materialization client.
 
-``` python
+```python
 client.materialize.version = 9
 ```
 
@@ -86,7 +86,7 @@ you should use in the metadata for the datastack.
 
 To see how many annotations are in a particular table use
 
-``` python
+```python
 nannotations=client.materialize.get_annotation_count('my_table')
 ```
 
@@ -106,7 +106,7 @@ for more information if this is what you are looking to do.**
 To just get a preview, use the limit argument (but note again that this
 won\'t be a reproducible set)
 
-``` python
+```python
 df=client.materialize.query_table('my_table', limit=10)
 ```
 
@@ -120,7 +120,7 @@ single value in the case of filter_equal).
 So for example to query a synapse table for all synapses onto a neuron
 in flywire you would use
 
-``` python
+```python
 synapse_table = client.info.get_datastack_info()['synapse_table']
 df=client.materialize.query_table(synapse_table,
                                   filter_equal_dict = {'post_pt_root_id': MYID})
@@ -141,7 +141,7 @@ can recombine split-out position columns using
 `~caveclient.materializationengine.concatenate_position_columns`{.interpreted-text
 role="func"}
 
-``` python
+```python
 synapse_table = client.info.get_datastack_info()['synapse_table']
 df=client.materialize.query_table(synapse_table,
                                   filter_equal_dict = {'post_pt_root_id': MYID},
@@ -162,7 +162,7 @@ Neuroglancer at.
 Annotation tables can be created and uploaded in varying resolutions
 according to whatever the user of the table felt was natural. This
 information is available in the metadata for that table. In addition,
-you may pass *desired_resolution* as a keyword argument which will
+you may pass _desired_resolution_ as a keyword argument which will
 automatically convert all spatial positions into voxels of that size in
 nanometers.
 
@@ -183,7 +183,7 @@ voxel_resolution of the table (which can be obtained from
 `~caveclient.materializationengine.MaterializatonClientV2.get_table_metadata`{.interpreted-text
 role="func"}).
 
-``` python
+```python
 bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
 synapse_table = client.info.get_datastack_info('synapse_table')
 df=client.materialize.query_table(synapse_table,
@@ -208,7 +208,7 @@ entire synapse table there are more efficent ways of doing this. Contact
 your dataset administrator for more information if this is what you are
 looking to do.**
 
-``` python
+```python
 bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
 df=client.materialize.query_table(post_ids = MYID,
                                   bounding_box=bounding_box)
@@ -226,7 +226,7 @@ can use
 `~caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots`{.interpreted-text
 role="func"}
 
-``` python
+```python
 import numpy as np
 mat_time = client.materialize.get_timestamp()
 is_latest = client.chunkedgraph.is_latest_roots([MYID], timestamp=mat_time)
@@ -255,7 +255,7 @@ future, such as now. For example, to pass now, use
 `` `datetime.datetime.now(datetime.timezone.utc) ``\`. Note all
 timestamps are in UTC throughout the codebase.
 
-``` python
+```python
 import datetime
 synapse_table = client.info.get_datastack_info()['synapse_table']
 df=client.materialize.live_query(synapse_table,
@@ -269,7 +269,7 @@ filters are not valid at the timestamp given
 You can also pass a timestamp directly to query_table and it will call
 live_query automatically.
 
-``` python
+```python
 import datetime
 synapse_table = client.info.get_datastack_info()['synapse_table']
 df=client.materialize.query_table(synapse_table,
@@ -303,21 +303,21 @@ and the list of their columns and lets you filter the tables as
 arguments in the function with suggestions. Moreover, the filtering
 arguments and the querying arguments are separated into two.
 
-Let\'s see how this works with a simplest example --- downloading a
+Let's see how this works with a simplest example --- downloading a
 table called `nucleus_detection_v0`. First, we reference the table as a
 function and then we run the query --- this is exactly the same as
 `client.materialize.query_table('nucleus_detection_v0')`.
 
-``` python
+```python
 client = CAVEclient('minnie65_public')
 nuc_df = client.materialize.tables.nucleus_detection_v0().query()
 ```
 
 Where things differ is when we add filters. If we want to query based on
-a set of values for the field \"id\", for example, we add that as an
+a set of values for the field "id", for example, we add that as an
 argument:
 
-``` python
+```python
 my_ids = [373879, 111162]
 nuc_df = client.materialize.tables.nucleus_detection_v0(id=my_ids).query()
 ```
@@ -336,7 +336,7 @@ If you need to specify the table programmatically, you can also use a
 dictionary-style approach to getting the table filtering function. For
 example, an equivalent version of the above line would be:
 
-``` python
+```python
 my_ids = [373879, 111162]
 my_table = 'nucleus_detection_v0'
 nuc_df = client.materialize.tables[my_table](id=my_ids).query()
@@ -350,7 +350,7 @@ particular, the arguments that apply to `query` are: `select_columns`,
 example, to add a desired resolution and split positions in the above
 query, it would look like:
 
-``` python
+```python
 my_ids = [373879, 111162]
 nuc_df = client.materialize.tables.nucleus_detection_v0(
     id=my_ids
@@ -364,7 +364,7 @@ If you want to do a live query instead of a materialized query, the
 filtering remains identifical but we use the `live_query` function
 instead. The one required argument for `live_query` is the timestamp.
 
-``` python
+```python
 my_ids = [373879, 111162]
 nuc_df = client.materialize.tables.nucleus_detection_v0(
     id=my_ids
@@ -388,7 +388,7 @@ called.
 Instead, if you want to glimpse the docstring of the query or live_query
 functions, you need to split it into two lines:
 
-``` python
+```python
 qry_func = client.materialize.tables.nucleus_detection_v0().query
 qry_func?
 ```

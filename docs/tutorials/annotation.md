@@ -67,26 +67,26 @@ Note there are some optional metadata parameters to
   this data as a warning. This could be used to warn users that the
   data is not complete or checked yet, or to advertise that a
   particular publication should be cited when using this table.
-- `read_permission` : one of \"PRIVATE\" which means only you can read
-  data in this table. \"PUBLIC\" (default) which means anyone can read
+- `read_permission` : one of "PRIVATE" which means only you can read
+  data in this table. "PUBLIC" (default) which means anyone can read
   this table that has read permissions to this dataset. So if and only
   if you can read the segmentation results of this data, you can read
-  this table. \"GROUP\" which means that you must share a common group
+  this table. "GROUP" which means that you must share a common group
   with this user for them to be able to read. We need to make a way to
   discover what groups you are in and who you share groups with.
-- `write_permission`: one of \"PRIVATE\" (default), which means only
-  you can write to this table. \"PUBLIC\" which means anyone can write
+- `write_permission`: one of "PRIVATE" (default), which means only
+  you can write to this table. "PUBLIC" which means anyone can write
   to this table that has write permissions to this dataset. Note
   although this means anyone can add data, no annotations are ever
-  truly overwritten. \"GROUP\" which means that you must share a
+  truly overwritten. "GROUP" which means that you must share a
   common group with this user for them to be able to write. We need to
   make a way to discover what groups you are in and who you share
   groups with.
 
 If you change your mind about what you want for metadata, some but not
 all fields can be updated with
-[update_metadata()]({{ client_api_paths.annotation }}.update_metadata). This includes the 
-description, the notice_text, and the permissions, but not the name, schema or voxel 
+[update_metadata()]({{ client_api_paths.annotation }}.update_metadata). This includes the
+description, the notice_text, and the permissions, but not the name, schema or voxel
 resolution.
 
 ```python
@@ -157,7 +157,7 @@ group, and finally upload to the annotation table.
 
 To get a StagedAnnotation object, you can start with either a table name
 or a schema name. Here, we\'ll assume that there\'s already a table
-called \"my_table\" that is running a \"cell_type_local\" schema. If we
+called "my_table" that is running a "cell_type_local" schema. If we
 want to add new annotations to the table, we simply use the table name
 with [stage_annotations()]({{ client_api_paths.annotation }}.stage_annotations).
 
