@@ -1,4 +1,6 @@
-# Getting Started
+---
+title: Getting Started
+---
 
 AnnotationFramework client is a package for simplifying interactions
 with HTML services associated with the CAVE (Connectome Annotation

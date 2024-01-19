@@ -1,4 +1,6 @@
-# ChunkedGraph
+---
+title: Chunked Graph
+---
 
 The chunkedgraph is a dynamic oct-tree connected components supervoxel
 graph.

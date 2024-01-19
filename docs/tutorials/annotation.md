@@ -1,4 +1,6 @@
-# AnnotationEngine
+---
+title: Annotation
+---
 
 The AnnotationClient is used to interact with the AnnotationEngine
 service to create tables from existing schema, upload new data, and
