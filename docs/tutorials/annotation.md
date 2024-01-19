@@ -10,35 +10,32 @@ do not include any root ids. An annotation client is accessed with
 ## Getting existing tables
 
 A list of the existing tables for the datastack can be found with
-<!-- [get_tables()][caveclient.annotationengine.{{ latest_clients.annotation }}.get_tables].
+[get_tables()]({{ client_api_paths.annotation }}.get_tables).
 
-[get_tables()](../client_api/materialize.md#caveclient.materializationengine.MaterializatonClientV3.get_tables_metadata). -->
-
-
-``` python
+```python
 all_tables = client.annotation.get_tables()
 all_tables[0]
 ```
 
 Each table has three main properties that can be useful to know:
 
--   `table_name` : The table name, used to refer to it when uploading or
-    downloading annotations. This is also passed through to the table in
-    the Materialized database.
--   `schema_name` : The name of the table's schema from
-    EMAnnotationSchemas (see below).
--   `max_annotation_id` : An upper limit on the number of annotations
-    already contained in the table.
+- `table_name` : The table name, used to refer to it when uploading or
+  downloading annotations. This is also passed through to the table in
+  the Materialized database.
+- `schema_name` : The name of the table's schema from
+  EMAnnotationSchemas (see below).
+- `max_annotation_id` : An upper limit on the number of annotations
+  already contained in the table.
 
 ## Downloading annotations
 
 You can download the JSON representation of a data point through the
-[get_annotation()][caveclient.annotationengine.{{ latest_clients.annotation }}.get_annotation] 
+[get_annotation()]({{ client_api_paths.annotation }}.get_annotation)
 method. This can be useful if you need to look up
 information on unmaterialized data, or to see what a properly templated
 annotation looks like.
 
-``` python
+```python
 table_name = all_tables[0]['table_name']      # 'ais_analysis_soma'
 annotation_id = 100
 client.annotation.get_annotation(annotation_ids=annotation_id, table_name=table_name)
@@ -47,10 +44,10 @@ client.annotation.get_annotation(annotation_ids=annotation_id, table_name=table_
 ## Create a new table
 
 One can create a new table with a specified schema with the
-[create_table()][caveclient.annotationengine.{{ latest_clients.annotation }}.create_table] 
- method:
+[create_table()]({{ client_api_paths.annotation }}.create_table)
+method:
 
-``` python
+```python
 client.annotation.create_table(table_name='test_table',
                                schema_name='microns_func_coreg',
                                voxel_resolution = [1,1,1],
@@ -64,35 +61,35 @@ neuroglancer session, you want this to match the units of that
 neuroglancer view.
 
 Note there are some optional metadata parameters to
-[create_table()][caveclient.annotationengine.{{ latest_clients.annotation }}.create_table] 
+[create_table()]({{ client_api_paths.annotation }}.create_table)
 
--   `notice_text` : This is text that will show up to users who access
-    this data as a warning. This could be used to warn users that the
-    data is not complete or checked yet, or to advertise that a
-    particular publication should be cited when using this table.
--   `read_permission` : one of \"PRIVATE\" which means only you can read
-    data in this table. \"PUBLIC\" (default) which means anyone can read
-    this table that has read permissions to this dataset. So if and only
-    if you can read the segmentation results of this data, you can read
-    this table. \"GROUP\" which means that you must share a common group
-    with this user for them to be able to read. We need to make a way to
-    discover what groups you are in and who you share groups with.
--   `write_permission`: one of \"PRIVATE\" (default), which means only
-    you can write to this table. \"PUBLIC\" which means anyone can write
-    to this table that has write permissions to this dataset. Note
-    although this means anyone can add data, no annotations are ever
-    truly overwritten. \"GROUP\" which means that you must share a
-    common group with this user for them to be able to write. We need to
-    make a way to discover what groups you are in and who you share
-    groups with.
+- `notice_text` : This is text that will show up to users who access
+  this data as a warning. This could be used to warn users that the
+  data is not complete or checked yet, or to advertise that a
+  particular publication should be cited when using this table.
+- `read_permission` : one of \"PRIVATE\" which means only you can read
+  data in this table. \"PUBLIC\" (default) which means anyone can read
+  this table that has read permissions to this dataset. So if and only
+  if you can read the segmentation results of this data, you can read
+  this table. \"GROUP\" which means that you must share a common group
+  with this user for them to be able to read. We need to make a way to
+  discover what groups you are in and who you share groups with.
+- `write_permission`: one of \"PRIVATE\" (default), which means only
+  you can write to this table. \"PUBLIC\" which means anyone can write
+  to this table that has write permissions to this dataset. Note
+  although this means anyone can add data, no annotations are ever
+  truly overwritten. \"GROUP\" which means that you must share a
+  common group with this user for them to be able to write. We need to
+  make a way to discover what groups you are in and who you share
+  groups with.
 
 If you change your mind about what you want for metadata, some but not
 all fields can be updated with
-`~caveclient.annotationengine.AnnotationClientV2.update_metadata`{.interpreted-text
-role="func"}. This includes the description, the notice_text, and the
-permissions, but not the name, schema or voxel resolution.
+[update_metadata()]({{ client_api_paths.annotation }}.update_metadata). This includes the 
+description, the notice_text, and the permissions, but not the name, schema or voxel 
+resolution.
 
-``` python
+```python
 # to update description
 client.annotation.update_metadata(table_name='test_table',
                                   description="a new description for my table")
@@ -116,7 +113,7 @@ The following could would create a new annotation and then upload it to
 the service. Note that you get back the annotation id(s) of what you
 uploaded.
 
-``` python
+```python
 new_data = {'type': 'microns_func_coreg',
             'pt': {'position': [1,2,3]},
             'func_id': 0}
@@ -127,13 +124,13 @@ There are methods to simplify annotation uploads if you have a pandas
 dataframe whose structure mirrors the struction of the annotation schema
 you want to upload
 
-``` python
+```python
 import pandas as pd
 
 df = pd.DataFrame([{'id':0,
          'type': 'microns_func_coreg',
          'pt_position': [1,2,3]},
-         'func_id': 0}, 
+         'func_id': 0},
         {'id':1,
         'type': 'microns_func_coreg',
         'pt_position': [3,2,1]},
@@ -147,12 +144,11 @@ IDs. If you leave them blank then the service will assign the IDs for
 you.
 
 There is a similar method for updating
-`~caveclient.annotationengine.AnnotationClientV2.update_annotation_df`{.interpreted-text
-role="func"}
+[update_annotation_df()]({{ client_api_paths.annotation }}.update_annotation_df)
 
 ## Staged Annotations
 
-Staged anotations help ensure that the annotations you post follow the
+Staged annotations help ensure that the annotations you post follow the
 appropriate schema, both by providing guides to the field names and
 locally validating against a schema before uploading. The most common
 use case for staged annotations is to create a StagedAnnotation object
@@ -163,11 +159,9 @@ To get a StagedAnnotation object, you can start with either a table name
 or a schema name. Here, we\'ll assume that there\'s already a table
 called \"my_table\" that is running a \"cell_type_local\" schema. If we
 want to add new annotations to the table, we simply use the table name
-with
-`~caveclient.annotationengine.AnnotationClientV2.stage_annotations`{.interpreted-text
-role="func"}.
+with [stage_annotations()]({{ client_api_paths.annotation }}.stage_annotations).
 
-``` python
+```python
 stage = client.annotation.stage_annotations("my_table")
 ```
 
@@ -176,7 +170,7 @@ collection of annotations. Every time you add an annotation, it is
 immediately validated against the schema. To add an annotation, use the
 `add` method:
 
-``` python
+```python
 stage.add(
     cell_type = "pyramidal_cell",
     classification_system="excitatory",
@@ -198,7 +192,7 @@ You can see the annotations as a list of dictionary records with
 a table name, this information is stored in the `stage` and you can
 simply upload it from the client.
 
-``` python
+```python
 client.annotation.upload_staged_annotations(stage)
 ```
 
@@ -207,7 +201,7 @@ annotation you are updating, which is not required in the schema
 otherwise. In order to stage updated annotations, set the `update`
 parameter to `True` when creating the stage.
 
-``` python
+```python
 update_stage = client.annotation.stage_annotations("my_table", update=True)
 update_stage.add(
     id=1,
@@ -231,7 +225,7 @@ different than the resolution for the table, you can also set the
 between the resolution you specify for your own annotations and the
 resolution that the table expects.
 
-``` python
+```python
 stage = client.annotation.stage_annotations("my_table", annotation_resolution=[8,8,40])
 stage.add(
     cell_type='pyramidal_cell',

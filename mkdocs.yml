@@ -2,7 +2,7 @@ site_name: CAVEclient
 site_url: https://bdpedigo.github.io/CAVEclient/
 repo_url: https://github.com/bdpedigo/CAVEclient/
 repo_name: bdpedigo/CAVEclient
-edit_uri: edit/main/docs/
+edit_uri: edit/master/docs/
 nav:
   - Home: index.md
   - Installation: installation.md
@@ -17,10 +17,10 @@ nav:
     - tutorials/schemas.md
     - tutorials/state.md
     - tutorials/materialization.md
-  - Glossary: glossary.md
   - Client API: 
     - client_api/index.md
     - client_api/annotation.md
+    - client_api/auth.md
     - client_api/chunkedgraph.md
     - client_api/l2cache.md
     - client_api/materialize.md
@@ -39,20 +39,22 @@ nav:
     - extended_api/l2cache.md
     - extended_api/materialization.md
     - extended_api/session_config.md
+  - Glossary: glossary.md
   - Contributing: contributing.md
   - Changelog: changelog.md
 theme:
   name: material
   language: en
-  #logo: assets/logo.png
+  logo: images/logo-inverted.png
+  favicon: images/logo-inverted.png
   palette:
     scheme: preference
-    primary: indigo
+    primary: black
     accent: indigo
   icon:
     repo: fontawesome/brands/github
   features:
-    # - navigation.indexes
+    - navigation.indexes
     - navigation.instant
     # - navigation.path
     - navigation.prune
@@ -149,12 +151,16 @@ extra:
   version:
     provider: mike
   names: 
-    title: CAVEclient
+    repo_title: CAVEclient
     package: caveclient
     main_branch: master
-  clients_api_paths:
+  client_api_paths:
     annotation: ../client_api/annotation.md#caveclient.annotationengine.AnnotationClientV2
+    chunkedgraph: ../client_api/chunkedgraph.md#caveclient.chunkedgraph.ChunkedGraphClientV1
     materialize: ../client_api/materialize.md#caveclient.materializationengine.MaterializatonClientV3
+    l2cache: ../client_api/l2cache.md#caveclient.l2cache.L2CacheClientLegacy
+    state: ../client_api/state.md#caveclient.state.JSONServiceV1
+
 
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id
