@@ -23,17 +23,6 @@ on:
         default: false
 
 jobs:
-  test:
-    name: Run tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run tests
-        if: ${{ github.event.inputs.skip-tests == 'false' }}
-        uses: ./.github/workflows/dev.yml
-      - name: Skip tests
-        if: ${{ github.event.inputs.skip-tests == 'true' }}
-        run: echo "Skipping tests"
-
   bump:
     name: Bump version
     runs-on: ubuntu-latest
