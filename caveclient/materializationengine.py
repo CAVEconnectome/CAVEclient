@@ -282,7 +282,7 @@ class MaterializatonClientV2(ClientBase):
         else:
             raise ValueError("Version not in materialized database")
 
-    def most_recent_version(self, datastack_name=None) -> np.int:
+    def most_recent_version(self, datastack_name=None) -> int:
         """
         Get the most recent version of materialization for this datastack name
 
