@@ -1,21 +1,22 @@
 import re
+
 import numpy as np
+
+from .auth import AuthClient
 from .base import (
     ClientBaseWithDatastack,
     _api_endpoints,
     handle_response,
 )
-from .auth import AuthClient
 from .endpoints import (
-    infoservice_common,
-    infoservice_api_versions,
     default_global_server_address,
+    infoservice_api_versions,
+    infoservice_common,
 )
 from .format_utils import (
-    output_map,
     format_raw,
+    output_map,
 )
-
 
 SERVER_KEY = "i_server_address"
 
@@ -31,7 +32,7 @@ def InfoServiceClient(
     pool_block=None,
     over_client=None,
     info_cache=None,
-):
+) -> "InfoServiceClientV2":
     if server_address is None:
         server_address = default_global_server_address
 
@@ -46,7 +47,7 @@ def InfoServiceClient(
         infoservice_common,
         infoservice_api_versions,
         auth_header,
-        verify=verify
+        verify=verify,
     )
 
     InfoClient = client_mapping[api_version]
@@ -204,9 +205,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "aligned_volume", datastack_name=datastack_name, use_stored=use_stored
         )
 
-    def get_datastacks_by_aligned_volume(
-        self, aligned_volume: str = None
-    ):
+    def get_datastacks_by_aligned_volume(self, aligned_volume: str = None):
         """Lookup what datastacks are associated with this aligned volume
 
         Args:
@@ -416,7 +415,9 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
 
         Requires cloudvolume to be installed, which is not included by default.
         """
-        return self._make_cloudvolume(self.image_source(format_for='cloudvolume'), **kwargs)
+        return self._make_cloudvolume(
+            self.image_source(format_for="cloudvolume"), **kwargs
+        )
 
     def segmentation_cloudvolume(self, use_client_secret=True, **kwargs):
         """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
@@ -427,7 +428,9 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         Requires cloudvolume to be installed, which is not included by default.
         """
         return self._make_cloudvolume(
-            self.segmentation_source(format_for='cloudvolume'), use_client_secret=use_client_secret, **kwargs
+            self.segmentation_source(format_for="cloudvolume"),
+            use_client_secret=use_client_secret,
+            **kwargs,
         )
 
     def _make_cloudvolume(self, cloudpath, use_client_secret=True, **kwargs):

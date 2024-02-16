@@ -1,20 +1,22 @@
+import json
+import numbers
+import os
+import re
+
+import numpy as np
+
+from .auth import AuthClient
 from .base import (
     ClientBase,
     _api_endpoints,
     handle_response,
 )
-from .auth import AuthClient
 from .endpoints import (
-    jsonservice_common,
-    jsonservice_api_versions,
     default_global_server_address,
+    jsonservice_api_versions,
+    jsonservice_common,
     ngl_endpoints_common,
 )
-import os
-import numpy as np
-import numbers
-import json
-import re
 
 server_key = "json_server_address"
 
@@ -34,6 +36,7 @@ def neuroglancer_json_encoder(obj):
         return list(obj)
     raise TypeError
 
+
 def JSONService(
     server_address=None,
     auth_client=None,
@@ -43,7 +46,7 @@ def JSONService(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "JSONServiceV1":
     """Client factory to interface with the JSON state service.
 
     Parameters
@@ -105,7 +108,7 @@ class JSONServiceV1(ClientBase):
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
-        over_client=None
+        over_client=None,
     ):
         super(JSONServiceV1, self).__init__(
             server_address,
@@ -153,7 +156,7 @@ class JSONServiceV1(ClientBase):
 
         url_mapping = self.default_url_mapping
         url_mapping["ngl_url"] = ngl_url
-        url = ngl_endpoints_common.get('get_info').format_map(url_mapping)
+        url = ngl_endpoints_common.get("get_info").format_map(url_mapping)
         response = self.session.get(url)
         # Not all neuroglancer deployments have a version.json,
         # so return empty if not found rather than throw error.
@@ -162,7 +165,6 @@ class JSONServiceV1(ClientBase):
 
         handle_response(response, as_json=False)
         return json.loads(response.content)
-
 
     def get_state_json(self, state_id):
         """Download a Neuroglancer JSON state
@@ -190,7 +192,7 @@ class JSONServiceV1(ClientBase):
         Parameters
         ----------
         json_state : dict
-            Dict representation of a neuroglancer state 
+            Dict representation of a neuroglancer state
         state_id : int
             ID of a JSON state uploaded to the state service.
             Using a state_id is an admin feature.
@@ -216,7 +218,7 @@ class JSONServiceV1(ClientBase):
             data=json.dumps(
                 json_state,
                 default=neuroglancer_json_encoder,
-            )
+            ),
         )
         handle_response(response, as_json=False)
         response_re = re.search(".*\/(\d+)", str(response.content))
@@ -224,7 +226,7 @@ class JSONServiceV1(ClientBase):
 
     def save_state_json_local(self, json_state, filename, overwrite=False):
         """Save a Neuroglancer JSON state to a JSON file locally.
-        
+
         Parameters
         ----------
         json_state : dict
@@ -244,12 +246,12 @@ class JSONServiceV1(ClientBase):
             json.dump(json_state, f, default=neuroglancer_json_encoder)
 
     def build_neuroglancer_url(
-            self,
-            state_id,
-            ngl_url=None,
-            target_site=None,
-            static_url=False,
-        ):
+        self,
+        state_id,
+        ngl_url=None,
+        target_site=None,
+        static_url=False,
+    ):
         """Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.
         If the datastack is specified, this is prepopulated from the info file field "viewer_site".
         If no ngl_url is specified in either the function or the client, a fallback neuroglancer deployment is used.
@@ -277,12 +279,12 @@ class JSONServiceV1(ClientBase):
             if self.ngl_url is not None:
                 ngl_url = self.ngl_url
             else:
-                ngl_url = ngl_endpoints_common['fallback_ngl_url']
+                ngl_url = ngl_endpoints_common["fallback_ngl_url"]
 
         if target_site is None and ngl_url is not None:
             ngl_info = self.get_neuroglancer_info(ngl_url)
             if len(ngl_info) > 0:
-                target_site = 'cave-explorer'
+                target_site = "cave-explorer"
             else:
                 target_site = "seunglab"
 

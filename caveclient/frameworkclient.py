@@ -1,13 +1,13 @@
-from .annotationengine import AnnotationClient
+from .annotationengine import AnnotationClient, AnnotationClientV2
 from .auth import AuthClient, default_token_file
-from .chunkedgraph import ChunkedGraphClient
+from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
 from .datastack_lookup import handle_server_address
-from .emannotationschemas import SchemaClient
+from .emannotationschemas import SchemaClient, SchemaClientLegacy
 from .endpoints import default_global_server_address
-from .infoservice import InfoServiceClient
-from .jsonservice import JSONService
-from .l2cache import L2CacheClient
-from .materializationengine import MaterializationClient
+from .infoservice import InfoServiceClient, InfoServiceClientV2
+from .jsonservice import JSONService, JSONServiceV1
+from .l2cache import L2CacheClient, L2CacheClientLegacy
+from .materializationengine import MaterializationClient, MaterializationClientType
 
 DEFAULT_RETRIES = 3
 
@@ -221,7 +221,7 @@ class CAVEclientGlobal(object):
         return self._server_address
 
     @property
-    def auth(self):
+    def auth(self) -> AuthClient:
         """
         A client for the auth service. See [client.auth](../client_api/auth.md) for more information.
         """
@@ -230,7 +230,7 @@ class CAVEclientGlobal(object):
         return self._auth
 
     @property
-    def info(self) -> InfoServiceClient:
+    def info(self) -> InfoServiceClientV2:
         """
         A client for the info service. See [client.info](../client_api/info.md) for more information.
         """
@@ -248,7 +248,7 @@ class CAVEclientGlobal(object):
         return self._info
 
     @property
-    def state(self):
+    def state(self) -> JSONServiceV1:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
@@ -265,7 +265,7 @@ class CAVEclientGlobal(object):
         return self._state
 
     @property
-    def schema(self):
+    def schema(self) -> SchemaClientLegacy:
         """
         A client for the EM Annotation Schemas service. See [client.schema](../client_api/schema.md)
         for more information.
@@ -287,15 +287,15 @@ class CAVEclientGlobal(object):
         )
 
     @property
-    def annotation(self):
+    def annotation(self) -> None:
         self._no_local_functionality()
 
     @property
-    def chunkedgraph(self):
+    def chunkedgraph(self) -> None:
         self._no_local_functionality()
 
     @property
-    def datastack_name(self):
+    def datastack_name(self) -> None:
         return None
 
 
@@ -401,7 +401,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._datastack_name
 
     @property
-    def chunkedgraph(self):
+    def chunkedgraph(self) -> ChunkedGraphClientV1:
         """
         A client for the chunkedgraph service. See [client.chunkedgraph](../client_api/chunkedgraph.md)
         for more information.
@@ -422,7 +422,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._chunkedgraph
 
     @property
-    def annotation(self):
+    def annotation(self) -> AnnotationClientV2:
         """
         A client for the annotation service. See [client.annotation](../client_api/annotation.md)
         for more information.
@@ -440,7 +440,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._annotation
 
     @property
-    def materialize(self):
+    def materialize(self) -> MaterializationClientType:
         """
         A client for the materialization service. See [client.materialize](../client_api/materialize.md)
         for more information.
@@ -460,7 +460,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._materialize
 
     @property
-    def state(self):
+    def state(self) -> JSONServiceV1:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
@@ -478,7 +478,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._state
 
     @property
-    def l2cache(self):
+    def l2cache(self) -> L2CacheClientLegacy:
         """
         A client for the L2 cache service. See [client.l2cache](../client_api/l2cache.md)
         for more information.

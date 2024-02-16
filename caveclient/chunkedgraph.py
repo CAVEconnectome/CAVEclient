@@ -112,7 +112,7 @@ def ChunkedGraphClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "ChunkedGraphClientV1":
     if server_address is None:
         server_address = default_global_server_address
 

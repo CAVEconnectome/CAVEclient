@@ -13,7 +13,7 @@ def SchemaClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "SchemaClientLegacy":
     if auth_client is None:
         auth_client = AuthClient()
 

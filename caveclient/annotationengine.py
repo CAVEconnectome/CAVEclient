@@ -23,7 +23,7 @@ def AnnotationClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "AnnotationClientV2":
     """Factory for returning AnnotationClient
 
     Parameters

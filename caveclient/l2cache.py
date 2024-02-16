@@ -24,7 +24,7 @@ def L2CacheClient(
     pool_block=None,
     over_client=None,
     verify=True,
-):
+) -> "L2CacheClientLegacy":
     if auth_client is None:
         auth_client = AuthClient()
 
