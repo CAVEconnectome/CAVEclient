@@ -1,5 +1,6 @@
 ---
-title: CAVEclient
+title: Home
+hide_toc: true
 ---
 
 CAVE is short for Connectome Annotation Versioning Engine. CAVE is a set of microservices
