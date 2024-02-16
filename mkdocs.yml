@@ -19,11 +19,14 @@ nav:
     - tutorials/materialization.md
   - Client API: 
     - client_api/index.md
+    - client_api/client.md
     - client_api/annotation.md
     - client_api/auth.md
     - client_api/chunkedgraph.md
+    - client_api/info.md
     - client_api/l2cache.md
     - client_api/materialize.md
+    - client_api/schema.md
     - client_api/state.md
   - Extended API:
     - extended_api/index.md
@@ -45,8 +48,8 @@ nav:
 theme:
   name: material
   language: en
-  logo: images/logo-inverted.png
-  favicon: images/logo-inverted.png
+  logo: images/logo-cleanest.png
+  favicon: images/logo-cleanest.png
   palette:
     scheme: preference
     primary: black
@@ -162,7 +165,9 @@ extra:
     l2cache: ../client_api/l2cache.md#caveclient.l2cache.L2CacheClientLegacy
     state: ../client_api/state.md#caveclient.state.JSONServiceV1
 
-
+watch:
+  - caveclient/
+  - docs/
   # to enable disqus, uncomment the following and put your disqus id below
   # disqus: disqus_id
 # uncomment the following and put your google tracking id below to enable GA
