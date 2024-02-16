@@ -227,7 +227,7 @@ class ClientBase(object):
 
     @staticmethod
     def raise_for_status(r, log_warning=True):
-        """Raises :class:`HTTPError`, if one occurred."""
+        """Raises [requests.HTTPError][], if one occurred."""
 
         _raise_for_status(r, log_warning=log_warning)
 

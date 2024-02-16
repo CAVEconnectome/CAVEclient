@@ -561,7 +561,7 @@ class MaterializatonClientV2(ClientBase):
         return_df: bool = True,
         split_positions: bool = False,
         materialization_version: int = None,
-        timestamp: datetime = None,
+        timestamp: Optional[datetime] = None,
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
