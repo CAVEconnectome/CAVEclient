@@ -66,7 +66,7 @@ def reset_server_address_cache(datastack, filename=None):
 
     Parameters
     ----------
-    datastacks : str or list of str, optional
+    datastack : str or list of str, optional
         Datastack names to remove from the cache, by default None
     filename : str, optional
         Name of the cache file, by default None

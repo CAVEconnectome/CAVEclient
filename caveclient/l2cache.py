@@ -126,9 +126,6 @@ class L2CacheClientLegacy(ClientBase):
     def cache_metadata(self):
         """Retrieves the meta data for the cache
 
-        Parameters
-        ----------
-
         Returns
         -------
         dict
@@ -147,8 +144,6 @@ class L2CacheClientLegacy(ClientBase):
 
     def table_mapping(self):
         """Retrieves table mappings for l2 cache.
-        Parameters
-        ----------
 
         Returns
         -------

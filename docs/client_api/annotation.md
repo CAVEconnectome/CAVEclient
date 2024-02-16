@@ -8,7 +8,7 @@ title: client.annotation
     type(client.annotation)
     ```
     Extended documentation for all versions of the annotation client can be found
-    [here](../extended_api/annotation.md).
+    [here](../extended_api/annotationengine.md).
 
 ::: caveclient.annotationengine.AnnotationClientV2
     options:

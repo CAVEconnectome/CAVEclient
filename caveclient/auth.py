@@ -272,7 +272,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
 
         Parameters
         ----------
-        user_id : list of int
+        user_ids : list of int
             user_ids to look up
         """
         endpoint_mapping = self._default_endpoint_mapping

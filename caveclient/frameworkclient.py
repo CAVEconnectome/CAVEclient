@@ -43,14 +43,14 @@ class CAVEclient(object):
 
         Then:
 
-        - `client.annotation` is an `AnnotationClient` (see [client.annotation](../../client_api/annotation/))
-        - `client.auth` is an `AuthClient` (see [client.auth](../../client_api/auth/))
-        - `client.chunkedgraph` is a `ChunkedGraphClient` (see [client.chunkedgraph](../../client_api/chunkedgraph/))
-        - `client.info` is an `InfoServiceClient` (see [client.info](../../client_api/info/))
-        - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../../client_api/l2cache/))
-        - `client.materialize` is a `MaterializationClient` (see [client.materialize](../../client_api/materialize/))
-        - `client.schema` is a `SchemaClient` (see [client.schema](../../client_api/schema/))
-        - `client.state` is a neuroglancer `JSONService` (see [client.state](../../client_api/state/))
+        - `client.annotation` is an `AnnotationClient` (see [client.annotation](../client_api/annotation.md))
+        - `client.auth` is an `AuthClient` (see [client.auth](../client_api/auth.md))
+        - `client.chunkedgraph` is a `ChunkedGraphClient` (see [client.chunkedgraph](../client_api/chunkedgraph.md))
+        - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
+        - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../client_api/l2cache.md))
+        - `client.materialize` is a `MaterializationClient` (see [client.materialize](../client_api/materialize.md))
+        - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
+        - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
 
         All subclients are loaded lazily and share the same datastack name, server address, and auth tokens where used.
@@ -139,10 +139,10 @@ class CAVEclientGlobal(object):
 
         Then:
 
-        - `client.auth` is an `AuthClient` (see [client.auth](../../client_api/auth/))
-        - `client.info` is an `InfoServiceClient` (see [client.info](../../client_api/info/))
-        - `client.schema` is a `SchemaClient` (see [client.schema](../../client_api/schema/))
-        - `client.state` is a neuroglancer `JSONService` (see [client.state](../../client_api/state/))
+        - `client.auth` is an `AuthClient` (see [client.auth](../client_api/auth.md))
+        - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
+        - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
+        - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
         All subclients are loaded lazily and share the same datastack name, server address, and auth tokens (where used).
 
@@ -223,7 +223,7 @@ class CAVEclientGlobal(object):
     @property
     def auth(self):
         """
-        A client for the auth service. See [client.auth](../../client_api/auth/) for more information.
+        A client for the auth service. See [client.auth](../client_api/auth.md) for more information.
         """
         if self._auth is None:
             self._auth = AuthClient(**self._auth_config)
@@ -232,7 +232,7 @@ class CAVEclientGlobal(object):
     @property
     def info(self) -> InfoServiceClient:
         """
-        A client for the info service. See [client.info](../../client_api/info/) for more information.
+        A client for the info service. See [client.info](../client_api/info.md) for more information.
         """
         if self._info is None:
             self._info = InfoServiceClient(
@@ -250,7 +250,7 @@ class CAVEclientGlobal(object):
     @property
     def state(self):
         """
-        A client for the neuroglancer state service. See [client.state](../../client_api/state/)
+        A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
         """
         if self._state is None:
@@ -267,7 +267,7 @@ class CAVEclientGlobal(object):
     @property
     def schema(self):
         """
-        A client for the EM Annotation Schemas service. See [client.schema](../../client_api/schema/)
+        A client for the EM Annotation Schemas service. See [client.schema](../client_api/schema.md)
         for more information.
         """
         if self._schema is None:
@@ -324,14 +324,14 @@ class CAVEclientFull(CAVEclientGlobal):
 
         Then
 
-        - `client.annotation` is an `AnnotationClient` (see [client.annotation](../../client_api/annotation/))
-        - `client.auth` is an `AuthClient` (see [client.auth](../../client_api/auth/))
-        - `client.chunkedgraph` is a `ChunkedGraphClient` (see [client.chunkedgraph](../../client_api/chunkedgraph/))
-        - `client.info` is an `InfoServiceClient` (see [client.info](../../client_api/info/))
-        - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../../client_api/l2cache/))
-        - `client.materialize` is a `MaterializationClient` (see [client.materialize](../../client_api/materialize/))
-        - `client.schema` is a `SchemaClient` (see [client.schema](../../client_api/schema/))
-        - `client.state` is a neuroglancer `JSONService` (see [client.state](../../client_api/state/))
+        - `client.annotation` is an `AnnotationClient` (see [client.annotation](../client_api/annotation.md))
+        - `client.auth` is an `AuthClient` (see [client.auth](../client_api/auth.md))
+        - `client.chunkedgraph` is a `ChunkedGraphClient` (see [client.chunkedgraph](../client_api/chunkedgraph.md))
+        - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
+        - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../client_api/l2cache.md))
+        - `client.materialize` is a `MaterializationClient` (see [client.materialize](../client_api/materialize.md))
+        - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
+        - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
         All subclients are loaded lazily and share the same datastack name, server address, and auth tokens where used.
 
@@ -403,7 +403,7 @@ class CAVEclientFull(CAVEclientGlobal):
     @property
     def chunkedgraph(self):
         """
-        A client for the chunkedgraph service. See [client.chunkedgraph](../../client_api/chunkedgraph/)
+        A client for the chunkedgraph service. See [client.chunkedgraph](../client_api/chunkedgraph.md)
         for more information.
         """
         if self._chunkedgraph is None:
@@ -424,7 +424,7 @@ class CAVEclientFull(CAVEclientGlobal):
     @property
     def annotation(self):
         """
-        A client for the annotation service. See [client.annotation](../../client_api/annotation/)
+        A client for the annotation service. See [client.annotation](../client_api/annotation.md)
         for more information.
         """
         if self._annotation is None:
@@ -442,7 +442,7 @@ class CAVEclientFull(CAVEclientGlobal):
     @property
     def materialize(self):
         """
-        A client for the materialization service. See [client.materialize](../../client_api/materialize/)
+        A client for the materialization service. See [client.materialize](../client_api/materialize.md)
         for more information.
         """
         if self._materialize is None:
@@ -462,7 +462,7 @@ class CAVEclientFull(CAVEclientGlobal):
     @property
     def state(self):
         """
-        A client for the neuroglancer state service. See [client.state](../../client_api/state/)
+        A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
         """
         if self._state is None:
@@ -480,7 +480,7 @@ class CAVEclientFull(CAVEclientGlobal):
     @property
     def l2cache(self):
         """
-        A client for the L2 cache service. See [client.l2cache](../../client_api/l2cache/)
+        A client for the L2 cache service. See [client.l2cache](../client_api/l2cache.md)
         for more information.
         """
         if self._l2cache is None:

@@ -1246,9 +1246,6 @@ class MaterializatonClientV2(ClientBase):
         filter_spatial_dict: dict of dicts, optional
             A dictionary with tables as keys, values are dicts with column keys and values
             of 2x3 list of bounds.
-        filter_regex_dict: dict of dicts, optional
-            A dictionary with tables as keys, values are dicts with column keys and values
-            of regex strings.
         select_columns: dict of lists of str, optional
             A dictionary with tables as keys, values are lists of columns to select.
         offset:

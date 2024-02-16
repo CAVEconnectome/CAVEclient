@@ -1,5 +1,5 @@
 import json
-from typing import Iterable, List, Mapping
+from typing import Iterable, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -30,7 +30,7 @@ def AnnotationClient(
     ----------
     server_address : str
         server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
+    dataset_name : str
         Name of the datastack.
     auth_client : AuthClient or None, optional
         Authentication client to use to connect to server. If None, do not use authentication.
@@ -48,6 +48,7 @@ def AnnotationClient(
         Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
     over_client:
         client to overwrite configuration with
+        
     Returns
     -------
     ClientBaseWithDatastack
@@ -272,7 +273,7 @@ class AnnotationClientV2(ClientBase):
             Name of the new table. Cannot be the same as an existing table
         schema_name: str
             Name of the schema for the new table.
-        descrption: str
+        description: str
             Human readable description for what is in the table.
             Should include information about who generated the table
             What data it covers, and how it should be interpreted.
@@ -316,6 +317,7 @@ class AnnotationClientV2(ClientBase):
             Text the user will see when querying this table. Can be used to warn users of flaws,
             and uncertainty in the data, or to advertise citations that should be used with this table.
             Defaults to None, no text. If you want to remove text, send empty string.
+
         Returns
         -------
         json
@@ -713,7 +715,7 @@ class AnnotationClientV2(ClientBase):
     def delete_annotation(
         self,
         table_name: str,
-        annotation_ids: (dict or List),
+        annotation_ids: Union[dict, List],
         aligned_volume_name: str = None,
     ):
         """Delete one or more annotations in a table. Annotations that are
@@ -723,7 +725,7 @@ class AnnotationClientV2(ClientBase):
         ----------
         table_name : str
             Name of the table where annotations will be added
-        data : dict or list,
+        annotation_ids : dict or list,
             A list of (or a single) dict of schematized annotation data matching the target table.
             each dict must contain an "id" field which is the ID of the annotation to update
         aligned_volume_name : str or None, optional

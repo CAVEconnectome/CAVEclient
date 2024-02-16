@@ -17,7 +17,7 @@ nav:
     - tutorials/schemas.md
     - tutorials/state.md
     - tutorials/materialization.md
-  - Client API: 
+  - Client API: # these match the client property names
     - client_api/index.md
     - client_api/client.md
     - client_api/annotation.md
@@ -28,7 +28,7 @@ nav:
     - client_api/materialize.md
     - client_api/schema.md
     - client_api/state.md
-  - Extended API:
+  - Extended API: # these match the python file names
     - extended_api/index.md
     - extended_api/annotationengine.md
     - extended_api/auth.md
@@ -40,7 +40,7 @@ nav:
     - extended_api/infoservice.md
     - extended_api/jsonservice.md
     - extended_api/l2cache.md
-    - extended_api/materialization.md
+    - extended_api/materializationengine.md
     - extended_api/session_config.md
   - Glossary: glossary.md
   - Contributing: contributing.md
