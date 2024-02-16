@@ -1,7 +1,5 @@
 from .base import (
     ClientBase,
-    BaseEncoder,
-    _api_versions,
     _api_endpoints,
     handle_response,
 )
@@ -13,7 +11,6 @@ from .endpoints import (
     ngl_endpoints_common,
 )
 import os
-import requests
 import numpy as np
 import numbers
 import json

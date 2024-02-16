@@ -48,7 +48,7 @@ def AnnotationClient(
         Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
     over_client:
         client to overwrite configuration with
-        
+
     Returns
     -------
     ClientBaseWithDatastack
@@ -554,7 +554,7 @@ class AnnotationClientV2(ClientBase):
             position_columns = [c for c in df.columns if c.endswith("_position")]
         if isinstance(position_columns, (list, np.ndarray, pd.Index)):
             position_columns = {c: c.rsplit("_", 1)[0] for c in position_columns}
-        if type(position_columns) != dict:
+        if not isinstance(position_columns, dict):
             raise ValueError("position_columns must be a list, dict or None")
 
         data = df.to_dict(orient="records")
