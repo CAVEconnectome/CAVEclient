@@ -2369,7 +2369,9 @@ it will likely get removed in future versions. "
         else:
             return response.json()
 
-    def get_unique_string_values(self, table: str, datastack_name: Optional[str] = None):
+    def get_unique_string_values(
+        self, table: str, datastack_name: Optional[str] = None
+    ):
         """Get unique string values for a table
 
         Parameters

@@ -3,19 +3,23 @@ import warnings
 import re
 from cachetools import cached, TTLCache, keys
 import logging
+
 logger = logging.getLogger(__name__)
 
 # json schema column types that can act as potential columns for looking at tables
 ALLOW_COLUMN_TYPES = ["integer", "boolean", "string", "float"]
-SPATIAL_POINT_TYPES = ['SpatialPoint']
+SPATIAL_POINT_TYPES = ["SpatialPoint"]
 
 # Helper functions for turning schema field names ot column names
+
 
 def bound_pt_position(pt):
     return f"{pt}_position"
 
+
 def bound_pt_root_id(pt):
     return f"{pt}_root_id"
+
 
 def add_with_suffix(namesA, namesB, suffix):
     all_names = []
@@ -29,6 +33,7 @@ def add_with_suffix(namesA, namesB, suffix):
             all_names.append(name)
     return all_names, rename_map
 
+
 def pop_empty(filter_dict):
     keys_to_pop = []
     for k in filter_dict.keys():
@@ -37,6 +42,7 @@ def pop_empty(filter_dict):
     for k in keys_to_pop:
         filter_dict.pop(k)
     return filter_dict
+
 
 def combine_names(tableA, namesA, tableB, namesB, suffixes):
     table_map = {}
@@ -50,23 +56,23 @@ def combine_names(tableA, namesA, tableB, namesB, suffixes):
 
     return final_namesA + final_namesB, table_map, rename_map
 
+
 def get_all_table_metadata(client):
     meta = client.materialize.get_tables_metadata()
     tables = []
     for m in meta:
-        if m.get('annotation_table'):
-            tables.append(m['annotation_table'])
+        if m.get("annotation_table"):
+            tables.append(m["annotation_table"])
         else:
-            tables.append(m['table_name'])
-    return {
-        tn: md
-        for tn, md in zip(tables, meta)
-    }
+            tables.append(m["table_name"])
+    return {tn: md for tn, md in zip(tables, meta)}
+
 
 def get_all_view_metadata(client):
     views = client.materialize.get_views()
     view_schema = client.materialize.get_view_schemas()
     return views, view_schema
+
 
 def is_list_like(x):
     if isinstance(x, str):
@@ -77,12 +83,14 @@ def is_list_like(x):
     except:
         return False
 
+
 def update_spatial_dict(spatial_dict):
     new_dict = {}
     for k in spatial_dict:
-        nm = re.match('(.*)_bbox$', k).groups()[0]
+        nm = re.match("(.*)_bbox$", k).groups()[0]
         new_dict[nm] = spatial_dict[k]
     return new_dict
+
 
 def filter_empty(filter_dict):
     new_dict = {}
@@ -92,11 +100,13 @@ def filter_empty(filter_dict):
         new_dict[k] = v
     return new_dict
 
+
 def replace_empty_with_none(filter_dict):
     if len(filter_dict) == 0:
         return None
     else:
         return filter_dict
+
 
 _schema_cache = TTLCache(maxsize=128, ttl=86_400)
 
@@ -142,6 +152,7 @@ def get_col_info(
 
 _table_cache = TTLCache(maxsize=128, ttl=86_400)
 
+
 def _table_key(table_name, meta, client, **kwargs):
     merge_schema = kwargs.get("merge_schema", True)
     allow_types = kwargs.get("allow_types", ALLOW_COLUMN_TYPES)
@@ -149,7 +160,13 @@ def _table_key(table_name, meta, client, **kwargs):
     return key
 
 
-def get_view_info(view_name, meta, schema, allow_types=ALLOW_COLUMN_TYPES, spatial_types=SPATIAL_POINT_TYPES):
+def get_view_info(
+    view_name,
+    meta,
+    schema,
+    allow_types=ALLOW_COLUMN_TYPES,
+    spatial_types=SPATIAL_POINT_TYPES,
+):
     """Assemble
 
     Parameters
@@ -169,8 +186,8 @@ def get_view_info(view_name, meta, schema, allow_types=ALLOW_COLUMN_TYPES, spati
     desc = meta.get("description", "")
     is_live = meta.get("live_compatible", False)
     pts = []
-    vals = [k for k,v in schema.items() if v['type'] in allow_types]
-    unbd_pts = [k for k,v in schema.items() if v['type'] in spatial_types]
+    vals = [k for k, v in schema.items() if v["type"] in allow_types]
+    unbd_pts = [k for k, v in schema.items() if v["type"] in spatial_types]
     column_map = {k: view_name for k in vals + unbd_pts}
     rename_map = {}
     return (
@@ -181,13 +198,18 @@ def get_view_info(view_name, meta, schema, allow_types=ALLOW_COLUMN_TYPES, spati
         rename_map,
         [view_name, None],
         desc,
-        is_live
+        is_live,
     )
-   
+
 
 @cached(cache=_table_cache, key=_table_key)
 def get_table_info(
-    tn, meta, client, allow_types=ALLOW_COLUMN_TYPES, merge_schema=True, suffixes=["", "_ref"]
+    tn,
+    meta,
+    client,
+    allow_types=ALLOW_COLUMN_TYPES,
+    merge_schema=True,
+    suffixes=["", "_ref"],
 ):
     """Get the point column and additional columns from a table
 
@@ -247,7 +269,7 @@ def get_table_info(
         column_map,
         rename_map,
         [name_base, name_ref],
-        meta.get('description'),
+        meta.get("description"),
     )
 
 
@@ -270,7 +292,9 @@ def table_metadata(table_name, client):
     return meta
 
 
-def make_class_vals(pts, val_cols, unbd_pts, table_map, rename_map, table_list, raw_points=False):
+def make_class_vals(
+    pts, val_cols, unbd_pts, table_map, rename_map, table_list, raw_points=False
+):
     class_vals = {
         "_reference_table": attrs.field(
             init=False, default=table_list[1], metadata={"is_meta": True}
@@ -326,53 +350,68 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 ]
             )
             filter_equal_dict = {
-                tn: filter_empty(attrs.asdict(
-                    self,
-                    filter=lambda a, v: is_list_like(v) == False
-                    and v is not None
-                    and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False
-                    and a.metadata.get("table") == tn,
-                ))
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: is_list_like(v) == False
+                        and v is not None
+                        and a.metadata.get("is_bbox", False) == False
+                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("table") == tn,
+                    )
+                )
                 for tn in tables
             }
             filter_in_dict = {
-                tn: filter_empty(attrs.asdict(
-                    self,
-                    filter=lambda a, v: is_list_like(v) == True
-                    and v is not None
-                    and a.metadata.get("is_bbox", False) == False
-                    and a.metadata.get("is_meta", False) == False
-                    and a.metadata.get("table") == tn,
-                ))
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: is_list_like(v) == True
+                        and v is not None
+                        and a.metadata.get("is_bbox", False) == False
+                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("table") == tn,
+                    )
+                )
                 for tn in tables
             }
             spatial_dict = {
                 tn: update_spatial_dict(
-                        attrs.asdict(
-                            self,
-                            filter=lambda a, v: a.metadata.get("is_bbox", False)
-                            and v is not None
-                            and a.metadata.get("is_meta", False) == False
-                            and a.metadata.get("table") == tn,
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: a.metadata.get("is_bbox", False)
+                        and v is not None
+                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("table") == tn,
                     )
                 )
                 for tn in tables
             }
 
             self.filter_kwargs_live = {
-                "filter_equal_dict": replace_empty_with_none(filter_empty(filter_equal_dict)),
+                "filter_equal_dict": replace_empty_with_none(
+                    filter_empty(filter_equal_dict)
+                ),
                 "filter_in_dict": replace_empty_with_none(filter_empty(filter_in_dict)),
-                "filter_spatial_dict": replace_empty_with_none(filter_empty(spatial_dict)),
+                "filter_spatial_dict": replace_empty_with_none(
+                    filter_empty(spatial_dict)
+                ),
             }
-            if len(tables)==2:
+            if len(tables) == 2:
                 self.filter_kwargs_mat = self.filter_kwargs_live
             else:
                 self.filter_kwargs_mat = {
-                    k: replace_empty_with_none(self.filter_kwargs_live[k].get(list(tables)[0],[])) 
-                    for k in ["filter_equal_dict", "filter_in_dict", "filter_spatial_dict"] if self.filter_kwargs_live[k] is not None
+                    k: replace_empty_with_none(
+                        self.filter_kwargs_live[k].get(list(tables)[0], [])
+                    )
+                    for k in [
+                        "filter_equal_dict",
+                        "filter_in_dict",
+                        "filter_spatial_dict",
+                    ]
+                    if self.filter_kwargs_live[k] is not None
                 }
-            
+
             pop_empty(self.filter_kwargs_live)
             pop_empty(self.filter_kwargs_mat)
 
@@ -391,6 +430,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 ]
 
     if not is_view:
+
         class TableQueryKwargs(BaseQueryKwargs):
             def query(
                 self,
@@ -478,8 +518,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         **self.filter_kwargs_live,
                         **self.joins_kwargs,
                     )
+
         return TableQueryKwargs
     else:
+
         class ViewQueryKwargs(BaseQueryKwargs):
             def query(
                 self,
@@ -503,16 +545,24 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     split_positions=split_positions,
                     limit=limit,
                     offset=offset,
-                    select_columns = select_columns,
+                    select_columns=select_columns,
                     get_counts=get_counts,
                     **self.filter_kwargs_mat,
                 )
+
     return ViewQueryKwargs
 
+
 def make_query_filter(table_name, meta, client):
-    pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc = get_table_info(
-        table_name, meta, client
-    )
+    (
+        pts,
+        val_cols,
+        all_unbd_pts,
+        table_map,
+        rename_map,
+        table_list,
+        desc,
+    ) = get_table_info(table_name, meta, client)
     class_vals = make_class_vals(
         pts, val_cols, all_unbd_pts, table_map, rename_map, table_list
     )
@@ -522,34 +572,48 @@ def make_query_filter(table_name, meta, client):
     QueryFilter.__doc__ = desc
     return QueryFilter
 
+
 def make_query_filter_view(view_name, meta, schema, client):
-    pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, desc, live_compatible= get_view_info(
-        view_name, meta, schema
-    )
+    (
+        pts,
+        val_cols,
+        all_unbd_pts,
+        table_map,
+        rename_map,
+        table_list,
+        desc,
+        live_compatible,
+    ) = get_view_info(view_name, meta, schema)
     class_vals = make_class_vals(
         pts, val_cols, all_unbd_pts, table_map, rename_map, table_list
     )
     ViewQueryFilter = attrs.make_class(
-        view_name, class_vals, bases=(make_kwargs_mixin(client, is_view=True, live_compatible=live_compatible),)
+        view_name,
+        class_vals,
+        bases=(
+            make_kwargs_mixin(client, is_view=True, live_compatible=live_compatible),
+        ),
     )
     ViewQueryFilter.__doc__ = desc
     return ViewQueryFilter
 
+
 class TableManager(object):
-    """Use schema definitions to generate query filters for each table.
-    """
+    """Use schema definitions to generate query filters for each table."""
+
     def __init__(self, client):
         self._client = client
         self._table_metadata = get_all_table_metadata(self._client)
         self._tables = sorted(list(self._table_metadata.keys()))
         for tn in self._tables:
-            setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client)) 
+            setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
 
     def __getitem__(self, key):
         return getattr(self, key)
-    
+
     def __repr__(self):
         return str(self._tables)
+
 
 class ViewManager(object):
     def __init__(self, client):
@@ -557,10 +621,16 @@ class ViewManager(object):
         self._view_metadata, view_schema = get_all_view_metadata(self._client)
         self._views = sorted(list(self._view_metadata.keys()))
         for vn in self._views:
-            setattr(self, vn, make_query_filter_view(vn, self._view_metadata[vn], view_schema[vn], client))
+            setattr(
+                self,
+                vn,
+                make_query_filter_view(
+                    vn, self._view_metadata[vn], view_schema[vn], client
+                ),
+            )
 
     def __getitem__(self, key):
         return getattr(self, key)
-    
+
     def __repr__(self):
         return str(self._views)
