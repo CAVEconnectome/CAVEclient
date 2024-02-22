@@ -1,27 +1,29 @@
-import re
-from urllib.error import HTTPError
-import warnings
-import pytz
-import pandas as pd
-from IPython.display import HTML
-from .mytimer import MyTimeIt
-from typing import Union, Iterable
 import itertools
-import pyarrow as pa
-from datetime import datetime, timezone
-import numpy as np
 import json
-from .endpoints import materialization_api_versions, materialization_common
+import logging
+import re
+import warnings
+from datetime import datetime, timezone
+from typing import Iterable, Union
+from urllib.error import HTTPError
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
+import pytz
+from cachetools import TTLCache, cached
+from IPython.display import HTML
+
 from .auth import AuthClient
 from .base import (
-    ClientBase,
     BaseEncoder,
+    ClientBase,
     _api_endpoints,
     handle_response,
 )
-from cachetools import cached, TTLCache
+from .endpoints import materialization_api_versions, materialization_common
+from .mytimer import MyTimeIt
 from .tools.table_manager import TableManager, ViewManager
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +215,7 @@ def MaterializationClient(
     )
 
 
-class MaterializatonClientV2(ClientBase):
+class MaterializationClientV2(ClientBase):
     def __init__(
         self,
         server_address,
@@ -232,7 +234,7 @@ class MaterializatonClientV2(ClientBase):
         over_client=None,
         desired_resolution=None,
     ):
-        super(MaterializatonClientV2, self).__init__(
+        super(MaterializationClientV2, self).__init__(
             server_address,
             auth_header,
             api_version,
@@ -747,7 +749,6 @@ class MaterializatonClientV2(ClientBase):
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1287,7 +1288,6 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
-
                     if len(desired_resolution) != 3:
                         raise ValueError(
                             "desired resolution needs to be of length 3, for xyz"
@@ -1528,7 +1528,6 @@ it will likely get removed in future versions. "
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -1761,9 +1760,9 @@ it will likely get removed in future versions. "
         return attrs
 
 
-class MaterializatonClientV3(MaterializatonClientV2):
+class MaterializationClientV3(MaterializationClientV2):
     def __init__(self, *args, **kwargs):
-        super(MaterializatonClientV3, self).__init__(*args, **kwargs)
+        super(MaterializationClientV3, self).__init__(*args, **kwargs)
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_tables_metadata(
@@ -1962,7 +1961,6 @@ it will likely get removed in future versions. "
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
                     if not response.headers.get("dataframe_resolution", None):
-
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -2291,8 +2289,13 @@ it will likely get removed in future versions. "
         return response.json()
 
 
+# included for historical reasons, there was a typo in the class name
+MaterializatonClientV2 = MaterializationClientV2
+
+MaterializatonClientV3 = MaterializationClientV3
+
 client_mapping = {
-    2: MaterializatonClientV2,
-    3: MaterializatonClientV3,
-    "latest": MaterializatonClientV2,
+    2: MaterializationClientV2,
+    3: MaterializationClientV3,
+    "latest": MaterializationClientV2,
 }
