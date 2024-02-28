@@ -15,7 +15,7 @@ we aim to have a generic set available to use.
 
 .. code:: python
 
-    client.schema.schema()
+    client.schema.get_schemas()
 
 View a specific schema
 ^^^^^^^^^^^^^^^^^^^^^^
