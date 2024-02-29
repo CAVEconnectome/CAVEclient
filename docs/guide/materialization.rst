@@ -5,7 +5,7 @@ The Materialization client allows one to interact with the materialized
 annotation tables, that were posted to the annotation service (see 
 :doc:`annotation`). 
 
-To see the entire class visit the API doc :class:`~caveclient.materializationengine.MaterializatonClientV2`
+To see the entire class visit the API doc :class:`~caveclient.materializationengine.MaterializationClientV2`
 
 The service regularly looks up all annotations and the segids underneath
 all the boundspatialpoints. You can then query these tables to find out
@@ -30,7 +30,7 @@ materialization version available.  This may or may not be desirable depending o
 use case.  If your code involves using specific IDs then you should be using a 
 specific version that is tied to a timepoint where those IDs are valid.
 
-To see what versions are available, use the :func:`~caveclient.materializationengine.MaterializatonClientV2.get_versions`
+To see what versions are available, use the :func:`~caveclient.materializationengine.MaterializationClientV2.get_versions`
 
 .. code:: python
 
@@ -38,9 +38,9 @@ To see what versions are available, use the :func:`~caveclient.materializationen
 
 Each version has a timestamp it was run on as well as a date when it will expire.
 You can query all this metadata for a specific version  using 
-:func:`~caveclient.materializationengine.MaterializatonClientV2.get_version_metadata`
+:func:`~caveclient.materializationengine.MaterializationClientV2.get_version_metadata`
 or all versions using
-:func:`~caveclient.materializationengine.MaterializatonClientV2.get_versions_metadata`
+:func:`~caveclient.materializationengine.MaterializationClientV2.get_versions_metadata`
 
 
 To change the default version, alter the .version property of the materialization client.
@@ -54,7 +54,7 @@ or specify the version when making a particular call.
 Browsing versions
 ^^^^^^^^^^^^^^^^^
 To see what tables are available in a version you can use 
-:func:`~caveclient.materializationengine.MaterializatonClientV2.get_tables`
+:func:`~caveclient.materializationengine.MaterializationClientV2.get_tables`
 
 If you want to read about the description of what that table is, use the annotationengine client
 :func:`~caveclient.annotationengine.AnnotationClientV2.get_table_metadata`
@@ -79,7 +79,7 @@ To see how many annotations are in a particular table use
 Querying tables
 ^^^^^^^^^^^^^^^
 To query a small table, you can just download the whole thing using  
-:func:`~caveclient.materializationengine.MaterializatonClientV2.query_table`
+:func:`~caveclient.materializationengine.MaterializationClientV2.query_table`
 which will return a dataframe of the table.
 
 Note however, some tables, such as the synapse table might be very large 200-300 million rows
@@ -149,7 +149,7 @@ You can also filter columns that are associated with spatial locations based upo
 
 This is done by adding a filter_spatial_dict argument to query_table.
 The units of the bounding box should be in the units of the voxel_resolution of the table 
-(which can be obtained from :func:`~caveclient.materializationengine.MaterializatonClientV2.get_table_metadata`).
+(which can be obtained from :func:`~caveclient.materializationengine.MaterializationClientV2.get_table_metadata`).
 
 
 .. code:: python
@@ -164,7 +164,7 @@ The units of the bounding box should be in the units of the voxel_resolution of 
 Synapse Query
 ^^^^^^^^^^^^^
 For synapses in particular, we have a simplified method for querying them with a reduced syntax.
-:func:`~caveclient.materializationengine.MaterializatonClientV2.synapse_query` 
+:func:`~caveclient.materializationengine.MaterializationClientV2.synapse_query` 
 lets you specify pre and post synaptic partners as keyword arguments and bounding boxes.
 The defaults make reasonable assumptions about what you want to query, namely that the synapse_table is
 the table that the info service advertises, and that if you specify a bounding box, that you want the post_pt_position. 
@@ -208,7 +208,7 @@ object in the most recent materialization.
 
 However, sometimes you might be browsing and proofreadding the data and get an ID
 that is more recent that the most recent version available.  For convience, you can use 
-:func:`~caveclient.materializationengine.MaterializatonClientV2.live_query`.
+:func:`~caveclient.materializationengine.MaterializationClientV2.live_query`.
 
 
 to automatically update the results of your query to a time in the future, such as now.
