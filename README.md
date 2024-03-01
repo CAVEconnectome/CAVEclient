@@ -15,4 +15,4 @@ pip install caveclient
 
 ## Documentation
 
-You can find full documentation on readthedocs (https://seung-lab.github.io/CAVEclient).
+You can find full documentation at [seung-lab.github.io/CAVEclient](https://seung-lab.github.io/CAVEclient).
