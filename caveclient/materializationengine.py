@@ -135,7 +135,87 @@ def string_format_timestamp(ts):
         return ts
 
 
-class MaterializatonClientV2(ClientBase):
+def MaterializationClient(
+    server_address,
+    datastack_name=None,
+    auth_client=None,
+    cg_client=None,
+    synapse_table=None,
+    api_version="latest",
+    version=None,
+    verify=True,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
+    desired_resolution=None,
+    over_client=None,
+) -> MaterializationClientType:
+    """Factory for returning AnnotationClient
+
+    Parameters
+    ----------
+    server_address : str
+        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+    datastack_name : str
+        Name of the datastack.
+    auth_client : AuthClient or None, optional
+        Authentication client to use to connect to server. If None, do not use authentication.
+    api_version : str or int (default: latest)
+        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
+        2: new api version, (i.e. minniev1.microns-daf.com)
+        'latest': default to the most recent (current 2)
+    cg_client: caveclient.chunkedgraph.ChunkedGraphClient
+        chunkedgraph client for live materializations
+    synapse_table: str
+        default synapse table for queries
+    version : default version to query
+        if None will default to latest version
+    desired_resolution : Iterable[float] or None, optional
+        If given, should be a list or array of the desired resolution you want queries returned in
+        useful for materialization queries.
+
+    Returns
+    -------
+    ClientBaseWithDatastack
+        List of datastack names for available datastacks on the annotation engine
+    """
+
+    if auth_client is None:
+        auth_client = AuthClient()
+
+    auth_header = auth_client.request_header
+    endpoints, api_version = _api_endpoints(
+        api_version,
+        SERVER_KEY,
+        server_address,
+        materialization_common,
+        materialization_api_versions,
+        auth_header,
+        fallback_version=2,
+        verify=verify,
+    )
+
+    MatClient = client_mapping[api_version]
+    return MatClient(
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        SERVER_KEY,
+        datastack_name,
+        cg_client=cg_client,
+        synapse_table=synapse_table,
+        version=version,
+        verify=verify,
+        max_retries=max_retries,
+        pool_maxsize=pool_maxsize,
+        pool_block=pool_block,
+        over_client=over_client,
+        desired_resolution=desired_resolution,
+    )
+
+
+class MaterializationClientV2(ClientBase):
     def __init__(
         self,
         server_address,
@@ -154,7 +234,7 @@ class MaterializatonClientV2(ClientBase):
         over_client=None,
         desired_resolution=None,
     ):
-        super(MaterializatonClientV2, self).__init__(
+        super(MaterializationClientV2, self).__init__(
             server_address,
             auth_header,
             api_version,
@@ -1795,9 +1875,9 @@ class MaterializatonClientV2(ClientBase):
         return attrs
 
 
-class MaterializatonClientV3(MaterializatonClientV2):
+class MaterializationClientV3(MaterializationClientV2):
     def __init__(self, *args, **kwargs):
-        super(MaterializatonClientV3, self).__init__(*args, **kwargs)
+        super(MaterializationClientV3, self).__init__(*args, **kwargs)
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_tables_metadata(
@@ -2399,90 +2479,15 @@ it will likely get removed in future versions. "
         return response.json()
 
 
+# included for historical reasons, there was a typo in the class name
+MaterializatonClientV2 = MaterializationClientV2
+
+MaterializatonClientV3 = MaterializationClientV3
+
 client_mapping = {
-    2: MaterializatonClientV2,
-    3: MaterializatonClientV3,
-    "latest": MaterializatonClientV2,
+    2: MaterializationClientV2,
+    3: MaterializationClientV3,
+    "latest": MaterializationClientV2,
 }
 
 MaterializationClientType = Union[MaterializatonClientV2, MaterializatonClientV3]
-
-
-def MaterializationClient(
-    server_address,
-    datastack_name=None,
-    auth_client=None,
-    cg_client=None,
-    synapse_table=None,
-    api_version="latest",
-    version=None,
-    verify=True,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    desired_resolution=None,
-    over_client=None,
-) -> MaterializationClientType:
-    """Factory for returning AnnotationClient
-
-    Parameters
-    ----------
-    server_address : str
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
-        Name of the datastack.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    cg_client: caveclient.chunkedgraph.ChunkedGraphClient
-        chunkedgraph client for live materializations
-    synapse_table: str
-        default synapse table for queries
-    version : default version to query
-        if None will default to latest version
-    desired_resolution : Iterable[float] or None, optional
-        If given, should be a list or array of the desired resolution you want queries returned in
-        useful for materialization queries.
-
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
-    """
-
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        SERVER_KEY,
-        server_address,
-        materialization_common,
-        materialization_api_versions,
-        auth_header,
-        fallback_version=2,
-        verify=verify,
-    )
-
-    MatClient = client_mapping[api_version]
-    return MatClient(
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        SERVER_KEY,
-        datastack_name,
-        cg_client=cg_client,
-        synapse_table=synapse_table,
-        version=version,
-        verify=verify,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-        desired_resolution=desired_resolution,
-    )
