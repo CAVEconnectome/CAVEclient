@@ -2490,4 +2490,4 @@ client_mapping = {
     "latest": MaterializationClientV2,
 }
 
-MaterializationClientType = Union[MaterializatonClientV2, MaterializatonClientV3]
+MaterializationClientType = Union[MaterializationClientV2, MaterializationClientV3]

@@ -10,7 +10,7 @@ title: client.materialize
     Extended documentation for all versions of the annotation client can be found
     [here](../extended_api/materializationengine.md).
 
-::: caveclient.materializationengine.MaterializatonClientV3
+::: caveclient.materializationengine.MaterializationClientV3
     options:
         heading_level: 2
         show_bases: false
