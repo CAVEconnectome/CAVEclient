@@ -149,7 +149,7 @@ def MaterializationClient(
     pool_block=None,
     desired_resolution=None,
     over_client=None,
-) -> MaterializationClientType:
+) -> "MaterializationClientType":
     """Factory for returning AnnotationClient
 
     Parameters
