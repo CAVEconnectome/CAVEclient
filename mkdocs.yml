@@ -151,8 +151,6 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/seung-lab/CAVEclient
       name: Github
-    - icon: material/email
-      link: "mailto:ben.pedigo@alleninstitute.org"
   version:
     provider: mike
   names: 
