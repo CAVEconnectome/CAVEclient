@@ -1,7 +1,7 @@
 site_name: CAVEclient
-site_url: https://bdpedigo.github.io/CAVEclient/
-repo_url: https://github.com/bdpedigo/CAVEclient/
-repo_name: bdpedigo/CAVEclient
+site_url: https://seung-lab.github.io/CAVEclient/
+repo_url: https://github.com/seung-lab/CAVEclient/
+repo_name: seung-lab/CAVEclient
 edit_uri: edit/master/docs/
 nav:
   - Home: index.md
@@ -139,7 +139,7 @@ plugins:
   #     show_contribution: true
   #     authorship_threshold_percent: 5
   # - git-committers: 
-      # repository: bdpedigo/CAVEclient
+      # repository: seung-lab/CAVEclient
       # branch: main
   # - git-revision-date-localized:
   #     enable_creation_date: true
@@ -149,7 +149,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/bdpedigo/CAVEclient
+      link: https://github.com/seung-lab/CAVEclient
       name: Github
     - icon: material/email
       link: "mailto:ben.pedigo@alleninstitute.org"
