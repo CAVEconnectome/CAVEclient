@@ -774,7 +774,7 @@ class ChunkedGraphClientV1(ClientBase):
         rd = handle_response(response)
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
-    def level2_chunk_graph(self, root_id) -> list:
+    def level2_chunk_graph(self, root_id, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
 
@@ -783,6 +783,8 @@ class ChunkedGraphClientV1(ClientBase):
         ----------
         root_id : int
             Root id of object
+        bounds : np.array
+            3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates.
 
         Returns
         -------
@@ -792,8 +794,13 @@ class ChunkedGraphClientV1(ClientBase):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["root_id"] = root_id
+
+        query_d = {}
+        if bounds is not None:
+            query_d["bounds"] = package_bounds(bounds)
+
         url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url))
+        r = handle_response(self.session.get(url, params=query_d))
         return r["edge_graph"]
 
     def remesh_level2_chunks(self, chunk_ids) -> None:
