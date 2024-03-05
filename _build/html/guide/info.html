@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Info Service &mdash; CAVEclient 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EMAnnotationSchemas" href="schemas.html" />
+    <link rel="prev" title="Level 2 Cache" href="l2cache.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> CAVEclient
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="l2cache.html">Level 2 Cache</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Info Service</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#accessing-datastack-information">Accessing datastack information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adjusting-formatting">Adjusting formatting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="materialization.html">Materialization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CAVEclient</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Info Service</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/info.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="info-service">
+<h1>Info Service<a class="headerlink" href="#info-service" title="Permalink to this heading"></a></h1>
+<p>A datastack has a number of complex paths to various data sources that
+together comprise a datastack. Rather than hardcode these paths, the
+InfoService allows one to query the location of each data source. This
+is also convenient in case data sources change.</p>
+<p>An InfoClient is accessed at <code class="docutils literal notranslate"><span class="pre">client.info</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">CAVEclient</span><span class="p">(</span><span class="n">datastack_name</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;This is an info client for </span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">datastack_name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">server_address</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="accessing-datastack-information">
+<h2>Accessing datastack information<a class="headerlink" href="#accessing-datastack-information" title="Permalink to this heading"></a></h2>
+<p>All of the information accessible for the datastack can be seen as a dict
+using <code class="docutils literal notranslate"><span class="pre">get_datastack_info()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Individual entries can be found as well. Use tab autocomplete to see the
+various possibilities.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">info</span><span class="o">.</span><span class="n">graphene_source</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="adjusting-formatting">
+<h2>Adjusting formatting<a class="headerlink" href="#adjusting-formatting" title="Permalink to this heading"></a></h2>
+<p>Because of the way neuroglancer looks up data versus cloudvolume,
+sometimes one needs to convert between <code class="docutils literal notranslate"><span class="pre">gs://</span></code> style paths to
+<code class="docutils literal notranslate"><span class="pre">https://storage.googleapis.com/</span></code> stype paths. All of the path sources
+in the info client accept a <code class="docutils literal notranslate"><span class="pre">format_for</span></code> argument that can handle
+this, and correctly adapts to graphene vs precomputed data sources.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">neuroglancer_style_source</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">image_source</span><span class="p">(</span><span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;neuroglancer&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;With gs-style: </span><span class="si">{</span> <span class="n">neuroglancer_style_source</span> <span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">cloudvolume_style_source</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">image_source</span><span class="p">(</span><span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;cloudvolume&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;With https-style: </span><span class="si">{</span> <span class="n">cloudvolume_style_source</span> <span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="l2cache.html" class="btn btn-neutral float-left" title="Level 2 Cache" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="schemas.html" class="btn btn-neutral float-right" title="EMAnnotationSchemas" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

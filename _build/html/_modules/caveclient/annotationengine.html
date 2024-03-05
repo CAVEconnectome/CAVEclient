@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>caveclient.annotationengine &mdash; CAVEclient 1.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> CAVEclient
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/info.html">Info Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/materialization.html">Materialization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CAVEclient</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>caveclient.annotationengine</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for caveclient.annotationengine</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">AuthClient</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">BaseEncoder</span><span class="p">,</span> <span class="n">ClientBase</span><span class="p">,</span> <span class="n">_api_endpoints</span><span class="p">,</span> <span class="n">handle_response</span>
+<span class="kn">from</span> <span class="nn">.endpoints</span> <span class="kn">import</span> <span class="n">annotation_api_versions</span><span class="p">,</span> <span class="n">annotation_common</span>
+<span class="kn">from</span> <span class="nn">.tools</span> <span class="kn">import</span> <span class="n">stage</span>
+
+<span class="n">SERVER_KEY</span> <span class="o">=</span> <span class="s2">&quot;ae_server_address&quot;</span>
+
+
+<div class="viewcode-block" id="AnnotationClient"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClient">[docs]</a><span class="k">def</span> <span class="nf">AnnotationClient</span><span class="p">(</span>
+    <span class="n">server_address</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">auth_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">api_version</span><span class="o">=</span><span class="s2">&quot;latest&quot;</span><span class="p">,</span>
+    <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">over_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Factory for returning AnnotationClient</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    server_address : str</span>
+<span class="sd">        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)</span>
+<span class="sd">    datastack_name : str</span>
+<span class="sd">        Name of the datastack.</span>
+<span class="sd">    auth_client : AuthClient or None, optional</span>
+<span class="sd">        Authentication client to use to connect to server. If None, do not use authentication.</span>
+<span class="sd">    api_version : str or int (default: latest)</span>
+<span class="sd">        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)</span>
+<span class="sd">        2: new api version, (i.e. minniev1.microns-daf.com)</span>
+<span class="sd">        &#39;latest&#39;: default to the most recent (current 2)</span>
+<span class="sd">    verify : str (default : True)</span>
+<span class="sd">        whether to verify https</span>
+<span class="sd">    max_retries : Int or None, optional</span>
+<span class="sd">        Set the number of retries per request, by default None. If None, defaults to requests package default.</span>
+<span class="sd">    pool_block : Bool or None, optional</span>
+<span class="sd">        If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.</span>
+<span class="sd">    pool_maxsize : Int or None, optional</span>
+<span class="sd">        Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.</span>
+<span class="sd">    over_client: </span>
+<span class="sd">        client to overwrite configuration with</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ClientBaseWithDatastack</span>
+<span class="sd">        List of datastack names for available datastacks on the annotation engine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">auth_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">auth_client</span> <span class="o">=</span> <span class="n">AuthClient</span><span class="p">()</span>
+
+    <span class="n">auth_header</span> <span class="o">=</span> <span class="n">auth_client</span><span class="o">.</span><span class="n">request_header</span>
+    <span class="n">endpoints</span><span class="p">,</span> <span class="n">api_version</span> <span class="o">=</span> <span class="n">_api_endpoints</span><span class="p">(</span>
+        <span class="n">api_version</span><span class="p">,</span>
+        <span class="n">SERVER_KEY</span><span class="p">,</span>
+        <span class="n">server_address</span><span class="p">,</span>
+        <span class="n">annotation_common</span><span class="p">,</span>
+        <span class="n">annotation_api_versions</span><span class="p">,</span>
+        <span class="n">auth_header</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">AnnoClient</span> <span class="o">=</span> <span class="n">client_mapping</span><span class="p">[</span><span class="n">api_version</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">api_version</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AnnoClient</span><span class="p">(</span>
+            <span class="n">server_address</span><span class="p">,</span>
+            <span class="n">auth_header</span><span class="p">,</span>
+            <span class="n">api_version</span><span class="p">,</span>
+            <span class="n">endpoints</span><span class="p">,</span>
+            <span class="n">SERVER_KEY</span><span class="p">,</span>
+            <span class="n">aligned_volume_name</span><span class="p">,</span>
+            <span class="n">verify</span><span class="o">=</span><span class="n">verify</span><span class="p">,</span>
+            <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+            <span class="n">pool_maxsize</span><span class="o">=</span><span class="n">pool_maxsize</span><span class="p">,</span>
+            <span class="n">pool_block</span><span class="o">=</span><span class="n">pool_block</span><span class="p">,</span>
+            <span class="n">over_client</span><span class="o">=</span><span class="n">over_client</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AnnoClient</span><span class="p">(</span>
+            <span class="n">server_address</span><span class="p">,</span>
+            <span class="n">auth_header</span><span class="p">,</span>
+            <span class="n">api_version</span><span class="p">,</span>
+            <span class="n">endpoints</span><span class="p">,</span>
+            <span class="n">SERVER_KEY</span><span class="p">,</span>
+            <span class="n">dataset_name</span><span class="p">,</span>
+            <span class="n">verify</span><span class="o">=</span><span class="n">verify</span><span class="p">,</span>
+            <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+            <span class="n">pool_maxsize</span><span class="o">=</span><span class="n">pool_maxsize</span><span class="p">,</span>
+            <span class="n">pool_block</span><span class="o">=</span><span class="n">pool_block</span><span class="p">,</span>
+            <span class="n">over_client</span><span class="o">=</span><span class="n">over_client</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AnnotationClientV2"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2">[docs]</a><span class="k">class</span> <span class="nc">AnnotationClientV2</span><span class="p">(</span><span class="n">ClientBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">server_address</span><span class="p">,</span>
+        <span class="n">auth_header</span><span class="p">,</span>
+        <span class="n">api_version</span><span class="p">,</span>
+        <span class="n">endpoints</span><span class="p">,</span>
+        <span class="n">server_name</span><span class="p">,</span>
+        <span class="n">aligned_volume_name</span><span class="p">,</span>
+        <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">over_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">schema_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AnnotationClientV2</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">server_address</span><span class="p">,</span>
+            <span class="n">auth_header</span><span class="p">,</span>
+            <span class="n">api_version</span><span class="p">,</span>
+            <span class="n">endpoints</span><span class="p">,</span>
+            <span class="n">server_name</span><span class="p">,</span>
+            <span class="n">verify</span><span class="o">=</span><span class="n">verify</span><span class="p">,</span>
+            <span class="n">max_retries</span><span class="o">=</span><span class="n">max_retries</span><span class="p">,</span>
+            <span class="n">pool_maxsize</span><span class="o">=</span><span class="n">pool_maxsize</span><span class="p">,</span>
+            <span class="n">pool_block</span><span class="o">=</span><span class="n">pool_block</span><span class="p">,</span>
+            <span class="n">over_client</span><span class="o">=</span><span class="n">over_client</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_aligned_volume_name</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="k">if</span> <span class="n">schema_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_schema_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc</span><span class="o">.</span><span class="n">schema</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_schema_client</span> <span class="o">=</span> <span class="n">schema_client</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aligned_volume_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aligned_volume_name</span>
+
+<div class="viewcode-block" id="AnnotationClientV2.get_tables"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gets a list of table names for a aligned_volume_name</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume, by default None.</span>
+<span class="sd">            If None, uses the one specified in the client.</span>
+<span class="sd">            Will be set correctly if you are using the framework_client</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of table names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;tables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.get_annotation_count"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.get_annotation_count">[docs]</a>    <span class="k">def</span> <span class="nf">get_annotation_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get number of annotations in a table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name (str):</span>
+<span class="sd">            name of table to mark for deletion</span>
+<span class="sd">        aligned_volume_name: str or None, optional,</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            number of annotations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;table_count&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.get_table_metadata"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.get_table_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get metadata about a table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name (str):</span>
+<span class="sd">            name of table to mark for deletion</span>
+<span class="sd">        aligned_volume_name: str or None, optional,</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            metadata about table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;table_info&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">metadata_d</span> <span class="o">=</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">vx</span> <span class="o">=</span> <span class="n">metadata_d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;voxel_resolution_x&quot;</span><span class="p">)</span>
+        <span class="n">vy</span> <span class="o">=</span> <span class="n">metadata_d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;voxel_resolution_y&quot;</span><span class="p">)</span>
+        <span class="n">vz</span> <span class="o">=</span> <span class="n">metadata_d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;voxel_resolution_z&quot;</span><span class="p">)</span>
+        <span class="n">metadata_d</span><span class="p">[</span><span class="s2">&quot;voxel_resolution&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">vx</span><span class="p">,</span> <span class="n">vy</span><span class="p">,</span> <span class="n">vz</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">metadata_d</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.delete_table"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.delete_table">[docs]</a>    <span class="k">def</span> <span class="nf">delete_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Marks a table for deletion requires super admin privileges</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name (str):</span>
+<span class="sd">            name of table to mark for deletion</span>
+<span class="sd">        aligned_volume_name: str or None, optional,</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;table_info&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.create_table"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.create_table">[docs]</a>    <span class="k">def</span> <span class="nf">create_table</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">schema_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">voxel_resolution</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">reference_table</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">track_target_id_updates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">flat_segmentation_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">write_permission</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;PRIVATE&quot;</span><span class="p">,</span>
+        <span class="n">read_permission</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;PUBLIC&quot;</span><span class="p">,</span>
+        <span class="n">notice_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a new data table based on an existing schema</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name: str</span>
+<span class="sd">            Name of the new table. Cannot be the same as an existing table</span>
+<span class="sd">        schema_name: str</span>
+<span class="sd">            Name of the schema for the new table.</span>
+<span class="sd">        descrption: str</span>
+<span class="sd">            Human readable description for what is in the table.</span>
+<span class="sd">            Should include information about who generated the table</span>
+<span class="sd">            What data it covers, and how it should be interpreted.</span>
+<span class="sd">            And who should you talk to if you want to use it.</span>
+<span class="sd">            An Example:</span>
+<span class="sd">            a manual synapse table to detect chandelier synapses</span>
+<span class="sd">            on 81 PyC cells with complete AISs</span>
+<span class="sd">            [created by Agnes - agnesb@alleninstitute.org, uploaded by Forrest]</span>
+<span class="sd">        voxel_resolution: list[float]</span>
+<span class="sd">            voxel resolution points will be uploaded in, typically nm, i.e [1,1,1] means nanometers</span>
+<span class="sd">            [4,4,40] would be 4nm, 4nm, 40nm voxels</span>
+<span class="sd">        reference_table: str or None</span>
+<span class="sd">            If the schema you are using is a reference schema</span>
+<span class="sd">            Meaning it is an annotation of another annotation.</span>
+<span class="sd">            Then you need to specify what the target table</span>
+<span class="sd">            those annotations are in.</span>
+<span class="sd">        track_target_id_updates: bool or None</span>
+<span class="sd">            Indicates whether to automatically update reference table&#39;s foreign key</span>
+<span class="sd">            if target annotation table row is updated.</span>
+<span class="sd">        flat_segmentation_source: str or None</span>
+<span class="sd">            the source to a flat segmentation that corresponds to this table</span>
+<span class="sd">            i.e. precomputed:\\gs:\\mybucket\this_tables_annotation</span>
+<span class="sd">        user_id: int</span>
+<span class="sd">            If you are uploading this schema on someone else&#39;s behalf</span>
+<span class="sd">            and you want to link this table with their ID, you can specify it here</span>
+<span class="sd">            Otherwise, the table will be created with your userID in the user_id column.</span>
+<span class="sd">        aligned_volume_name: str or None, optional,</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+<span class="sd">        write_permission: str, optional</span>
+<span class="sd">            What permissions to give the table for writing.  One of</span>
+<span class="sd">            PRIVATE: only you can write to this table (DEFAULT)</span>
+<span class="sd">            GROUP: only members that share a group with you can write (excluding some groups) </span>
+<span class="sd">            PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done</span>
+<span class="sd">            by marking rows as deleted, so all data is always recoverable</span>
+<span class="sd">        read_permission: str, optional</span>
+<span class="sd">            What permissions to give the table for reading. One of</span>
+<span class="sd">            PRIVATE: only you can read this table. Intended to be used for sorting out bugs.</span>
+<span class="sd">            GROUP: only members that share a group with you can read (intended for within group vetting)</span>
+<span class="sd">            PUBLIC: anyone with permissions to read this datastack can read this data (DEFAULT)</span>
+<span class="sd">        notice_text: str, optional</span>
+<span class="sd">            Text the user will see when querying this table. Can be used to warn users of flaws,</span>
+<span class="sd">            and uncertainty in the data, or to advertise citations that should be used with this table.</span>
+<span class="sd">            Defaults to None, no text. If you want to remove text, send empty string. </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Basic annotation table:</span>
+<span class="sd">        description = &quot;Some description about the table&quot;</span>
+<span class="sd">        voxel_res = [4,4,40]</span>
+<span class="sd">        client.create_table(&quot;some_synapse_table&quot;, &quot;synapse&quot;, description, voxel_res)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">read_permission</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;PRIVATE&quot;</span><span class="p">,</span><span class="s2">&quot;GROUP&quot;</span><span class="p">,</span><span class="s2">&quot;PUBLIC&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;read_permission must be one of PRIVATE GROUP or PUBLIC&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">write_permission</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;PRIVATE&quot;</span><span class="p">,</span> <span class="s2">&quot;GROUP&quot;</span><span class="p">,</span> <span class="s2">&quot;PUBLIC&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;write_permission must be one of PRIVATE GROUP or PUBLIC&#39;</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;tables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">description</span><span class="p">,</span>
+            <span class="s2">&quot;voxel_resolution_x&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">voxel_resolution</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="s2">&quot;voxel_resolution_y&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">voxel_resolution</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="s2">&quot;voxel_resolution_z&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">voxel_resolution</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+            <span class="s2">&quot;read_permission&quot;</span><span class="p">:</span> <span class="n">read_permission</span><span class="p">,</span>
+            <span class="s2">&quot;write_permission&quot;</span><span class="p">:</span> <span class="n">write_permission</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_id</span>
+        <span class="k">if</span> <span class="n">notice_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;notice_text&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">notice_text</span>
+        <span class="k">if</span> <span class="n">reference_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;table_metadata&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;reference_table&quot;</span><span class="p">:</span> <span class="n">reference_table</span><span class="p">,</span>
+                <span class="s2">&quot;track_target_id_updates&quot;</span><span class="p">:</span> <span class="n">track_target_id_updates</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">if</span> <span class="n">flat_segmentation_source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;flat_segmentation_source&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">flat_segmentation_source</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;schema_type&quot;</span><span class="p">:</span> <span class="n">schema_name</span><span class="p">,</span>
+            <span class="s2">&quot;table_name&quot;</span><span class="p">:</span> <span class="n">table_name</span><span class="p">,</span>
+            <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">metadata</span>
+        <span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.update_metadata"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.update_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">update_metadata</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">flat_segmentation_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">read_permission</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">write_permission</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">notice_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;update the metadata on an existing table</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table_name (str): name of table to update</span>
+<span class="sd">            description (str, optional): text description of the the table. </span>
+<span class="sd">                Defaults to None (will not update).</span>
+<span class="sd">            flat_segmentation_source (str, optional): cloudpath to a flat segmentation associated with this table.</span>
+<span class="sd">                Defaults to None (will not update).</span>
+<span class="sd">            read_permission: str, optional</span>
+<span class="sd">                What permissions to give the table for reading. One of</span>
+<span class="sd">                PRIVATE: only you can read this table. Intended to be used for sorting out bugs.</span>
+<span class="sd">                GROUP: only members that share a group with you can read (intended for within group vetting)</span>
+<span class="sd">                PUBLIC: anyone with permissions to read this datastack can read this data</span>
+<span class="sd">                Defaults to None (will not update).</span>
+<span class="sd">            write_permission: str, optional</span>
+<span class="sd">                What permissions to give the table for writing.  One of</span>
+<span class="sd">                PRIVATE: only you can write to this table</span>
+<span class="sd">                GROUP: only members that share a group with you can write (excluding some groups) </span>
+<span class="sd">                PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done</span>
+<span class="sd">                by marking rows as deleted, so all data is always recoverable</span>
+<span class="sd">                Defaults to None (will not update).</span>
+<span class="sd">            user_id (int, optional): change ownership of this table to this user_id.</span>
+<span class="sd">                Note, if you use this you will not be able to update the metadata on this table any longer</span>
+<span class="sd">                and depending on permissions may not be able to read or write to it </span>
+<span class="sd">                Defaults to None. (will not update)</span>
+<span class="sd">            notice_text: str, optional</span>
+<span class="sd">                Text the user will see when querying this table. Can be used to warn users of flaws,</span>
+<span class="sd">                and uncertainty in the data, or to advertise citations that should be used with this table.</span>
+<span class="sd">                Defaults to None. (will not update)</span>
+<span class="sd">            aligned_volume_name : str or None, optional</span>
+<span class="sd">                Name of the aligned_volume. If None, uses the one specified in the client.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">read_permission</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">read_permission</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;PRIVATE&quot;</span><span class="p">,</span><span class="s2">&quot;GROUP&quot;</span><span class="p">,</span><span class="s2">&quot;PUBLIC&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;read_permission must be one of PRIVATE GROUP or PUBLIC&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">write_permission</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">write_permission</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;PRIVATE&quot;</span><span class="p">,</span> <span class="s2">&quot;GROUP&quot;</span><span class="p">,</span> <span class="s2">&quot;PUBLIC&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;write_permission must be one of PRIVATE GROUP or PUBLIC&#39;</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;tables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">description</span>
+        <span class="k">if</span> <span class="n">read_permission</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;read_permission&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">read_permission</span>
+        <span class="k">if</span> <span class="n">write_permission</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;write_permission&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">write_permission</span> 
+        <span class="k">if</span> <span class="n">flat_segmentation_source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;flat_segmentation_source&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">flat_segmentation_source</span>            
+        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_id</span>
+        <span class="k">if</span> <span class="n">notice_text</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;notice_text&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">notice_text</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;table_name&quot;</span><span class="p">:</span> <span class="n">table_name</span><span class="p">,</span>
+            <span class="s2">&quot;metadata&quot;</span><span class="p">:</span> <span class="n">metadata</span>
+        <span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.get_annotation"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.get_annotation">[docs]</a>    <span class="k">def</span> <span class="nf">get_annotation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">annotation_ids</span><span class="p">:</span> <span class="p">(</span><span class="nb">int</span> <span class="ow">or</span> <span class="n">Iterable</span><span class="p">),</span>
+        <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve an annotation or annotations by id(s) and table name.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str</span>
+<span class="sd">            Name of the table</span>
+<span class="sd">        annotation_ids : int or iterable</span>
+<span class="sd">            ID or IDS of the annotation to retreive</span>
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            Annotation data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;annotations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">iter</span><span class="p">(</span><span class="n">annotation_ids</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">annotation_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">annotation_ids</span><span class="p">]</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;annotation_ids&quot;</span><span class="p">:</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotation_ids</span><span class="p">])}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.post_annotation"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.post_annotation">[docs]</a>    <span class="k">def</span> <span class="nf">post_annotation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="p">(</span><span class="nb">dict</span> <span class="ow">or</span> <span class="n">List</span><span class="p">),</span> <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Post one or more new annotations to a table in the AnnotationEngine.</span>
+<span class="sd">        All inserted annotations will be marked as &#39;valid&#39;. To invalidate</span>
+<span class="sd">        annotations refer to &#39;update_annotation&#39;, &#39;update_annotation_df&#39;</span>
+<span class="sd">        and &#39;delete_annotation&#39; methods.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str</span>
+<span class="sd">            Name of the table where annotations will be added</span>
+<span class="sd">        data : dict or list,</span>
+<span class="sd">            A list of (or a single) dict of schematized annotation data matching the target table.</span>
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;annotations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">BaseEncoder</span><span class="p">),</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.process_position_columns"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.process_position_columns">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">process_position_columns</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">position_columns</span><span class="p">:</span> <span class="p">(</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process a dataframe into a list of dictionaries, nesting thing</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            df (pd.DataFrame): dataframe to process</span>
+<span class="sd">            position_columns (Iterable[str] or Mapping[str, str] or None): see post_annotation_df</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            json list of annotations ready for posting</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">position_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">position_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_position&quot;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">position_columns</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">)):</span>
+            <span class="n">position_columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">position_columns</span><span class="p">}</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">position_columns</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;position_columns must be a list, dict or None&quot;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">position_columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="n">pos</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.post_annotation_df"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.post_annotation_df">[docs]</a>    <span class="k">def</span> <span class="nf">post_annotation_df</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">position_columns</span><span class="p">:</span> <span class="p">(</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Post one or more new annotations to a table in the AnnotationEngine.</span>
+<span class="sd">        All inserted annotations will be marked as &#39;valid&#39;. To invalidate</span>
+<span class="sd">        annotations see &#39;update_annotation&#39;, &#39;update_annotation_df&#39;</span>
+<span class="sd">        and &#39;delete_annotation&#39; methods.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str</span>
+<span class="sd">            Name of the table where annotations will be added</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            A pandas dataframe containing the annotations. Columns should be fields in schema,</span>
+<span class="sd">            position columns need to be called out in position_columns argument.</span>
+<span class="sd">        position_columns: dict or (list or np.array or pd.Index) or None</span>
+<span class="sd">            if None, will look for all columns with &#39;X_position&#39; in the name and assume they go</span>
+<span class="sd">            in fields called &quot;X&quot;.</span>
+<span class="sd">            if Iterable assumes each column given ends in _position.</span>
+<span class="sd">            (i.e. [&#39;pt_position&#39;] if &#39;pt&#39; is the name of the position field in schema)</span>
+<span class="sd">            if Mapping, keys are names of columns in dataframe, values are the names of the fields</span>
+<span class="sd">            (i.e. {&#39;pt_column&#39;: &#39;pt&#39;} would be correct if you had one column named &#39;pt_column&#39;</span>
+<span class="sd">            which needed to go into a schema with a position column called &#39;pt&#39;)</span>
+
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_position_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">position_columns</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_annotation</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="o">=</span><span class="n">aligned_volume_name</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.update_annotation"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.update_annotation">[docs]</a>    <span class="k">def</span> <span class="nf">update_annotation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="p">(</span><span class="nb">dict</span> <span class="ow">or</span> <span class="n">List</span><span class="p">),</span> <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update one or more new annotations to a table in the AnnotationEngine.</span>
+<span class="sd">        Updating is implemented by invalidating the old annotation</span>
+<span class="sd">        and inserting a new annotation row, which will receive a new primary key ID.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        If annotations ids were user provided upon insertion the database will</span>
+<span class="sd">        autoincrement from the current max id in the table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str</span>
+<span class="sd">            Name of the table where annotations will be added</span>
+<span class="sd">        data : dict or list,</span>
+<span class="sd">            A list of (or a single) dict of schematized annotation data matching the target table.</span>
+<span class="sd">            each dict must contain an &quot;id&quot; field which is the ID of the annotation to update</span>
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON: a list of new annotation IDs.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;annotations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">iter</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">data</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">BaseEncoder</span><span class="p">),</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.update_annotation_df"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.update_annotation_df">[docs]</a>    <span class="k">def</span> <span class="nf">update_annotation_df</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">position_columns</span><span class="p">:</span> <span class="p">(</span><span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="ow">or</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update one or more annotations to a table in the AnnotationEngine using a</span>
+<span class="sd">        dataframe as format. Updating is implemented by invalidating the old annotation</span>
+<span class="sd">        and inserting a new annotation row, which will receive a new primary key ID.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        If annotations ids were user provided upon insertion the database will</span>
+<span class="sd">        autoincrement from the current max id in the table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str</span>
+<span class="sd">            Name of the table where annotations will be added</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            A pandas dataframe containing the annotations. Columns should be fields in schema,</span>
+<span class="sd">            position columns need to be called out in position_columns argument.</span>
+<span class="sd">        position_columns: dict or (list or np.array or pd.Index) or None</span>
+<span class="sd">            if None, will look for all columns with &#39;X_position&#39; in the name and assume they go</span>
+<span class="sd">            in fields called &quot;X&quot;.</span>
+<span class="sd">            if Iterable assumes each column given ends in _position.</span>
+<span class="sd">            (i.e. [&#39;pt_position&#39;] if &#39;pt&#39; is the name of the position field in schema)</span>
+<span class="sd">            if Mapping, keys are names of columns in dataframe, values are the names of the fields</span>
+<span class="sd">            (i.e. {&#39;pt_column&#39;: &#39;pt&#39;} would be correct if you had one column named &#39;pt_column&#39;</span>
+<span class="sd">            which needed to go into a schema with a position column called &#39;pt&#39;)</span>
+
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_position_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">position_columns</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_annotation</span><span class="p">(</span>
+            <span class="n">table_name</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="o">=</span><span class="n">aligned_volume_name</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.delete_annotation"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.delete_annotation">[docs]</a>    <span class="k">def</span> <span class="nf">delete_annotation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">annotation_ids</span><span class="p">:</span> <span class="p">(</span><span class="nb">dict</span> <span class="ow">or</span> <span class="n">List</span><span class="p">),</span>
+        <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Delete one or more annotations in a table. Annotations that are</span>
+<span class="sd">        deleted are recorded as &#39;non-valid&#39; but are not physically removed from the table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str</span>
+<span class="sd">            Name of the table where annotations will be added</span>
+<span class="sd">        data : dict or list,</span>
+<span class="sd">            A list of (or a single) dict of schematized annotation data matching the target table.</span>
+<span class="sd">            each dict must contain an &quot;id&quot; field which is the ID of the annotation to update</span>
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Response JSON: a list of new annotation IDs.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">aligned_volume_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aligned_volume_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aligned_volume_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;aligned_volume_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aligned_volume_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;annotations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">iter</span><span class="p">(</span><span class="n">annotation_ids</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">annotation_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">annotation_ids</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;annotation_ids&quot;</span><span class="p">:</span> <span class="n">annotation_ids</span><span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">BaseEncoder</span><span class="p">),</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.stage_annotations"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.stage_annotations">[docs]</a>    <span class="k">def</span> <span class="nf">stage_annotations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">schema_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">id_field</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">table_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">annotation_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a StagedAnnotations object to help produce correctly formatted annotations for a given table or schema.</span>
+<span class="sd">        StagedAnnotation objects can be uploaded directly with `upload_staged_annotations`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name : str, optional</span>
+<span class="sd">            Table name to stage annotations for, by default None.</span>
+<span class="sd">        schema_name : str, optional</span>
+<span class="sd">            Schema name to use to make annotations. Only needed if the table_name is not set, by default None</span>
+<span class="sd">        update : bool, optional</span>
+<span class="sd">            Set to True if individual annotations are going to be updated, by default False.</span>
+<span class="sd">        id_field : bool, optional</span>
+<span class="sd">            Set to True if id fields are to be specified. Not needed if update is True, which always needs id fields. Optional, by default False</span>
+<span class="sd">        table_resolution : list-like or None, optional</span>
+<span class="sd">            Voxel resolution of spatial points in the table in nanometers. This is found automatically from the info service if a table name is provided, by default None.</span>
+<span class="sd">            If annotation_resolution is also set, this allows points to be scaled correctly for the table.</span>
+<span class="sd">        annotation_resolution : list-like, optional</span>
+<span class="sd">            Voxel resolution of spatial points provided by the user when creating annotations. If the table resolution is also available (manually or from the info service),</span>
+<span class="sd">            annotations are correctly rescaled for the volume. By default, None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">obj_name</span> <span class="o">=</span> <span class="n">table_name</span>
+            <span class="n">table_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_table_metadata</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+            <span class="n">schema_name</span> <span class="o">=</span> <span class="n">table_meta</span><span class="p">[</span><span class="s2">&quot;schema_type&quot;</span><span class="p">]</span>
+            <span class="n">table_resolution</span> <span class="o">=</span> <span class="n">table_meta</span><span class="p">[</span><span class="s2">&quot;voxel_resolution&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">schema_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must specify either table name or schema name&quot;</span><span class="p">)</span>
+            <span class="n">obj_name</span> <span class="o">=</span> <span class="n">schema_name</span>
+
+        <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_client</span><span class="o">.</span><span class="n">schema_definition</span><span class="p">(</span><span class="n">schema_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stage</span><span class="o">.</span><span class="n">StagedAnnotations</span><span class="p">(</span>
+            <span class="n">schema</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">obj_name</span><span class="p">,</span>
+            <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span>
+            <span class="n">id_field</span><span class="o">=</span><span class="n">id_field</span><span class="p">,</span>
+            <span class="n">annotation_resolution</span><span class="o">=</span><span class="n">annotation_resolution</span><span class="p">,</span>
+            <span class="n">table_resolution</span><span class="o">=</span><span class="n">table_resolution</span><span class="p">,</span>
+            <span class="n">table_name</span><span class="o">=</span><span class="n">table_name</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnnotationClientV2.upload_staged_annotations"><a class="viewcode-back" href="../../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.upload_staged_annotations">[docs]</a>    <span class="k">def</span> <span class="nf">upload_staged_annotations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">staged_annos</span><span class="p">:</span> <span class="n">stage</span><span class="o">.</span><span class="n">StagedAnnotations</span><span class="p">,</span>
+        <span class="n">aligned_volume_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Upload annotations directly from an Annotation Guide object.</span>
+<span class="sd">        This method uses the options specified in the object, including table name and if the annotation is an update or not.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        staged_annos : guide.AnnotationGuide</span>
+<span class="sd">            AnnotationGuide object with a specified table name and a collection of annotations already filled in.</span>
+<span class="sd">        aligned_volume_name : str or None, optional</span>
+<span class="sd">            Name of the aligned_volume. If None, uses the one specified in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        List or dict</span>
+<span class="sd">            If new annotations are posted, a list of ids.</span>
+<span class="sd">            If annotations are being updated, a dictionary with the mapping from old ids to new ids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">staged_annos</span><span class="o">.</span><span class="n">table_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Only annotation guide objects with a specified table name can be used here&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">staged_annos</span><span class="o">.</span><span class="n">is_update</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_annotation</span><span class="p">(</span>
+                <span class="n">staged_annos</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+                <span class="n">staged_annos</span><span class="o">.</span><span class="n">annotation_list</span><span class="p">,</span>
+                <span class="n">aligned_volume_name</span><span class="o">=</span><span class="n">aligned_volume_name</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_annotation</span><span class="p">(</span>
+                <span class="n">staged_annos</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+                <span class="n">staged_annos</span><span class="o">.</span><span class="n">annotation_list</span><span class="p">,</span>
+                <span class="n">aligned_volume_name</span><span class="o">=</span><span class="n">aligned_volume_name</span><span class="p">,</span>
+            <span class="p">)</span></div></div>
+
+
+<span class="n">client_mapping</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="n">AnnotationClientV2</span><span class="p">,</span>
+    <span class="s2">&quot;latest&quot;</span><span class="p">:</span> <span class="n">AnnotationClientV2</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

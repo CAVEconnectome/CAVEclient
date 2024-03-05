@@ -1,0 +1,1385 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://seung-lab.github.io/CAVEclient/tutorials/materialization/">
+      
+      
+        <link rel="prev" href="../state/">
+      
+      
+        <link rel="next" href="../../client_api/">
+      
+      
+      <link rel="icon" href="../../images/logo-cleanest.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.12">
+    
+    
+      
+        <title>Materialization - CAVEclient</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e359304.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="preference" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#initializing-the-client" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CAVEclient" class="md-header__button md-logo" aria-label="CAVEclient" data-md-component="logo">
+      
+  <img src="../../images/logo-cleanest.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CAVEclient
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Materialization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/seung-lab/CAVEclient/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    seung-lab/CAVEclient
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="../" class="md-tabs__link">
+        
+  
+    
+  
+  Tutorial
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../client_api/" class="md-tabs__link">
+        
+  
+    
+  
+  Client API
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../extended_api/" class="md-tabs__link">
+        
+  
+    
+  
+  Extended API
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../glossary/" class="md-tabs__link">
+        
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CAVEclient" class="md-nav__button md-logo" aria-label="CAVEclient" data-md-component="logo">
+      
+  <img src="../../images/logo-cleanest.png" alt="logo">
+
+    </a>
+    CAVEclient
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/seung-lab/CAVEclient/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    seung-lab/CAVEclient
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../framework/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Authentication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chunkedgraph/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chunked Graph
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../l2cache/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Level 2 Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../info/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Info Service
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EM Annotation Schemas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../state/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    JSON Neuroglancer State Service
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Materialization
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Materialization
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#initializing-the-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      Initializing the client
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browsing-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browsing versions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#querying-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Querying tables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#desired-resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Desired Resolution
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spatial-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spatial Filters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#synapse-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      Synapse Query
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#live-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      Live Query
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#content-aware-interface-experimental" class="md-nav__link">
+    <span class="md-ellipsis">
+      Content-aware Interface (Experimental)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../client_api/client/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Client API
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../extended_api/annotationengine/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Extended API
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/seung-lab/CAVEclient/edit/master/docs/tutorials/materialization.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/seung-lab/CAVEclient/raw/master/docs/tutorials/materialization.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.15 8.15 0 0 1-1.23-2Z"/></svg>
+    </a>
+  
+
+
+  <h1>Materialization</h1>
+
+<p>The Materialization client allows one to interact with the materialized
+annotation tables, that were posted to the annotation service
+(<a href="../annotation/">the annotations tutorial</a>).</p>
+<p>To see the entire class visit the <a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3">API doc</a>.</p>
+<p>The service regularly looks up all annotations and the segids underneath
+all the boundspatialpoints. You can then query these tables to find out
+the IDs that underlie the annotations, or the annotations that now
+intersect with certain IDs.</p>
+<p>For example, one common pattern is that you have identified a cell based
+on the location of its cell body, and you have an annotation there.</p>
+<p>You want to know what are the inputs onto the cell, so you first query
+the annotation table with your soma annotation, asking for the current
+ID underneath that soma. Then you query a synapse table for all synapse
+annotations that have a post-synaptic ID equal to the ID from your soma
+annotation.</p>
+<p>In this way your code stays the same, as the proofreading changes and
+you can track the connectivity of your cell over time.</p>
+<h3 id="initializing-the-client">Initializing the client<a class="headerlink" href="#initializing-the-client" title="Permanent link">&para;</a></h3>
+<p>By default when you initialize the overall client, it will choose the
+most recent materialization version available. This may or may not be
+desirable depending on your use case. If your code involves using
+specific IDs then you should be using a specific version that is tied to
+a timepoint where those IDs are valid.</p>
+<p>To see what versions are available, use the
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_versions">client.materialize.get_versions()</a> function.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span>
+</code></pre></div>
+<p>Each version has a timestamp it was run on as well as a date when it
+will expire. You can query all this metadata for a specific version
+using
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_version_metadata">client.materialize.get_version_metadata()</a> or
+all versions using
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_versions_metadata">client.materialize.get_versions_metadata()</a>.</p>
+<p>To change the default version, alter the .version property of the
+materialization client.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">9</span>
+</code></pre></div>
+<p>or specify the version when making a particular call.</p>
+<h3 id="browsing-versions">Browsing versions<a class="headerlink" href="#browsing-versions" title="Permanent link">&para;</a></h3>
+<p>To see what tables are available in a version you can use
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_tables">client.materialize.get_tables()</a>.</p>
+<p>If you want to read about the description of what that table is, use the
+annotationengine client
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_table_metadata">client.materialize.get_table_metadata()</a>.</p>
+<p>If you want to read more about the schema for the annotation table use
+the schema service
+<a class="autorefs autorefs-internal" href="../../extended_api/emannotationschemas/#caveclient.emannotationschemas.SchemaClientLegacy.schema_definition">caveclient.emannotationschemas.SchemaClientLegacy.schema_definition()</a>.</p>
+<p>Note, the materialization service has a human readable webpage that
+links to the other services that might be more convenient for you to
+browse, to get a link there in ipython display
+<code>client.materialize.homepage</code></p>
+<p>for some important tables, the info service has a pointer to which table
+you should use in the metadata for the datastack.
+<code>client.info.get_datastack_info()['synapse_table']</code> and
+<code>client.info.get_datastack_info()['soma_table']</code>.</p>
+<p>To see how many annotations are in a particular table use</p>
+<div class="highlight"><pre><span></span><code><span class="n">nannotations</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_annotation_count</span><span class="p">(</span><span class="s1">&#39;my_table&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="querying-tables">Querying tables<a class="headerlink" href="#querying-tables" title="Permanent link">&para;</a></h3>
+<p>To query a small table, you can just download the whole thing using
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.query_table">client.materialize.query_table()</a> which will return a
+dataframe of the table.</p>
+<p>Note however, some tables, such as the synapse table might be very large
+200-300 million rows and the service will only return the first 200,000
+results, and not in a deterministic manner. <strong>NOTE! This API is not
+designed to enable enmass downloading of the entire synapse table there
+are more efficient ways of doing this. Contact your dataset administrator
+for more information if this is what you are looking to do.</strong></p>
+<p>To just get a preview, use the limit argument (but note again that this
+won't be a reproducible set)</p>
+<div class="highlight"><pre><span></span><code><span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="s1">&#39;my_table&#39;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</code></pre></div>
+<p>For most applications, you will want to filter the query in some way.</p>
+<p>We offer three kinds of filters you can apply: <code>filter_equal_dict</code>, <code>filter_in_dict</code>
+and <code>filter_out_dict</code>. For query_table each is specified as a dictionary
+where the keys are column names, and the values are a list of values (or
+single value in the case of filter_equal).</p>
+<p>So for example to query a synapse table for all synapses onto a neuron
+in flywire you would use</p>
+<div class="highlight"><pre><span></span><code><span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()[</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">]</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">})</span>
+</code></pre></div>
+<p>The speed of querying is affected by a number of factors, including the
+size of the data. To improve the performance of results, you can reduce
+the number of columns returned using <code>select_columns</code>.</p>
+<p>So for example, if you are only interested in the root_ids and locations
+of pre_synaptic terminals you might limit the query with select_columns.
+Also, it is convenient to return the with positions as a column of
+<code>np.array([x,y,z])</code> coordinates for many purposes. However, sometimes
+you might prefer to have them split out as separate x, y, z
+columns. To enable this option use <code>split_columns=True</code>.
+split_columns=True is faster, as combining them is an extra step. You
+can recombine split-out position columns using
+<a class="autorefs autorefs-internal" href="../../extended_api/materializationengine/#caveclient.materializationengine.concatenate_position_columns">caveclient.materializationengine.concatenate_position_columns()</a></p>
+<div class="highlight"><pre><span></span><code><span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()[</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">]</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">},</span>
+                                  <span class="n">select_columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;pre_pt_root_id&#39;</span><span class="p">,</span> <span class="s1">&#39;pre_pt_position&#39;</span><span class="p">],</span>
+                                  <span class="n">split_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="desired-resolution">Desired Resolution<a class="headerlink" href="#desired-resolution" title="Permanent link">&para;</a></h3>
+<p>Often you want to have position information in different units. For
+example, to consider synapse locations or soma locations, you might want
+to have positions in nanometers or microns.</p>
+<p>To create neuroglancer views, you might want positions in integer voxels
+of a size that aligns with the resolution you are used to using
+Neuroglancer at.</p>
+<p>Annotation tables can be created and uploaded in varying resolutions
+according to whatever the user of the table felt was natural. This
+information is available in the metadata for that table. In addition,
+you may pass <em>desired_resolution</em> as a keyword argument which will
+automatically convert all spatial positions into voxels of that size in
+nanometers.</p>
+<p>So if you want positions in nanometers, you would pass
+<code>desired_resolution=[1,1,1]</code>. If you want positions in microns you would
+pass <code>desired_resolution=[1000,1000,1000]</code>. If you want positions in
+4,4,40nm voxel coordinates to use with cloud-volume or neuroglancer you
+would pass <code>desired_resolution=[4,4,40]</code>.</p>
+<h3 id="spatial-filters">Spatial Filters<a class="headerlink" href="#spatial-filters" title="Permanent link">&para;</a></h3>
+<p>You can also filter columns that are associated with spatial locations
+based upon being within a 3d bounding box.</p>
+<p>This is done by adding a filter_spatial_dict argument to query_table.
+The units of the bounding box should be in the units of the
+voxel_resolution of the table (which can be obtained from
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_table_metadata">client.materialize.get_table_metadata()</a>).</p>
+<div class="highlight"><pre><span></span><code><span class="n">bounding_box</span> <span class="o">=</span> <span class="p">[[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">min_z</span><span class="p">],</span> <span class="p">[</span><span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span> <span class="n">max_z</span><span class="p">]]</span>
+<span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">},</span>
+                                  <span class="n">filter_spatial_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_position&#39;</span><span class="p">:</span> <span class="n">bounding_box</span><span class="p">})</span>
+</code></pre></div>
+<h3 id="synapse-query">Synapse Query<a class="headerlink" href="#synapse-query" title="Permanent link">&para;</a></h3>
+<p>For synapses in particular, we have a simplified method for querying
+them with a reduced syntax.
+<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.synapse_query">client.materialize.synapse_query()</a> lets you specify pre
+and post synaptic partners as keyword arguments and bounding boxes. The defaults make reasonable assumptions
+about what you want to query, namely that the synapse_table is the table
+that the info service advertises, and that if you specify a bounding
+box, that you want the post_pt_position. These can be overridden of
+course, but the above bounding box query is simplified to.</p>
+<p><strong>NOTE! This API is not designed to enable enmass downloading of the
+entire synapse table there are more efficient ways of doing this. Contact
+your dataset administrator for more information if this is what you are
+looking to do.</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">bounding_box</span> <span class="o">=</span> <span class="p">[[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">min_z</span><span class="p">],</span> <span class="p">[</span><span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span> <span class="n">max_z</span><span class="p">]]</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">post_ids</span> <span class="o">=</span> <span class="n">MYID</span><span class="p">,</span>
+                                  <span class="n">bounding_box</span><span class="o">=</span><span class="n">bounding_box</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="live-query">Live Query<a class="headerlink" href="#live-query" title="Permanent link">&para;</a></h3>
+<p>In order to query the materialized tables above you can only use IDs
+that were present at the timestamp of the materialization. If you query
+the tables with an ID that is not valid during the time of the
+materialization you will get empty results.</p>
+<p>To check if root_ids are valid at your materialization's timestamp, you
+can use
+<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots">client.chunkedgraph.is_latest_roots()</a></p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">mat_time</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_timestamp</span><span class="p">()</span>
+<span class="n">is_latest</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">is_latest_roots</span><span class="p">([</span><span class="n">MYID</span><span class="p">],</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">mat_time</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">is_latest</span><span class="p">))</span>
+</code></pre></div>
+<p>If you need to lookup what happened to that ID, you can use the
+chunkedgraph lineage tree, to look into the future or the past,
+depending on your application you can use
+<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph">client.chunkedgraph.get_lineage_graph()</a>.</p>
+<p>Again, the ideal situation is that you have an annotation in the
+database which refers to your objects of interest, and querying that
+table by the id column will return the object in the most recent
+materialization.</p>
+<p>However, sometimes you might be browsing and proofreadding the data and
+get an ID that is more recent that the most recent version available.
+For convenience, you can use
+<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.live_query">client.materialize.live_query()</a>.</p>
+<p>to automatically update the results of your query to a time in the
+future, such as now. For example, to pass now, use
+<code>datetime.datetime.now(datetime.timezone.utc)</code>. Note all
+timestamps are in UTC throughout the codebase.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()[</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">]</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">live_query</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">})</span>
+</code></pre></div>
+<p>This will raise an ValueError exception if the IDs passed in your
+filters are not valid at the timestamp given</p>
+<p>You can also pass a timestamp directly to query_table and it will call
+live_query automatically.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()[</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">]</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">})</span>
+</code></pre></div>
+<p>Also, keep in mind if you run multiple queries and at each time pass
+<code>datetime.datetime.now(datetime.timezone.utc)</code>, there is no guarantee
+that the IDs will be consistent from query to query, as proofreading
+might be happening at any time. For larger scale analysis constraining
+oneself to a materialized version will ensure consistent results.</p>
+<p>Versions have varying expiration times in order to support the tradeoff
+between recency and consistency, so before undertaking an analysis
+project consider what version you want to query and what your plan will
+be to update your analysis to future versions.</p>
+<h3 id="content-aware-interface-experimental">Content-aware Interface (Experimental)<a class="headerlink" href="#content-aware-interface-experimental" title="Permanent link">&para;</a></h3>
+<p>As of version 5.8.0, we have introduced a new interface to query tables
+and views. This interface might have small but breaking changes in the
+near future.
+:::</p>
+<p>In order to make the querying interface more consistent across tables,
+we have introduced an additional alternative interface to filtering and
+querying data via the <code>client.materialize.tables</code> object. When you
+instantiate this object, this object finds all of the existing tables
+and the list of their columns and lets you filter the tables as
+arguments in the function with suggestions. Moreover, the filtering
+arguments and the querying arguments are separated into two.</p>
+<p>Let's see how this works with a simplest example --- downloading a
+table called <code>nucleus_detection_v0</code>. First, we reference the table as a
+function and then we run the query --- this is exactly the same as
+<code>client.materialize.query_table('nucleus_detection_v0')</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">CAVEclient</span><span class="p">(</span><span class="s1">&#39;minnie65_public&#39;</span><span class="p">)</span>
+<span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">()</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+</code></pre></div>
+<p>Where things differ is when we add filters. If we want to query based on
+a set of values for the field "id", for example, we add that as an
+argument:</p>
+<div class="highlight"><pre><span></span><code><span class="n">my_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">373879</span><span class="p">,</span> <span class="mi">111162</span><span class="p">]</span>
+<span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">my_ids</span><span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+</code></pre></div>
+<p>Where in this example the <code>id=</code> queries the column <code>id</code> based on the
+schema. These values can be either individual elements (i.e. an integer
+or a string) or a list/array of elements, and any field can be used. The
+tooling will automatically sort out how to format the filtering
+appropriately when running the query. Importantly, the filtering is
+identical between querying all types of tables and queries. To see the
+complete list of fields that can be queried, you can tab-autocomplete or
+in Jupyter or IPython glance at the docstring with
+<code>client.materialize.tables.nucleus_detection_v0?</code>.</p>
+<p>If you need to specify the table programmatically, you can also use a
+dictionary-style approach to getting the table filtering function. For
+example, an equivalent version of the above line would be:</p>
+<div class="highlight"><pre><span></span><code><span class="n">my_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">373879</span><span class="p">,</span> <span class="mi">111162</span><span class="p">]</span>
+<span class="n">my_table</span> <span class="o">=</span> <span class="s1">&#39;nucleus_detection_v0&#39;</span>
+<span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="n">my_table</span><span class="p">](</span><span class="nb">id</span><span class="o">=</span><span class="n">my_ids</span><span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+</code></pre></div>
+<p>The <code>query</code> function can also take arguments relating to timestamps or
+formatting where they act just like in the other query method. In
+particular, the arguments that apply to <code>query</code> are: <code>select_columns</code>,
+<code>offset</code>, <code>limit</code>, <code>split_positions</code>, <code>materialization_version</code>,
+<code>timestamp</code>, <code>metadata</code>, <code>desired_resolution</code>, and <code>get_counts</code>. For
+example, to add a desired resolution and split positions in the above
+query, it would look like:</p>
+<div class="highlight"><pre><span></span><code><span class="n">my_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">373879</span><span class="p">,</span> <span class="mi">111162</span><span class="p">]</span>
+<span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">(</span>
+    <span class="nb">id</span><span class="o">=</span><span class="n">my_ids</span>
+<span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+    <span class="n">split_positions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">desired_resolution</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>If you want to do a live query instead of a materialized query, the
+filtering remains identical but we use the <code>live_query</code> function
+instead. The one required argument for <code>live_query</code> is the timestamp.</p>
+<div class="highlight"><pre><span></span><code><span class="n">my_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">373879</span><span class="p">,</span> <span class="mi">111162</span><span class="p">]</span>
+<span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">(</span>
+    <span class="nb">id</span><span class="o">=</span><span class="n">my_ids</span>
+<span class="p">)</span><span class="o">.</span><span class="n">live_query</span><span class="p">(</span>
+    <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>The live query functions have similar but slightly different arguments:
+<code>timestamp</code> (required), <code>offset</code>, <code>limit</code>, <code>split_positions</code>,
+<code>metadata</code>, <code>desired_resolution</code>, and <code>allow_missing_lookups</code>.</p>
+<p>Note that way that IPython handles docstrings means that while you can
+use <code>?</code> to get the docstring of the filtering part of the function, you
+can't simply do something like
+<code>client.materialize.tables.nucleus_detection_v0().query?</code>. It will tell
+you the function can't be found, because technically the <code>query</code>
+function does not yet exist until the table filtering function is
+called.</p>
+<p>Instead, if you want to glimpse the docstring of the query or live_query
+functions, you need to split it into two lines:</p>
+<div class="highlight"><pre><span></span><code><span class="n">qry_func</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">()</span><span class="o">.</span><span class="n">query</span>
+<span class="n">qry_func</span><span class="err">?</span>
+</code></pre></div>
+<p>Finally, if the project you are working with has views, a similar
+interface is available to them via <code>client.materialize.views</code>. Currently
+views are not compatible with live query, and so only the <code>.query</code>
+function is available.</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/seung-lab/CAVEclient" target="_blank" rel="noopener" title="Github" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
+      
+    
+  </body>
+</html>

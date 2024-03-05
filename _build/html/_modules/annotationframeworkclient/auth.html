@@ -1,0 +1,402 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>annotationframeworkclient.auth &mdash; CAVEclient 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CAVEclient
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/info.html">Info Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/materialization.html">Materialization</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CAVEclient</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>annotationframeworkclient.auth</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for annotationframeworkclient.auth</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">webbrowser</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">.endpoints</span> <span class="kn">import</span> <span class="n">auth_endpoints_v1</span><span class="p">,</span> <span class="n">default_global_server_address</span>
+
+<span class="n">default_token_location</span> <span class="o">=</span> <span class="s2">&quot;~/.cloudvolume/secrets&quot;</span>
+<span class="n">default_token_name</span> <span class="o">=</span> <span class="s2">&quot;chunkedgraph-secret.json&quot;</span>
+<span class="n">default_token_key</span> <span class="o">=</span> <span class="s1">&#39;token&#39;</span>
+<span class="n">default_token_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">default_token_location</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">default_token_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="AuthClient"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.auth.AuthClient">[docs]</a><span class="k">class</span> <span class="nc">AuthClient</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Client to find and use auth tokens to access the dynamic annotation framework services.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    token_file : str, optional</span>
+<span class="sd">        Path to a JSON key:value file holding your auth token.</span>
+<span class="sd">        By default, &quot;~/.cloudvolume/secrets/chunkedgraph-secret.json&quot;</span>
+
+<span class="sd">    token_key : str, optional</span>
+<span class="sd">        Key for the token in the token_file.</span>
+<span class="sd">        By default, &quot;token&quot;</span>
+
+<span class="sd">    token : str or None, optional</span>
+<span class="sd">        Direct entry of the token as a string. If provided, overrides the files.</span>
+<span class="sd">        If None, attempts to use the file paths.</span>
+
+<span class="sd">    server_address : str, optional,</span>
+<span class="sd">        URL to the auth server. By default, uses a default server address.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">server_address</span><span class="o">=</span><span class="n">default_global_server_address</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">token_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">token_file</span> <span class="o">=</span> <span class="n">default_token_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">token_file</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">token_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">token_key</span> <span class="o">=</span> <span class="n">default_token_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token_key</span> <span class="o">=</span> <span class="n">token_key</span>
+
+        <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_token_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token_key</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">token</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_server_address</span> <span class="o">=</span> <span class="n">server_address</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_endpoint_mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;auth_server_address&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server_address</span><span class="p">}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Secret token used to authenticate yourself to the Dynamic Annotation Framework services.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span>
+
+    <span class="nd">@token</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_token</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">new_token</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token_key</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="AuthClient.get_token"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.auth.AuthClient.get_token">[docs]</a>    <span class="k">def</span> <span class="nf">get_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load a token with a given key the specified token file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        token_key : str or None, optional</span>
+<span class="sd">            key in the token file JSON, by default None. If None, uses &#39;token&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token_key</span> <span class="o">=</span> <span class="n">token_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_token_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token_key</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_load_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token_file</span><span class="p">,</span> <span class="n">token_key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">token_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">token_file</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">token_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">token_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">token</span>
+
+<div class="viewcode-block" id="AuthClient.get_new_token"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.auth.AuthClient.get_new_token">[docs]</a>    <span class="k">def</span> <span class="nf">get_new_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">open</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Currently, returns instructions for getting a new token based on the current settings and saving it to the local environment. New OAuth tokens are currently not able to be retrieved programmatically.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        open : bool, optional</span>
+<span class="sd">            If True, opens a web browser to the web page where you can generate a new token.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">auth_url</span> <span class="o">=</span> <span class="n">auth_endpoints_v1</span><span class="p">[</span><span class="s2">&quot;refresh_token&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_default_endpoint_mapping</span>
+        <span class="p">)</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;New Tokens need to be acquired by hand. Please follow the following steps:</span>
+<span class="s2">                1) Go to: </span><span class="si">{</span><span class="n">auth_url</span><span class="si">}</span><span class="s2"></span>
+<span class="s2">                2) Log in with your Google credentials and copy the token shown afterward.</span>
+<span class="s2">                3a) Save it to your computer with: client.auth.save_token(token=&quot;PASTE_YOUR_TOKEN_HERE&quot;)</span>
+<span class="s2">                or</span>
+<span class="s2">                3b) Set it for the current session only with client.auth.token = &quot;PASTE_YOUR_TOKEN_HERE&quot;</span>
+<span class="s2">                Note: If you need to save or load multiple tokens, please read the documentation for details.</span>
+<span class="s2">                Warning! Creating a new token by finishing step 2 will invalidate the previous token!&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">open</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">auth_url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="AuthClient.save_token"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.auth.AuthClient.save_token">[docs]</a>    <span class="k">def</span> <span class="nf">save_token</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">token_key</span><span class="o">=</span><span class="n">default_token_key</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">switch_token</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Conveniently save a token in the correct format.</span>
+
+<span class="sd">        After getting a new token by following the instructions in `authclient.get_new_token()`, you can save it with a fully default configuration by running:</span>
+
+<span class="sd">        token = &#39;my_shiny_new_token&#39;</span>
+
+<span class="sd">        authclient.save_token(token=token)</span>
+
+<span class="sd">        Now on next load, authclient=AuthClient() will make an authclient instance using this token.</span>
+<span class="sd">        If you would like to specify more information about the json file where the token will be stored, see the parameters below.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        token : str, optional</span>
+<span class="sd">            New token to save, by default None</span>
+<span class="sd">        token_key : str, optional</span>
+<span class="sd">            Key for the token in the token_file json, by default &quot;token&quot;</span>
+<span class="sd">        overwrite : bool, optional</span>
+<span class="sd">            Allow an existing token to be changed, by default False</span>
+<span class="sd">        token_file : str, optional</span>
+<span class="sd">            Path to the token file, by default None. If None, uses the default file location specified above.</span>
+<span class="sd">        switch_token : bool, optional</span>
+<span class="sd">            If True, switch the auth client over into using the new token, by default True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span>
+
+        <span class="k">if</span> <span class="n">token_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">save_token_file</span> <span class="o">=</span> <span class="n">token_file</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">save_token_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token_file</span>
+
+        <span class="k">if</span> <span class="n">save_token_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No token file is set&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_token_file</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">save_token_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">secrets</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">token_key</span> <span class="ow">in</span> <span class="n">secrets</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Key </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">token_key</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> already exists in token file </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">save_token_file</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">secrets</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">secrets</span><span class="p">[</span><span class="n">token_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span>
+
+        <span class="n">secret_dir</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">save_token_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">secret_dir</span><span class="p">):</span>
+            <span class="n">full_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">secret_dir</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">full_dir</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">save_token_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">secrets</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">switch_token</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="n">token</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_token_key</span> <span class="o">=</span> <span class="n">token_key</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_token_file</span> <span class="o">=</span> <span class="n">save_token_file</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">request_header</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Formatted request header with the specified token</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">auth_header</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Bearer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+            <span class="k">return</span> <span class="n">auth_header</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

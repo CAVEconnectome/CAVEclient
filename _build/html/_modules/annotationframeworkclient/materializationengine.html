@@ -1,0 +1,1019 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>annotationframeworkclient.materializationengine &mdash; CAVEclient 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CAVEclient
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/info.html">Info Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/materialization.html">Materialization</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CAVEclient</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>annotationframeworkclient.materializationengine</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for annotationframeworkclient.materializationengine</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">cachetools</span> <span class="kn">import</span> <span class="n">cached</span><span class="p">,</span> <span class="n">TTLCache</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ValuesView</span>
+
+<span class="kn">from</span> <span class="nn">numpy.lib.function_base</span> <span class="kn">import</span> <span class="n">iterable</span>
+<span class="kn">import</span> <span class="nn">annotationframeworkclient</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">ClientBaseWithDataset</span><span class="p">,</span> <span class="n">ClientBaseWithDatastack</span><span class="p">,</span> <span class="n">ClientBase</span><span class="p">,</span> <span class="n">_api_versions</span><span class="p">,</span> <span class="n">_api_endpoints</span><span class="p">,</span> <span class="n">handle_response</span>
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">AuthClient</span>
+<span class="kn">from</span> <span class="nn">.endpoints</span> <span class="kn">import</span> <span class="n">materialization_api_versions</span><span class="p">,</span> <span class="n">materialization_common</span>
+<span class="kn">from</span> <span class="nn">.infoservice</span> <span class="kn">import</span> <span class="n">InfoServiceClientV2</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">date</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">pyarrow</span> <span class="k">as</span> <span class="nn">pa</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span>
+
+
+<span class="n">SERVER_KEY</span> <span class="o">=</span> <span class="s2">&quot;me_server_address&quot;</span>
+
+<div class="viewcode-block" id="concatenate_position_columns"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.concatenate_position_columns">[docs]</a><span class="k">def</span> <span class="nf">concatenate_position_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;function to take a dataframe with xyz position columns and replace them</span>
+<span class="sd">    with one column per position with an xyz numpy array.  Edits occur </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df (pd.DataFrame): dataframe to alter</span>
+<span class="sd">        inplace (bool): whether to perform edits in place</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: [description]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">inplace</span><span class="p">:</span>
+        <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">grps</span><span class="o">=</span><span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">df2</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">base</span><span class="p">,</span><span class="n">g</span> <span class="ow">in</span> <span class="n">grps</span><span class="p">:</span>
+        <span class="n">gl</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">k</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">gl</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">==</span><span class="s1">&#39;xyz&#39;</span><span class="p">:</span>  
+            <span class="n">df2</span><span class="p">[</span><span class="n">base</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df2</span><span class="p">[</span><span class="n">gl</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+            <span class="n">df2</span><span class="o">=</span><span class="n">df2</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">gl</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df2</span></div>
+
+<div class="viewcode-block" id="MEEncoder"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MEEncoder">[docs]</a><span class="k">class</span> <span class="nc">MEEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<div class="viewcode-block" id="MEEncoder.default"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MEEncoder.default">[docs]</a>    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="convert_timestamp"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.convert_timestamp">[docs]</a><span class="k">def</span> <span class="nf">convert_timestamp</span><span class="p">(</span><span class="n">ts</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S.</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MaterializationClient"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializationClient">[docs]</a><span class="k">def</span> <span class="nf">MaterializationClient</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span>
+                          <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">auth_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">cg_client</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">api_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span>
+                          <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Factory for returning AnnotationClient</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        server_address : str </span>
+<span class="sd">            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)</span>
+<span class="sd">        datastack_name : str</span>
+<span class="sd">            Name of the datastack.</span>
+<span class="sd">        auth_client : AuthClient or None, optional</span>
+<span class="sd">            Authentication client to use to connect to server. If None, do not use authentication.</span>
+<span class="sd">        api_version : str or int (default: latest)</span>
+<span class="sd">            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com) </span>
+<span class="sd">            2: new api version, (i.e. minniev1.microns-daf.com)</span>
+<span class="sd">            &#39;latest&#39;: default to the most recent (current 2)</span>
+<span class="sd">        version : default version to query</span>
+<span class="sd">            if None will default to latest version</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ClientBaseWithDatastack</span>
+<span class="sd">            List of datastack names for available datastacks on the annotation engine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">auth_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">auth_client</span> <span class="o">=</span> <span class="n">AuthClient</span><span class="p">()</span>
+
+    <span class="n">auth_header</span> <span class="o">=</span> <span class="n">auth_client</span><span class="o">.</span><span class="n">request_header</span>
+    <span class="n">endpoints</span><span class="p">,</span> <span class="n">api_version</span> <span class="o">=</span> <span class="n">_api_endpoints</span><span class="p">(</span><span class="n">api_version</span><span class="p">,</span> <span class="n">SERVER_KEY</span><span class="p">,</span> <span class="n">server_address</span><span class="p">,</span>
+                                            <span class="n">materialization_common</span><span class="p">,</span> <span class="n">materialization_api_versions</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">)</span>
+
+    <span class="n">MatClient</span> <span class="o">=</span> <span class="n">client_mapping</span><span class="p">[</span><span class="n">api_version</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">MatClient</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span>
+                     <span class="n">endpoints</span><span class="p">,</span> <span class="n">SERVER_KEY</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">,</span>
+                     <span class="n">cg_client</span><span class="o">=</span><span class="n">cg_client</span><span class="p">,</span>
+                     <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="n">verify</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MaterializatonClientV2"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2">[docs]</a><span class="k">class</span> <span class="nc">MaterializatonClientV2</span><span class="p">(</span><span class="n">ClientBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_address</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span>
+                 <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">,</span> <span class="n">cg_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MaterializatonClientV2</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span>
+                                                     <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span>
+                                                     <span class="n">verify</span><span class="o">=</span><span class="n">verify</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datastack_name</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">most_recent_version</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cg_client</span> <span class="o">=</span> <span class="n">cg_client</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">datastack_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datastack_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_version</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">homepage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server_address</span> <span class="o">+</span> <span class="s2">&quot;/materialize/views/datastack/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datastack_name</span>
+        <span class="k">return</span> <span class="n">HTML</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;a href=&quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">&quot; target=&quot;_blank&quot;&gt;Materialization Engine&lt;/a&gt;&#39;</span><span class="p">)</span>
+        
+    <span class="nd">@version</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Version not in materialized database&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MaterializatonClientV2.most_recent_version"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.most_recent_version">[docs]</a>    <span class="k">def</span> <span class="nf">most_recent_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the most recent version of materialization </span>
+<span class="sd">        for this datastack name</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datastack_name (str, optional): datastack name to find most</span>
+<span class="sd">            recent materialization of. </span>
+<span class="sd">            If None, uses the one specified in the client.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">versions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="n">datastack_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">versions</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_versions"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_versions">[docs]</a>    <span class="k">def</span> <span class="nf">get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get versions available</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            datastack_name ([type], optional): [description]. Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;versions&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_tables"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_tables">[docs]</a>    <span class="k">def</span> <span class="nf">get_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Gets a list of table names for a datastack</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        datastack_name : str or None, optional</span>
+<span class="sd">            Name of the datastack, by default None.</span>
+<span class="sd">            If None, uses the one specified in the client.</span>
+<span class="sd">            Will be set correctly if you are using the framework_client</span>
+<span class="sd">        version: int or None, optional</span>
+<span class="sd">            the version to query, else get the tables in the most recent version</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of table names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="c1"># TODO fix up latest version</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;tables&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_annotation_count"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_annotation_count">[docs]</a>    <span class="k">def</span> <span class="nf">get_annotation_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                             <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get number of annotations in a table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name (str): </span>
+<span class="sd">            name of table to mark for deletion</span>
+<span class="sd">        datastack_name: str or None, optional,</span>
+<span class="sd">            Name of the datastack_name. If None, uses the one specified in the client.</span>
+<span class="sd">        version: int or None, optional</span>
+<span class="sd">            the version to query, else get the tables in the most recent version</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">            number of annotations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;table_count&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_version_metadata"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_version_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">get_version_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get metadata about a version</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            version (int, optional): version number to get metadata about. Defaults to client default version.</span>
+<span class="sd">            datastack_name (str, optional): datastack to query. Defaults to client default datastack.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+        <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;version_metadata&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">=</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;time_stamp&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">convert_timestamp</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;time_stamp&#39;</span><span class="p">])</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;expires_on&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">convert_timestamp</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;expires_on&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_timestamp"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_timestamp">[docs]</a>    <span class="k">def</span> <span class="nf">get_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get datetime.datetime timestamp for a materialization version.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        version : int or None, optional</span>
+<span class="sd">            Materialization version, by default None. If None, defaults to the value set in the client.</span>
+<span class="sd">        datastack_name : str or None, optional</span>
+<span class="sd">            Datastack name, by default None. If None, defaults to the value set in the client.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        datetime.datetime</span>
+<span class="sd">            Datetime when the materialization version was frozen.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_version_metadata</span><span class="p">(</span>
+            <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="n">datastack_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">convert_timestamp</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;time_stamp&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_versions_metadata"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_versions_metadata">[docs]</a>    <span class="nd">@cached</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="n">TTLCache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">12</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">get_versions_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get the metadata for all the versions that are presently available and valid</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.</span>
+<span class="sd">            </span>
+<span class="sd">            Returns:</span>
+<span class="sd">                list[dict]: a list of metadata dictionaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;versions_metadata&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">=</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">md</span><span class="p">[</span><span class="s1">&#39;time_stamp&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">convert_timestamp</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;time_stamp&#39;</span><span class="p">])</span>
+            <span class="n">md</span><span class="p">[</span><span class="s1">&#39;expires_on&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">convert_timestamp</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;expires_on&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.get_table_metadata"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.get_table_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">get_table_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get metadata about a table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table_name (str): </span>
+<span class="sd">            name of table to mark for deletion</span>
+<span class="sd">        datastack_name: str or None, optional,</span>
+<span class="sd">            Name of the datastack_name.</span>
+<span class="sd">            If None, uses the one specified in the client.</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            metadata about table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;table_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table_name</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+    <span class="c1"># def get_annotation(self, table_name, annotation_ids,</span>
+    <span class="c1">#                    materialization_version=None,</span>
+    <span class="c1">#                    datastack_name=None):</span>
+    <span class="c1">#     &quot;&quot;&quot; Retrieve an annotation or annotations by id(s) and table name.</span>
+
+    <span class="c1">#     Parameters</span>
+    <span class="c1">#     ----------</span>
+    <span class="c1">#     table_name : str</span>
+    <span class="c1">#         Name of the table</span>
+    <span class="c1">#     annotation_ids : int or iterable</span>
+    <span class="c1">#         ID or IDS of the annotation to retreive</span>
+    <span class="c1">#     materialization_version: int or None</span>
+    <span class="c1">#         materialization version to use</span>
+    <span class="c1">#         If None, uses the one specified in the client</span>
+    <span class="c1">#     datastack_name : str or None, optional</span>
+    <span class="c1">#         Name of the datastack_name.</span>
+    <span class="c1">#         If None, uses the one specified in the client.</span>
+    <span class="c1">#     Returns</span>
+    <span class="c1">#     -------</span>
+    <span class="c1">#     list</span>
+    <span class="c1">#         Annotation data</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     if materialization_version is None:</span>
+    <span class="c1">#         materialization_version = self.version</span>
+    <span class="c1">#     if datastack_name is None:</span>
+    <span class="c1">#         datastack_name = self.datastack_name</span>
+
+    <span class="c1">#     endpoint_mapping = self.default_url_mapping</span>
+    <span class="c1">#     endpoint_mapping[&quot;datastack_name&quot;] = datastack_name</span>
+    <span class="c1">#     endpoint_mapping[&quot;table_name&quot;] = table_name</span>
+    <span class="c1">#     endpoint_mapping[&quot;version&quot;] = materialization_version</span>
+    <span class="c1">#     url = self._endpoints[&quot;annotations&quot;].format_map(endpoint_mapping)</span>
+    <span class="c1">#     try:</span>
+    <span class="c1">#         iter(annotation_ids)</span>
+    <span class="c1">#     except TypeError:</span>
+    <span class="c1">#         annotation_ids = [annotation_ids]</span>
+
+    <span class="c1">#     params = {</span>
+    <span class="c1">#         &#39;annotation_ids&#39;: &quot;,&quot;.join([str(a) for a in annotation_ids])</span>
+    <span class="c1">#     }</span>
+    <span class="c1">#     response = self.session.get(url, params=params)</span>
+    <span class="c1">#     self.raise_for_status(response)</span>
+    <span class="c1">#     return response.json()</span>
+    <span class="k">def</span> <span class="nf">_format_query_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">tables</span><span class="p">,</span> 
+                                <span class="n">select_columns</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">,</span>
+                                <span class="n">filter_in_dict</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="p">,</span>
+                                <span class="n">return_pyarrow</span><span class="p">,</span> <span class="n">split_positions</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">limit</span><span class="p">):</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;datastack_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datastack_name</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">query_args</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">query_args</span><span class="p">[</span><span class="s1">&#39;return_pyarrow&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">return_pyarrow</span>
+        <span class="n">query_args</span><span class="p">[</span><span class="s1">&#39;split_positions&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">split_positions</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s1">&#39;table_name&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">tables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;simple_query&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;tables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tables</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s2">&quot;join_query&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">filter_in_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;filter_in_dict&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">filter_in_dict</span>
+        <span class="k">if</span> <span class="n">filter_out_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;filter_notin_dict&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">filter_out_dict</span>
+        <span class="k">if</span> <span class="n">filter_equal_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;filter_equal_dict&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">filter_equal_dict</span>
+        <span class="k">if</span> <span class="n">select_columns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;select_columns&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">select_columns</span>
+        <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;offset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">offset</span>
+        <span class="k">if</span> <span class="n">suffixes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;suffixes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">suffixes</span>
+        <span class="k">if</span> <span class="n">limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">limit</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;limit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">limit</span>
+        <span class="k">if</span> <span class="n">return_pyarrow</span><span class="p">:</span>
+            <span class="n">encoding</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">encoding</span> <span class="o">=</span> <span class="s1">&#39;gzip&#39;</span>
+        
+        <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">query_args</span><span class="p">,</span> <span class="n">encoding</span>
+
+<div class="viewcode-block" id="MaterializatonClientV2.query_table"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.query_table">[docs]</a>    <span class="k">def</span> <span class="nf">query_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">filter_spatial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">join_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">return_df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="n">split_positions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="n">materialization_version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generic query on materialization tables</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table: &#39;str&#39;</span>
+
+<span class="sd">            filter_in_dict (dict , optional): </span>
+<span class="sd">                keys are column names, values are allowed entries.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            filter_out_dict (dict, optional): </span>
+<span class="sd">                keys are column names, values are not allowed entries.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            filter_equal_dict (dict, optional): </span>
+<span class="sd">                inner layer: keys are column names, values are specified entry.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            offset (int, optional): offset in query result</span>
+<span class="sd">            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)</span>
+<span class="sd">            select_columns (list of str, optional): columns to select. Defaults to None.</span>
+<span class="sd">            suffixes: (list[str], optional): suffixes to use on duplicate columns</span>
+<span class="sd">            offset (int, optional): result offset to use. Defaults to None.</span>
+<span class="sd">                will only return top K results. </span>
+<span class="sd">            datastack_name (str, optional): datastack to query. </span>
+<span class="sd">                If None defaults to one specified in client. </span>
+<span class="sd">            return_df (bool, optional): whether to return as a dataframe</span>
+<span class="sd">                default True, if False, data is returned as json (slower)</span>
+<span class="sd">            split_positions (bool, optional): whether to break position columns into x,y,z columns</span>
+<span class="sd">                default False, if False data is returned as one column with [x,y,z] array (slower)</span>
+<span class="sd">            materialization_version (int, optional): version to query. </span>
+<span class="sd">                If None defaults to one specified in client.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">        pd.DataFrame: a pandas dataframe of results of query</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">materialization_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">materialization_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+
+        <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">query_args</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_query_components</span><span class="p">(</span><span class="n">datastack_name</span><span class="p">,</span>
+                                                                        <span class="n">materialization_version</span><span class="p">,</span>
+                                                                        <span class="p">[</span><span class="n">table</span><span class="p">],</span> <span class="n">select_columns</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> 
+                                                                        <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">filter_in_dict</span><span class="p">}</span> <span class="k">if</span> <span class="n">filter_in_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                                                                        <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">filter_out_dict</span><span class="p">}</span> <span class="k">if</span> <span class="n">filter_out_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                                                                        <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">filter_equal_dict</span><span class="p">}</span> <span class="k">if</span> <span class="n">filter_equal_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                                                                        <span class="n">return_df</span><span class="p">,</span>
+                                                                        <span class="kc">False</span><span class="p">,</span>
+                                                                        <span class="n">offset</span><span class="p">,</span>
+                                                                        <span class="n">limit</span><span class="p">)</span>
+          
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">MEEncoder</span><span class="p">),</span>
+                                     <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                                         <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span>
+                                         <span class="s1">&#39;Accept-Encoding&#39;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">},</span>
+                                     <span class="n">params</span><span class="o">=</span><span class="n">query_args</span><span class="p">,</span>
+                                     <span class="n">stream</span><span class="o">=~</span><span class="n">return_df</span><span class="p">,</span>
+                                     <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>                         
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_df</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">split_positions</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">df</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">concatenate_position_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.join_query"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.join_query">[docs]</a>    <span class="k">def</span> <span class="nf">join_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                   <span class="n">tables</span><span class="p">,</span>
+                   <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">filter_spatial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">join_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">suffixes</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">return_df</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                   <span class="n">split_positions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">materialization_version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generic query on materialization tables</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tables: list of lists with length 2 or &#39;str&#39;</span>
+<span class="sd">                list of two lists: first entries are table names, second</span>
+<span class="sd">                                   entries are the columns used for the join</span>
+<span class="sd">            filter_in_dict (dict of dicts, optional): </span>
+<span class="sd">                outer layer: keys are table names</span>
+<span class="sd">                inner layer: keys are column names, values are allowed entries.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            filter_out_dict (dict of dicts, optional): </span>
+<span class="sd">                outer layer: keys are table names</span>
+<span class="sd">                inner layer: keys are column names, values are not allowed entries.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            filter_equal_dict (dict of dicts, optional): </span>
+<span class="sd">                outer layer: keys are table names</span>
+<span class="sd">                inner layer: keys are column names, values are specified entry.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            select_columns (list of str, optional): columns to select. Defaults to None.</span>
+<span class="sd">            offset (int, optional): result offset to use. Defaults to None.</span>
+<span class="sd">                will only return top K results. </span>
+<span class="sd">            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)</span>
+<span class="sd">            suffixes (list[str], optional): suffixes to use for duplicate columns same order as tables </span>
+<span class="sd">            datastack_name (str, optional): datastack to query. </span>
+<span class="sd">                If None defaults to one specified in client. </span>
+<span class="sd">            return_df (bool, optional): whether to return as a dataframe</span>
+<span class="sd">                default True, if False, data is returned as json (slower)</span>
+<span class="sd">            split_positions (bool, optional): whether to break position columns into x,y,z columns</span>
+<span class="sd">                default False, if False data is returned as one column with [x,y,z] array (slower)</span>
+<span class="sd">            materialization_version (int, optional): version to query. </span>
+<span class="sd">                If None defaults to one specified in client.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: a pandas dataframe of results of query</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">materialization_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">materialization_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span>
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+
+        <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">query_args</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_query_components</span><span class="p">(</span><span class="n">datastack_name</span><span class="p">,</span>
+                                                                        <span class="n">materialization_version</span><span class="p">,</span>
+                                                                        <span class="n">tables</span><span class="p">,</span> <span class="n">select_columns</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">,</span> 
+                                                                        <span class="n">filter_in_dict</span><span class="p">,</span>
+                                                                        <span class="n">filter_out_dict</span><span class="p">,</span>
+                                                                        <span class="n">filter_equal_dict</span><span class="p">,</span>
+                                                                        <span class="n">return_df</span><span class="p">,</span>
+                                                                        <span class="kc">False</span><span class="p">,</span>
+                                                                        <span class="n">offset</span><span class="p">,</span>
+                                                                        <span class="n">limit</span><span class="p">)</span>
+        
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">MEEncoder</span><span class="p">),</span>
+                                     <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                                         <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span>
+                                         <span class="s1">&#39;Accept-Encoding&#39;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">},</span>
+                                     <span class="n">params</span><span class="o">=</span><span class="n">query_args</span><span class="p">,</span>
+                                     <span class="n">stream</span><span class="o">=~</span><span class="n">return_df</span><span class="p">,</span>
+                                     <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_df</span><span class="p">:</span>
+            <span class="n">df</span><span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">split_positions</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">df</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">concatenate_position_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MaterializatonClientV2.map_filters"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.map_filters">[docs]</a>    <span class="k">def</span> <span class="nf">map_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">timestamp_past</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;translate a list of filter dictionaries</span>
+<span class="sd">           from a point in the future, to a point in the past</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filters (list[dict]): filter dictionaries with </span>
+<span class="sd">            timestamp ([type]): [description]</span>
+<span class="sd">            timestamp_past ([type]): [description]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            [type]: [description]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_filters</span> <span class="o">=</span><span class="p">[]</span>
+        <span class="n">vals</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">filter_dict</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">filter_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>      
+                <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">filter_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="n">Iterable</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                        <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">val</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="c1"># if they are all None then we can safely return now</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+        <span class="n">filter_vals_latest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg_client</span><span class="o">.</span><span class="n">is_latest_roots</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">filter_vals_latest</span><span class="p">):</span>
+            <span class="n">not_latest</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="o">~</span><span class="n">filter_vals_latest</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&#39;&#39;</span><span class="si">{</span><span class="n">not_latest</span><span class="si">}</span><span class="s1"> are not valid rootIDs at timestamp= </span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s1">, </span>
+<span class="s1">                                use chunkedgraph client to query lineage graph to find new ID(s)&#39;&#39;&#39;</span><span class="p">)</span>
+        <span class="n">id_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg_client</span><span class="o">.</span><span class="n">get_past_ids</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> 
+                                                 <span class="n">timestamp_past</span><span class="o">=</span><span class="n">timestamp_past</span><span class="p">,</span>
+                                                 <span class="n">timestamp_future</span><span class="o">=</span><span class="n">timestamp</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">filter_dict</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">filter_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filter_dict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_dict</span><span class="o">=</span><span class="p">{}</span>
+                <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">vals</span> <span class="ow">in</span> <span class="n">filter_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="p">(</span><span class="n">Iterable</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                        <span class="n">new_dict</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">=</span><span class="n">id_mapping</span><span class="p">[</span><span class="s1">&#39;past_id_map&#39;</span><span class="p">][</span><span class="n">vals</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">new_dict</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">id_mapping</span><span class="p">[</span><span class="s1">&#39;past_id_map&#39;</span><span class="p">][</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span> <span class="p">])</span>
+                <span class="n">new_filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_filters</span></div>
+
+    <span class="k">def</span> <span class="nf">_update_rootids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="c1">#post process the dataframe to update all the root_ids columns</span>
+        <span class="c1">#with the most up to date get roots</span>
+        <span class="n">time_d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">sv_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;supervoxel_id&#39;</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">sv_col</span> <span class="ow">in</span> <span class="n">sv_columns</span><span class="p">:</span>
+            <span class="n">root_id_col</span> <span class="o">=</span> <span class="n">sv_col</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s1">&#39;supervoxel_id&#39;</span><span class="p">)]</span> <span class="o">+</span> <span class="s1">&#39;root_id&#39;</span>
+            <span class="n">svids</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sv_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">root_ids</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">root_id_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="n">uniq_root_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">root_ids</span><span class="p">)</span>
+            <span class="n">is_latest_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg_client</span><span class="o">.</span><span class="n">is_latest_roots</span><span class="p">(</span><span class="n">uniq_root_ids</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">)</span>
+            <span class="n">is_latest_root</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">uniq_root_ids</span><span class="p">[</span><span class="n">is_latest_root</span><span class="p">])</span>
+
+            <span class="n">time_d</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;is_latest_root </span><span class="si">{</span><span class="n">sv_col</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+            <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">sv_col</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">svids</span><span class="p">[</span><span class="o">~</span><span class="n">is_latest_root</span><span class="p">])</span><span class="si">}</span><span class="s1"> to update&#39;</span><span class="p">)</span>
+            <span class="n">updated_root_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg_client</span><span class="o">.</span><span class="n">get_roots</span><span class="p">(</span><span class="n">svids</span><span class="p">[</span><span class="o">~</span><span class="n">is_latest_root</span><span class="p">],</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp</span><span class="p">)</span>
+
+            <span class="n">time_d</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;get_roots </span><span class="si">{</span><span class="n">sv_col</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+            <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="n">root_ids</span><span class="p">[</span><span class="o">~</span><span class="n">is_latest_root</span><span class="p">]</span><span class="o">=</span><span class="n">updated_root_ids</span>
+            <span class="c1"># ran into an isssue with pyarrow producing read only columns</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">root_id_col</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">root_id_col</span><span class="p">]</span><span class="o">=</span><span class="n">root_ids</span>
+            
+            <span class="n">time_d</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;replace_roots </span><span class="si">{</span><span class="n">sv_col</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+            <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">df</span><span class="p">,</span> <span class="n">time_d</span>
+
+<div class="viewcode-block" id="MaterializatonClientV2.live_query"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.materializationengine.MaterializatonClientV2.live_query">[docs]</a>    <span class="k">def</span> <span class="nf">live_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span><span class="p">,</span>
+                    <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">filter_spatial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">join_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">split_positions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="n">post_filter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generic query on materialization tables</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            table: &#39;str&#39;</span>
+<span class="sd">            timestamp (datetime.datetime): time to materialize (in utc)</span>
+<span class="sd">                pass datetime.datetime.utcnow() for present time</span>
+<span class="sd">            filter_in_dict (dict , optional): </span>
+<span class="sd">                keys are column names, values are allowed entries.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            filter_out_dict (dict, optional): </span>
+<span class="sd">                keys are column names, values are not allowed entries.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            filter_equal_dict (dict, optional): </span>
+<span class="sd">                inner layer: keys are column names, values are specified entry.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            offset (int, optional): offset in query result</span>
+<span class="sd">            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)</span>
+<span class="sd">            select_columns (list of str, optional): columns to select. Defaults to None.</span>
+<span class="sd">            suffixes: (list[str], optional): suffixes to use on duplicate columns</span>
+<span class="sd">            offset (int, optional): result offset to use. Defaults to None.</span>
+<span class="sd">                will only return top K results. </span>
+<span class="sd">            datastack_name (str, optional): datastack to query. </span>
+<span class="sd">                If None defaults to one specified in client. </span>
+<span class="sd">            split_positions (bool, optional): whether to break position columns into x,y,z columns</span>
+<span class="sd">                default False, if False data is returned as one column with [x,y,z] array (slower)</span>
+<span class="sd">            post_filter (bool, optional): whether to filter down the result based upon the filters specified</span>
+<span class="sd">                if false, it will return the query with present root_ids in the root_id columns,</span>
+<span class="sd">                but the rows will reflect the filters translated into their past IDs.</span>
+<span class="sd">                So if, for example, a cell had a false merger split off since the last materialization.</span>
+<span class="sd">                those annotations on that incorrect portion of the cell will be included if this is False,</span>
+<span class="sd">                but will be filtered down if this is True. (Default=True)</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">        pd.DataFrame: a pandas dataframe of results of query</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">return_df</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;You must have a cg_client to run live_query&#39;</span><span class="p">)</span>
+        
+        <span class="n">starttime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">time_d</span> <span class="o">=</span><span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">datastack_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">datastack_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datastack_name</span>
+
+        <span class="c1"># we want to find the most recent materialization</span>
+        <span class="c1"># in which the timestamp given is in the future</span>
+        <span class="n">mds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_versions_metadata</span><span class="p">()</span>
+        <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span>
+        <span class="c1"># make sure the materialization&#39;s are increasing in ID/time</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mds</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]):</span>
+            <span class="n">ts</span> <span class="o">=</span> <span class="n">convert_timestamp</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;time_stamp&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">timestamp</span> <span class="o">&gt;</span> <span class="n">ts</span><span class="p">):</span>
+                <span class="n">materialization_version</span><span class="o">=</span><span class="n">md</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span>
+                <span class="n">timestamp_start</span> <span class="o">=</span> <span class="n">ts</span>
+        <span class="c1"># if none of the available versions are before</span>
+        <span class="c1"># this timestamp, then we cannot support the query</span>
+        <span class="k">if</span> <span class="n">materialization_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;The timestamp you passed is not recent enough</span>
+<span class="s1">             for the materialization versions that are available&#39;&#39;&#39;</span><span class="p">))</span>
+       
+        <span class="n">time_d</span><span class="p">[</span><span class="s1">&#39;mat_version&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># first we want to translate all these filters into the IDss at the </span>
+        <span class="c1"># most recent materialization</span>
+        <span class="n">past_filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_filters</span><span class="p">([</span><span class="n">filter_in_dict</span><span class="p">,</span>
+                                        <span class="n">filter_out_dict</span><span class="p">,</span>
+                                        <span class="n">filter_equal_dict</span><span class="p">],</span>
+                                        <span class="n">timestamp</span><span class="p">,</span> <span class="n">timestamp_start</span><span class="p">)</span>
+        <span class="n">past_filter_in_dict</span><span class="p">,</span> <span class="n">past_filter_out_dict</span><span class="p">,</span> <span class="n">past_equal_dict</span> <span class="o">=</span> <span class="n">past_filters</span>
+        <span class="k">if</span> <span class="n">filter_equal_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># when doing a filter equal in the past</span>
+            <span class="c1"># we translate it to a filter_in, as 1 ID might</span>
+            <span class="c1"># be multiple IDs in the past.</span>
+            <span class="c1"># so we want to update the filter_in dict</span>
+            <span class="k">if</span> <span class="n">past_filter_in_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">past_filter_in_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">past_equal_dict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># or if there wasn&#39;t a filter_in dict</span>
+                <span class="c1"># then replace it</span>
+                <span class="n">past_filter_in_dict</span> <span class="o">=</span> <span class="n">past_equal_dict</span>
+                
+        <span class="n">time_d</span><span class="p">[</span><span class="s1">&#39;map_filters&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">query_args</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_query_components</span><span class="p">(</span><span class="n">datastack_name</span><span class="p">,</span>
+                                                                        <span class="n">materialization_version</span><span class="p">,</span>
+                                                                        <span class="p">[</span><span class="n">table</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> 
+                                                                        <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">past_filter_in_dict</span><span class="p">}</span> <span class="k">if</span> <span class="n">past_filter_in_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                                                                        <span class="p">{</span><span class="n">table</span><span class="p">:</span> <span class="n">past_filter_out_dict</span><span class="p">}</span> <span class="k">if</span> <span class="n">past_filter_out_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                                                                        <span class="kc">None</span><span class="p">,</span>
+                                                                        <span class="kc">True</span><span class="p">,</span>
+                                                                        <span class="kc">False</span><span class="p">,</span>
+                                                                        <span class="n">offset</span><span class="p">,</span>
+                                                                        <span class="n">limit</span><span class="p">)</span>
+        <span class="n">time_d</span><span class="p">[</span><span class="s1">&#39;package query&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">MEEncoder</span><span class="p">),</span>
+                                     <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                                         <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span>
+                                         <span class="s1">&#39;Accept-Encoding&#39;</span><span class="p">:</span> <span class="n">encoding</span><span class="p">},</span>
+                                     <span class="n">params</span><span class="o">=</span><span class="n">query_args</span><span class="p">,</span>
+                                     <span class="n">stream</span><span class="o">=~</span><span class="n">return_df</span><span class="p">,</span>
+                                     <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>                         
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        
+        <span class="n">time_d</span><span class="p">[</span><span class="s1">&#39;query materialize&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+                
+        <span class="n">df</span><span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">split_positions</span><span class="p">:</span>
+            <span class="n">concatenate_position_columns</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="n">time_d</span><span class="p">[</span><span class="s1">&#39;deserialize&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+        <span class="c1">#post process the dataframe to update all the root_ids columns</span>
+        <span class="c1">#with the most up to date get roots</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">root_time_d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_rootids</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+        
+        <span class="n">time_d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">root_time_d</span><span class="p">)</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="c1"># apply the original filters to remove rows</span>
+        <span class="c1"># from this result which are not relevant</span>
+        <span class="k">if</span> <span class="n">post_filter</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">filter_in_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">filter_in_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">val</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">filter_out_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">filter_out_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">val</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">filter_equal_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">filter_equal_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">==</span><span class="n">val</span><span class="p">]</span>
+
+        
+        <span class="n">time_d</span><span class="p">[</span><span class="s1">&#39;post_filter&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">starttime</span>
+        <span class="n">starttime</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">time_d</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">df</span></div></div>
+ 
+
+<span class="n">client_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="n">MaterializatonClientV2</span><span class="p">,</span>
+                  <span class="s1">&#39;latest&#39;</span><span class="p">:</span> <span class="n">MaterializatonClientV2</span><span class="p">}</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Level 2 Cache &mdash; CAVEclient 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Info Service" href="info.html" />
+    <link rel="prev" title="ChunkedGraph" href="chunkedgraph.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> CAVEclient
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Level 2 Cache</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#finding-level-2-nodes">Finding Level 2 Nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#statistics">Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#retrieving-level-2-statistics">Retrieving Level 2 Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#missing-data">Missing Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#use-cases">Use Cases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#calculate-total-area-and-volume-of-cells">Calculate Total Area and Volume of Cells</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#skeletonization">Skeletonization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#trajectory-distributions">Trajectory Distributions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="info.html">Info Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="materialization.html">Materialization</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CAVEclient</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Level 2 Cache</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/l2cache.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="level-2-cache">
+<h1>Level 2 Cache<a class="headerlink" href="#level-2-cache" title="Permalink to this heading"></a></h1>
+<p>To understand the level 2 cache, you must understand the structure of the chunkedgraph so see <a class="reference internal" href="chunkedgraph.html"><span class="doc">ChunkedGraph</span></a>.</p>
+<p>Nodes on the second level or layer of the graph, corresponds to all the supervoxels that are locally connected to one another within a single level 2 spatial “chunk” of the data.
+The Level 2 Cache, is a service whose job it is to track and update relevant statistics about every level 2 node within the a chunkedgraph. The source code of this service can be found  <a class="reference external" href="https://github.com/seung-lab/pcgl2cache">here</a>.</p>
+<section id="finding-level-2-nodes">
+<h2>Finding Level 2 Nodes<a class="headerlink" href="#finding-level-2-nodes" title="Permalink to this heading"></a></h2>
+<p>The chunkedgraph can be used to find the level2 nodes of a rootID using a <code class="docutils literal notranslate"><span class="pre">stop_layer=2</span></code> keyword argument on the <a class="reference internal" href="../api/caveclient.html#caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_leaves()</span></code></a>. Conversely the level 2 node of a supervoxel can be found using the same keyword argument of <a class="reference internal" href="../api/caveclient.html#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_roots()</span></code></a>. Note if you don’t specify a timestamp it will give you the level2 node that is presently associated with the object.</p>
+</section>
+<section id="statistics">
+<h2>Statistics<a class="headerlink" href="#statistics" title="Permalink to this heading"></a></h2>
+<p>The statistics that are available are</p>
+<table class="colwidths-given docutils align-default" id="id2">
+<caption><span class="caption-text">Level 2 Stats</span><a class="headerlink" href="#id2" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Statistic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>area_nm2</p></td>
+<td><p>The surface area of the object in square nanometers.
+Does not include border touching voxels</p></td>
+</tr>
+<tr class="row-odd"><td><p>size_nm3</p></td>
+<td><p>The volume of the object in cubic nanometers, based on counting voxels in the object.</p></td>
+</tr>
+<tr class="row-even"><td><p>max_dt_nm</p></td>
+<td><p>The maximum edge distance transform of that object in nanometers. Meant to capture the maximum ‘thickness’ of the voxels in the node.</p></td>
+</tr>
+<tr class="row-odd"><td><p>mean_dt_nm</p></td>
+<td><p>The average edge distance transform of that object in nanometers. Meant to capture the average ‘thickness’ of voxels in that node.</p></td>
+</tr>
+<tr class="row-even"><td><p>rep_coord_nm</p></td>
+<td><p>A list of x,y,z coordinates in nanometers that represent a point within the object that is designed to be close to the ‘center’ of the object. This is the location of the max_dt_nm value.</p></td>
+</tr>
+<tr class="row-odd"><td><p>chunk_intersect_count</p></td>
+<td><p>A 2 x 3 matrix representing the 6 sides of the chunk, and whose values represent how many voxels border that side of the chunk.  Meant to help understand significant the borders with other chunks are. Ordering is the [[x_bottom, y_bottom, z_bottom],[x_top, y_top, z_top]] where {xyz}_bottom refers to the face which has the smallest values for that dimension, and {xyz}_top refers to the face which has the largest.</p></td>
+</tr>
+<tr class="row-even"><td><p>pca</p></td>
+<td><p>A 3x3 matrix representing the principal components of the xyz point cloud of voxels for this object.  Ordering is NxD where N is the components and D are the xyz dimensions. Meant to help desribe the orientation of the level 2 chunk. Note that this is not calculated for very small objects and so might not be present for all level 2 nodes. You will see that its availability correlates strongly with size_nm3.</p></td>
+</tr>
+<tr class="row-odd"><td><p>pca_val</p></td>
+<td><p>The 3 principal component values for the PCA components.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="retrieving-level-2-statistics">
+<h2>Retrieving Level 2 Statistics<a class="headerlink" href="#retrieving-level-2-statistics" title="Permalink to this heading"></a></h2>
+<p>Level 2 stats about nodes can be retreived using the <a class="reference internal" href="../api/caveclient.html#caveclient.l2cache.L2CacheClientLegacy.get_l2data" title="caveclient.l2cache.L2CacheClientLegacy.get_l2data"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_l2data()</span></code></a> method. It simply takes a list of level 2 nodes you want to retrieve. Optionally you can specify only the attributes that you are interested in retrieving which will speed up the request.</p>
+</section>
+<section id="missing-data">
+<h2>Missing Data<a class="headerlink" href="#missing-data" title="Permalink to this heading"></a></h2>
+<p>The service is constantly watching for changes made to objects and recalculating stats on new level2 nodes that are created, in order to keep its database of statistics current. This however takes some time, and is subject to sporadic rare failures. If you request stats on a level 2 node which are not in the database, you will receive an empty dictionary for that node. This will immediately trigger the system to recalculate the statistics of that missing data, and so it should be available shortly (on the order of seconds) if systems are operational. Please note that PCA is not calculated for very small objects because it is not meaningful. So if you are interested in differentiating whether PCA is not available because it hasn’t been calculated, vs when its not available because it is not possible to calculate, you should ask for at least one other non PCA statistic as well. You will see that its availability correlates strongly with size_nm3.</p>
+</section>
+<section id="use-cases">
+<h2>Use Cases<a class="headerlink" href="#use-cases" title="Permalink to this heading"></a></h2>
+<section id="calculate-total-area-and-volume-of-cells">
+<h3>Calculate Total Area and Volume of Cells<a class="headerlink" href="#calculate-total-area-and-volume-of-cells" title="Permalink to this heading"></a></h3>
+<p>Say you want to calculate the total surface area and volume of a object in the dataset.
+The areas and volume of each component can simply be added together to do this.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">root_id</span> <span class="o">=</span> <span class="mi">648518346349541252</span>
+<span class="n">lvl2nodes</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span><span class="n">stop_layer</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">l2stats</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">l2cache</span><span class="o">.</span><span class="n">get_l2data</span><span class="p">(</span><span class="n">lvl2nodes</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;size_nm3&#39;</span><span class="p">,</span><span class="s1">&#39;area_nm2&#39;</span><span class="p">])</span>
+<span class="n">l2df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">l2stats</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">total_area_um2</span><span class="o">=</span><span class="n">l2df</span><span class="o">.</span><span class="n">area_nm2</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span><span class="p">(</span><span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">total_volume_um3</span> <span class="o">=</span> <span class="n">l2df</span><span class="o">.</span><span class="n">size_nm3</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span><span class="p">(</span><span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By utilizing the bounds argument of get_leaves, you can also do simple spatially restricted analysis of objects. In fact, because you have data on each level2 node individually, you can segregate the neuron using any labelling of its topology.</p>
+</section>
+<section id="skeletonization">
+<h3>Skeletonization<a class="headerlink" href="#skeletonization" title="Permalink to this heading"></a></h3>
+<p>Level 2 nodes have ‘cross chunk’ edges within the chunkedgraph which represent what level 2 nodes that object is locally connected to. This forms a graph between the level 2 nodes of the object that can be retreived using the chunkedgraph function <a class="reference internal" href="../api/caveclient.html#caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" title="caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph"><code class="xref py py-func docutils literal notranslate"><span class="pre">level2_chunk_graph()</span></code></a>. This graph represents a topological representation of the neuron at the resolution of individual chunks, and is gaurunteed to be fully connected, unlike a voxel or mesh representation of the neuron which can have gaps where there are defects in the segmentation volume or incorrectly inferred edges at self contact locations.</p>
+<p>The level 2 graph can be turned into a skeleton representation of a neuron using a graph based TEASAR like algorithm as described for skeletonizing meshes in this <a class="reference external" href="https://meshparty.readthedocs.io/en/latest/guide/skeletons.html">MeshParty Documentation</a>. There is an implementation of this approach that utilizes the chunkedgraph and the L2cache if available <a class="reference external" href="https://github.com/AllenInstitute/pcg_skel">here</a> and on pypi as <code class="docutils literal notranslate"><span class="pre">pcg-skel</span></code>. In this implementation the l2cache is used to more accurately place the level 2 nodes in space using the <code class="docutils literal notranslate"><span class="pre">rep_coord_nm</span></code> value.</p>
+</section>
+<section id="trajectory-distributions">
+<h3>Trajectory Distributions<a class="headerlink" href="#trajectory-distributions" title="Permalink to this heading"></a></h3>
+<p>If one is interested in the bulk direction of processes in a region of the brain,
+one can start with supervoxels in a region, find level 2 nodes that correspond to them, filter out components based on size, (or other criteria such as whether they are part of objects that have components in some other brain area) and look at the distribution of PCA components to understand the directions that those processes are moving within that region of space.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="chunkedgraph.html" class="btn btn-neutral float-left" title="ChunkedGraph" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="info.html" class="btn btn-neutral float-right" title="Info Service" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>annotationframeworkclient.emannotationschemas &mdash; CAVEclient 1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CAVEclient
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/info.html">Info Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guide/materialization.html">Materialization</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CAVEclient</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>annotationframeworkclient.emannotationschemas</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for annotationframeworkclient.emannotationschemas</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">ClientBase</span><span class="p">,</span> <span class="n">_api_endpoints</span><span class="p">,</span> <span class="n">handle_response</span>
+<span class="kn">from</span> <span class="nn">.endpoints</span> <span class="kn">import</span> <span class="n">schema_common</span><span class="p">,</span> <span class="n">schema_api_versions</span><span class="p">,</span> <span class="n">schema_endpoints_common</span>
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="kn">import</span> <span class="n">AuthClient</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="n">server_key</span> <span class="o">=</span> <span class="s2">&quot;emas_server_address&quot;</span>
+
+
+<div class="viewcode-block" id="SchemaClient"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.emannotationschemas.SchemaClient">[docs]</a><span class="k">def</span> <span class="nf">SchemaClient</span><span class="p">(</span><span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">auth_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">api_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">auth_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">auth_client</span> <span class="o">=</span> <span class="n">AuthClient</span><span class="p">()</span>
+
+    <span class="n">auth_header</span> <span class="o">=</span> <span class="n">auth_client</span><span class="o">.</span><span class="n">request_header</span>
+    <span class="n">endpoints</span><span class="p">,</span> <span class="n">api_version</span> <span class="o">=</span> <span class="n">_api_endpoints</span><span class="p">(</span><span class="n">api_version</span><span class="p">,</span> <span class="n">server_key</span><span class="p">,</span> <span class="n">server_address</span><span class="p">,</span>
+                                            <span class="n">schema_endpoints_common</span><span class="p">,</span> <span class="n">schema_api_versions</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">)</span>
+    <span class="n">SchemaClient</span> <span class="o">=</span> <span class="n">client_mapping</span><span class="p">[</span><span class="n">api_version</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">SchemaClient</span><span class="p">(</span><span class="n">server_address</span><span class="o">=</span><span class="n">server_address</span><span class="p">,</span>
+                        <span class="n">auth_header</span><span class="o">=</span><span class="n">auth_header</span><span class="p">,</span>
+                        <span class="n">api_version</span><span class="o">=</span><span class="n">api_version</span><span class="p">,</span>
+                        <span class="n">endpoints</span><span class="o">=</span><span class="n">endpoints</span><span class="p">,</span>
+                        <span class="n">server_name</span><span class="o">=</span><span class="n">server_key</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchemaClientLegacy"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.emannotationschemas.SchemaClientLegacy">[docs]</a><span class="k">class</span> <span class="nc">SchemaClientLegacy</span><span class="p">(</span><span class="n">ClientBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_address</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_name</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SchemaClientLegacy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span>
+                                                 <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SchemaClientLegacy.get_schemas"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.emannotationschemas.SchemaClientLegacy.get_schemas">[docs]</a>    <span class="k">def</span> <span class="nf">get_schemas</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the available schema types</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            List of schema types available on the Schema service.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s1">&#39;schema&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SchemaClientLegacy.schema_definition"><a class="viewcode-back" href="../../api/annotationframeworkclient.html#annotationframeworkclient.emannotationschemas.SchemaClientLegacy.schema_definition">[docs]</a>    <span class="k">def</span> <span class="nf">schema_definition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the definition of a specified schema_type</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        schema_type : str</span>
+<span class="sd">            Name of a schema_type</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        json</span>
+<span class="sd">            Schema definition</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">endpoint_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_url_mapping</span>
+        <span class="n">endpoint_mapping</span><span class="p">[</span><span class="s1">&#39;schema_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema_type</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_endpoints</span><span class="p">[</span><span class="s1">&#39;schema_definition&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format_map</span><span class="p">(</span><span class="n">endpoint_mapping</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span></div></div>
+
+
+<span class="n">client_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="n">SchemaClientLegacy</span><span class="p">,</span>
+                  <span class="mi">2</span><span class="p">:</span> <span class="n">SchemaClientLegacy</span><span class="p">,</span>
+                  <span class="s1">&#39;latest&#39;</span><span class="p">:</span> <span class="n">SchemaClientLegacy</span><span class="p">}</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Materialization &mdash; CAVEclient 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="caveclient package" href="../api/caveclient.html" />
+    <link rel="prev" title="JSON Neuroglancer State Service" href="state.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> CAVEclient
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="framework.html">CAVEclient: One client for all services</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authentication.html">Authentication Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">AnnotationEngine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="chunkedgraph.html">ChunkedGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="l2cache.html">Level 2 Cache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="info.html">Info Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schemas.html">EMAnnotationSchemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="state.html">JSON Neuroglancer State Service</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Materialization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initializing-the-client">Initializing the client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#browsing-versions">Browsing versions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#querying-tables">Querying tables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#desired-resolution">Desired Resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spatial-filters">Spatial Filters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#synapse-query">Synapse Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#live-query">Live Query</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/caveclient.html">caveclient package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CAVEclient</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Materialization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/guide/materialization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="materialization">
+<h1>Materialization<a class="headerlink" href="#materialization" title="Permalink to this heading"></a></h1>
+<p>The Materialization client allows one to interact with the materialized
+annotation tables, that were posted to the annotation service (see
+<a class="reference internal" href="annotation.html"><span class="doc">AnnotationEngine</span></a>).</p>
+<p>To see the entire class visit the API doc <a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2" title="caveclient.materializationengine.MaterializatonClientV2"><code class="xref py py-class docutils literal notranslate"><span class="pre">MaterializatonClientV2</span></code></a></p>
+<p>The service regularly looks up all annotations and the segids underneath
+all the boundspatialpoints. You can then query these tables to find out
+the IDs that underlie the annotations, or the annotations that now intersect
+with certain IDs.</p>
+<p>For example, one common pattern is that you have idenfied a cell based on
+the location of its cell body, and you have an annotation there.</p>
+<p>You want to know what are the inputs onto the cell, so you first query the
+annotation table with your soma annotation, asking for the current ID underneath
+that soma.  Then you query a synapse table for all synapse annotations that
+have a post-synaptic ID equal to the ID from your soma annotation.</p>
+<p>In this way your code stays the same, as the proofreading changes and you can
+track the connectivity of your cell over time.</p>
+<section id="initializing-the-client">
+<h2>Initializing the client<a class="headerlink" href="#initializing-the-client" title="Permalink to this heading"></a></h2>
+<p>By default when you initialize the overall client, it will choose the most recent
+materialization version available.  This may or may not be desirable depending on your
+use case.  If your code involves using specific IDs then you should be using a
+specific version that is tied to a timepoint where those IDs are valid.</p>
+<p>To see what versions are available, use the <a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.get_versions" title="caveclient.materializationengine.MaterializatonClientV2.get_versions"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_versions()</span></code></a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Each version has a timestamp it was run on as well as a date when it will expire.
+You can query all this metadata for a specific version  using
+<a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.get_version_metadata" title="caveclient.materializationengine.MaterializatonClientV2.get_version_metadata"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_version_metadata()</span></code></a>
+or all versions using
+<a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.get_versions_metadata" title="caveclient.materializationengine.MaterializatonClientV2.get_versions_metadata"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_versions_metadata()</span></code></a></p>
+<p>To change the default version, alter the .version property of the materialization client.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">9</span>
+</pre></div>
+</div>
+<p>or specify the version when making a particular call.</p>
+</section>
+<section id="browsing-versions">
+<h2>Browsing versions<a class="headerlink" href="#browsing-versions" title="Permalink to this heading"></a></h2>
+<p>To see what tables are available in a version you can use
+<a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.get_tables" title="caveclient.materializationengine.MaterializatonClientV2.get_tables"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_tables()</span></code></a></p>
+<p>If you want to read about the description of what that table is, use the annotationengine client
+<a class="reference internal" href="../api/caveclient.html#caveclient.annotationengine.AnnotationClientV2.get_table_metadata" title="caveclient.annotationengine.AnnotationClientV2.get_table_metadata"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_table_metadata()</span></code></a></p>
+<p>If you want to read more about the schema for the annotation table use the schema service
+<a class="reference internal" href="../api/caveclient.html#caveclient.emannotationschemas.SchemaClientLegacy.schema_definition" title="caveclient.emannotationschemas.SchemaClientLegacy.schema_definition"><code class="xref py py-func docutils literal notranslate"><span class="pre">schema_definition()</span></code></a></p>
+<p>Note, the materialization service has a human readable webpage that links to the other services
+that might be more convienent for you to browse,
+to get a link there in ipython display <code class="docutils literal notranslate"><span class="pre">client.materialize.homepage</span></code></p>
+<p>for some important tables, the info service has a pointer to which table you should use in
+the metadata for the datastack.  <code class="docutils literal notranslate"><span class="pre">`client.info.get_datastack_info()['synapse_table']`</span></code>
+and <code class="docutils literal notranslate"><span class="pre">`client.info.get_datastack_info()['soma_table']`</span></code>.</p>
+<p>To see how many annotations are in a particular table use</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">nannotations</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_annotation_count</span><span class="p">(</span><span class="s1">&#39;my_table&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="querying-tables">
+<h2>Querying tables<a class="headerlink" href="#querying-tables" title="Permalink to this heading"></a></h2>
+<p>To query a small table, you can just download the whole thing using
+<a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.query_table" title="caveclient.materializationengine.MaterializatonClientV2.query_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">query_table()</span></code></a>
+which will return a dataframe of the table.</p>
+<p>Note however, some tables, such as the synapse table might be very large 200-300 million rows
+and the service will only return the first 200,000 results, and not in a deterministic manner.
+<strong>NOTE! This API is not designed to enable enmass downloading of the entire synapse table
+there are more efficent ways of doing this. Contact your dataset administrator for more information
+if this is what you are looking to do.</strong></p>
+<p>To just get a preview, use the limit argument (but note again that this won’t be a reproducible set)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="s1">&#39;my_table&#39;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For most applications, you will want to filter the query in some way.</p>
+<p>We offer three kinds of filters you can apply:  filter_equal, filter_in and filter_not_in.
+For query_table each is specified as a dictionary where the keys are column names,
+and the values are a list of values (or single value in the case of filter_equal).</p>
+<p>So for example to query a synapse table for all synapses onto a neuron in flywire you would use</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>The speed of querying is affected by a number of factors, including the size of the data.
+To improve the performance of results, you can reduce the number of columns returned using
+select_colums.</p>
+<p>So for example, if you are only interested in the root_ids and locations of pre_synaptic terminals
+you might limit the query with select_columns.  Also, it is convient to return the
+with positions as a column of np.array([x,y,z]) coordinates for many purposes.
+However, sometimes you might prefer to have them split out as seperate _x, _y, _z columns.
+To enable this option use split_columns=True. split_columns=True is faster, as combining them is an extra step.
+You can recombine split-out position columns using <a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.concatenate_position_columns" title="caveclient.materializationengine.concatenate_position_columns"><code class="xref py py-func docutils literal notranslate"><span class="pre">concatenate_position_columns()</span></code></a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">},</span>
+                                  <span class="n">select_columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;pre_pt_root_id&#39;</span><span class="p">,</span> <span class="s1">&#39;pre_pt_position&#39;</span><span class="p">],</span>
+                                  <span class="n">split_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="desired-resolution">
+<h2>Desired Resolution<a class="headerlink" href="#desired-resolution" title="Permalink to this heading"></a></h2>
+<p>Often you want to have position information in different units.
+For example, to consider synapse locations or soma locations, you might want to have positions in nanometers or microns.</p>
+<p>To create neuroglancer views, you might want positions in integer voxels of a size that aligns with the resolution you are used to using Neuroglancer at.</p>
+<p>Annotation tables can be created and uploaded in varying resolutions according to whatever the user of the table felt was natural.
+This information is available in the metadata for that table.  In addition, you may pass <em>desired_resolution</em> as a keyword argument
+which will automatically convert all spatial positions into voxels of that size in nanometers.</p>
+<p>So if you want positions in nanometers, you would pass desired_resolution=[1,1,1].
+If you want positions in microns you would pass desired_resolution=[1000,1000,1000].
+If you want positions in 4,4,40nm voxel coordinates to use with cloud-volume or neuroglancer you would pass desired_resolution=[4,4,40].</p>
+</section>
+<section id="spatial-filters">
+<h2>Spatial Filters<a class="headerlink" href="#spatial-filters" title="Permalink to this heading"></a></h2>
+<p>You can also filter columns that are associated with spatial locations based upon being within a 3d bounding box.</p>
+<p>This is done by adding a filter_spatial_dict argument to query_table.
+The units of the bounding box should be in the units of the voxel_resolution of the table
+(which can be obtained from <a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.get_table_metadata" title="caveclient.materializationengine.MaterializatonClientV2.get_table_metadata"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_table_metadata()</span></code></a>).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bounding_box</span> <span class="o">=</span> <span class="p">[[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">min_z</span><span class="p">],</span> <span class="p">[</span><span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span> <span class="n">max_z</span><span class="p">]]</span>
+<span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">},</span>
+                                  <span class="n">filter_spatial_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_position&#39;</span><span class="p">:</span> <span class="n">bounding_box</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="synapse-query">
+<h2>Synapse Query<a class="headerlink" href="#synapse-query" title="Permalink to this heading"></a></h2>
+<p>For synapses in particular, we have a simplified method for querying them with a reduced syntax.
+<a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.synapse_query" title="caveclient.materializationengine.MaterializatonClientV2.synapse_query"><code class="xref py py-func docutils literal notranslate"><span class="pre">synapse_query()</span></code></a>
+lets you specify pre and post synaptic partners as keyword arguments and bounding boxes.
+The defaults make reasonable assumptions about what you want to query, namely that the synapse_table is
+the table that the info service advertises, and that if you specify a bounding box, that you want the post_pt_position.
+These can be overridden of course, but the above bounding box query is simplified to.</p>
+<p><strong>NOTE! This API is not designed to enable enmass downloading of the entire synapse table
+there are more efficent ways of doing this. Contact your dataset administrator for more information
+if this is what you are looking to do.</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bounding_box</span> <span class="o">=</span> <span class="p">[[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">min_z</span><span class="p">],</span> <span class="p">[</span><span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span> <span class="n">max_z</span><span class="p">]]</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">post_ids</span> <span class="o">=</span> <span class="n">MYID</span><span class="p">,</span>
+                                  <span class="n">bounding_box</span><span class="o">=</span><span class="n">bounding_box</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="live-query">
+<h2>Live Query<a class="headerlink" href="#live-query" title="Permalink to this heading"></a></h2>
+<p>In order to query the materialized tables above you can only use IDs that were present at the
+timestamp of the materialization.  If you query the tables with an ID that is not valid during the
+time of the materialization you will get empty results.</p>
+<p>To check if root_ids are valid at your materialization’s timestamp, you can use
+<a class="reference internal" href="../api/caveclient.html#caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots" title="caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_latest_roots()</span></code></a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">mat_time</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_timestamp</span><span class="p">()</span>
+<span class="n">is_latest</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">is_latest_roots</span><span class="p">([</span><span class="n">MYID</span><span class="p">],</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">mat_time</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">is_latest</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If you need to lookup what happened to that ID, you can use the chunkedgraph lineage tree,
+to look into the future or the past, depending on your application you can use
+<a class="reference internal" href="../api/caveclient.html#caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_lineage_graph()</span></code></a></p>
+<p>Again, the ideal situation is that you have an annotation in the database which refers
+to your objects of interest, and querying that table by the id column will return the
+object in the most recent materialization.</p>
+<p>However, sometimes you might be browsing and proofreadding the data and get an ID
+that is more recent that the most recent version available.  For convience, you can use
+<a class="reference internal" href="../api/caveclient.html#caveclient.materializationengine.MaterializatonClientV2.live_query" title="caveclient.materializationengine.MaterializatonClientV2.live_query"><code class="xref py py-func docutils literal notranslate"><span class="pre">live_query()</span></code></a>.</p>
+<p>to automatically update the results of your query to a time in the future, such as now.
+For example, to pass now, use <code class="docutils literal notranslate"><span class="pre">`datetime.datetime.utcnow`</span></code>.  Note all timestamps are in UTC
+throughout the codebase.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">live_query</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>This will raise an ValueError exception if the IDs passed in your filters are not valid at the timestamp given</p>
+<p>You can also pass a timestamp directly to query_table and it will call live_query automatically.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
+                                  <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">(),</span>
+                                  <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Also, keep in mind if you run multiple queries and at each time pass <code class="docutils literal notranslate"><span class="pre">datetime.datetime.utcnow()</span></code>,
+there is no gauruntee that the IDs will be consistent from query to query, as proofreading might be happening
+at any time.  For larger scale analysis constraining oneself to a materialized version will ensure consistent results.</p>
+<p>Versions have varying expiration times in order to support the tradeoff between recency and consistency,
+so before undertakin an analysis project consider what version you want to query and what your plan will be to
+update your analysis to future versions.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="state.html" class="btn btn-neutral float-left" title="JSON Neuroglancer State Service" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/caveclient.html" class="btn btn-neutral float-right" title="caveclient package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Casey Schneider-Mizell, Forrest Collman, Sven Dorkenwald.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

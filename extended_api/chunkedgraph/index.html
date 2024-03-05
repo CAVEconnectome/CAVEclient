@@ -1,0 +1,4433 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://seung-lab.github.io/CAVEclient/extended_api/chunkedgraph/">
+      
+      
+        <link rel="prev" href="../base/">
+      
+      
+        <link rel="next" href="../datastack_lookup/">
+      
+      
+      <link rel="icon" href="../../images/logo-cleanest.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.12">
+    
+    
+      
+        <title>chunkedgraph - CAVEclient</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e359304.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="preference" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CAVEclient" class="md-header__button md-logo" aria-label="CAVEclient" data-md-component="logo">
+      
+  <img src="../../images/logo-cleanest.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CAVEclient
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              chunkedgraph
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/seung-lab/CAVEclient/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    seung-lab/CAVEclient
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../tutorials/" class="md-tabs__link">
+        
+  
+    
+  
+  Tutorial
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../client_api/" class="md-tabs__link">
+        
+  
+    
+  
+  Client API
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="../" class="md-tabs__link">
+        
+  
+    
+  
+  Extended API
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../glossary/" class="md-tabs__link">
+        
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CAVEclient" class="md-nav__button md-logo" aria-label="CAVEclient" data-md-component="logo">
+      
+  <img src="../../images/logo-cleanest.png" alt="logo">
+
+    </a>
+    CAVEclient
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/seung-lab/CAVEclient/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    seung-lab/CAVEclient
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../tutorials/framework/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../client_api/client/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Client API
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Extended API
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Extended API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotationengine/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    annotationengine
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    auth
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../base/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    base
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    chunkedgraph
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    chunkedgraph
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1" class="md-nav__link">
+    <span class="md-ellipsis">
+      ChunkedGraphClientV1
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ChunkedGraphClientV1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.base_resolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      base_resolution
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      segmentation_info
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.do_merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      do_merge
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.execute_split" class="md-nav__link">
+    <span class="md-ellipsis">
+      execute_split
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.find_path" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_path
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_change_log" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_change_log
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_children" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_children
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_contact_sites" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_contact_sites
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_delta_roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_delta_roots
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_latest_roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_latest_roots
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_leaves
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_lineage_graph
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_merge_log" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_merge_log
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_oldest_timestamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_oldest_timestamp
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_operation_details" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_operation_details
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_original_roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_original_roots
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_past_ids
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_root_id
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_root_timestamps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_roots
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_subgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_subgraph
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_tabular_change_log" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_tabular_change_log
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_user_operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_user_operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      is_latest_roots
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.is_valid_nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      is_valid_nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      level2_chunk_graph
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.preview_split" class="md-nav__link">
+    <span class="md-ellipsis">
+      preview_split
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.raise_for_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      raise_for_status
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.remesh_level2_chunks" class="md-nav__link">
+    <span class="md-ellipsis">
+      remesh_level2_chunks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.suggest_latest_roots" class="md-nav__link">
+    <span class="md-ellipsis">
+      suggest_latest_roots
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.undo_operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      undo_operation
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.package_split_data" class="md-nav__link">
+    <span class="md-ellipsis">
+      package_split_data
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datastack_lookup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    datastack_lookup
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../emannotationschemas/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    emannotationschemas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../framework/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    framework
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infoservice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    infoservice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jsonservice/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    jsonservice
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../l2cache/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    l2cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../materializationengine/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    materializationengine
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../session_config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    session_config
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Changelog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+    <a href="https://github.com/seung-lab/CAVEclient/edit/master/docs/extended_api/chunkedgraph.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/seung-lab/CAVEclient/raw/master/docs/extended_api/chunkedgraph.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.15 8.15 0 0 1-1.23-2Z"/></svg>
+    </a>
+  
+
+
+  <h1>chunkedgraph</h1>
+
+<div class="doc doc-object doc-module">
+
+
+
+
+  <div class="doc doc-contents first">
+  
+      <p>PyChunkedgraph service python interface</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="caveclient.chunkedgraph.ChunkedGraphClientV1" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ChunkedGraphClientV1</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_key</span><span class="o">=</span><span class="n">SERVER_KEY</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">over_client</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><a class="autorefs autorefs-internal" title="caveclient.base.ClientBase" href="../base/#caveclient.base.ClientBase">ClientBase</a></code></p>
+
+  
+      <p>ChunkedGraph Client for the v1 API</p>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.base_resolution" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">base_resolution</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.base_resolution" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>MIP 0 resolution for voxels assumed by the ChunkedGraph</p>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>3-long list of x/y/z voxel dimensions in nm</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">segmentation_info</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Complete segmentation metadata</p>
+  </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.do_merge" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">do_merge</span><span class="p">(</span><span class="n">supervoxels</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">40</span><span class="p">))</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.do_merge" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Perform a merge on the chunked graph.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>supervoxels</code></td>
+          <td>
+                <code>iterable</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An N-long list of supervoxels to merge.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>coords</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>An Nx3 array of coordinates of the supervoxels in units of <code>resolution</code>.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>resolution</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#tuple">tuple</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>What to multiply <code>coords</code> by to get nanometers. Defaults to (4,4,40).</p>
+            </div>
+          </td>
+          <td>
+                <code>(4, 4, 40)</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.execute_split" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">execute_split</span><span class="p">(</span><span class="n">source_points</span><span class="p">,</span> <span class="n">sink_points</span><span class="p">,</span> <span class="n">root_id</span><span class="p">,</span> <span class="n">source_supervoxels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sink_supervoxels</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.execute_split" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Execute a multicut split based on points or supervoxels.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>source_points</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Nx3 list or array of 3d points in nm coordinates for source points (red).</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>sink_points</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Mx3 list or array of 3d points in nm coordinates for sink points (blue).</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID of object to do split preview.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>source_supervoxels</code></td>
+          <td>
+                <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If providing source supervoxels, an N-length array of supervoxel IDs or
+Nones matched to source points. If None, treats as a full array of Nones.
+By default None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>sink_supervoxels</code></td>
+          <td>
+                <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If providing sink supervoxels, an M-length array of supervoxel IDs or Nones
+matched to source points. If None, treats as a full array of Nones.
+By default None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>operation_id</code></td>          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Unique ID of the split operation</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>new_root_ids</code></td>          <td>
+                <code>list of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>List of new root IDs resulting from the split operation.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.find_path" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">find_path</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">src_pt</span><span class="p">,</span> <span class="n">dst_pt</span><span class="p">,</span> <span class="n">precision_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.find_path" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Find a path between two locations on a root ID using the level 2 chunked
+graph.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>src_pt</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>3-element array of xyz coordinates in nm for the source point.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>dst_pt</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>3-element array of xyz coordinates in nm for the destination point.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>precision_mode</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to perform the search in precision mode. Defaults to False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>centroids_list</code></td>          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of centroids along the path.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>l2_path</code></td>          <td>
+                <code>np.array of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of level 2 chunk IDs along the path.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>failed_l2_ids</code></td>          <td>
+                <code>np.array of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of level 2 chunk IDs that failed to find a path.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_change_log" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_change_log</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">filtered</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_change_log" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the change log (splits and merges) for an object.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Object root ID to look up.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filtered</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to filter the change log to only include splits and merges which
+affect the final state of the object (<code>filtered=True</code>), as opposed to
+including edit history for objects which as some point were split from
+the query object <code>root_id</code> (<code>filtered=False</code>). Defaults to True.</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dictionary summarizing split and merge events in the object history,
+containing the following keys:</p>
+<ul>
+<li>"n_merges": int<ul>
+<li>Number of merges</li>
+</ul>
+</li>
+<li>"n_splits": int<ul>
+<li>Number of splits</li>
+</ul>
+</li>
+<li>"operations_ids": list of int<ul>
+<li>Identifiers for each operation</li>
+</ul>
+</li>
+<li>"past_ids": list of int<ul>
+<li>Previous root ids for this object</li>
+</ul>
+</li>
+<li>"user_info": dict of dict<ul>
+<li>Dictionary keyed by user (string) to a dictionary specifying how many
+  merges and splits that user performed on this object</li>
+</ul>
+</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_children" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_children</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_children" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the children of a node in the chunked graph hierarchy.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>node_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Node ID to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of np.int64</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>IDs of child nodes.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_contact_sites" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_contact_sites</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">calc_partners</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_contact_sites" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get contacts for a root ID.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bounds</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Bounds within a 3x2 numpy array of bounds
+<code>[[minx,maxx],[miny,maxy],[minz,maxz]]</code> for which to find contacts.
+Running this query without bounds is too slow.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>calc_partners</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, get partner root IDs. By default, False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dict relating ids to contacts</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_delta_roots" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_delta_roots</span><span class="p">(</span><span class="n">timestamp_past</span><span class="p">,</span> <span class="n">timestamp_future</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_delta_roots" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the list of roots that have changed between <code>timetamp_past</code> and
+<code>timestamp_future</code>.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>timestamp_past</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Past timepoint to query</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_future</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Future timepoint to query. Defaults to
+<code>datetime.datetime.now(datetime.timezone.utc)</code>.</p>
+            </div>
+          </td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a>(<a class="autorefs autorefs-external" title="datetime.timezone.utc" href="https://docs.python.org/3/library/datetime.html#datetime.timezone.utc">utc</a>)</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>old_roots</code></td>          <td>
+                <code>np.ndarray of np.int64</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Roots that have expired in that interval.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>new_roots</code></td>          <td>
+                <code>np.ndarray of np.int64</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Roots that are new in that interval.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_latest_roots" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_latest_roots</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp_future</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_latest_roots" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Returns root IDs that are related to the given <code>root_id</code> at a given
+timestamp. Can be used to find the "latest" root IDs associated with an object.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Object root ID.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp of where to query IDs from. If None then will assume you want
+till now.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_future</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>DEPRECATED name, use <code>timestamp</code> instead.
+Timestamp to suggest IDs from (note can be in the past relative to the
+root). By default, None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>1d array with all latest successors.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_leaves</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get all supervoxels for a root ID.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bounds</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, returns supervoxels within a 3x2 numpy array of bounds
+<code>[[minx,maxx],[miny,maxy],[minz,maxz]]</code>. If None, finds all supervoxels.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>stop_layer</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If specified, returns chunkedgraph nodes at layer <code>stop_layer</code>
+default will be <code>stop_layer=1</code> (supervoxels).</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of np.int64</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of supervoxel IDs (or node ids if <code>stop_layer&gt;1</code>).</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_lineage_graph</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">timestamp_past</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp_future</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">as_nx_graph</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exclude_links_to_future</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exclude_links_to_past</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Returns the lineage graph for a root ID, optionally cut off in the past or
+the future.</p>
+<p>Each change in the chunked graph creates a new root ID for the object after
+that change. This function returns a graph of all root IDs for a given object,
+tracing the history of the object in terms of merges and splits.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Object root ID.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_past</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Cutoff for the lineage graph backwards in time. By default, None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_future</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Cutoff for the lineage graph going forwards in time. By default, None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>as_nx_graph</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, a NetworkX graph is returned.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>exclude_links_to_future</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, links from nodes before <code>timestamp_future</code> to after
+<code>timestamp_future</code> are removed. If False, the link(s) which has one node
+before timestamp and one node after timestamp is kept.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>exclude_links_to_past</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, links from nodes before <code>timestamp_past</code> to after <code>timestamp_past</code>
+are removed. If False, the link(s) which has one node before timestamp and
+one node after timestamp is kept.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dictionary describing the lineage graph and operations for the root ID. Not
+returned if <code>as_nx_graph</code> is True. The dictionary contains the following
+keys:</p>
+<ul>
+<li>"directed" : bool<ul>
+<li>Whether the graph is directed.</li>
+</ul>
+</li>
+<li>"graph" : dict<ul>
+<li>Dictionary of graph attributes.</li>
+</ul>
+</li>
+<li>"links" : list of dict<ul>
+<li>Each element of the list is a dictionary describing an edge in the
+lineage graph as "source" and "target" keys.</li>
+</ul>
+</li>
+<li>"multigraph" : bool<ul>
+<li>Whether the graph is a multigraph.</li>
+</ul>
+</li>
+<li>"nodes" : list of dict<ul>
+<li>Each element of the list is a dictionary describing a node in the
+lineage graph, usually with "id", "timestamp", and "operation_id"
+keys.</li>
+</ul>
+</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" title="networkx.DiGraph" href="https://networkx.org/documentation/stable/reference/classes/digraph.html#networkx.DiGraph">DiGraph</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>NetworkX directed graph of the lineage graph. Only returned if <code>as_nx_graph</code>
+is True.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_merge_log" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_merge_log</span><span class="p">(</span><span class="n">root_id</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_merge_log" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the merge log (splits and merges) for an object.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Object root ID to look up.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>List of merge events in the history of the object.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_oldest_timestamp" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_oldest_timestamp</span><span class="p">()</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_oldest_timestamp" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the oldest timestamp in the database.</p>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Oldest timestamp in the database.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_operation_details" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_operation_details</span><span class="p">(</span><span class="n">operation_ids</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_operation_details" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the details of a list of operations.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>operation_ids</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>List/array of operation IDs.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>dict of str to dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A dict of dicts of operation info, keys are operation IDs (as strings),
+values are a dictionary of operation info for the operation. These
+dictionaries contain the following keys:</p>
+<ul>
+<li>"added_edges"/"removed_edges": list of list of int<ul>
+<li>List of edges added (if a merge) or removed (if a split) by this
+operation. Each edge is a list of two supervoxel IDs (source and
+target).</li>
+</ul>
+</li>
+<li>"roots": list of int<ul>
+<li>List of root IDs that were created by this operation.</li>
+</ul>
+</li>
+<li>"sink_coords": list of list of int<ul>
+<li>List of sink coordinates for this operation. The sink is one of the
+points placed by the user when specifying the operation. Each sink
+coordinate is a list of three integers (x, y, z), corresponding to
+spatial coordinates in segmentation voxel space.</li>
+</ul>
+</li>
+<li>"source_coords": list of list of int<ul>
+<li>List of source coordinates for this operation. The source is one of the
+points placed by the user when specifying the operation. Each source
+coordinate is a list of three integers (x, y, z), corresponding to
+spatial coordinates in segmentation voxel space.</li>
+</ul>
+</li>
+<li>"timestamp": str<ul>
+<li>Timestamp of the operation.</li>
+</ul>
+</li>
+<li>"user": str<ul>
+<li>User ID number who performed the operation (as a string).</li>
+</ul>
+</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_original_roots" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_original_roots</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">timestamp_past</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_original_roots" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Returns root IDs that are the latest successors of a given root ID.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Object root ID.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_past</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Cutoff for the search going backwards in time. By default, None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>1d array with all latest successors.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_past_ids</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">timestamp_past</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp_future</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>For a set of root IDs, get the list of IDs at a past or future time point
+that could contain parts of the same object.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_ids</code></td>
+          <td>
+                <code>Iterable of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Iterable of root IDs to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_past</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Time of a point in the past for which to look up root ids. Default is None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_future</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Time of a point in the future for which to look up root ids. Not
+implemented on the server currently. Default is None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dict with keys "future_id_map" and "past_id_map". Each is a dict whose keys
+are the supplied <code>root_ids</code> and whose values are the list of related
+root IDs at <code>timestamp_past</code>/<code>timestamp_future</code>.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_root_id</span><span class="p">(</span><span class="n">supervoxel_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">level2</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the root ID for a specified supervoxel.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>supervoxel_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Supervoxel id value</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>UTC datetime to specify the state of the chunkedgraph at which to query, by
+default None. If None, uses the current time.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.int64" href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.int64">int64</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID containing the supervoxel.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_root_timestamps</span><span class="p">(</span><span class="n">root_ids</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Retrieves timestamps when roots where created.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_ids</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Iterable of root IDs to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of datetime.datetime</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of timestamps when <code>root_ids</code> were created.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_roots</span><span class="p">(</span><span class="n">supervoxel_ids</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get the root ID for a list of supervoxels.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>supervoxel_ids</code></td>
+          <td>
+                <code>list or np.array of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Supervoxel IDs to look up.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>UTC datetime to specify the state of the chunkedgraph at which to query, by
+default None. If None, uses the current time.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>stop_layer</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, looks up IDs only up to a given stop layer. Default is None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of np.uint64</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root IDs containing each supervoxel.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_subgraph" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_subgraph</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_subgraph" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get subgraph of root id within a bounding box.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root (or any node ID) of chunked graph to query.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bounds</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of np.int64</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Node IDs in the subgraph.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+                <code>np.array of np.double</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Affinities of edges in the subgraph.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+                <code>np.array of np.int32</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Areas of nodes in the subgraph.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_tabular_change_log" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_tabular_change_log</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">filtered</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_tabular_change_log" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get a detailed changelog for neurons.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_ids</code></td>
+          <td>
+                <code>list of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Object root IDs to look up.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>filtered</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to filter the change log to only include splits and merges which
+affect the final state of the object (<code>filtered=True</code>), as opposed to
+including edit history for objects which as some point were split from
+the query objects in <code>root_ids</code> (<code>filtered=False</code>). Defaults to True.</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>dict of pd.DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The keys are the root IDs, and the values are DataFrames with the
+following columns and datatypes:</p>
+<ul>
+<li>"operation_id": int<ul>
+<li>Identifier for the operation.</li>
+</ul>
+</li>
+<li>"timestamp": int<ul>
+<li>Timestamp of the operation, provided in <em>milliseconds</em>. To convert to
+datetime, use <code>datetime.datetime.utcfromtimestamp(timestamp/1000)</code>.</li>
+</ul>
+</li>
+<li>"user_id": int<ul>
+<li>User who performed the operation.</li>
+</ul>
+</li>
+<li>"before_root_ids: list of int<ul>
+<li>Root IDs of objects that existed before the operation.</li>
+</ul>
+</li>
+<li>"after_root_ids: list of int<ul>
+<li>Root IDs of objects created by the operation. Note that this only
+records the root id that was kept as part of the query object, so there
+will only be one in this list.</li>
+</ul>
+</li>
+<li>"is_merge": bool<ul>
+<li>Whether the operation was a merge.</li>
+</ul>
+</li>
+<li>"user_name": str<ul>
+<li>Name of the user who performed the operation.</li>
+</ul>
+</li>
+<li>"user_affiliation": str<ul>
+<li>Affiliation of the user who performed the operation.</li>
+</ul>
+</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_user_operations" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_user_operations</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">timestamp_start</span><span class="p">,</span> <span class="n">include_undo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timestamp_end</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_user_operations" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get operation details for a user ID. Currently, this is only available to
+admins.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>user_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>User ID to query (use 0 for all users (admin only)).</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_start</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp to start filter (UTC).</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>include_undo</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to include undos. Defaults to True.</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp_end</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp to end filter (UTC). Defaults to now.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>DataFrame including the following columns:</p>
+<ul>
+<li>"operation_id": int<ul>
+<li>Identifier for the operation.</li>
+</ul>
+</li>
+<li>"timestamp": datetime.datetime<ul>
+<li>Timestamp of the operation.</li>
+</ul>
+</li>
+<li>"user_id": int<ul>
+<li>User who performed the operation.</li>
+</ul>
+</li>
+</ul>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">is_latest_roots</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Check whether these root IDs are still a root at this timestamp.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_ids</code></td>
+          <td>
+                <code>list or array of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root IDs to check.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp to check whether these IDs are valid root IDs in the chunked
+graph. Defaults to None (assumes now).</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of whether these are valid root IDs.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.is_valid_nodes" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">is_valid_nodes</span><span class="p">(</span><span class="n">node_ids</span><span class="p">,</span> <span class="n">start_timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end_timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.is_valid_nodes" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Check whether nodes are valid for given timestamp range.</p>
+<p>Valid is defined as existing in the chunked graph. This makes no statement
+about these IDs being roots, supervoxel or anything in-between. It also
+does not take into account whether a root ID has since been edited.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>node_ids</code></td>
+          <td>
+                <code>list or array of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Node IDs to check.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>start_timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp to check whether these IDs were valid after this timestamp.
+Defaults to None (assumes now).</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>end_timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp to check whether these IDs were valid before this timestamp.
+Defaults to None (assumes now).</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>np.array of bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of whether these are valid IDs.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">level2_chunk_graph</span><span class="p">(</span><span class="n">root_id</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root id of object</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>list of list</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Edge list for level 2 chunked graph. Each element of the list is an edge,
+and each edge is a list of two node IDs (source and target).</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.preview_split" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">preview_split</span><span class="p">(</span><span class="n">source_points</span><span class="p">,</span> <span class="n">sink_points</span><span class="p">,</span> <span class="n">root_id</span><span class="p">,</span> <span class="n">source_supervoxels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sink_supervoxels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_additional_ccs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.preview_split" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get supervoxel connected components from a preview multicut split.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>source_points</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Nx3 list or array of 3d points in nm coordinates for source points (red).</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>sink_points</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Mx3 list or array of 3d points in nm coordinates for sink points (blue).</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID of object to do split preview.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>source_supervoxels</code></td>
+          <td>
+                <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If providing source supervoxels, an N-length array of supervoxel IDs or
+Nones matched to source points. If None, treats as a full array of Nones.
+By default None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>sink_supervoxels</code></td>
+          <td>
+                <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If providing sink supervoxels, an M-length array of supervoxel IDs or Nones
+matched to source points. If None, treats as a full array of Nones.
+By default None.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>return_additional_ccs</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, returns any additional connected components beyond the ones with
+source and sink points. In most situations, this can be ignored.
+By default, False.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>source_connected_component</code></td>          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Supervoxel IDs in the component with the most source points.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>sink_connected_component</code></td>          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Supervoxel IDs in the component with the most sink points.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td><code>successful_split</code></td>          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>True if the split worked.</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+<td></td>          <td>
+                <code>other_connected_components (optional) : list of lists of int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>List of lists of supervoxel IDs for any other resulting connected components.
+Only returned if <code>return_additional_ccs</code> is True.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.raise_for_status" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">raise_for_status</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.raise_for_status" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.remesh_level2_chunks" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">remesh_level2_chunks</span><span class="p">(</span><span class="n">chunk_ids</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.remesh_level2_chunks" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Submit specific level 2 chunks to be remeshed in case of a problem.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>chunk_ids</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>List of level 2 chunk IDs.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.suggest_latest_roots" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">suggest_latest_roots</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop_layer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_all</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_fraction_overlap</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.suggest_latest_roots" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Suggest latest roots for a given root id, based on overlap of component
+chunk IDs. Note that edits change chunk IDs, and so this effectively measures
+the fraction of unchanged chunks at a given chunk layer, which sets the size
+scale of chunks. Higher layers are coarser.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>root_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Root ID of the potentially outdated object.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Datetime at which "latest" roots are being computed, by default None. If
+None, the current time is used. Note that this has to be a timestamp after
+the creation of the <code>root_id</code>.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>stop_layer</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Chunk level at which to compute overlap, by default None.
+No value will take the 4th from the top layer, which emphasizes speed and
+works well for larger objects. Lower values are slower but more
+fine-grained. Values under 2 (i.e. supervoxels) are not recommended except
+in extremely fine grained scenarios.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>return_all</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, return all current IDs sorted from most overlap to least, by
+default False. If False, only the top is returned.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>return_fraction_overlap</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, return all fractions sorted by most overlap to least, by default
+False. If False, only the top value is returned.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.undo_operation" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">undo_operation</span><span class="p">(</span><span class="n">operation_id</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.undo_operation" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Undo an operation.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>operation_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Operation ID to undo.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="caveclient.chunkedgraph.package_split_data" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">package_split_data</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">source_points</span><span class="p">,</span> <span class="n">sink_points</span><span class="p">,</span> <span class="n">source_supervoxels</span><span class="p">,</span> <span class="n">sink_supervoxels</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.package_split_data" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Create the data for preview or executed split operations</p>
+
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/seung-lab/CAVEclient" target="_blank" rel="noopener" title="Github" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c8d2eff1.min.js"></script>
+      
+    
+  </body>
+</html>
