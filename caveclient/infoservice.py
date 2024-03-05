@@ -1,21 +1,22 @@
 import re
+
 import numpy as np
+
+from .auth import AuthClient
 from .base import (
     ClientBaseWithDatastack,
     _api_endpoints,
     handle_response,
 )
-from .auth import AuthClient
 from .endpoints import (
-    infoservice_common,
-    infoservice_api_versions,
     default_global_server_address,
+    infoservice_api_versions,
+    infoservice_common,
 )
 from .format_utils import (
-    output_map,
     format_raw,
+    output_map,
 )
-
 
 SERVER_KEY = "i_server_address"
 
@@ -31,7 +32,7 @@ def InfoServiceClient(
     pool_block=None,
     over_client=None,
     info_cache=None,
-):
+) -> "InfoServiceClientV2":
     if server_address is None:
         server_address = default_global_server_address
 
@@ -46,7 +47,7 @@ def InfoServiceClient(
         infoservice_common,
         infoservice_api_versions,
         auth_header,
-        verify=verify
+        verify=verify,
     )
 
     InfoClient = client_mapping[api_version]
@@ -204,9 +205,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             "aligned_volume", datastack_name=datastack_name, use_stored=use_stored
         )
 
-    def get_datastacks_by_aligned_volume(
-        self, aligned_volume: str = None
-    ):
+    def get_datastacks_by_aligned_volume(self, aligned_volume: str = None):
         """Lookup what datastacks are associated with this aligned volume
 
         Args:
@@ -372,16 +371,20 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         for ds in self.info_cache.keys():
             self.get_datastack_info(datastack_name=ds, use_stored=False)
 
-    def viewer_resolution(self, datastack_name=None, use_stored=True):
-        """get the viewer resolution metadata for this datastack
+    def viewer_resolution(self, datastack_name=None, use_stored=True) -> np.array:
+        """Get the viewer resolution metadata for this datastack
 
-        Args:
-            datastack_name (_type_, optional): _description_. Defaults to None.
-              If None use the default one configured in the client
-            use_stored (bool, optional): _description_. Defaults to True.
-              Use the cached value, if False go get a new value from server
-        Returns:
-            np.array: voxel resolution as a len(3) np.array
+        Parameters
+        ----------
+        datastack_name (_type_, optional): _description_. Defaults to None.
+            If None use the default one configured in the client
+        use_stored (bool, optional): _description_. Defaults to True.
+            Use the cached value, if False go get a new value from server
+
+        Returns
+        -------
+        :
+            Voxel resolution as a len(3) np.array
         """
         vx = self._get_property(
             "viewer_resolution_x",
@@ -400,8 +403,21 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         )
         return np.array([vx, vy, vz])
 
-    def viewer_site(self, datastack_name=None, use_stored=True):
-        """Get the base Neuroglancer URL for the dataset"""
+    def viewer_site(self, datastack_name=None, use_stored=True) -> str:
+        """Get the base Neuroglancer URL for the dataset
+
+        Parameters
+        ----------
+        datastack_name : str or None, optional
+            Name of the datastack to look up. If None, uses the value specified by the client. Default is None.
+        use_stored : bool, optional
+            If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.
+
+        Returns
+        -------
+        :
+            Base URL for the Neuroglancer viewer
+        """
         return self._get_property(
             "viewer_site",
             datastack_name=datastack_name,
@@ -416,7 +432,9 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
 
         Requires cloudvolume to be installed, which is not included by default.
         """
-        return self._make_cloudvolume(self.image_source(format_for='cloudvolume'), **kwargs)
+        return self._make_cloudvolume(
+            self.image_source(format_for="cloudvolume"), **kwargs
+        )
 
     def segmentation_cloudvolume(self, use_client_secret=True, **kwargs):
         """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
@@ -427,7 +445,9 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         Requires cloudvolume to be installed, which is not included by default.
         """
         return self._make_cloudvolume(
-            self.segmentation_source(format_for='cloudvolume'), use_client_secret=use_client_secret, **kwargs
+            self.segmentation_source(format_for="cloudvolume"),
+            use_client_secret=use_client_secret,
+            **kwargs,
         )
 
     def _make_cloudvolume(self, cloudpath, use_client_secret=True, **kwargs):

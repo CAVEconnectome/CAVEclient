@@ -112,7 +112,7 @@ def ChunkedGraphClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "ChunkedGraphClientV1":
     if server_address is None:
         server_address = default_global_server_address
 
@@ -296,17 +296,17 @@ class ChunkedGraphClientV1(ClientBase):
             Dictionary summarizing split and merge events in the object history,
             containing the following keys:
 
-            "n_merges": int
-                Number of merges
-            "n_splits": int
-                Number of splits
-            "operations_ids": list of int
-                Identifiers for each operation
-            "past_ids": list of int
-                Previous root ids for this object
-            "user_info": dict of dict
-                Dictionary keyed by user (string) to a dictionary specifying how many
-                merges and splits that user performed on this object
+            - "n_merges": int
+                - Number of merges
+            - "n_splits": int
+                - Number of splits
+            - "operations_ids": list of int
+                - Identifiers for each operation
+            - "past_ids": list of int
+                - Previous root ids for this object
+            - "user_info": dict of dict
+                - Dictionary keyed by user (string) to a dictionary specifying how many
+                  merges and splits that user performed on this object
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["root_id"] = root_id
@@ -344,12 +344,12 @@ class ChunkedGraphClientV1(ClientBase):
         pd.DataFrame
             DataFrame including the following columns:
 
-            "operation_id": int
-                Identifier for the operation.
-            "timestamp": datetime.datetime
-                Timestamp of the operation.
-            "user_id": int
-                User who performed the operation.
+            - "operation_id": int
+                - Identifier for the operation.
+            - "timestamp": datetime.datetime
+                - Timestamp of the operation.
+            - "user_id": int
+                - User who performed the operation.
         """
 
         endpoint_mapping = self.default_url_mapping
@@ -397,25 +397,25 @@ class ChunkedGraphClientV1(ClientBase):
             The keys are the root IDs, and the values are DataFrames with the
             following columns and datatypes:
 
-            "operation_id": int
-                Identifier for the operation.
-            "timestamp": int
-                Timestamp of the operation, provided in *milliseconds*. To convert to
+            - "operation_id": int
+                - Identifier for the operation.
+            - "timestamp": int
+                - Timestamp of the operation, provided in *milliseconds*. To convert to
                 datetime, use ``datetime.datetime.utcfromtimestamp(timestamp/1000)``.
-            "user_id": int
-                User who performed the operation.
-            "before_root_ids: list of int
-                Root IDs of objects that existed before the operation.
-            "after_root_ids: list of int
-                Root IDs of objects created by the operation. Note that this only
+            - "user_id": int
+                - User who performed the operation.
+            - "before_root_ids: list of int
+                - Root IDs of objects that existed before the operation.
+            - "after_root_ids: list of int
+                - Root IDs of objects created by the operation. Note that this only
                 records the root id that was kept as part of the query object, so there
                 will only be one in this list.
-            "is_merge": bool
-                Whether the operation was a merge.
-            "user_name": str
-                Name of the user who performed the operation.
-            "user_affiliation": str
-                Affiliation of the user who performed the operation.
+            - "is_merge": bool
+                - Whether the operation was a merge.
+            - "user_name": str
+                - Name of the user who performed the operation.
+            - "user_affiliation": str
+                - Affiliation of the user who performed the operation.
         """
         root_ids = [int(r) for r in np.unique(root_ids)]
 
@@ -826,26 +826,26 @@ class ChunkedGraphClientV1(ClientBase):
             values are a dictionary of operation info for the operation. These
             dictionaries contain the following keys:
 
-            "added_edges"/"removed_edges": list of list of int
-                List of edges added (if a merge) or removed (if a split) by this
+            - "added_edges"/"removed_edges": list of list of int
+                - List of edges added (if a merge) or removed (if a split) by this
                 operation. Each edge is a list of two supervoxel IDs (source and
                 target).
-            "roots": list of int
-                List of root IDs that were created by this operation.
-            "sink_coords": list of list of int
-                List of sink coordinates for this operation. The sink is one of the
+            - "roots": list of int
+                - List of root IDs that were created by this operation.
+            - "sink_coords": list of list of int
+                - List of sink coordinates for this operation. The sink is one of the
                 points placed by the user when specifying the operation. Each sink
                 coordinate is a list of three integers (x, y, z), corresponding to
                 spatial coordinates in segmentation voxel space.
-            "source_coords": list of list of int
-                List of source coordinates for this operation. The source is one of the
+            - "source_coords": list of list of int
+                - List of source coordinates for this operation. The source is one of the
                 points placed by the user when specifying the operation. Each source
                 coordinate is a list of three integers (x, y, z), corresponding to
                 spatial coordinates in segmentation voxel space.
-            "timestamp": str
-                Timestamp of the operation.
-            "user": str
-                User ID number who performed the operation (as a string).
+            - "timestamp": str
+                - Timestamp of the operation.
+            - "user": str
+                - User ID number who performed the operation (as a string).
         """
         if isinstance(operation_ids, np.ndarray):
             operation_ids = operation_ids.tolist()
@@ -903,17 +903,17 @@ class ChunkedGraphClientV1(ClientBase):
             returned if `as_nx_graph` is True. The dictionary contains the following
             keys:
 
-            "directed" : bool
-                Whether the graph is directed.
-            "graph" : dict
-                Dictionary of graph attributes.
-            "links" : list of dict
-                Each element of the list is a dictionary describing an edge in the
+            - "directed" : bool
+                - Whether the graph is directed.
+            - "graph" : dict
+                - Dictionary of graph attributes.
+            - "links" : list of dict
+                - Each element of the list is a dictionary describing an edge in the
                 lineage graph as "source" and "target" keys.
-            "multigraph" : bool
-                Whether the graph is a multigraph.
-            "nodes" : list of dict
-                Each element of the list is a dictionary describing a node in the
+            - "multigraph" : bool
+                - Whether the graph is a multigraph.
+            - "nodes" : list of dict
+                - Each element of the list is a dictionary describing a node in the
                 lineage graph, usually with "id", "timestamp", and "operation_id"
                 keys.
         nx.DiGraph

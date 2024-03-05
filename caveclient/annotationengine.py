@@ -1,5 +1,5 @@
 import json
-from typing import Iterable, List, Mapping
+from typing import Dict, Iterable, List, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -23,14 +23,14 @@ def AnnotationClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "AnnotationClientV2":
     """Factory for returning AnnotationClient
 
     Parameters
     ----------
     server_address : str
         server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
+    dataset_name : str
         Name of the datastack.
     auth_client : AuthClient or None, optional
         Authentication client to use to connect to server. If None, do not use authentication.
@@ -48,6 +48,7 @@ def AnnotationClient(
         Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
     over_client:
         client to overwrite configuration with
+
     Returns
     -------
     ClientBaseWithDatastack
@@ -272,7 +273,7 @@ class AnnotationClientV2(ClientBase):
             Name of the new table. Cannot be the same as an existing table
         schema_name: str
             Name of the schema for the new table.
-        descrption: str
+        description: str
             Human readable description for what is in the table.
             Should include information about who generated the table
             What data it covers, and how it should be interpreted.
@@ -316,6 +317,7 @@ class AnnotationClientV2(ClientBase):
             Text the user will see when querying this table. Can be used to warn users of flaws,
             and uncertainty in the data, or to advertise citations that should be used with this table.
             Defaults to None, no text. If you want to remove text, send empty string.
+
         Returns
         -------
         json
@@ -324,9 +326,10 @@ class AnnotationClientV2(ClientBase):
         Examples
         --------
         Basic annotation table:
-        description = "Some description about the table"
-        voxel_res = [4,4,40]
-        client.create_table("some_synapse_table", "synapse", description, voxel_res)
+
+            description = "Some description about the table"
+            voxel_res = [4,4,40]
+            client.create_table("some_synapse_table", "synapse", description, voxel_res)
         """
         if read_permission not in ["PRIVATE", "GROUP", "PUBLIC"]:
             raise ValueError("read_permission must be one of PRIVATE GROUP or PUBLIC")
@@ -381,37 +384,38 @@ class AnnotationClientV2(ClientBase):
         notice_text: str = None,
         aligned_volume_name: str = None,
     ):
-        """update the metadata on an existing table
+        """Update the metadata on an existing table
 
-        Args:
-            table_name (str): name of table to update
-            description (str, optional): text description of the the table.
-                Defaults to None (will not update).
-            flat_segmentation_source (str, optional): cloudpath to a flat segmentation associated with this table.
-                Defaults to None (will not update).
-            read_permission: str, optional
-                What permissions to give the table for reading. One of
-                PRIVATE: only you can read this table. Intended to be used for sorting out bugs.
-                GROUP: only members that share a group with you can read (intended for within group vetting)
-                PUBLIC: anyone with permissions to read this datastack can read this data
-                Defaults to None (will not update).
-            write_permission: str, optional
-                What permissions to give the table for writing.  One of
-                PRIVATE: only you can write to this table
-                GROUP: only members that share a group with you can write (excluding some groups)
-                PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done
-                by marking rows as deleted, so all data is always recoverable
-                Defaults to None (will not update).
-            user_id (int, optional): change ownership of this table to this user_id.
-                Note, if you use this you will not be able to update the metadata on this table any longer
-                and depending on permissions may not be able to read or write to it
-                Defaults to None. (will not update)
-            notice_text: str, optional
-                Text the user will see when querying this table. Can be used to warn users of flaws,
-                and uncertainty in the data, or to advertise citations that should be used with this table.
-                Defaults to None. (will not update)
-            aligned_volume_name : str or None, optional
-                Name of the aligned_volume. If None, uses the one specified in the client.
+        Parameters
+        ----------
+        table_name (str): name of table to update
+        description (str, optional): text description of the the table.
+            Defaults to None (will not update).
+        flat_segmentation_source (str, optional): cloudpath to a flat segmentation associated with this table.
+            Defaults to None (will not update).
+        read_permission: str, optional
+            What permissions to give the table for reading. One of
+            PRIVATE: only you can read this table. Intended to be used for sorting out bugs.
+            GROUP: only members that share a group with you can read (intended for within group vetting)
+            PUBLIC: anyone with permissions to read this datastack can read this data
+            Defaults to None (will not update).
+        write_permission: str, optional
+            What permissions to give the table for writing.  One of
+            PRIVATE: only you can write to this table
+            GROUP: only members that share a group with you can write (excluding some groups)
+            PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done
+            by marking rows as deleted, so all data is always recoverable
+            Defaults to None (will not update).
+        user_id (int, optional): change ownership of this table to this user_id.
+            Note, if you use this you will not be able to update the metadata on this table any longer
+            and depending on permissions may not be able to read or write to it
+            Defaults to None. (will not update)
+        notice_text: str, optional
+            Text the user will see when querying this table. Can be used to warn users of flaws,
+            and uncertainty in the data, or to advertise citations that should be used with this table.
+            Defaults to None. (will not update)
+        aligned_volume_name : str or None, optional
+            Name of the aligned_volume. If None, uses the one specified in the client.
         """
         if read_permission is not None:
             if read_permission not in ["PRIVATE", "GROUP", "PUBLIC"]:
@@ -537,22 +541,28 @@ class AnnotationClientV2(ClientBase):
 
     @staticmethod
     def process_position_columns(
-        df: pd.DataFrame, position_columns: (Iterable[str] or Mapping[str, str] or None)
+        df: pd.DataFrame,
+        position_columns: Optional[Union[Iterable[str], Mapping[str, str]]],
     ):
-        """Process a dataframe into a list of dictionaries, nesting thing
+        """Process a dataframe into a list of dictionaries
 
-        Args:
-            df (pd.DataFrame): dataframe to process
-            position_columns (Iterable[str] or Mapping[str, str] or None): see post_annotation_df
-        Returns:
-            json list of annotations ready for posting
+        Parameters
+        ----------
+        df :
+            Dataframe to process
+        position_columns :
+            See `.post_annotation_df`
 
+        Returns
+        -------
+        dict
+            Annotations ready for posting
         """
         if position_columns is None:
             position_columns = [c for c in df.columns if c.endswith("_position")]
         if isinstance(position_columns, (list, np.ndarray, pd.Index)):
             position_columns = {c: c.rsplit("_", 1)[0] for c in position_columns}
-        if type(position_columns) != dict:
+        if not isinstance(position_columns, dict):
             raise ValueError("position_columns must be a list, dict or None")
 
         data = df.to_dict(orient="records")
@@ -566,7 +576,7 @@ class AnnotationClientV2(ClientBase):
         self,
         table_name: str,
         df: pd.DataFrame,
-        position_columns: (Iterable[str] or Mapping[str, str] or None),
+        position_columns: Optional[Union[Iterable[str], Mapping[str, str]]],
         aligned_volume_name=None,
     ):
         """Post one or more new annotations to a table in the AnnotationEngine.
@@ -609,7 +619,7 @@ class AnnotationClientV2(ClientBase):
         )
 
     def update_annotation(
-        self, table_name: str, data: (dict or List), aligned_volume_name: str = None
+        self, table_name: str, data: Union[Dict, List], aligned_volume_name: str = None
     ):
         """Update one or more new annotations to a table in the AnnotationEngine.
         Updating is implemented by invalidating the old annotation
@@ -713,7 +723,7 @@ class AnnotationClientV2(ClientBase):
     def delete_annotation(
         self,
         table_name: str,
-        annotation_ids: (dict or List),
+        annotation_ids: Union[dict, List],
         aligned_volume_name: str = None,
     ):
         """Delete one or more annotations in a table. Annotations that are
@@ -723,7 +733,7 @@ class AnnotationClientV2(ClientBase):
         ----------
         table_name : str
             Name of the table where annotations will be added
-        data : dict or list,
+        annotation_ids : dict or list,
             A list of (or a single) dict of schematized annotation data matching the target table.
             each dict must contain an "id" field which is the ID of the annotation to update
         aligned_volume_name : str or None, optional

@@ -105,7 +105,7 @@ def _check_authorization_redirect(response):
 {first_url}
 with the current auth configuration.\n
 Read the documentation at 
-https://caveclient.readthedocs.io/en/latest/guide/authentication.html
+https://seung-lab.github.io/CAVEclient/tutorials/authentication/
 or follow instructions under 
 client.auth.get_new_token() for how to set a valid API token.
 after initializing a global client with
@@ -113,7 +113,9 @@ client=CAVEclient(server_address="{urlp.scheme +"://"+ urlp.netloc}")"""
         )
 
 
-def _api_versions(server_name, server_address, endpoints_common, auth_header, verify=True):
+def _api_versions(
+    server_name, server_address, endpoints_common, auth_header, verify=True
+):
     """Asks a server what API versions are available, if possible"""
     url_mapping = {server_name: server_address}
     url_base = endpoints_common.get("get_api_versions", None)
@@ -140,7 +142,11 @@ def _api_endpoints(
     if api_version == "latest":
         try:
             avail_vs_server = _api_versions(
-                server_name, server_address, endpoints_common, auth_header, verify=verify
+                server_name,
+                server_address,
+                endpoints_common,
+                auth_header,
+                verify=verify,
             )
             avail_vs_server = set(avail_vs_server)
         except:
@@ -221,7 +227,7 @@ class ClientBase(object):
 
     @staticmethod
     def raise_for_status(r, log_warning=True):
-        """Raises :class:`HTTPError`, if one occurred."""
+        """Raises [requests.HTTPError][], if one occurred."""
 
         _raise_for_status(r, log_warning=log_warning)
 
@@ -241,7 +247,6 @@ class ClientBaseWithDataset(ClientBase):
         pool_block=None,
         over_client=None,
     ):
-
         super(ClientBaseWithDataset, self).__init__(
             server_address,
             auth_header,
@@ -276,7 +281,6 @@ class ClientBaseWithDatastack(ClientBase):
         pool_block=None,
         over_client=None,
     ):
-
         super(ClientBaseWithDatastack, self).__init__(
             server_address,
             auth_header,

@@ -1,7 +1,6 @@
 from .base import ClientBase, _api_endpoints, handle_response
-from .endpoints import schema_common, schema_api_versions, schema_endpoints_common
+from .endpoints import schema_api_versions, schema_endpoints_common
 from .auth import AuthClient
-import requests
 
 server_key = "emas_server_address"
 
@@ -14,7 +13,7 @@ def SchemaClient(
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
-):
+) -> "SchemaClientLegacy":
     if auth_client is None:
         auth_client = AuthClient()
 

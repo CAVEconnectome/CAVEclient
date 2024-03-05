@@ -4,7 +4,7 @@ import logging
 import re
 import warnings
 from datetime import datetime, timezone
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 from urllib.error import HTTPError
 
 import numpy as np
@@ -149,7 +149,7 @@ def MaterializationClient(
     pool_block=None,
     desired_resolution=None,
     over_client=None,
-):
+) -> "MaterializationClientType":
     """Factory for returning AnnotationClient
 
     Parameters
@@ -282,23 +282,41 @@ class MaterializationClientV2(ClientBase):
         else:
             raise ValueError("Version not in materialized database")
 
-    def most_recent_version(self, datastack_name=None):
-        """get the most recent version of materialization
-        for this datastack name
-
-        Args:
-            datastack_name (str, optional): datastack name to find most
-            recent materialization of.
-            If None, uses the one specified in the client.
+    def most_recent_version(self, datastack_name=None) -> int:
         """
+        Get the most recent version of materialization for this datastack name
+
+        Parameters
+        ----------
+        datastack_name : str or None, optional
+            Name of the datastack, by default None.
+            If None, uses the one specified in the client.
+            Will be set correctly if you are using the framework_client
+
+        Returns
+        -------
+        np.int
+            Most recent version of materialization for this datastack name
+        """
+
         versions = self.get_versions(datastack_name=datastack_name)
         return np.max(np.array(versions))
 
     def get_versions(self, datastack_name=None, expired=False):
-        """get versions available
+        """Get the versions available
 
-        Args:
-            datastack_name ([type], optional): [description]. Defaults to None.
+        Parameters
+        ----------
+        datastack_name : str or None, optional
+            Name of the datastack, by default None.
+            If None, uses the one specified in the client.
+        expired : bool, optional
+            Whether to include expired versions, by default False.
+
+        Returns
+        -------
+        dict
+            Dictionary of versions available
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -331,8 +349,9 @@ class MaterializationClientV2(ClientBase):
             Name of the datastack, by default None.
             If None, uses the one specified in the client.
             Will be set correctly if you are using the framework_client
-        version: int or None, optional
+        version : int or None, optional
             the version to query, else get the tables in the most recent version
+
         Returns
         -------
         list
@@ -353,21 +372,6 @@ class MaterializationClientV2(ClientBase):
         return response.json()
 
     def get_annotation_count(self, table_name: str, datastack_name=None, version=None):
-        """Get number of annotations in a table
-
-        Parameters
-        ----------
-        table_name (str):
-            name of table to mark for deletion
-        datastack_name: str or None, optional,
-            Name of the datastack_name. If None, uses the one specified in the client.
-        version: int or None, optional
-            the version to query, else get the tables in the most recent version
-        Returns
-        -------
-        int
-            number of annotations
-        """
         if datastack_name is None:
             datastack_name = self.datastack_name
         if version is None:
@@ -384,11 +388,19 @@ class MaterializationClientV2(ClientBase):
         return response.json()
 
     def get_version_metadata(self, version: int = None, datastack_name: str = None):
-        """get metadata about a version
+        """Get metadata about a version
 
-        Args:
-            version (int, optional): version number to get metadata about. Defaults to client default version.
-            datastack_name (str, optional): datastack to query. Defaults to client default datastack.
+        Parameters
+        ----------
+        version : int or None, optional
+            Materialization version, by default None. If None, defaults to the value set in the client.
+        datastack_name : str or None, optional
+            Datastack name, by default None. If None, defaults to the value set in the client.
+
+        Returns
+        -------
+        dict
+            Dictionary of metadata about the version
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -426,15 +438,21 @@ class MaterializationClientV2(ClientBase):
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_versions_metadata(self, datastack_name=None, expired=False):
-        """get the metadata for all the versions that are presently available and valid
+        """Get the metadata for all the versions that are presently available and valid
 
-        Args:
-            datastack_name (str, optional): datastack to query. If None, defaults to the value set in the client.
-            expired (bool, optional): whether to include expired versions. Defaults to False.
+        Parameters
+        ----------
+        datastack_name : str or None, optional
+            Datastack name, by default None. If None, defaults to the value set in the client.
+        expired : bool, optional
+            Whether to include expired versions, by default False.
 
-        Returns:
-            list[dict]: a list of metadata dictionaries
+        Returns
+        -------
+        list[dict]
+            List of metadata dictionaries
         """
+
         if datastack_name is None:
             datastack_name = self.datastack_name
         endpoint_mapping = self.default_url_mapping
@@ -458,21 +476,23 @@ class MaterializationClientV2(ClientBase):
     ):
         """Get metadata about a table
 
-        Args:
-            table_name (str):
-                name of table to mark for deletion
-            datastack_name: str or None, optional,
-                Name of the datastack_name.
-                If None, uses the one specified in the client.
-            version (int, optional):
-                version to get. If None, uses the one specified in the client.
-            log_warning (bool, optional):
-                whether to print out warnings to the logger.
-                Defaults to True.
+        Parameters
+        ----------
+        table_name : str
+            name of table to mark for deletion
+        datastack_name : str or None, optional
+            Name of the datastack_name. If None, uses the one specified in the client.
+        version : int, optional
+            Version to get. If None, uses the one specified in the client.
+        log_warning : bool, optional
+            Whether to print out warnings to the logger. Defaults to True.
 
-        Returns:
-            dict: metadata dictionary for table
+        Returns
+        -------
+        dict
+            Metadata dictionary for table
         """
+
         if datastack_name is None:
             datastack_name = self.datastack_name
         if version is None:
@@ -621,62 +641,77 @@ class MaterializationClientV2(ClientBase):
         return_df: bool = True,
         split_positions: bool = False,
         materialization_version: int = None,
-        timestamp: datetime = None,
+        timestamp: Optional[datetime] = None,
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
         random_sample: int = None,
     ):
-        """generic query on materialization tables
+        """Generic query on materialization tables
 
-        Args:
-            table: 'str'
+        Parameters
+        ----------
+        table : str
+            Table to query
+        filter_in_dict : dict, optional
+            Keys are column names, values are allowed entries, by default None
+        filter_out_dict : dict, optional
+            Keys are column names, values are not allowed entries, by default None
+        filter_equal_dict : dict, optional
+            Keys are column names, values are specified entry, by default None
+        filter_spatial_dict : dict, optional
+            Keys are column names, values are bounding boxes expressed in units of the
+            voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, max_y, max_z]], by default None
+        filter_regex_dict : dict, optional
+            Keys are column names, values are regex strings, by default None
+        select_columns : list of str, optional
+            Columns to select, by default None
+        offset : int, optional
+            Result offset to use, by default None. Will only return top K results.
+        limit : int, optional
+            Maximum results to return (server will set upper limit,
+            see get_server_config), by default None
+        datastack_name : str, optional
+            Datastack to query, by default None. If None, defaults to one
+            specified in client.
+        return_df : bool, optional
+            Whether to return as a dataframe, by default True. If False, data is
+            returned as json (slower).
+        split_positions : bool, optional
+            Whether to break position columns into x,y,z columns, by default False.
+            If False data is returned as one column with [x,y,z] array (slower)
+        materialization_version : int, optional
+            Version to query, by default None.
+            If None, defaults to one specified in client.
+        timestamp : datetime.datetime, optional
+            Timestamp to query, by default None. If passsed will do a live query.
+            Error if also passing a materialization version
+        metadata : bool, optional
+            Toggle to return metadata (default True), by default True. If True
+            (and return_df is also True), return table and query metadata in the
+            df.attr dictionary.
+        merge_reference : bool, optional
+            Toggle to automatically join reference table, by default True. If True,
+            metadata will be queries and if its a reference table it will perform a
+            join on the reference table to return the rows of that
+        desired_resolution : Iterable[float], optional
+            Desired resolution you want all spatial points returned in, by default None.
+            If None, defaults to one specified in client, if that is None then points
+            are returned as stored in the table and should be in the resolution
+            specified in the table metadata
+        get_counts : bool, optional
+            Whether to get counts of the query, by default False
+        random_sample : int, optional
+            If given, will do a tablesample of the of the table to return that many
+            annotations
 
-            filter_in_dict (dict , optional):
-                keys are column names, values are allowed entries.
-                Defaults to None.
-            filter_out_dict (dict, optional):
-                keys are column names, values are not allowed entries.
-                Defaults to None.
-            filter_equal_dict (dict, optional):
-                inner layer: keys are column names, values are specified entry.
-                Defaults to None.
-            filter_spatial_dict (dict, optional):
-                inner layer: keys are column names, values are bounding boxes
-                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                             Expressed in units of the voxel_resolution of this dataset.
-            filter_regex_dict (dict, optional):
-                inner layer: keys are column names, values are regex strings
-            offset (int, optional): offset in query result
-            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-            select_columns (list of str, optional): columns to select. Defaults to None.
-            suffixes: (list[str], optional): suffixes to use on duplicate columns
-            offset (int, optional): result offset to use. Defaults to None.
-                will only return top K results.
-            datastack_name (str, optional): datastack to query.
-                If None defaults to one specified in client.
-            return_df (bool, optional): whether to return as a dataframe
-                default True, if False, data is returned as json (slower)
-            split_positions (bool, optional): whether to break position columns into x,y,z columns
-                default False, if False data is returned as one column with [x,y,z] array (slower)
-            materialization_version (int, optional): version to query.
-                If None defaults to one specified in client.
-            timestamp (datetime.datetime, optional): timestamp to query
-                If passsed will do a live query. Error if also passing a materialization version
-            metadata: (bool, optional) : toggle to return metadata (default True)
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-            merge_reference: (bool, optional) : toggle to automatically join reference table
-                If True, metadata will be queries and if its a reference table it will perform a join
-                on the reference table to return the rows of that
-            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
-                If None, defaults to one specified in client, if that is None then points are returned
-                as stored in the table and should be in the resolution specified in the table metadata
-            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
-        Returns:
-        pd.DataFrame: a pandas dataframe of results of query
-
+        Returns
+        -------
+        pd.DataFrame
+            A pandas dataframe of results of query
         """
+
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
         if timestamp is not None:
@@ -809,58 +844,65 @@ class MaterializationClientV2(ClientBase):
         desired_resolution: Iterable = None,
         random_sample: int = None,
     ):
-        """generic query on materialization tables
+        """Generic query on materialization tables
 
-         Args:
-             tables: list of lists with length 2 or 'str'
-                 list of two lists: first entries are table names, second
-                                    entries are the columns used for the join
-             filter_in_dict (dict of dicts, optional):
-                 outer layer: keys are table names
-                 inner layer: keys are column names, values are allowed entries.
-                 Defaults to None.
-             filter_out_dict (dict of dicts, optional):
-                 outer layer: keys are table names
-                 inner layer: keys are column names, values are not allowed entries.
-                 Defaults to None.
-             filter_equal_dict (dict of dicts, optional):
-                 outer layer: keys are table names
-                 inner layer: keys are column names, values are specified entry.
-                 Defaults to None.
-             filter_spatial (dict of dicts, optional):
-                 outer layer: keys are table names:
-                 inner layer: keys are column names, values are bounding boxes
-                              as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                              Expressed in units of the voxel_resolution of this dataset.
-                 Defaults to None
-            filter_regex_dict (dict of dicts, optional):
-                outer layer: keys are table names:
-                inner layer: keys are column names, values are regex strings
-                Defaults to None
-             select_columns (dict of lists of str, optional): keys are table names,values are the list of columns from that table.
-               Defaults to None, which will select all tables.  Will be passed to server as select_column_maps.
-               Passing a list will be passed as select_columns which is deprecated.
-             offset (int, optional): result offset to use. Defaults to None.
-                 will only return top K results.
-             limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-             suffixes (dict, optional): suffixes to use for duplicate columns, keys are table names, values are the suffix
-             datastack_name (str, optional): datastack to query.
-                 If None defaults to one specified in client.
-             return_df (bool, optional): whether to return as a dataframe
-                 default True, if False, data is returned as json (slower)
-             split_positions (bool, optional): whether to break position columns into x,y,z columns
-                 default False, if False data is returned as one column with [x,y,z] array (slower)
-             materialization_version (int, optional): version to query.
-                 If None defaults to one specified in client.
-             metadata: (bool, optional) : toggle to return metadata
-                 If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-             desired_resolution (Iterable, optional):
-                 What resolution to convert position columns to. Defaults to None will use defaults.
-             random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
-        Returns:
-             pd.DataFrame: a pandas dataframe of results of query
+        Parameters
+        ----------
+        tables : list of lists with length 2 or 'str'
+            list of two lists: first entries are table names, second entries are the
+            columns used for the join.
+        filter_in_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are allowed entries, by default None
+        filter_out_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are not allowed entries, by default None
+        filter_equal_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are specified entry, by default None
+        filter_spatial_dict : dict of dicts, optional
+            outer layer: keys are table names, inner layer: keys are column names.
+            Values are bounding boxes as [[min_x, min_y,min_z],[max_x, max_y, max_z]],
+            expressed in units of the voxel_resolution of this dataset. Defaults to None.
+        filter_regex_dict : dict of dicts, optional
+            outer layer: keys are table names. inner layer: keys are column names,
+            values are regex strings. Defaults to None
+        select_columns : dict of lists of str, optional
+            keys are table names,values are the list of columns from that table.
+            Defaults to None, which will select all tables.  Will be passed to server
+            as select_column_maps. Passing a list will be passed as select_columns
+            which is deprecated.
+        offset : int, optional
+            result offset to use. Defaults to None. Will only return top K results.
+        limit : int, optional
+            maximum results to return (server will set upper limit, see get_server_config)
+        suffixes : dict, optional
+            suffixes to use for duplicate columns, keys are table names, values are the suffix
+        datastack_name : str, optional
+            datastack to query. If None defaults to one specified in client.
+        return_df : bool, optional
+            whether to return as a dataframe default True, if False, data is returned
+            as json (slower)
+        split_positions : bool, optional
+            whether to break position columns into x,y,z columns default False, if False
+            data is returned as one column with [x,y,z] array (slower)
+        materialization_version : int, optional
+            version to query. If None defaults to one specified in client.
+        metadata : bool, optional
+            toggle to return metadata If True (and return_df is also True), return
+            table and query metadata in the df.attr dictionary.
+        desired_resolution : Iterable, optional
+            What resolution to convert position columns to. Defaults to None will use
+            defaults.
+        random_sample : int, optional
+            if given, will do a tablesample of the table to return that many annotations
 
+        Returns
+        -------
+        pd.DataFrame
+            a pandas dataframe of results of query
         """
+
         if materialization_version is None:
             materialization_version = self.version
         if datastack_name is None:
@@ -929,16 +971,24 @@ class MaterializationClientV2(ClientBase):
                 return concatenate_position_columns(df, inplace=True)
 
     def map_filters(self, filters, timestamp, timestamp_past):
-        """translate a list of filter dictionaries
-           from a point in the future, to a point in the past
+        """Translate a list of filter dictionaries from a point in the
+        future to a point in the past
 
-        Args:
-            filters (list[dict]): filter dictionaries with
-            timestamp ([type]): [description]
-            timestamp_past ([type]): [description]
+        Parameters
+        ----------
+        filters : list[dict]
+            filter dictionaries with root_ids
+        timestamp : datetime.datetime
+            timestamp to query
+        timestamp_past : datetime.datetime
+            timestamp to query from
 
-        Returns:
-            [type]: [description]
+        Returns
+        -------
+        list[dict]
+            filter dictionaries with past root_ids
+        dict
+            mapping of future root_ids to past root_ids
         """
         timestamp = convert_timestamp(timestamp)
         timestamp_past = convert_timestamp(timestamp_past)
@@ -1082,15 +1132,19 @@ class MaterializationClientV2(ClientBase):
         table_name: str,
         datastack_name: str = None,
     ):
-        """Trigger supervoxel lookup and rootID looksup of new annotations in a table.
+        """Trigger supervoxel lookup and root ID lookup of new annotations in a table.
 
+        Parameters
+        ----------
+        table_name : str
+            Table to trigger
+        datastack_name : str, optional
+            Datastack to trigger it. Defaults to what is set in client.
 
-        Args:
-            table_name (str): table to drigger
-            datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
-
-        Returns:
-            response: status code of response from server
+        Returns
+        -------
+        dict
+            Status code of response from server
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -1107,18 +1161,24 @@ class MaterializationClientV2(ClientBase):
         table_name: str,
         annotation_ids: list = None,
         datastack_name: str = None,
-    ):
+    ) -> dict:
         """Trigger supervoxel lookups of new annotations in a table.
 
 
-        Args:
-            table_name (str): table to drigger
-            annotation_ids: (list, optional): list of annotation ids to lookup. Default is None,
-                                              which will trigger lookup of entire table.
-            datastack_name (str, optional): datastack to trigger it. Defaults to what is set in client.
+        Parameters
+        ----------
+        table_name : str
+            Table to trigger
+        annotation_ids : list, optional
+            List of annotation ids to lookup. Default is None, which will trigger
+            lookup of entire table.
+        datastack_name : str, optional
+            Datastack to trigger it. Defaults to what is set in client.
 
-        Returns:
-            response: status code of response from server
+        Returns
+        -------
+        dict
+            Status code of response from server
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -1161,70 +1221,100 @@ class MaterializationClientV2(ClientBase):
         allow_missing_lookups: bool = False,
         random_sample: int = None,
     ):
-        """Beta method for querying cave annotation tables with rootIDs and annotations at a particular
-        timestamp.  Note: this method requires more explicit mapping of filters and selection to table
-        as its designed to test a more general endpoint that should eventually support complex joins.
+        """Beta method for querying cave annotation tables with rootIDs and annotations
+        at a particular timestamp.  Note: this method requires more explicit mapping of
+        filters and selection to table as its designed to test a more general endpoint
+        that should eventually support complex joins.
 
-        Args:
-            table (str): principle table to query
-            timestamp (datetime): timestamp to use for querying
-            joins (list): a list of joins, where each join is a list of [table1,column1, table2, column2]
-            filter_in_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to accept . Defaults to None.
-            filter_out_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to reject. Defaults to None.
-            filter_equal_dict (dict, optional):  a dictionary with tables as keys, values are dicts with column keys and values to equate. Defaults to None.
-            filter_spatial_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of 2x3 list of bounds. Defaults to None.
-            filter_regex_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of regex strings. Defaults to None.
-            select_columns (_type_, optional): a dictionary with tables as keys, values are list of columns. Defaults to None.
-            offset (int, optional): value to offset query by. Defaults to None.
-            limit (int, optional): limit of query. Defaults to None.
-            datastack_name (str, optional): datastack to query. Defaults to set by client.
-            split_positions (bool, optional): whether to split positions into seperate columns, True is faster. Defaults to False.
-            metadata (bool, optional): whether to attach metadata to dataframe. Defaults to True.
-            suffixes (dict, optional): what suffixes to use on joins, keys are table_names, values are suffixes. Defaults to None.
-            desired_resolution (Iterable, optional): What resolution to convert position columns to. Defaults to None will use defaults.
-            allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
-            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
-        Example:
-         live_live_query("table_name",datetime.datetime.now(datetime.timezone.utc),
-            joins=[[table_name, table_column, joined_table, joined_column],
-                     [joined_table, joincol2, third_table, joincol_third]]
-            suffixes={
-                "table_name":"suffix1",
-                "joined_table":"suffix2",
-                "third_table":"suffix3"
-            },
-            select_columns= {
-                "table_name":[ "column","names"],
-                "joined_table":["joined_colum"]
-            },
-            filter_in_dict= {
-                "table_name":{
-                    "column_name":[included,values]
-                }
-            },
-            filter_out_dict= {
-                "table_name":{
-                    "column_name":[excluded,values]
-                }
-            },
-            filter_equal_dict"={
-                "table_name":{
-                    "column_name":value
-                },
-            filter_spatial_dict"= {
-                "table_name": {
-                "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
-            }
-            filter_regex_dict"= {
-                "table_name": {
-                "column_name": "regex_string"
-        }
-        Returns:
-            pd.DataFrame: result of query
+        Parameters
+        ----------
+        table:
+            Principle table to query
+        timestamp:
+            Timestamp to query
+        joins: list of lists of str, optional
+            List of joins, where each join is a list of [table1,column1, table2, column2]
+        filter_in_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and list
+            values to accept.
+        filter_out_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and list
+            values to reject.
+        filter_equal_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            to equate.
+        filter_spatial_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            of 2x3 list of bounds.
+        select_columns: dict of lists of str, optional
+            A dictionary with tables as keys, values are lists of columns to select.
+        offset:
+            Value to offset query by.
+        limit:
+            Limit of query.
+        datastack_name:
+            Datastack to query. Defaults to set by client.
+        split_positions:
+            Whether to split positions into separate columns, True is faster.
+        metadata:
+            Whether to attach metadata to dataframe.
+        suffixes:
+            What suffixes to use on joins, keys are table_names, values are suffixes.
+        desired_resolution:
+            What resolution to convert position columns to.
+        allow_missing_lookups:
+            If there are annotations without supervoxels and root IDs yet, allow results.
+        random_sample:
+            If given, will do a table sample of the table to return that many annotations.
+
+        Returns
+        -------
+        :
+            Results of query
+
+        Examples
+        --------
+        >>> from caveclient import CAVEclient
+        >>> client = CAVEclient('minnie65_public_v117')
+        >>> live_live_query("table_name", datetime.datetime.now(datetime.timezone.utc),
+        >>>    joins=[[table_name, table_column, joined_table, joined_column],
+        >>>             [joined_table, joincol2, third_table, joincol_third]]
+        >>>    suffixes={
+        >>>        "table_name":"suffix1",
+        >>>        "joined_table":"suffix2",
+        >>>        "third_table":"suffix3"
+        >>>    },
+        >>>    select_columns= {
+        >>>        "table_name":[ "column","names"],
+        >>>        "joined_table":["joined_colum"]
+        >>>    },
+        >>>    filter_in_dict= {
+        >>>        "table_name":{
+        >>>            "column_name":[included,values]
+        >>>        }
+        >>>    },
+        >>>    filter_out_dict= {
+        >>>        "table_name":{
+        >>>            "column_name":[excluded,values]
+        >>>        }
+        >>>    },
+        >>>    filter_equal_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_spatial_dict"= {
+        >>>        "table_name": {
+        >>>        "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+        >>>    }
+        >>>    filter_regex_dict"= {
+        >>>        "table_name": {
+        >>>        "column_name": "regex_string"
+        >>>     }
         """
+
         logging.warning(
             "Deprecation: this method is to facilitate beta testing of this feature, \
-it will likely get removed in future versions. "
+            it will likely get removed in future versions. "
         )
         timestamp = convert_timestamp(timestamp)
         return_df = True
@@ -1348,57 +1438,65 @@ it will likely get removed in future versions. "
         desired_resolution: Iterable = None,
         random_sample: int = None,
     ):
-        """generic query on materialization tables
+        """Generic query on materialization tables
 
-        Args:
-            table: 'str'
-            timestamp (datetime.datetime): time to materialize (in utc)
-                pass datetime.datetime.now(datetime.timezone.utc) for present time
-            filter_in_dict (dict , optional):
-                keys are column names, values are allowed entries.
-                Defaults to None.
-            filter_out_dict (dict, optional):
-                keys are column names, values are not allowed entries.
-                Defaults to None.
-            filter_equal_dict (dict, optional):
-                inner layer: keys are column names, values are specified entry.
-                Defaults to None.
-            filter_spatial (dict, optional):
-                inner layer: keys are column names, values are bounding boxes
-                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                             Expressed in units of the voxel_resolution of this dataset.
-                             Defaults to None
-            filter_regex_dict (dict, optional):
-                inner layer: keys are column names, values are regex strings
-            offset (int, optional): offset in query result
-            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-            select_columns (list of str, optional): columns to select. Defaults to None.
-            suffixes: (list[str], optional): suffixes to use on duplicate columns
-            offset (int, optional): result offset to use. Defaults to None.
-                will only return top K results.
-            datastack_name (str, optional): datastack to query.
-                If None defaults to one specified in client.
-            split_positions (bool, optional): whether to break position columns into x,y,z columns
-                default False, if False data is returned as one column with [x,y,z] array (slower)
-            post_filter (bool, optional): whether to filter down the result based upon the filters specified
-                if false, it will return the query with present root_ids in the root_id columns,
-                but the rows will reflect the filters translated into their past IDs.
-                So if, for example, a cell had a false merger split off since the last materialization.
-                those annotations on that incorrect portion of the cell will be included if this is False,
-                but will be filtered down if this is True. (Default=True)
-            metadata: (bool, optional) : toggle to return metadata
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-            merge_reference: (bool, optional) : toggle to automatically join reference table
-                If True, metadata will be queries and if its a reference table it will perform a join
-                on the reference table to return the rows of that
-            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
-                If None, defaults to one specified in client, if that is None then points are returned
-                as stored in the table and should be in the resolution specified in the table metadata
-            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
-        Returns:
-        pd.DataFrame: a pandas dataframe of results of query
+        Parameters
+        ----------
+        table : str
+            Table to query
+        timestamp : datetime.datetime
+            Time to materialize (in utc). Pass
+            datetime.datetime.now(datetime.timezone.utc) for present time.
+        filter_in_dict : dict, optional
+            Keys are column names, values are allowed entries.
+        filter_out_dict : dict, optional
+            Keys are column names, values are not allowed entries.
+        filter_equal_dict : dict, optional
+            Keys are column names, values are specified entry.
+        filter_spatial_dict : dict, optional
+            Keys are column names, values are bounding boxes expressed in units of the
+            voxel_resolution of this dataset. Bounding box is
+            [[min_x, min_y,min_z],[max_x, max_y, max_z]].
+        filter_regex_dict : dict, optional
+            Keys are column names, values are regex strings.
+        select_columns : list of str, optional
+            Columns to select.
+        offset : int, optional
+            Offset in query result.
+        limit : int, optional
+            Maximum results to return (server will set upper limit, see get_server_config).
+        datastack_name : str, optional
+            Datastack to query. If None, defaults to one specified in client.
+        split_positions : bool, optional
+            Whether to break position columns into x,y,z columns. If False data is
+            returned as one column with [x,y,z] array (slower).
+        post_filter : bool, optional
+            Whether to filter down the result based upon the filters specified. If False,
+            it will return the query with present root_ids in the root_id columns, but the
+            rows will reflect the filters translated into their past IDs. So if, for example,
+            a cell had a false merger split off since the last materialization, those
+            annotations on that incorrect portion of the cell will be included if this is
+            False, but will be filtered down if this is True.
+        metadata : bool, optional
+            Toggle to return metadata. If True (and return_df is also True), return table
+            and query metadata in the df.attr dictionary.
+        merge_reference : bool, optional
+            Toggle to automatically join reference table. If True, metadata will be queries
+            and if its a reference table it will perform a join on the reference table to
+            return the rows of that table.
+        desired_resolution : Iterable, optional
+            Desired resolution you want all spatial points returned in. If None, defaults to
+            one specified in client, if that is None then points are returned as stored in
+            the table and should be in the resolution specified in the table metadata.
+        random_sample : int, optional
+            If given, will do a tablesample of the table to return that many annotations.
 
+        Returns
+        -------
+        pd.DataFrame
+            A pandas dataframe of results of query
         """
+
         timestamp = convert_timestamp(timestamp)
         return_df = True
         if self.cg_client is None:
@@ -1587,7 +1685,7 @@ it will likely get removed in future versions. "
         self,
         pre_ids: Union[int, Iterable, np.ndarray] = None,
         post_ids: Union[int, Iterable, np.ndarray] = None,
-        bounding_box=None,
+        bounding_box: Optional[Union[list, np.ndarray]] = None,
         bounding_box_column: str = "post_pt_position",
         timestamp: datetime = None,
         remove_autapses: bool = True,
@@ -1600,36 +1698,53 @@ it will likely get removed in future versions. "
         synapse_table: str = None,
         datastack_name: str = None,
         metadata: bool = True,
-    ):
-        """Convience method for quering synapses. Will use the synapse table specified in the info service by default.
-        It will also remove autapses by default. NOTE: This is not designed to allow querying of the entire synapse table.
-        A query with no filters will return only a limited number of rows (configured by the server) and will do so in a non-deterministic fashion.
-        Please contact your dataset administrator if you want access to the entire table.
+    ) -> pd.DataFrame:
+        """Convenience method for querying synapses.
 
-        Args:
-            pre_ids (Union[int, Iterable, optional): pre_synaptic cell(s) to query. Defaults to None.
-            post_ids (Union[int, Iterable, optional): post synaptic cell(s) to query. Defaults to None.
-            timestamp (datetime.datetime, optional): timestamp to query (optional).
-                If passed recalculate query at timestamp, do not pass with materialization_verison
-            bounding_box: [[min_x, min_y, min_z],[max_x, max_y, max_z]] bounding box to filter
-                          synapse locations. Expressed in units of the voxel_resolution of this dataset (optional)
-            bounding_box_column (str, optional): which synapse location column to filter by (Default to "post_pt_position")
-            remove_autapses (bool, optional): post-hoc filter out synapses. Defaults to True.
-            include_zeros (bool, optional): whether to include synapses to/from id=0 (out of segmentation). Defaults to True.
-            limit (int, optional): number of synapses to limit, Defaults to None (server side limit applies)
-            offset (int, optional): number of synapses to offset query, Defaults to None (no offset).
-            split_positions (bool, optional): whether to return positions as seperate x,y,z columns (faster)
-                defaults to False
-            desired_resolution : Iterable[float] or None, optional
-                If given, should be a list or array of the desired resolution you want queries returned in
-                useful for materialization queries.
-            synapse_table (str, optional): synapse table to query. If None, defaults to self.synapse_table.
-            datastack_name: (str, optional): datastack to query
-            materialization_version (int, optional): version to query.
-                defaults to self.materialization_version if not specified
-            metadata: (bool, optional) : toggle to return metadata
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
+        Will use the synapse table
+        specified in the info service by default. It will also remove autapses by
+        default. NOTE: This is not designed to allow querying of the entire synapse table.
+        A query with no filters will return only a limited number of rows (configured
+        by the server) and will do so in a non-deterministic fashion. Please contact
+        your dataset administrator if you want access to the entire table.
 
+        Parameters
+        ----------
+        pre_ids:
+            Pre-synaptic cell(s) to query.
+        post_ids:
+            Post-synaptic cell(s) to query.
+        bounding_box:
+            [[min_x, min_y, min_z],[max_x, max_y, max_z]] bounding box to filter
+            synapse locations. Expressed in units of the voxel_resolution of this dataset.
+        bounding_box_column:
+            Which synapse location column to filter by.
+        timestamp:
+            Timestamp to query. If passed recalculate query at timestamp, do not pass
+            with materialization_version.
+        remove_autapses:
+            Whether to remove autapses from query results.
+        include_zeros:
+            Whether to include synapses to/from id=0 (out of segmentation).
+        limit:
+            Number of synapses to limit. Server-side limit still applies.
+        offset:
+            Number of synapses to offset query.
+        split_positions:
+            Whether to split positions into separate columns, True is faster.
+        desired_resolution:
+            List or array of the desired resolution you want queries returned in
+            useful for materialization queries.
+        materialization_version:
+            Version to query. If passed, do not pass timestamp. Defaults to
+            `self.materialization_version` if not specified.
+        metadata:
+            Whether to attach metadata to dataframe in the df.attr dictionary.
+
+        Returns
+        -------
+        :
+            Results of query.
         """
         filter_in_dict = {}
         filter_equal_dict = {}
@@ -1770,21 +1885,22 @@ class MaterializationClientV3(MaterializationClientV2):
         datastack_name=None,
         version: int = None,
         log_warning: bool = True,
-    ):
-        """Get metadata about a table
+    ) -> dict:
+        """Get metadata about tables
 
-        Args:
-            datastack_name: str or None, optional,
-                Name of the datastack_name.
-                If None, uses the one specified in the client.
-            version (int, optional):
-                version to get. If None, uses the one specified in the client.
-            log_warning (bool, optional):
-                whether to print out warnings to the logger.
-                Defaults to True.
+        Parameters
+        ----------
+        datastack_name : str or None, optional
+            Name of the datastack_name. If None, uses the one specified in the client.
+        version :
+            Version to get. If None, uses the one specified in the client.
+        log_warning :
+            Whether to print out warnings to the logger. Defaults to True.
 
-        Returns:
-            dict: metadata dictionary for table
+        Returns
+        -------
+        :
+            Metadata dictionary for table
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -1827,69 +1943,103 @@ class MaterializationClientV3(MaterializationClientV2):
         allow_invalid_root_ids: bool = False,
         random_sample: int = None,
     ):
-        """Beta method for querying cave annotation tables with rootIDs and annotations at a particular
-        timestamp.  Note: this method requires more explicit mapping of filters and selection to table
-        as its designed to test a more general endpoint that should eventually support complex joins.
+        """Beta method for querying cave annotation tables with root IDs and annotations
+        at a particular timestamp.  Note: this method requires more explicit mapping of
+        filters and selection to table as its designed to test a more general endpoint
+        that should eventually support complex joins.
 
-        Args:
-            table (str): principle table to query
-            timestamp (datetime): timestamp to use for querying
-            joins (list): a list of joins, where each join is a list of [table1,column1, table2, column2]
-            filter_in_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to accept . Defaults to None.
-            filter_out_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and list values to reject. Defaults to None.
-            filter_equal_dict (dict, optional):  a dictionary with tables as keys, values are dicts with column keys and values to equate. Defaults to None.
-            filter_spatial_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of 2x3 list of bounds. Defaults to None.
-            filter_regex_dict (dict, optional): a dictionary with tables as keys, values are dicts with column keys and values of regex strings. Defaults to None.
-            select_columns (_type_, optional): a dictionary with tables as keys, values are list of columns. Defaults to None.
-            offset (int, optional): value to offset query by. Defaults to None.
-            limit (int, optional): limit of query. Defaults to None.
-            datastack_name (str, optional): datastack to query. Defaults to set by client.
-            split_positions (bool, optional): whether to split positions into seperate columns, True is faster. Defaults to False.
-            metadata (bool, optional): whether to attach metadata to dataframe. Defaults to True.
-            suffixes (dict, optional): what suffixes to use on joins, keys are table_names, values are suffixes. Defaults to None.
-            desired_resolution (Iterable, optional): What resolution to convert position columns to. Defaults to None will use defaults.
-            allow_missing_lookups (bool, optional): If there are annotations without supervoxels and rootids yet, allow results. Defaults to False.
-            allow_invalid_root_ids (bool, optional): If True, ignore root ids not valid at the given timestamp, otherwise raise an Error. Defaults to False.
-            random_sample (int, optional): If given, will do a tablesample of the table to return that many annotations
-        Example:
-         live_live_query("table_name",datetime.datetime.now(datetime.timezone.utc),
-            joins=[[table_name, table_column, joined_table, joined_column],
-                     [joined_table, joincol2, third_table, joincol_third]]
-            suffixes={
-                "table_name":"suffix1",
-                "joined_table":"suffix2",
-                "third_table":"suffix3"
-            },
-            select_columns= {
-                "table_name":[ "column","names"],
-                "joined_table":["joined_colum"]
-            },
-            filter_in_dict= {
-                "table_name":{
-                    "column_name":[included,values]
-                }
-            },
-            filter_out_dict= {
-                "table_name":{
-                    "column_name":[excluded,values]
-                }
-            },
-            filter_equal_dict"={
-                "table_name":{
-                    "column_name":value
-                },
-            filter_spatial_dict"= {
-                "table_name": {
-                    "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
-            }
-            filter_regex_dict"= {
-                "table_name": {
-                    "column_name": "regex"
-            }
-        }
-        Returns:
-            pd.DataFrame: result of query
+        Parameters
+        ----------
+        table:
+            Principle table to query
+        timestamp:
+            Timestamp to query
+        joins: list of lists of str, optional
+            List of joins, where each join is a list of [table1,column1, table2, column2]
+        filter_in_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and list
+            values to accept.
+        filter_out_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and list
+            values to reject.
+        filter_equal_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            to equate.
+        filter_spatial_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            of 2x3 list of bounds.
+        filter_regex_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            of regex strings.
+        select_columns: dict of lists of str, optional
+            A dictionary with tables as keys, values are lists of columns to select.
+        offset:
+            Value to offset query by.
+        limit:
+            Limit of query.
+        datastack_name:
+            Datastack to query. Defaults to set by client.
+        split_positions:
+            Whether to split positions into separate columns, True is faster.
+        metadata:
+            Whether to attach metadata to dataframe.
+        suffixes:
+            What suffixes to use on joins, keys are table_names, values are suffixes.
+        desired_resolution:
+            What resolution to convert position columns to.
+        allow_missing_lookups:
+            If there are annotations without supervoxels and root IDs yet, allow results.
+        allow_invalid_root_ids:
+            If True, ignore root ids not valid at the given timestamp, otherwise raise
+            an error.
+        random_sample:
+            If given, will do a table sample of the table to return that many annotations.
+
+        Returns
+        -------
+        :
+            Results of query
+
+        Examples
+        --------
+        >>> from caveclient import CAVEclient
+        >>> client = CAVEclient('minnie65_public_v117')
+        >>> live_live_query("table_name", datetime.datetime.now(datetime.timezone.utc),
+        >>>    joins=[[table_name, table_column, joined_table, joined_column],
+        >>>             [joined_table, joincol2, third_table, joincol_third]]
+        >>>    suffixes={
+        >>>        "table_name":"suffix1",
+        >>>        "joined_table":"suffix2",
+        >>>        "third_table":"suffix3"
+        >>>    },
+        >>>    select_columns= {
+        >>>        "table_name":[ "column","names"],
+        >>>        "joined_table":["joined_colum"]
+        >>>    },
+        >>>    filter_in_dict= {
+        >>>        "table_name":{
+        >>>            "column_name":[included,values]
+        >>>        }
+        >>>    },
+        >>>    filter_out_dict= {
+        >>>        "table_name":{
+        >>>            "column_name":[excluded,values]
+        >>>        }
+        >>>    },
+        >>>    filter_equal_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_spatial_dict"= {
+        >>>        "table_name": {
+        >>>        "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+        >>>    }
+        >>>    filter_regex_dict"= {
+        >>>        "table_name": {
+        >>>        "column_name": "regex_string"
+        >>>     }
         """
+
         logging.warning(
             "Deprecation: this method is to facilitate beta testing of this feature, \
 it will likely get removed in future versions. "
@@ -2006,16 +2156,20 @@ it will likely get removed in future versions. "
         return df
 
     def get_views(self, version: int = None, datastack_name: str = None):
-        """get all available views for a version
+        """
+        Get all available views for a version
 
-        Args:
-            version (int, optional): version to query.
-                                     Defaults to None. (will version set by client)
-            datastack_name (str, optional): datastack to query. Defaults to None.
-                                            (will use datastack set by client)
+        Parameters
+        ----------
+        version :
+            Version to query. If None, uses the one specified in the client.
+        datastack_name :
+            Datastack to query. If None, uses the one specified in the client.
 
-        Returns:
-            list[str]: a list of views
+        Returns
+        -------
+        list
+            List of views
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -2036,16 +2190,21 @@ it will likely get removed in future versions. "
         datastack_name: str = None,
         log_warning: bool = True,
     ):
-        """get metadata for a view
+        """Get metadata for a view
 
-        Args:
-            view_name (str): name of view to query
-            materialization_version (int, optional): version to query.
-                                        Defaults to None. (will use version set by client)
-            log_warning (bool, optional): whether to log warnings. Defaults to True.
-        Returns:
-            dict: metadata of view
+        Parameters
+        ----------
+        view_name :
+            Name of view to query.
+        materialization_version :
+            Version to query. If None, will use version set by client.
+        log_warning :
+            Whether to log warnings.
 
+        Returns
+        -------
+        dict
+            Metadata of view
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -2069,15 +2228,21 @@ it will likely get removed in future versions. "
         datastack_name: str = None,
         log_warning: bool = True,
     ):
-        """get schema for a view
+        """Get schema for a view
 
-        Args:
-            view_name (str): name of view to query
-            materialization_version (int, optional): version to query.
-                                        Defaults to None. (will version set by client)
-            log_warning (bool, optional): whether to log warnings. Defaults to True.
-        Returns:
-            dict: schema of view
+        Parameters
+        ----------
+        view_name:
+            Name of view to query.
+        materialization_version:
+            Version to query. If None, will use version set by client.
+        log_warning:
+            Whether to log warnings.
+
+        Returns
+        -------
+        dict
+            Schema of view.
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -2100,14 +2265,19 @@ it will likely get removed in future versions. "
         datastack_name: str = None,
         log_warning: bool = True,
     ):
-        """get schemas for all views
+        """Get schema for a view
 
-        Args:
-            materialization_version (int, optional): version to query.
-                                        Defaults to None. (will version set by client)
-            log_warning (bool, optional): whether to log warnings. Defaults to True.
-        Returns:
-            dict: schemas of all views
+        Parameters
+        ----------
+        materialization_version:
+            Version to query. If None, will use version set by client.
+        log_warning:
+            Whether to log warnings.
+
+        Returns
+        -------
+        dict
+            Schema of view.
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -2144,51 +2314,65 @@ it will likely get removed in future versions. "
         get_counts: bool = False,
         random_sample: int = None,
     ):
-        """generic query on a view
+        """Generic query on a view
 
-            Args:
-            table: 'str'
+        Parameters
+        ----------
+        view_name : str
+            View to query
+        filter_in_dict : dict, optional
+            Keys are column names, values are allowed entries, by default None
+        filter_out_dict : dict, optional
+            Keys are column names, values are not allowed entries, by default None
+        filter_equal_dict : dict, optional
+            Keys are column names, values are specified entry, by default None
+        filter_spatial_dict : dict, optional
+            Keys are column names, values are bounding boxes expressed in units of the
+            voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, max_y, max_z]], by default None
+        filter_regex_dict : dict, optional
+            Keys are column names, values are regex strings, by default None
+        select_columns : list of str, optional
+            Columns to select, by default None
+        offset : int, optional
+            Result offset to use, by default None. Will only return top K results.
+        limit : int, optional
+            Maximum results to return (server will set upper limit,
+            see get_server_config), by default None
+        datastack_name : str, optional
+            Datastack to query, by default None. If None, defaults to one
+            specified in client.
+        return_df : bool, optional
+            Whether to return as a dataframe, by default True. If False, data is
+            returned as json (slower).
+        split_positions : bool, optional
+            Whether to break position columns into x,y,z columns, by default False.
+            If False data is returned as one column with [x,y,z] array (slower)
+        materialization_version : int, optional
+            Version to query, by default None.
+            If None, defaults to one specified in client.
+        metadata : bool, optional
+            Toggle to return metadata (default True), by default True. If True
+            (and return_df is also True), return table and query metadata in the
+            df.attr dictionary.
+        merge_reference : bool, optional
+            Toggle to automatically join reference table, by default True. If True,
+            metadata will be queries and if its a reference table it will perform a
+            join on the reference table to return the rows of that
+        desired_resolution : Iterable[float], optional
+            Desired resolution you want all spatial points returned in, by default None.
+            If None, defaults to one specified in client, if that is None then points
+            are returned as stored in the table and should be in the resolution
+            specified in the table metadata
+        get_counts : bool, optional
+            Whether to get counts of the query, by default False
+        random_sample : int, optional
+            If given, will do a tablesample of the of the table to return that many
+            annotations
 
-            filter_in_dict (dict , optional):
-                keys are column names, values are allowed entries.
-                Defaults to None.
-            filter_out_dict (dict, optional):
-                keys are column names, values are not allowed entries.
-                Defaults to None.
-            filter_equal_dict (dict, optional):
-                inner layer: keys are column names, values are specified entry.
-                Defaults to None.
-            filter_spatial (dict, optional):
-                inner layer: keys are column names, values are bounding boxes
-                             as [[min_x, min_y,min_z],[max_x, max_y, max_z]]
-                             Expressed in units of the voxel_resolution of this dataset.
-            filter_regex_dict (dict, optional):
-                inner layer: keys are column names, values are regex strings.
-            offset (int, optional): offset in query result
-            limit (int, optional): maximum results to return (server will set upper limit, see get_server_config)
-            select_columns (list of str, optional): columns to select. Defaults to None.
-            suffixes: (list[str], optional): suffixes to use on duplicate columns
-            offset (int, optional): result offset to use. Defaults to None.
-                will only return top K results.
-            datastack_name (str, optional): datastack to query.
-                If None defaults to one specified in client.
-            return_df (bool, optional): whether to return as a dataframe
-                default True, if False, data is returned as json (slower)
-            split_positions (bool, optional): whether to break position columns into x,y,z columns
-                default False, if False data is returned as one column with [x,y,z] array (slower)
-            materialization_version (int, optional): version to query.
-                If None defaults to one specified in client.
-            metadata: (bool, optional) : toggle to return metadata (default True)
-                If True (and return_df is also True), return table and query metadata in the df.attr dictionary.
-            merge_reference: (bool, optional) : toggle to automatically join reference table
-                If True, metadata will be queries and if its a reference table it will perform a join
-                on the reference table to return the rows of that
-            desired_resolution: (Iterable[float], Optional) : desired resolution you want all spatial points returned in
-                If None, defaults to one specified in client, if that is None then points are returned
-                as stored in the table and should be in the resolution specified in the table metadata
-            random_sample: (int, optional) : if given, will do a tablesample of the table to return that many annotations
-        Returns:
-        pd.DataFrame: a pandas dataframe of results of query
+        Returns
+        -------
+        pd.DataFrame
+            A pandas dataframe of results of query
         """
 
         if desired_resolution is None:
@@ -2265,16 +2449,22 @@ it will likely get removed in future versions. "
         else:
             return response.json()
 
-    def get_unique_string_values(self, table: str, datastack_name: str = None):
-        """get unique string values for a table
+    def get_unique_string_values(
+        self, table: str, datastack_name: Optional[str] = None
+    ):
+        """Get unique string values for a table
 
-            Args:
-            table: 'str'
-            datastack_name (str, optional): datastack to query.
-                If None defaults to one specified in client.
+        Parameters
+        ----------
+        table :
+            Table to query
+        datastack_name :
+            Datastack to query. If None, uses the one specified in the client.
 
-        Returns:
-        dict[str]: a dictionary of column names and unique values
+        Returns
+        -------
+        dict[str]
+            A dictionary of column names and their unique values
         """
         if datastack_name is None:
             datastack_name = self.datastack_name
@@ -2299,3 +2489,5 @@ client_mapping = {
     3: MaterializationClientV3,
     "latest": MaterializationClientV2,
 }
+
+MaterializationClientType = Union[MaterializationClientV2, MaterializationClientV3]

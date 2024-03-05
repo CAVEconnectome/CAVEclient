@@ -1,14 +1,15 @@
+import json
+import logging
+import os
+import urllib
+import webbrowser
+
+import requests
+
 from .base import (
     handle_response,
 )
-import urllib
 from .endpoints import auth_endpoints_v1, default_global_server_address
-import os
-import webbrowser
-import requests
-import json
-import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,6 @@ deprecated_token_files = [
 
 
 def write_token(token, filepath, key, overwrite=True):
-
     if os.path.exists(filepath):
         with open(filepath, "r") as f:
             secrets = json.load(f)
@@ -45,26 +45,6 @@ def write_token(token, filepath, key, overwrite=True):
 
 
 class AuthClient(object):
-    """Client to find and use auth tokens to access the dynamic annotation framework services.
-
-    Parameters
-    ----------
-    token_file : str, optional
-        Path to a JSON key:value file holding your auth token.
-        By default, "~/.cloudvolume/secrets/cave-secret.json"
-        (will check deprecated token name "chunkedgraph-secret.json" as well)
-    token_key : str, optional
-        Key for the token in the token_file.
-        By default, "token"
-
-    token : str or None, optional
-        Direct entry of the token as a string. If provided, overrides the files.
-        If None, attempts to use the file paths.
-
-    server_address : str, optional,
-        URL to the auth server. By default, uses a default server address.
-    """
-
     def __init__(
         self,
         token_file=None,
@@ -72,6 +52,25 @@ class AuthClient(object):
         token=None,
         server_address=default_global_server_address,
     ):
+        """Client to find and use auth tokens to access the dynamic annotation framework services.
+
+        Parameters
+        ----------
+        token_file : str, optional
+            Path to a JSON key:value file holding your auth token.
+            By default, "~/.cloudvolume/secrets/cave-secret.json"
+            (will check deprecated token name "chunkedgraph-secret.json" as well)
+        token_key : str, optional
+            Key for the token in the token_file.
+            By default, "token"
+
+        token : str or None, optional
+            Direct entry of the token as a string. If provided, overrides the files.
+            If None, attempts to use the file paths.
+
+        server_address : str, optional,
+            URL to the auth server. By default, uses a default server address.
+        """
         if token_file is None:
             server = urllib.parse.urlparse(server_address).netloc
             server_file = server + "-cave-secret.json"
@@ -273,7 +272,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
 
         Parameters
         ----------
-        user_id : list of int
+        user_ids : list of int
             user_ids to look up
         """
         endpoint_mapping = self._default_endpoint_mapping

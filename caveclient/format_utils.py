@@ -11,14 +11,16 @@ def format_precomputed_neuroglancer(objurl):
         objurl_out = None
     return objurl_out
 
+
 def format_neuroglancer(objurl):
     qry = urlparse(objurl)
-    if qry.scheme == 'graphene' or 'https':
+    if qry.scheme == "graphene" or "https":
         return format_graphene(objurl)
-    elif qry.scheme == 'precomputed':
+    elif qry.scheme == "precomputed":
         return format_precomputed_neuroglancer(objurl)
     else:
         return format_raw(objurl)
+
 
 def format_precomputed_https(objurl):
     qry = urlparse(objurl)
@@ -41,6 +43,7 @@ def format_graphene(objurl):
         objurl_out = None
     return objurl_out
 
+
 def format_verbose_graphene(objurl):
     qry = urlparse(objurl)
     if qry.scheme == "http" or qry.scheme == "https":
@@ -48,6 +51,7 @@ def format_verbose_graphene(objurl):
     elif qry.scheme == "graphene":
         objurl_out = f"graphene://middleauth+{qry.netloc}{qry.path}"
     return objurl_out
+
 
 def format_cloudvolume(objurl):
     qry = urlparse(objurl)
@@ -58,14 +62,16 @@ def format_cloudvolume(objurl):
     else:
         return None
 
+
 def format_raw(objurl):
     return objurl
+
 
 def format_cave_explorer(objurl):
     qry = urlparse(objurl)
     if qry.scheme == "graphene" or qry.scheme == "https":
         return format_verbose_graphene(objurl)
-    elif qry.scheme == 'precomputed':
+    elif qry.scheme == "precomputed":
         return format_precomputed_neuroglancer(objurl)
     else:
         return None
