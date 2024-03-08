@@ -366,6 +366,42 @@ class TestChunkedgraph:
         assert np.all(qlvl2_graph == lvl2_graph)
 
     @responses.activate
+    def test_get_lvl2subgraph_bounds(self, myclient):
+        endpoint_mapping = self._default_endpoint_map
+        root_id = 864691136812623475
+        endpoint_mapping["root_id"] = root_id
+        url = chunkedgraph_endpoints_v1["lvl2_graph"].format_map(endpoint_mapping)
+
+        lvl2_graph_list = [
+            [160032475051983415, 160032543771460210],
+            [160032475051983415, 160102843796161019],
+            [160032543771460210, 160032612490936816],
+            [160032543771460210, 160102912515637813],
+            [160032612490936816, 160032681210413593],
+            [160032612490936816, 160102981235115106],
+            [160032681210413593, 160032749929890185],
+            [160032681210413593, 160032749929890340],
+            [160032681210413593, 160103049954591386],
+            [160032749929890185, 160103118674068005],
+            [160032818649367090, 160103187393544707],
+            [160102843796161019, 160102912515637813],
+            [160102912515637813, 160102981235115106],
+            [160102981235115106, 160103049954591364],
+            [160102981235115106, 160103049954591386],
+            [160103049954591386, 160103118674068005],
+            [160103118674068005, 160103187393544707],
+            [160103187393544707, 160173556137722487],
+        ]
+
+        lvl2_graph = np.array(lvl2_graph_list, dtype=np.int64)
+
+        responses.add(responses.GET, json={"edge_graph": lvl2_graph_list}, url=url)
+
+        bounds = np.array([[83875, 85125], [82429, 83679], [20634, 20884]])
+        qlvl2_graph = myclient.chunkedgraph.level2_chunk_graph(root_id, bounds=bounds)
+        assert np.all(qlvl2_graph == lvl2_graph)
+
+    @responses.activate
     def test_get_remeshing(self, myclient):
         endpoint_mapping = self._default_endpoint_map
         root_id = 864691135776832352
