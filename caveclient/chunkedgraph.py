@@ -784,7 +784,11 @@ class ChunkedGraphClientV1(ClientBase):
         root_id : int
             Root id of object
         bounds : np.array
-            3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates.
+            3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates. Note that
+            the result will include any level 2 nodes which have chunk boundaries within
+            some part of this bounding box, meaning that the representative point for 
+            a given level 2 node could still be slightly outside of these bounds. 
+            If None, returns all level 2 chunks for the root ID.
 
         Returns
         -------
