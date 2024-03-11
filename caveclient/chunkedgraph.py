@@ -806,9 +806,9 @@ class ChunkedGraphClientV1(ClientBase):
             query_d["bounds"] = package_bounds(bounds)
 
         url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url, params=query_d), as_json=False)
+        response = self.session.get(url, params=query_d)
 
-        used_bounds = r.headers["Used-Bounds"]
+        used_bounds = response.headers.get("Used-Bounds")
         if bounds is not None and not used_bounds:
             warning = (
                 "Bounds were not used for this query, even though it was requested."
@@ -817,6 +817,8 @@ class ChunkedGraphClientV1(ClientBase):
                 "your system administrator to update the chunkedgraph."
             )
             raise ValueError(warning)
+        
+        r = handle_response(response)
 
         return r["edge_graph"]
 
