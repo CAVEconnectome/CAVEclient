@@ -811,7 +811,7 @@ class ChunkedGraphClientV1(ClientBase):
         used_bounds = response.headers.get("Used-Bounds")
         if bounds is not None and not used_bounds:
             warning = (
-                "Bounds were not used for this query, even though it was requested."
+                "Bounds were not used for this query, even though it was requested. "
                 "This is likely because your system is running a version of the "
                 "chunkedgraph that does not support this feature. Please contact "
                 "your system administrator to update the chunkedgraph."
