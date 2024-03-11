@@ -814,7 +814,7 @@ class ChunkedGraphClientV1(ClientBase):
                 "chunkedgraph that does not support this feature. Please contact "
                 "your system administrator to update the chunkedgraph."
             )
-            raise UserWarning(warning)
+            raise ValueError(warning)
 
         return r["edge_graph"]
 
