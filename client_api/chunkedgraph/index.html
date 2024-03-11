@@ -3707,7 +3707,7 @@ Defaults to None (assumes now).</p>
 
 
 <h2 id="caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">level2_chunk_graph</span><span class="p">(</span><span class="n">root_id</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">level2_chunk_graph</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -3741,6 +3741,26 @@ Defaults to None (assumes now).</p>
           </td>
           <td>
               <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>bounds</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates (use
+<code>client.chunkedgraph.base_resolution</code> to view this default resolution for 
+your chunkedgraph client). Note that the result will include any level 2 
+nodes which have chunk boundaries within some part of this bounding box, 
+meaning that the representative point for a given level 2 node could still 
+be slightly outside of these bounds. If None, returns all level 2 chunks 
+for the root ID.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
           </td>
         </tr>
     </tbody>
