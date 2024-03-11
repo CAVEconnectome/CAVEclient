@@ -15,4 +15,4 @@ pip install caveclient
 
 ## Documentation
 
-You can find full documentation at [caveclient.readthedocs.io](https://caveclient.readthedocs.io/).
+You can find full documentation at [caveconnectome.github.io/CAVEclient](https://caveconnectome.github.io/CAVEclient).
