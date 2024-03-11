@@ -786,8 +786,8 @@ class ChunkedGraphClientV1(ClientBase):
         bounds : np.array
             3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates. Note that
             the result will include any level 2 nodes which have chunk boundaries within
-            some part of this bounding box, meaning that the representative point for 
-            a given level 2 node could still be slightly outside of these bounds. 
+            some part of this bounding box, meaning that the representative point for
+            a given level 2 node could still be slightly outside of these bounds.
             If None, returns all level 2 chunks for the root ID.
 
         Returns
@@ -805,6 +805,17 @@ class ChunkedGraphClientV1(ClientBase):
 
         url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
         r = handle_response(self.session.get(url, params=query_d))
+
+        used_bounds = r.headers["Used-Bounds"]
+        if bounds is not None and not used_bounds:
+            warning = (
+                "Bounds were not used for this query, even though it was requested."
+                "This is likely because your system is running a version of the "
+                "chunkedgraph that does not support this feature. Please contact "
+                "your system administrator to update the chunkedgraph."
+            )
+            raise UserWarning(warning)
+
         return r["edge_graph"]
 
     def remesh_level2_chunks(self, chunk_ids) -> None:
