@@ -1,18 +1,19 @@
-from re import A, match
-from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
-import pytest
-import responses
-from responses.matchers import json_params_matcher
-import pytz
-import numpy as np
-from caveclient.endpoints import (
-    chunkedgraph_endpoints_v1,
-    chunkedgraph_endpoints_common,
-)
 import datetime
-import time
 import json
 from urllib.parse import urlencode
+
+import numpy as np
+import pytest
+import pytz
+import responses
+from responses.matchers import json_params_matcher
+
+from caveclient.endpoints import (
+    chunkedgraph_endpoints_common,
+    chunkedgraph_endpoints_v1,
+)
+
+from .conftest import TEST_LOCAL_SERVER, test_info
 
 
 def binary_body_match(body):
@@ -395,11 +396,29 @@ class TestChunkedgraph:
 
         lvl2_graph = np.array(lvl2_graph_list, dtype=np.int64)
 
-        responses.add(responses.GET, json={"edge_graph": lvl2_graph_list}, url=url)
+        responses.add(
+            responses.GET,
+            json={"edge_graph": lvl2_graph_list},
+            url=url,
+            headers={"Used-Bounds": "True"},
+        )
 
         bounds = np.array([[83875, 85125], [82429, 83679], [20634, 20884]])
         qlvl2_graph = myclient.chunkedgraph.level2_chunk_graph(root_id, bounds=bounds)
         assert np.all(qlvl2_graph == lvl2_graph)
+
+        # should fail when bounds are not used, but bounds were passed in
+        responses.add(
+            responses.GET,
+            json={"edge_graph": lvl2_graph_list},
+            url=url,
+            headers={"Used-Bounds": "False"},
+        )
+
+        with pytest.raises(ValueError):
+            qlvl2_graph = myclient.chunkedgraph.level2_chunk_graph(
+                root_id, bounds=bounds
+            )
 
     @responses.activate
     def test_get_remeshing(self, myclient):
@@ -837,7 +856,6 @@ class TestChunkedgraph:
 
     @responses.activate
     def test_is_valid_nodes(self, myclient):
-
         endpoint_mapping = self._default_endpoint_map
         url = chunkedgraph_endpoints_v1["valid_nodes"].format_map(endpoint_mapping)
         query_nodes = [91070075234304972, 91070075234296549]

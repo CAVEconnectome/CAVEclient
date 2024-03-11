@@ -809,6 +809,7 @@ class ChunkedGraphClientV1(ClientBase):
         response = self.session.get(url, params=query_d)
 
         used_bounds = response.headers.get("Used-Bounds")
+        used_bounds = used_bounds == "true" or used_bounds == "True"
         if bounds is not None and not used_bounds:
             warning = (
                 "Bounds were not used for this query, even though it was requested. "
