@@ -774,7 +774,7 @@ class ChunkedGraphClientV1(ClientBase):
         rd = handle_response(response)
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
-    def level2_chunk_graph(self, root_id) -> list:
+    def level2_chunk_graph(self, root_id, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
 
@@ -783,6 +783,14 @@ class ChunkedGraphClientV1(ClientBase):
         ----------
         root_id : int
             Root id of object
+        bounds : np.array
+            3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates (use
+            `client.chunkedgraph.base_resolution` to view this default resolution for 
+            your chunkedgraph client). Note that the result will include any level 2 
+            nodes which have chunk boundaries within some part of this bounding box, 
+            meaning that the representative point for a given level 2 node could still 
+            be slightly outside of these bounds. If None, returns all level 2 chunks 
+            for the root ID.
 
         Returns
         -------
@@ -792,8 +800,27 @@ class ChunkedGraphClientV1(ClientBase):
         """
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["root_id"] = root_id
+
+        query_d = {}
+        if bounds is not None:
+            query_d["bounds"] = package_bounds(bounds)
+
         url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
-        r = handle_response(self.session.get(url))
+        response = self.session.get(url, params=query_d)
+
+        used_bounds = response.headers.get("Used-Bounds")
+        used_bounds = used_bounds == "true" or used_bounds == "True"
+        if bounds is not None and not used_bounds:
+            warning = (
+                "Bounds were not used for this query, even though it was requested. "
+                "This is likely because your system is running a version of the "
+                "chunkedgraph that does not support this feature. Please contact "
+                "your system administrator to update the chunkedgraph."
+            )
+            raise ValueError(warning)
+        
+        r = handle_response(response)
+
         return r["edge_graph"]
 
     def remesh_level2_chunks(self, chunk_ids) -> None:
