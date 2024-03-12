@@ -57,8 +57,9 @@ def combine_names(tableA, namesA, tableB, namesB, suffixes):
     return final_namesA + final_namesB, table_map, rename_map
 
 
-def get_all_table_metadata(client):
-    meta = client.materialize.get_tables_metadata()
+def get_all_table_metadata(client, meta=None):
+    if meta is None:
+        meta = client.materialize.get_tables_metadata()
     tables = []
     for m in meta:
         if m.get("annotation_table"):
@@ -116,13 +117,20 @@ def _schema_key(schema_name, client, **kwargs):
     key = keys.hashkey(schema_name, str(allow_types))
     return key
 
-def populate_schema_cache(client):
-    try:
-        schema_definitions = client.schema.schema_definition_all()
-    except:
-        schema_definitions = {sn:None for sn in client.schema.get_schemas()}
+def populate_schema_cache(client, schema_definitions=None):
+    if schema_definitions is None:
+        try:
+            schema_definitions = client.schema.schema_definition_all()
+        except:
+            schema_definitions = {sn:None for sn in client.schema.get_schemas()}
     for schema_name, schema_definition in schema_definitions.items():
         get_col_info(schema_name, client, schema_definition=schema_definition)
+
+def populate_table_cache(client, metadata=None):
+    if metadata is None:
+        metadata = get_all_table_metadata(client)
+    for tn, meta in metadata.items():
+        table_metadata(tn, client, meta=meta)
 
 @cached(cache=_schema_cache, key=_schema_key)
 def get_col_info(
@@ -286,18 +294,18 @@ def get_table_info(
 
 _metadata_cache = TTLCache(maxsize=128, ttl=86_400)
 
-
-def _metadata_key(tn, client):
+def _metadata_key(tn, client, **kwargs):
     key = keys.hashkey(tn)
     return key
 
 
 @cached(cache=_metadata_cache, key=_metadata_key)
-def table_metadata(table_name, client):
+def table_metadata(table_name, client, meta=None):
     "Caches getting table metadata"
     with warnings.catch_warnings():
         warnings.simplefilter(action="ignore")
-        meta = client.materialize.get_table_metadata(table_name)
+        if meta is None:
+            meta = client.materialize.get_table_metadata(table_name)
     if "schema" not in meta:
         meta["schema"] = meta.get("schema_type")
     return meta
@@ -545,6 +553,29 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
+                """Query views through the table interface
+
+                    Parameters
+                    ----------
+                    select_columns : list[str], optional
+                        Specification of columns to return, by default None
+                    offset : int, optional
+                        Integer offset from the beginning of the table to return, by default None.
+                        Used when tables are too large to return in one query.
+                    limit : int, optional
+                        Maximum number of rows to return, by default None
+                    split_positions : bool, optional
+                        If true, returns each point coordinate as a separate column, by default False
+                    materialization_version : int, optional
+                        Query a specified materialization version, by default None
+                    metadata : bool, optional
+                        If true includes query and table metadata in the .attrs property of the returned dataframe, by default True
+                    desired_resolution : list[int], optional
+                        Sets the 3d point resolution in nm, by default None.
+                        If default, uses the values in the table directly.
+                    get_counts : bool, optional
+                        Only return number of rows in the query, by default False
+                """
                 logger.warning(
                     "The `client.materialize.views` interface is experimental and might experience breaking changes before the feature is stabilized."
                 )
@@ -612,11 +643,12 @@ def make_query_filter_view(view_name, meta, schema, client):
 class TableManager(object):
     """Use schema definitions to generate query filters for each table."""
 
-    def __init__(self, client):
+    def __init__(self, client, metadata=None, schema=None):
         self._client = client
-        self._table_metadata = get_all_table_metadata(self._client)
+        self._table_metadata = get_all_table_metadata(self._client, meta=metadata)
         self._tables = sorted(list(self._table_metadata.keys()))
-        populate_schema_cache(client)
+        populate_schema_cache(client, schema_definitions=schema)
+        populate_table_cache(client, metadata=self._table_metadata)
         for tn in self._tables:
             setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
 
@@ -628,9 +660,12 @@ class TableManager(object):
 
 
 class ViewManager(object):
-    def __init__(self, client):
+    def __init__(self, client, view_metadata=None, view_schema=None):
         self._client = client
-        self._view_metadata, view_schema = get_all_view_metadata(self._client)
+        if view_metadata is None or view_schema is None:
+            view_metadata, view_schema = get_all_view_metadata(self._client)
+        else:
+            self._view_metadata = view_metadata
         self._views = sorted(list(self._view_metadata.keys()))
         for vn in self._views:
             setattr(
@@ -647,4 +682,3 @@ class ViewManager(object):
     def __repr__(self):
         return str(self._views)
 
-    
