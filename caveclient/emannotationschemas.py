@@ -108,7 +108,7 @@ class SchemaClientLegacy(ClientBase):
         Returns
         -------
         dict
-            Dictionary of schema definitions, keys are schema names values are definitions.
+            Dictionary of schema definitions. Keys are schema names, values are definitions.
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["schema_definition_multi"].format_map(endpoint_mapping)
@@ -122,7 +122,7 @@ class SchemaClientLegacy(ClientBase):
         Returns
         -------
         dict
-            Dictionary of schema definitions, keys are schema names values are definitions.
+            Dictionary of schema definitions. Keys are schema names, values are definitions.
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["schema_definition_all"].format_map(endpoint_mapping)
