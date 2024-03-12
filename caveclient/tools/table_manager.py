@@ -116,6 +116,13 @@ def _schema_key(schema_name, client, **kwargs):
     key = keys.hashkey(schema_name, str(allow_types))
     return key
 
+def populate_schema_cache(client):
+    try:
+        schema_definitions = client.schema.schema_definition_all()
+    except:
+        schema_definitions = {sn:None for sn in client.schema.get_schemas()}
+    for schema_name, schema_definition in schema_definitions.items():
+        get_col_info(schema_name, client, schema_definition=schema_definition)
 
 @cached(cache=_schema_cache, key=_schema_key)
 def get_col_info(
@@ -126,8 +133,12 @@ def get_col_info(
     allow_types=ALLOW_COLUMN_TYPES,
     add_fields=["id"],
     omit_fields=[],
+    schema_definition=None,
 ):
-    schema = client.schema.schema_definition(schema_name)
+    if schema_definition is None:
+        schema = client.schema.schema_definition(schema_name)
+    else:
+        schema = schema_definition.copy()
     sp_name = f"#/definitions/{spatial_point}"
     unbd_sp_name = f"#/definitions/{unbound_spatial_point}"
     n_sp = 0
@@ -605,6 +616,7 @@ class TableManager(object):
         self._client = client
         self._table_metadata = get_all_table_metadata(self._client)
         self._tables = sorted(list(self._table_metadata.keys()))
+        populate_schema_cache(client)
         for tn in self._tables:
             setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
 
@@ -634,3 +646,5 @@ class ViewManager(object):
 
     def __repr__(self):
         return str(self._views)
+
+    
