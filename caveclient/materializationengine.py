@@ -1892,9 +1892,16 @@ class MaterializationClientV3(MaterializationClientV2):
                     self.get_view_schemas
                 )
             )
-        tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
+        if self.fc is not None:
+            tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
+        else:
+            tables = None
         self.tables = tables
-        views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
+
+        if self.fc is not None:
+            views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
+        else:
+            views = None
         self.views = views
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))

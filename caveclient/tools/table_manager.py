@@ -655,8 +655,18 @@ class TableManager(object):
     def __getitem__(self, key):
         return getattr(self, key)
 
+    def __contains__(self, key):
+        return key in self._tables
+
     def __repr__(self):
         return str(self._tables)
+
+    @property
+    def table_names(self):
+        return self._tables
+    
+    def __len__(self):
+        return len(self._tables)
 
 
 class ViewManager(object):
@@ -679,6 +689,16 @@ class ViewManager(object):
     def __getitem__(self, key):
         return getattr(self, key)
 
+    def __contains__(self, key):
+        return key in self._views
+
     def __repr__(self):
         return str(self._views)
+
+    @property
+    def table_names(self):
+        return self._views
+    
+    def __len__(self):
+        return len(self._views)
 
