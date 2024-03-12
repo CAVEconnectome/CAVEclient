@@ -1806,9 +1806,7 @@ class MaterializationClientV2(ClientBase):
         if isinstance(tables, str):
             tables = [tables]
         if isinstance(desired_resolution, str):
-            desired_resolution = np.array(
-                [float(r) for r in desired_resolution.split(", ")]
-            )
+            desired_resolution = [float(r) for r in desired_resolution.split(", ")]
         join_query = len(tables) > 1
         materialization_version = kwargs.get("materialization_version", None)
         attrs = {
@@ -1865,7 +1863,7 @@ class MaterializationClientV2(ClientBase):
                 for tn in attrs["tables"]:
                     res.append(attrs["tables"][tn]["table_voxel_resolution"])
                 if np.atleast_2d(np.unique(np.array(res), axis=0)).shape[0] == 1:
-                    attrs["dataframe_resolution"] = res[0]
+                    attrs["dataframe_resolution"] = list(res[0])
                 else:
                     attrs["dataframe_resolution"] = "mixed_resolutions"
             else:
