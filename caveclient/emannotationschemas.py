@@ -112,7 +112,7 @@ class SchemaClientLegacy(ClientBase):
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["schema_definition_multi"].format_map(endpoint_mapping)
-        data={'schema_names': schema_types}
+        data={'schema_names': ','.join(schema_types)}
         response = self.session.post(url, params=data)
         return handle_response(response)
 
