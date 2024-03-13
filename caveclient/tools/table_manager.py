@@ -481,7 +481,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         metadata=metadata,
                         **self.filter_kwargs_mat,
                     )
-                else:
+                elif timestamp is None:
                     qry_table = self._reference_table
                     return client.materialize.join_query(
                         tables=self.basic_join,
@@ -494,6 +494,16 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         suffixes={self._reference_table: "_ref", self._base_table: ""},
                         metadata=metadata,
                         **self.filter_kwargs_mat,
+                    )
+                else:
+                    return self.live_query(
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        metadata=metadata,
+                        desired_resolution=desired_resolution,
+                        allow_missing_lookups=False,
                     )
 
             def live_query(
