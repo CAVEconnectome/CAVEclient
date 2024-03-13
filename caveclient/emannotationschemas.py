@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .base import ClientBase, _api_endpoints, handle_response
 from .endpoints import schema_api_versions, schema_endpoints_common
 from .auth import AuthClient
@@ -65,7 +66,7 @@ class SchemaClientLegacy(ClientBase):
             over_client=over_client,
         )
 
-    def get_schemas(self):
+    def get_schemas(self) -> list[str]:
         """Get the available schema types
 
         Returns
@@ -77,8 +78,8 @@ class SchemaClientLegacy(ClientBase):
         url = self._endpoints["schema"].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
-
-    def schema_definition(self, schema_type):
+    
+    def schema_definition(self, schema_type: str) -> dict[str]:
         """Get the definition of a specified schema_type
 
         Parameters
@@ -94,6 +95,38 @@ class SchemaClientLegacy(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["schema_type"] = schema_type
         url = self._endpoints["schema_definition"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        return handle_response(response)
+
+    def schema_definition_multi(self, schema_types: list[str]) -> dict:
+        """Get the definition of multiple schema_types
+
+        Parameters
+        ----------
+        schema_types : list
+            List of schema names
+        
+        Returns
+        -------
+        dict
+            Dictionary of schema definitions. Keys are schema names, values are definitions.
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["schema_definition_multi"].format_map(endpoint_mapping)
+        data={'schema_names': ','.join(schema_types)}
+        response = self.session.post(url, params=data)
+        return handle_response(response)
+
+    def schema_definition_all(self) -> dict[str]:
+        """Get the definition of all schema_types
+
+        Returns
+        -------
+        dict
+            Dictionary of schema definitions. Keys are schema names, values are definitions.
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["schema_definition_all"].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
 

@@ -200,6 +200,8 @@ schema_v2 = "{emas_server_address}/schema/api/v2"
 schema_endpoints_v2 = {
     "schema": schema_v2 + "/type",
     "schema_definition": schema_v2 + "/type/{schema_type}",
+    "schema_definition_multi": schema_v2 + "/types",
+    "schema_definition_all": schema_v2 + "/types_all",
 }
 
 schema_api_versions = {1: schema_endpoints_v1, 2: schema_endpoints_v2}

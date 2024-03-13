@@ -26,17 +26,17 @@ with open("requirements.txt", "r") as f:
 
 # read the contents of README file
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.rst").read_text()
+long_description = (this_directory / "README.md").read_text()
 
 setup(
     version=find_version("caveclient", "__init__.py"),
     name="caveclient",
     description="a service for interacting with the Connectome Annotation Versioning Engine",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     author="Forrest Collman, Casey Schneider-Mizell, Sven Dorkenwald",
     author_email="forrestc@alleninstute.org,caseys@alleninstitute.org,svenmd@princeton.edu,",
-    url="https://github.com/seung-lab/CAVEclient",
+    url="https://github.com/CAVEconnectome/CAVEclient",
     packages=find_packages(where="."),
     include_package_data=True,
     install_requires=required,

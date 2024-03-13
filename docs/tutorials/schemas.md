@@ -14,7 +14,7 @@ Currently, new schema have to be generated on the server side, although
 we aim to have a generic set available to use.
 
 ```python
-client.schema.schema()
+client.schema.get_schemas()
 ```
 
 ## View a specific schema
