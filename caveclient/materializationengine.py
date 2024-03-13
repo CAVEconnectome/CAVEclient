@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytz
+from concurrent.futures import ThreadPoolExecutor
 from cachetools import TTLCache, cached
 from IPython.display import HTML
 
@@ -247,25 +248,28 @@ class MaterializationClientV2(ClientBase):
             over_client=over_client,
         )
         self._datastack_name = datastack_name
-        if version is None:
-            version = self.most_recent_version()
         self._version = version
-        if cg_client is None:
-            if self.fc is not None:
-                self.cg_client = self.fc.chunkedgraph
-        else:
-            self.cg_client = cg_client
+        self._cg_client = cg_client
         self.synapse_table = synapse_table
         self.desired_resolution = desired_resolution
-        self._tables = None
-        self._views = None
 
     @property
     def datastack_name(self):
         return self._datastack_name
+    
+    @property
+    def cg_client(self):
+        if self._cg_client is None:
+            if self.fc is not None:
+                self._cg_client = self.fc.chunkedgraph
+            else:
+                raise ValueError("No chunkedgraph client specified")
+        return self._cg_client
 
     @property
     def version(self):
+        if self._version is None:
+            self._version = self.most_recent_version()
         return self._version
 
     @property
@@ -327,18 +331,6 @@ class MaterializationClientV2(ClientBase):
         response = self.session.get(url, params=query_args)
         self.raise_for_status(response)
         return response.json()
-
-    @property
-    def tables(self):
-        if self._tables is None:
-            self._tables = TableManager(self.fc)
-        return self._tables
-
-    @property
-    def views(self):
-        if self._views is None:
-            self._views = ViewManager(self.fc)
-        return self._views
 
     def get_tables(self, datastack_name=None, version=None):
         """Gets a list of table names for a datastack
@@ -1876,6 +1868,39 @@ class MaterializationClientV2(ClientBase):
 class MaterializationClientV3(MaterializationClientV2):
     def __init__(self, *args, **kwargs):
         super(MaterializationClientV3, self).__init__(*args, **kwargs)
+        metadata = []
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            metadata.append(
+                executor.submit(
+                    self.get_tables_metadata,
+                )
+            )
+            metadata.append(
+                executor.submit(
+                    self.fc.schema.schema_definition_all
+                )
+            )
+            metadata.append(
+                executor.submit(
+                    self.get_views
+                )
+            )
+            metadata.append(
+                executor.submit(
+                    self.get_view_schemas
+                )
+            )
+        if self.fc is not None:
+            tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
+        else:
+            tables = None
+        self.tables = tables
+
+        if self.fc is not None:
+            views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
+        else:
+            views = None
+        self.views = views
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_tables_metadata(
