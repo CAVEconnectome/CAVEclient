@@ -119,9 +119,8 @@ def _schema_key(schema_name, client, **kwargs):
 
 def populate_schema_cache(client, schema_definitions=None):
     if schema_definitions is None:
-        try:
-            schema_definitions = client.schema.schema_definition_all()
-        except:
+        schema_definitions = client.schema.schema_definition_all()
+        if schema_definitions is None:
             schema_definitions = {sn:None for sn in client.schema.get_schemas()}
     for schema_name, schema_definition in schema_definitions.items():
         get_col_info(schema_name, client, schema_definition=schema_definition)
@@ -251,6 +250,9 @@ def get_table_info(
         Dict mapping columns to table names
     """
     ref_table = meta.get("reference_table")
+    if ref_table is not None:
+        if len(ref_table) == 0:
+            ref_table = None
     if ref_table is None or merge_schema is False:
         schema = meta["schema"]
         ref_pts = []
@@ -463,9 +465,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
-                logger.warning(
-                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.query_table(
@@ -481,7 +480,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         metadata=metadata,
                         **self.filter_kwargs_mat,
                     )
-                else:
+                elif timestamp is None:
+                    logger.warning(
+                        "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
+                    )
                     qry_table = self._reference_table
                     return client.materialize.join_query(
                         tables=self.basic_join,
@@ -494,6 +496,16 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         suffixes={self._reference_table: "_ref", self._base_table: ""},
                         metadata=metadata,
                         **self.filter_kwargs_mat,
+                    )
+                else:
+                    return self.live_query(
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        metadata=metadata,
+                        desired_resolution=desired_resolution,
+                        allow_missing_lookups=False,
                     )
 
             def live_query(

@@ -5,7 +5,7 @@ import re
 import warnings
 from datetime import datetime, timezone
 from typing import Iterable, Optional, Union
-from urllib.error import HTTPError
+from requests import HTTPError
 
 import numpy as np
 import pandas as pd
@@ -252,6 +252,8 @@ class MaterializationClientV2(ClientBase):
         self._cg_client = cg_client
         self.synapse_table = synapse_table
         self.desired_resolution = desired_resolution
+        self._tables = None
+        self._views = None
 
     @property
     def datastack_name(self):
@@ -267,13 +269,13 @@ class MaterializationClientV2(ClientBase):
         return self._cg_client
 
     @property
-    def version(self):
+    def version(self) -> int:
         if self._version is None:
             self._version = self.most_recent_version()
         return self._version
 
     @property
-    def homepage(self):
+    def homepage(self) -> HTML:
         url = (
             f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
         )
@@ -285,6 +287,24 @@ class MaterializationClientV2(ClientBase):
             self._version = int(x)
         else:
             raise ValueError("Version not in materialized database")
+
+    @property
+    def tables(self) -> TableManager:
+        if self._tables is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                self._tables = TableManager(self.fc)
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._tables
+    
+    @property
+    def views(self) -> ViewManager:
+        if self._views is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                self._views = ViewManager(self.fc)
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._views
 
     def most_recent_version(self, datastack_name=None) -> int:
         """
@@ -356,7 +376,6 @@ class MaterializationClientV2(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
-        # TODO fix up latest version
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
@@ -1890,17 +1909,16 @@ class MaterializationClientV3(MaterializationClientV2):
                     self.get_view_schemas
                 )
             )
+        tables = None
         if self.fc is not None:
-            tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
-        else:
-            tables = None
-        self.tables = tables
-
+            if metadata[0].result() is not None and metadata[1].result() is not None:
+                tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
+        self._tables = tables
         if self.fc is not None:
             views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
         else:
             views = None
-        self.views = views
+        self._views = views
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
     def get_tables_metadata(
@@ -2510,7 +2528,7 @@ MaterializatonClientV3 = MaterializationClientV3
 client_mapping = {
     2: MaterializationClientV2,
     3: MaterializationClientV3,
-    "latest": MaterializationClientV2,
+    "latest": MaterializationClientV3,
 }
 
 MaterializationClientType = Union[MaterializationClientV2, MaterializationClientV3]
