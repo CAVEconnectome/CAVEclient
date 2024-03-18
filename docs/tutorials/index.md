@@ -14,7 +14,7 @@ Versioning Engine), which includes:
   (For storing datastack metadata information)
 - [EmAnnotationSchemas](https://www.github.com/seung-lab/EmAnnotationSchemas)
   (For storing an extensible set of schemas for annotating EM data)
-- [AnnotatationEngine](https://www.github.com/seung-lab/AnnotationEngine)
+- [AnnotationEngine](https://www.github.com/seung-lab/AnnotationEngine)
   (For storing annotations on EM data)
 
 ## Installation
