@@ -17,6 +17,7 @@ nav:
     - tutorials/schemas.md
     - tutorials/state.md
     - tutorials/materialization.md
+  - Examples: generated/examples
   - Client API: # these match the client property names
     - client_api/index.md
     - client_api/client.md
@@ -135,6 +136,11 @@ plugins:
   - macros
   - autorefs
   - section-index
+  - gallery:
+      examples_dirs: docs/examples
+      gallery_dirs: docs/generated/examples
+      filename_pattern: '/*.py'
+
   # - git-authors: # this one is more email-based
   #     show_contribution: true
   #     authorship_threshold_percent: 5

@@ -1,5 +1,6 @@
 mkdocs
 mkdocs-autorefs
+mkdocs-gallery
 mkdocs-git-authors-plugin
 mkdocs-git-committers-plugin-2
 mkdocs-git-revision-date-localized-plugin
