@@ -15,8 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: chartboost/ruff-action@v1
-        with:
-          args: check . --fix --select I
+        with: # the --extend-select flag adds import sorting
+          args: check . --fix --extend-select I
       - uses: chartboost/ruff-action@v1
         with:
           args: format .
