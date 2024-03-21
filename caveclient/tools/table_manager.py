@@ -117,19 +117,22 @@ def _schema_key(schema_name, client, **kwargs):
     key = keys.hashkey(schema_name, str(allow_types))
     return key
 
+
 def populate_schema_cache(client, schema_definitions=None):
     if schema_definitions is None:
         schema_definitions = client.schema.schema_definition_all()
         if schema_definitions is None:
-            schema_definitions = {sn:None for sn in client.schema.get_schemas()}
+            schema_definitions = {sn: None for sn in client.schema.get_schemas()}
     for schema_name, schema_definition in schema_definitions.items():
         get_col_info(schema_name, client, schema_definition=schema_definition)
+
 
 def populate_table_cache(client, metadata=None):
     if metadata is None:
         metadata = get_all_table_metadata(client)
     for tn, meta in metadata.items():
         table_metadata(tn, client, meta=meta)
+
 
 @cached(cache=_schema_cache, key=_schema_key)
 def get_col_info(
@@ -295,6 +298,7 @@ def get_table_info(
 
 
 _metadata_cache = TTLCache(maxsize=128, ttl=86_400)
+
 
 def _metadata_key(tn, client, **kwargs):
     key = keys.hashkey(tn)
@@ -567,26 +571,26 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
             ):
                 """Query views through the table interface
 
-                    Parameters
-                    ----------
-                    select_columns : list[str], optional
-                        Specification of columns to return, by default None
-                    offset : int, optional
-                        Integer offset from the beginning of the table to return, by default None.
-                        Used when tables are too large to return in one query.
-                    limit : int, optional
-                        Maximum number of rows to return, by default None
-                    split_positions : bool, optional
-                        If true, returns each point coordinate as a separate column, by default False
-                    materialization_version : int, optional
-                        Query a specified materialization version, by default None
-                    metadata : bool, optional
-                        If true includes query and table metadata in the .attrs property of the returned dataframe, by default True
-                    desired_resolution : list[int], optional
-                        Sets the 3d point resolution in nm, by default None.
-                        If default, uses the values in the table directly.
-                    get_counts : bool, optional
-                        Only return number of rows in the query, by default False
+                Parameters
+                ----------
+                select_columns : list[str], optional
+                    Specification of columns to return, by default None
+                offset : int, optional
+                    Integer offset from the beginning of the table to return, by default None.
+                    Used when tables are too large to return in one query.
+                limit : int, optional
+                    Maximum number of rows to return, by default None
+                split_positions : bool, optional
+                    If true, returns each point coordinate as a separate column, by default False
+                materialization_version : int, optional
+                    Query a specified materialization version, by default None
+                metadata : bool, optional
+                    If true includes query and table metadata in the .attrs property of the returned dataframe, by default True
+                desired_resolution : list[int], optional
+                    Sets the 3d point resolution in nm, by default None.
+                    If default, uses the values in the table directly.
+                get_counts : bool, optional
+                    Only return number of rows in the query, by default False
                 """
                 logger.warning(
                     "The `client.materialize.views` interface is experimental and might experience breaking changes before the feature is stabilized."
@@ -676,7 +680,7 @@ class TableManager(object):
     @property
     def table_names(self):
         return self._tables
-    
+
     def __len__(self):
         return len(self._tables)
 
@@ -710,7 +714,6 @@ class ViewManager(object):
     @property
     def table_names(self):
         return self._views
-    
+
     def __len__(self):
         return len(self._views)
-

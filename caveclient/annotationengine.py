@@ -457,7 +457,7 @@ class AnnotationClientV2(ClientBase):
     def get_annotation(
         self,
         table_name: str,
-        annotation_ids: (int or Iterable),
+        annotation_ids: int or Iterable,
         aligned_volume_name: str = None,
     ):
         """Retrieve an annotation or annotations by id(s) and table name.
@@ -493,7 +493,7 @@ class AnnotationClientV2(ClientBase):
         return handle_response(response)
 
     def post_annotation(
-        self, table_name: str, data: (dict or List), aligned_volume_name: str = None
+        self, table_name: str, data: dict or List, aligned_volume_name: str = None
     ):
         """Post one or more new annotations to a table in the AnnotationEngine.
         All inserted annotations will be marked as 'valid'. To invalidate
@@ -674,7 +674,7 @@ class AnnotationClientV2(ClientBase):
         self,
         table_name: str,
         df: pd.DataFrame,
-        position_columns: (Iterable[str] or Mapping[str, str] or None),
+        position_columns: Iterable[str] or Mapping[str, str] or None,
         aligned_volume_name=None,
     ):
         """Update one or more annotations to a table in the AnnotationEngine using a

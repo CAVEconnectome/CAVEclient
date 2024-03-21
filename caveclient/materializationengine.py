@@ -258,7 +258,7 @@ class MaterializationClientV2(ClientBase):
     @property
     def datastack_name(self):
         return self._datastack_name
-    
+
     @property
     def cg_client(self):
         if self._cg_client is None:
@@ -296,7 +296,7 @@ class MaterializationClientV2(ClientBase):
             else:
                 raise ValueError("No full CAVEclient specified")
         return self._tables
-    
+
     @property
     def views(self) -> ViewManager:
         if self._views is None:
@@ -1593,16 +1593,22 @@ class MaterializationClientV2(ClientBase):
                 tables,
                 select_columns,
                 suffix_map,
-                {table: past_filter_in_dict}
-                if past_filter_in_dict is not None
-                else None,
-                {table: past_filter_out_dict}
-                if past_filter_out_dict is not None
-                else None,
+                (
+                    {table: past_filter_in_dict}
+                    if past_filter_in_dict is not None
+                    else None
+                ),
+                (
+                    {table: past_filter_out_dict}
+                    if past_filter_out_dict is not None
+                    else None
+                ),
                 {table: past_equal_dict} if past_equal_dict is not None else None,
-                {table: filter_spatial_dict}
-                if filter_spatial_dict is not None
-                else None,
+                (
+                    {table: filter_spatial_dict}
+                    if filter_spatial_dict is not None
+                    else None
+                ),
                 {table: filter_regex_dict} if filter_regex_dict is not None else None,
                 True,
                 True,
@@ -1894,25 +1900,15 @@ class MaterializationClientV3(MaterializationClientV2):
                     self.get_tables_metadata,
                 )
             )
-            metadata.append(
-                executor.submit(
-                    self.fc.schema.schema_definition_all
-                )
-            )
-            metadata.append(
-                executor.submit(
-                    self.get_views
-                )
-            )
-            metadata.append(
-                executor.submit(
-                    self.get_view_schemas
-                )
-            )
+            metadata.append(executor.submit(self.fc.schema.schema_definition_all))
+            metadata.append(executor.submit(self.get_views))
+            metadata.append(executor.submit(self.get_view_schemas))
         tables = None
         if self.fc is not None:
             if metadata[0].result() is not None and metadata[1].result() is not None:
-                tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
+                tables = TableManager(
+                    self.fc, metadata[0].result(), metadata[1].result()
+                )
         self._tables = tables
         if self.fc is not None:
             views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
@@ -2432,9 +2428,11 @@ it will likely get removed in future versions. "
             {view_name: filter_in_dict} if filter_in_dict is not None else None,
             {view_name: filter_out_dict} if filter_out_dict is not None else None,
             {view_name: filter_equal_dict} if filter_equal_dict is not None else None,
-            {view_name: filter_spatial_dict}
-            if filter_spatial_dict is not None
-            else None,
+            (
+                {view_name: filter_spatial_dict}
+                if filter_spatial_dict is not None
+                else None
+            ),
             {view_name: filter_regex_dict} if filter_regex_dict is not None else None,
             return_df,
             True,
