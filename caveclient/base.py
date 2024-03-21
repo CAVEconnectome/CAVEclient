@@ -1,17 +1,16 @@
+import datetime
 import json
 import logging
 import urllib
-
-import requests
-
-logger = logging.getLogger(__name__)
-import datetime
 import webbrowser
 
 import numpy as np
 import pandas as pd
+import requests
 
 from .session_config import patch_session
+
+logger = logging.getLogger(__name__)
 
 
 class BaseEncoder(json.JSONEncoder):
