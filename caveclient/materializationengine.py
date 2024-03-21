@@ -136,12 +136,16 @@ def string_format_timestamp(ts):
         return ts
 
 
-def _check_select_columns_and_timestamp(select_columns, timestamp):
-    if timestamp is not None:
+def _check_select_columns_and_timestamp(
+    select_columns: Optional[Union[list, dict]], timestamp: Optional[datetime]
+) -> None:
+    if timestamp is not None and select_columns is not None:
         if isinstance(select_columns, list):
             select_values = select_columns
         elif isinstance(select_columns, dict):
             select_values = list(select_columns.values())
+        else:
+            return
 
         has_root = False
         has_supervoxel = False
