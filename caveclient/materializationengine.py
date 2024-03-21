@@ -3,17 +3,17 @@ import json
 import logging
 import re
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Iterable, Optional, Union
-from requests import HTTPError
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytz
-from concurrent.futures import ThreadPoolExecutor
 from cachetools import TTLCache, cached
 from IPython.display import HTML
+from requests import HTTPError
 
 from .auth import AuthClient
 from .base import (
@@ -134,6 +134,31 @@ def string_format_timestamp(ts):
         return datetime.strftime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     else:
         return ts
+
+
+def _check_select_columns_and_timestamp(select_columns, timestamp):
+    if timestamp is not None:
+        if isinstance(select_columns, list):
+            select_values = select_columns
+        elif isinstance(select_columns, dict):
+            select_values = list(select_columns.values())
+
+        has_root = False
+        has_supervoxel = False
+        for select_value in select_values:
+            if "_root_id" in select_value:
+                has_root = True
+            if "_supervoxel_id" in select_value:
+                has_supervoxel = True
+        if has_root and not has_supervoxel:
+            msg = (
+                "It looks like you are selecting a root ID column without "
+                "selecting the corresponding supervoxel ID column. This is likely "
+                "to cause issues with incorrect root IDs being returned for some "
+                "versions of the materialization engine. Please select the "
+                "corresponding supervoxel ID column as well."
+            )
+            raise ValueError(msg)
 
 
 def MaterializationClient(
@@ -258,7 +283,7 @@ class MaterializationClientV2(ClientBase):
     @property
     def datastack_name(self):
         return self._datastack_name
-    
+
     @property
     def cg_client(self):
         if self._cg_client is None:
@@ -296,7 +321,7 @@ class MaterializationClientV2(ClientBase):
             else:
                 raise ValueError("No full CAVEclient specified")
         return self._tables
-    
+
     @property
     def views(self) -> ViewManager:
         if self._views is None:
@@ -1513,6 +1538,8 @@ class MaterializationClientV2(ClientBase):
         if self.cg_client is None:
             raise ValueError("You must have a cg_client to run live_query")
 
+        _check_select_columns_and_timestamp(select_columns, timestamp)
+
         if datastack_name is None:
             datastack_name = self.datastack_name
         if desired_resolution is None:
@@ -1894,25 +1921,15 @@ class MaterializationClientV3(MaterializationClientV2):
                     self.get_tables_metadata,
                 )
             )
-            metadata.append(
-                executor.submit(
-                    self.fc.schema.schema_definition_all
-                )
-            )
-            metadata.append(
-                executor.submit(
-                    self.get_views
-                )
-            )
-            metadata.append(
-                executor.submit(
-                    self.get_view_schemas
-                )
-            )
+            metadata.append(executor.submit(self.fc.schema.schema_definition_all))
+            metadata.append(executor.submit(self.get_views))
+            metadata.append(executor.submit(self.get_view_schemas))
         tables = None
         if self.fc is not None:
             if metadata[0].result() is not None and metadata[1].result() is not None:
-                tables = TableManager(self.fc, metadata[0].result(), metadata[1].result())
+                tables = TableManager(
+                    self.fc, metadata[0].result(), metadata[1].result()
+                )
         self._tables = tables
         if self.fc is not None:
             views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
