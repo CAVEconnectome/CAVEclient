@@ -146,9 +146,9 @@ def _check_select_columns_and_timestamp(select_columns, timestamp):
         has_root = False
         has_supervoxel = False
         for select_value in select_values:
-            if "_root_id" in select_value:
+            if "root_id" in select_value:
                 has_root = True
-            if "_supervoxel_id" in select_value:
+            if "supervoxel_id" in select_value:
                 has_supervoxel = True
         if has_root and not has_supervoxel:
             msg = (
