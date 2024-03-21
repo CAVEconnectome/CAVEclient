@@ -105,7 +105,7 @@ def _check_authorization_redirect(response):
 {first_url}
 with the current auth configuration.\n
 Read the documentation at 
-https://seung-lab.github.io/CAVEclient/tutorials/authentication/
+https://caveconnectome.github.io/CAVEclient/tutorials/authentication/
 or follow instructions under 
 client.auth.get_new_token() for how to set a valid API token.
 after initializing a global client with
