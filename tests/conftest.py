@@ -1,9 +1,9 @@
+import os
+
 import pytest
 import responses
-from caveclient import CAVEclient
-import os
-from caveclient import endpoints
 
+from caveclient import CAVEclient, endpoints
 
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
 TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")

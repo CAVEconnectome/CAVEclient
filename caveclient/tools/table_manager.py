@@ -1,8 +1,9 @@
-import attrs
-import warnings
-import re
-from cachetools import cached, TTLCache, keys
 import logging
+import re
+import warnings
+
+import attrs
+from cachetools import TTLCache, cached, keys
 
 logger = logging.getLogger(__name__)
 

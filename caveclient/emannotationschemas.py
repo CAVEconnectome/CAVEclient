@@ -1,9 +1,12 @@
 from __future__ import annotations
+
+import logging
+
+from requests import HTTPError
+
+from .auth import AuthClient
 from .base import ClientBase, _api_endpoints, handle_response
 from .endpoints import schema_api_versions, schema_endpoints_common
-from .auth import AuthClient
-from requests import HTTPError
-import logging
 
 logger = logging.getLogger(__name__)
 

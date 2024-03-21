@@ -3,17 +3,17 @@ import json
 import logging
 import re
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Iterable, Optional, Union
-from requests import HTTPError
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytz
-from concurrent.futures import ThreadPoolExecutor
 from cachetools import TTLCache, cached
 from IPython.display import HTML
+from requests import HTTPError
 
 from .auth import AuthClient
 from .base import (

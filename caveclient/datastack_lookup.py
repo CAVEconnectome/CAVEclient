@@ -1,7 +1,8 @@
-import os
 import json
-from . import auth
 import logging
+import os
+
+from . import auth
 
 logger = logging.getLogger(__name__)
 

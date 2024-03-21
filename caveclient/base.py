@@ -1,15 +1,17 @@
-import urllib
-import requests
 import json
 import logging
+import urllib
+
+import requests
 
 logger = logging.getLogger(__name__)
+import datetime
 import webbrowser
 
-from .session_config import patch_session
 import numpy as np
-import datetime
 import pandas as pd
+
+from .session_config import patch_session
 
 
 class BaseEncoder(json.JSONEncoder):

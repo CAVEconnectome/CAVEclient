@@ -1,7 +1,9 @@
-from caveclient.endpoints import infoservice_endpoints_v2
-import responses
-from .conftest import test_info, TEST_DATASTACK, TEST_GLOBAL_SERVER
 import numpy as np
+import responses
+
+from caveclient.endpoints import infoservice_endpoints_v2
+
+from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, test_info
 
 
 def test_info_d(myclient):
