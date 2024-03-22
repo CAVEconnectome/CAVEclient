@@ -150,7 +150,7 @@ def _api_endpoints(
                 verify=verify,
             )
             avail_vs_server = set(avail_vs_server)
-        except: # noqa: E722
+        except:  # noqa: E722
             avail_vs_server = None
 
         avail_vs_client = set(endpoint_versions.keys())

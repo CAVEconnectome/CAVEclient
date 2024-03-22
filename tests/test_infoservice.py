@@ -20,7 +20,7 @@ class TestInfoClient:
 
     @responses.activate
     def test_infoclient(self, myclient, mocker):
-        endpoint_mapping = self.default_mapping # noqa F841
+        endpoint_mapping = self.default_mapping  # noqa F841
 
         assert myclient.info.segmentation_source() == test_info["segmentation_source"]
         assert (
