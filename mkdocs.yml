@@ -150,7 +150,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/seung-lab/CAVEclient
+      link: https://github.com/CAVEconnectome/CAVEclient
       name: Github
   version:
     provider: mike
