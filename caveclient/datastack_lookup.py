@@ -17,7 +17,7 @@ def read_map(filename=None):
         with open(os.path.expanduser(filename), "r") as f:
             data = json.load(f)
         return data
-    except:
+    except: # noqa E722
         return {}
 
 

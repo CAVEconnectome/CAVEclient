@@ -79,10 +79,9 @@ def get_all_view_metadata(client):
 def is_list_like(x):
     if isinstance(x, str):
         return False
-    try:
-        len(x)
+    if hasattr(x, "__len__"):
         return True
-    except:
+    else:
         return False
 
 
@@ -379,10 +378,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 tn: filter_empty(
                     attrs.asdict(
                         self,
-                        filter=lambda a, v: is_list_like(v) == False
+                        filter=lambda a, v: not is_list_like(v)
                         and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("is_bbox", False) == False # noqa E712
+                        and a.metadata.get("is_meta", False) == False # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -392,10 +391,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 tn: filter_empty(
                     attrs.asdict(
                         self,
-                        filter=lambda a, v: is_list_like(v) == True
+                        filter=lambda a, v: is_list_like(v)
                         and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("is_bbox", False) == False # noqa E712
+                        and a.metadata.get("is_meta", False) == False # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -407,7 +406,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: a.metadata.get("is_bbox", False)
                         and v is not None
-                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("is_meta", False) == False # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
