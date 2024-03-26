@@ -1,9 +1,13 @@
 from __future__ import annotations
+
+import logging
+
+from requests import HTTPError
+
+from .auth import AuthClient
 from .base import ClientBase, _api_endpoints, handle_response
 from .endpoints import schema_api_versions, schema_endpoints_common
-from .auth import AuthClient
-from requests import HTTPError
-import logging
+
 logger = logging.getLogger(__name__)
 
 server_key = "emas_server_address"
@@ -81,7 +85,7 @@ class SchemaClientLegacy(ClientBase):
         url = self._endpoints["schema"].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
-    
+
     def schema_definition(self, schema_type: str) -> dict[str]:
         """Get the definition of a specified schema_type
 
@@ -108,7 +112,7 @@ class SchemaClientLegacy(ClientBase):
         ----------
         schema_types : list
             List of schema names
-        
+
         Returns
         -------
         dict
@@ -116,12 +120,14 @@ class SchemaClientLegacy(ClientBase):
         """
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["schema_definition_multi"].format_map(endpoint_mapping)
-        data={'schema_names': ','.join(schema_types)}
+        data = {"schema_names": ",".join(schema_types)}
         response = self.session.post(url, params=data)
         try:
             return handle_response(response)
         except HTTPError:
-            logger.warning('Client requested an schema service endpoint (see "schema_definition_multi") not yet available on your deployment. Please talk to your admin about updating your deployment')
+            logger.warning(
+                'Client requested an schema service endpoint (see "schema_definition_multi") not yet available on your deployment. Please talk to your admin about updating your deployment'
+            )
             return None
 
     def schema_definition_all(self) -> dict[str]:
@@ -138,9 +144,10 @@ class SchemaClientLegacy(ClientBase):
         try:
             return handle_response(response)
         except HTTPError:
-            logger.warning('Client requested an schema service endpoint (see "schema_definition_all") not yet available on your deployment. Please talk to your admin about updating your deployment')
+            logger.warning(
+                'Client requested an schema service endpoint (see "schema_definition_all") not yet available on your deployment. Please talk to your admin about updating your deployment'
+            )
             return None
-
 
 
 client_mapping = {

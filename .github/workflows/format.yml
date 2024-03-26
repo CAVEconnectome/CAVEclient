@@ -1,0 +1,22 @@
+name: Lint and Format
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: master
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Allows other workflows to trigger this workflow
+  workflow_call:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+        with: # the --extend-select flag adds import sorting
+          args: check . --extend-select I
+      - uses: chartboost/ruff-action@v1
+        with:
+          args: format . --check

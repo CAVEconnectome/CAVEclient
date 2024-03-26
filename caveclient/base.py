@@ -1,15 +1,16 @@
-import urllib
-import requests
+import datetime
 import json
 import logging
-
-logger = logging.getLogger(__name__)
+import urllib
 import webbrowser
 
-from .session_config import patch_session
 import numpy as np
-import datetime
 import pandas as pd
+import requests
+
+from .session_config import patch_session
+
+logger = logging.getLogger(__name__)
 
 
 class BaseEncoder(json.JSONEncoder):
@@ -149,7 +150,7 @@ def _api_endpoints(
                 verify=verify,
             )
             avail_vs_server = set(avail_vs_server)
-        except:
+        except:  # noqa: E722
             avail_vs_server = None
 
         avail_vs_client = set(endpoint_versions.keys())
