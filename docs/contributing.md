@@ -31,8 +31,8 @@ and "help wanted" is open to whoever wants to implement it.
 
 ### Write Documentation
 
-networkframe could always use more documentation, whether as part of the
-official networkframe docs, in docstrings, or even on the web in blog posts,
+`{{ names.package }}` could always use more documentation, whether as part of the
+official `{{ names.package }}` docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 ### Submit Feedback
@@ -57,7 +57,12 @@ git clone git@github.com:your_name_here/{{ names.repo_title }}.git
 ```
 
 - Ensure [pip](https://pip.pypa.io/en/stable/installation/) is installed.
-- Create a virtual environment using pipenv:
+- Create a virtual environment (here we use venv):
+
+  ```console
+  python3 -m venv .venv
+  ```
+
 - Start your virtualenv:
 
   ```console
@@ -71,6 +76,13 @@ git clone git@github.com:your_name_here/{{ names.repo_title }}.git
   ```
 
 - Make your changes locally
+- Install development requirements:
+
+  ```console
+  pip install -r test_requirements.txt
+  pip install -e .
+  ```
+
 - When you're done making changes, check that your changes pass the
   tests by running [pytest](https://docs.pytest.org/en/):
 
@@ -81,6 +93,19 @@ git clone git@github.com:your_name_here/{{ names.repo_title }}.git
   Note that once you submit your pull request, GitHub Actions will run the tests also,
   including on multiple operating systems and Python versions. Your pull request will
   have to pass on all of these before it can be merged.
+
+- Ensure your contribution meets style guidelines. First, install [ruff](https://docs.astral.sh/ruff/):
+
+  ```console
+  pip install ruff
+  ```
+
+- Fix linting and formatting. From the root of the repository, run the following commands:
+
+  ```console
+  ruff check . --extend-select I --fix
+  ruff format .
+  ```
 
 - Commit your changes and push your branch to GitHub:
 
@@ -108,5 +133,6 @@ use the [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) theme, a
 variety of other extensions.
 
 !!! note
+
     More information codifying our documentation style and principles coming soon. For
     now, just try to follow the style of the existing documentation.
