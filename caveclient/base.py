@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.ndarray) or isinstance(obj, pd.Series):
+        if isinstance(obj, (np.ndarray, pd.Series, pd.Index)):
             return obj.tolist()
         if isinstance(obj, set):
             return list(obj)
