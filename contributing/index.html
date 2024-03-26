@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -847,8 +847,8 @@ wanted" is open to whoever wants to implement it.</p>
 <p>Look through the GitHub issues for features. Anything tagged with "enhancement"
 and "help wanted" is open to whoever wants to implement it.</p>
 <h4 id="write-documentation">Write Documentation<a class="headerlink" href="#write-documentation" title="Permanent link">&para;</a></h4>
-<p>networkframe could always use more documentation, whether as part of the
-official networkframe docs, in docstrings, or even on the web in blog posts,
+<p><code>caveclient</code> could always use more documentation, whether as part of the
+official <code>caveclient</code> docs, in docstrings, or even on the web in blog posts,
 articles, and such.</p>
 <h4 id="submit-feedback">Submit Feedback<a class="headerlink" href="#submit-feedback" title="Permanent link">&para;</a></h4>
 <p>The best way to send feedback is to <a href="https://github.com/CAVEconnectome/CAVEclient/issues/new">create an issue</a> on GitHub.</p>
@@ -868,7 +868,11 @@ articles, and such.</p>
 </code></pre></div>
 <ul>
 <li>Ensure <a href="https://pip.pypa.io/en/stable/installation/">pip</a> is installed.</li>
-<li>Create a virtual environment using pipenv:</li>
+<li>Create a virtual environment (here we use venv):</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">python3 -m venv .venv</span>
+</code></pre></div>
+<ul>
 <li>Start your virtualenv:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="go">source .venv/bin/activate</span>
@@ -880,6 +884,12 @@ articles, and such.</p>
 </code></pre></div>
 <ul>
 <li>Make your changes locally</li>
+<li>Install development requirements:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">pip install -r test_requirements.txt</span>
+<span class="go">pip install -e .</span>
+</code></pre></div>
+<ul>
 <li>When you're done making changes, check that your changes pass the
   tests by running <a href="https://docs.pytest.org/en/">pytest</a>:</li>
 </ul>
@@ -888,6 +898,17 @@ articles, and such.</p>
 <p>Note that once you submit your pull request, GitHub Actions will run the tests also,
   including on multiple operating systems and Python versions. Your pull request will
   have to pass on all of these before it can be merged.</p>
+<ul>
+<li>Ensure your contribution meets style guidelines. First, install <a href="https://docs.astral.sh/ruff/">ruff</a>:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">pip install ruff</span>
+</code></pre></div>
+<ul>
+<li>Fix linting and formatting. From the root of the repository, run the following commands:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">ruff check . --extend-select I --fix</span>
+<span class="go">ruff format .</span>
+</code></pre></div>
 <ul>
 <li>Commit your changes and push your branch to GitHub:</li>
 </ul>
