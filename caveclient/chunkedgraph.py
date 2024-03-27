@@ -17,7 +17,7 @@ from .base import (
     BaseEncoder,
     ClientBase,
     _api_endpoints,
-    check_version_compatibility,
+    _check_version_compatibility,
     handle_response,
 )
 from .endpoints import (
@@ -205,10 +205,13 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["get_current_semver"].format_map(endpoint_mapping)
         response = self.session.get(url)
+        print(url)
         if response.status_code == 404:  # server doesn't have this endpoint yet
             return None
         else:
             version_str = response.json()
+            print(response.json())
+            print(response)
             version = Version(version_str)
             return version
 
@@ -808,9 +811,7 @@ class ChunkedGraphClientV1(ClientBase):
         rd = handle_response(response)
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
-    @check_version_compatibility(
-        method_constraint=">=1.0.0", kwarg_use_constraints={"bounds": ">=2.15.0"}
-    )
+    @_check_version_compatibility(kwarg_use_constraints={"bounds": ">=2.15.0"})
     def level2_chunk_graph(self, root_id, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
@@ -847,6 +848,8 @@ class ChunkedGraphClientV1(ClientBase):
 
         r = handle_response(response)
 
+        # TODO in theory, could remove this check if we are confident in the server
+        # version fix
         used_bounds = response.headers.get("Used-Bounds")
         used_bounds = used_bounds == "true" or used_bounds == "True"
         if bounds is not None and not used_bounds:

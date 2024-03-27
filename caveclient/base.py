@@ -337,18 +337,18 @@ def _version_fails_constraint(version: Version, constraint: str = None):
 
 
 @parametrized
-def check_version_compatibility(
+def _check_version_compatibility(
     method: Callable, method_constraint: str = None, kwarg_use_constraints: dict = None
 ) -> Callable:
     """
-    This decorator is used to check the compatibility features in the client and
+    This decorator is used to check the compatibility of features in the client and
     server versions. If the server version is not compatible with the constraint, an
     error will be raised.
 
     Parameters
     ----------
     method
-        Method to be decorated.
+        Method of the client to be decorated.
     method_constraint
         Version constraint for the method, described as a comparison operator
         followed by the version number. For example, "<=1.0.0" would indicate that this

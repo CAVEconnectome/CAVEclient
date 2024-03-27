@@ -8,6 +8,7 @@ import pytz
 import responses
 from responses.matchers import json_params_matcher
 
+from caveclient.base import ServerIncompatibilityError
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     chunkedgraph_endpoints_v1,
@@ -418,6 +419,13 @@ class TestChunkedgraph:
         with pytest.raises(ValueError):
             qlvl2_graph = myclient.chunkedgraph.level2_chunk_graph(
                 root_id, bounds=bounds
+            )
+
+    def test_lvl2subgraph_old_server_fails_bounds(self, myclient):
+        myclient.chunkedgraph._version = "0.1.0"
+        with pytest.raises(ServerIncompatibilityError):
+            myclient.chunkedgraph.level2_chunk_graph(
+                0, bounds=np.array([[0, 1], [0, 1], [0, 1]])
             )
 
     @responses.activate
