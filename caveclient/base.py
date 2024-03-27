@@ -1,12 +1,18 @@
 import datetime
 import json
 import logging
+import operator
 import urllib
 import webbrowser
+from functools import wraps
+from typing import Callable
 
 import numpy as np
-import pandas as pd
 import requests
+from packaging.version import Version
+from packaging.version import parse as parse_version
+
+import pandas as pd
 
 from .session_config import patch_session
 
@@ -299,3 +305,135 @@ class ClientBaseWithDatastack(ClientBase):
     @property
     def datastack_name(self):
         return self._datastack_name
+
+
+def parametrized(dec):
+    """This decorator allows you to easily create decorators that take arguments"""
+    # REF: https://stackoverflow.com/questions/5929107/decorators-with-parameters
+
+    @wraps(dec)
+    def layer(*args, **kwargs):
+        @wraps(dec)
+        def repl(f):
+            return dec(f, *args, **kwargs)
+
+        return repl
+
+    return layer
+
+
+def _extract_constraint_info(constraint: str) -> tuple[str, Callable, Version]:
+    """
+    Extracts the operator and version number from a version constraint.
+
+    Parameters
+    ----------
+    constraint
+        Version constraint described as a comparison operator followed by the version
+        number. For example, "<=1.0.0" would indicate that this method is only
+        compatible with server versions less than or equal to 1.0.0.
+
+    Returns
+    -------
+    :
+        The complement name of the constraint.
+    :
+        The complement operator of the constraint.
+    :
+        The version object of the constraint.
+
+    """
+    if "<=" == constraint[:2]:
+        complement_name = ">"
+        complement_operator = operator.gt
+        constraint = constraint[2:]
+    elif ">=" == constraint[:2]:
+        complement_name = "<"
+        complement_operator = operator.lt
+        constraint = constraint[2:]
+    elif "==" == constraint[:2]:
+        complement_name = "!="
+        complement_operator = operator.ne
+        constraint = constraint[2:]
+    elif "!=" == constraint[:2]:
+        complement_name = "=="
+        complement_operator = operator.eq
+        constraint = constraint[2:]
+    elif "<" == constraint[0]:
+        complement_name = ">="
+        complement_operator = operator.ge
+        constraint = constraint[1:]
+    elif ">" == constraint[0]:
+        complement_name = "<="
+        complement_operator = operator.le
+        constraint = constraint[1:]
+    else:
+        raise ValueError(f"Constraint {constraint} not recognized.")
+    constraint = parse_version(constraint)
+    return complement_name, complement_operator, constraint
+
+
+@parametrized
+def check_version_compatibility(
+    method: Callable, method_constraint: str = None, kwarg_use_constraints: dict = None
+) -> Callable:
+    """
+    This decorator is used to check the compatibility features in the client and
+    server versions. If the server version is not compatible with the constraint, an
+    error will be raised.
+
+    Parameters
+    ----------
+    method
+        Method to be decorated.
+    method_constraint
+        Version constraint for the method, described as a comparison operator
+        followed by the version number. For example, "<=1.0.0" would indicate that this
+        method is only compatible with server versions less than or equal to 1.0.0.
+    kwarg_use_constraints
+        Dictionary with some number of the method's keyword arguments as keys and
+        version constraints as values. Version constraints are described as a
+        comparison operator followed by the version number. For example, "<=1.0.0"
+        would indicate that the keyword argument is only compatible with server versions
+        less than or equal to 1.0.0. An error will be raised only if the user both
+        provides the keyword argument (even if passing in the default value!) and the
+        server version is not compatible with the constraint.
+    """
+
+    @wraps(method)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        server_version = parse_version(self.version)
+
+        if method_constraint is not None:
+            complement_name, complement_operator, constraint = _extract_constraint_info(
+                method_constraint
+            )
+
+            if complement_operator(server_version, constraint):
+                msg = (
+                    f"Method {method.__name__} is not permitted "
+                    f"for server version {complement_name}{constraint}, your server "
+                    f"version is {server_version}. Contact your system "
+                    "administrator to update the server version."
+                )
+                raise ValueError(msg)
+
+        for kwarg, value in kwarg_use_constraints.items():
+            complement_name, complement_operator, constraint = _extract_constraint_info(
+                value
+            )
+
+            if kwarg in kwargs and complement_operator(server_version, constraint):
+                msg = (
+                    f"Use of {kwarg} in {method.__name__} is not permitted "
+                    f"for server version {complement_name}{constraint}, your server "
+                    f"version is {server_version}. Contact your system "
+                    "administrator to update the server version."
+                )
+                raise ValueError(msg)
+
+        out = method(*args, **kwargs)
+        return out
+
+    return wrapper
