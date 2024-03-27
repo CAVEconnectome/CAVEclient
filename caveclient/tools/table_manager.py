@@ -1,8 +1,9 @@
-import attrs
-import warnings
-import re
-from cachetools import cached, TTLCache, keys
 import logging
+import re
+import warnings
+
+import attrs
+from cachetools import TTLCache, cached, keys
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +58,9 @@ def combine_names(tableA, namesA, tableB, namesB, suffixes):
     return final_namesA + final_namesB, table_map, rename_map
 
 
-def get_all_table_metadata(client):
-    meta = client.materialize.get_tables_metadata()
+def get_all_table_metadata(client, meta=None):
+    if meta is None:
+        meta = client.materialize.get_tables_metadata()
     tables = []
     for m in meta:
         if m.get("annotation_table"):
@@ -77,10 +79,9 @@ def get_all_view_metadata(client):
 def is_list_like(x):
     if isinstance(x, str):
         return False
-    try:
-        len(x)
+    if hasattr(x, "__len__"):
         return True
-    except:
+    else:
         return False
 
 
@@ -117,6 +118,22 @@ def _schema_key(schema_name, client, **kwargs):
     return key
 
 
+def populate_schema_cache(client, schema_definitions=None):
+    if schema_definitions is None:
+        schema_definitions = client.schema.schema_definition_all()
+        if schema_definitions is None:
+            schema_definitions = {sn: None for sn in client.schema.get_schemas()}
+    for schema_name, schema_definition in schema_definitions.items():
+        get_col_info(schema_name, client, schema_definition=schema_definition)
+
+
+def populate_table_cache(client, metadata=None):
+    if metadata is None:
+        metadata = get_all_table_metadata(client)
+    for tn, meta in metadata.items():
+        table_metadata(tn, client, meta=meta)
+
+
 @cached(cache=_schema_cache, key=_schema_key)
 def get_col_info(
     schema_name,
@@ -126,8 +143,12 @@ def get_col_info(
     allow_types=ALLOW_COLUMN_TYPES,
     add_fields=["id"],
     omit_fields=[],
+    schema_definition=None,
 ):
-    schema = client.schema.schema_definition(schema_name)
+    if schema_definition is None:
+        schema = client.schema.schema_definition(schema_name)
+    else:
+        schema = schema_definition.copy()
     sp_name = f"#/definitions/{spatial_point}"
     unbd_sp_name = f"#/definitions/{unbound_spatial_point}"
     n_sp = 0
@@ -232,6 +253,9 @@ def get_table_info(
         Dict mapping columns to table names
     """
     ref_table = meta.get("reference_table")
+    if ref_table is not None:
+        if len(ref_table) == 0:
+            ref_table = None
     if ref_table is None or merge_schema is False:
         schema = meta["schema"]
         ref_pts = []
@@ -276,17 +300,18 @@ def get_table_info(
 _metadata_cache = TTLCache(maxsize=128, ttl=86_400)
 
 
-def _metadata_key(tn, client):
+def _metadata_key(tn, client, **kwargs):
     key = keys.hashkey(tn)
     return key
 
 
 @cached(cache=_metadata_cache, key=_metadata_key)
-def table_metadata(table_name, client):
+def table_metadata(table_name, client, meta=None):
     "Caches getting table metadata"
     with warnings.catch_warnings():
         warnings.simplefilter(action="ignore")
-        meta = client.materialize.get_table_metadata(table_name)
+        if meta is None:
+            meta = client.materialize.get_table_metadata(table_name)
     if "schema" not in meta:
         meta["schema"] = meta.get("schema_type")
     return meta
@@ -353,10 +378,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 tn: filter_empty(
                     attrs.asdict(
                         self,
-                        filter=lambda a, v: is_list_like(v) == False
+                        filter=lambda a, v: not is_list_like(v)
                         and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("is_bbox", False) == False  # noqa E712
+                        and a.metadata.get("is_meta", False) == False  # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -366,10 +391,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 tn: filter_empty(
                     attrs.asdict(
                         self,
-                        filter=lambda a, v: is_list_like(v) == True
+                        filter=lambda a, v: is_list_like(v)
                         and v is not None
-                        and a.metadata.get("is_bbox", False) == False
-                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("is_bbox", False) == False  # noqa E712
+                        and a.metadata.get("is_meta", False) == False  # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -381,7 +406,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: a.metadata.get("is_bbox", False)
                         and v is not None
-                        and a.metadata.get("is_meta", False) == False
+                        and a.metadata.get("is_meta", False) == False  # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -444,9 +469,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
-                logger.warning(
-                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.query_table(
@@ -462,7 +484,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         metadata=metadata,
                         **self.filter_kwargs_mat,
                     )
-                else:
+                elif timestamp is None:
+                    logger.warning(
+                        "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
+                    )
                     qry_table = self._reference_table
                     return client.materialize.join_query(
                         tables=self.basic_join,
@@ -475,6 +500,16 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         suffixes={self._reference_table: "_ref", self._base_table: ""},
                         metadata=metadata,
                         **self.filter_kwargs_mat,
+                    )
+                else:
+                    return self.live_query(
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        split_positions=split_positions,
+                        metadata=metadata,
+                        desired_resolution=desired_resolution,
+                        allow_missing_lookups=False,
                     )
 
             def live_query(
@@ -534,6 +569,29 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution=None,
                 get_counts=False,
             ):
+                """Query views through the table interface
+
+                Parameters
+                ----------
+                select_columns : list[str], optional
+                    Specification of columns to return, by default None
+                offset : int, optional
+                    Integer offset from the beginning of the table to return, by default None.
+                    Used when tables are too large to return in one query.
+                limit : int, optional
+                    Maximum number of rows to return, by default None
+                split_positions : bool, optional
+                    If true, returns each point coordinate as a separate column, by default False
+                materialization_version : int, optional
+                    Query a specified materialization version, by default None
+                metadata : bool, optional
+                    If true includes query and table metadata in the .attrs property of the returned dataframe, by default True
+                desired_resolution : list[int], optional
+                    Sets the 3d point resolution in nm, by default None.
+                    If default, uses the values in the table directly.
+                get_counts : bool, optional
+                    Only return number of rows in the query, by default False
+                """
                 logger.warning(
                     "The `client.materialize.views` interface is experimental and might experience breaking changes before the feature is stabilized."
                 )
@@ -601,24 +659,39 @@ def make_query_filter_view(view_name, meta, schema, client):
 class TableManager(object):
     """Use schema definitions to generate query filters for each table."""
 
-    def __init__(self, client):
+    def __init__(self, client, metadata=None, schema=None):
         self._client = client
-        self._table_metadata = get_all_table_metadata(self._client)
+        self._table_metadata = get_all_table_metadata(self._client, meta=metadata)
         self._tables = sorted(list(self._table_metadata.keys()))
+        populate_schema_cache(client, schema_definitions=schema)
+        populate_table_cache(client, metadata=self._table_metadata)
         for tn in self._tables:
             setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
 
     def __getitem__(self, key):
         return getattr(self, key)
 
+    def __contains__(self, key):
+        return key in self._tables
+
     def __repr__(self):
         return str(self._tables)
 
+    @property
+    def table_names(self):
+        return self._tables
+
+    def __len__(self):
+        return len(self._tables)
+
 
 class ViewManager(object):
-    def __init__(self, client):
+    def __init__(self, client, view_metadata=None, view_schema=None):
         self._client = client
-        self._view_metadata, view_schema = get_all_view_metadata(self._client)
+        if view_metadata is None or view_schema is None:
+            view_metadata, view_schema = get_all_view_metadata(self._client)
+        else:
+            self._view_metadata = view_metadata
         self._views = sorted(list(self._view_metadata.keys()))
         for vn in self._views:
             setattr(
@@ -632,5 +705,15 @@ class ViewManager(object):
     def __getitem__(self, key):
         return getattr(self, key)
 
+    def __contains__(self, key):
+        return key in self._views
+
     def __repr__(self):
         return str(self._views)
+
+    @property
+    def table_names(self):
+        return self._views
+
+    def __len__(self):
+        return len(self._views)

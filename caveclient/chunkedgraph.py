@@ -1,4 +1,5 @@
 """PyChunkedgraph service python interface"""
+
 import datetime
 import json
 import logging
@@ -852,6 +853,8 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
         response = self.session.get(url, params=query_d)
 
+        r = handle_response(response)
+
         used_bounds = response.headers.get("Used-Bounds")
         used_bounds = used_bounds == "true" or used_bounds == "True"
         if bounds is not None and not used_bounds:
@@ -862,8 +865,6 @@ class ChunkedGraphClientV1(ClientBase):
                 "your system administrator to update the chunkedgraph."
             )
             raise ValueError(warning)
-
-        r = handle_response(response)
 
         return r["edge_graph"]
 

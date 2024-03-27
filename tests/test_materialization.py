@@ -1,18 +1,25 @@
+import copy
+import datetime
+from io import BytesIO
+from urllib.parse import urlencode
+
+import numpy as np
+import pandas as pd
+import pyarrow as pa
 import pytest
+import responses
+from responses.matchers import json_params_matcher, query_param_matcher
+
 from caveclient import materializationengine
 from caveclient.endpoints import (
-    materialization_endpoints_v2,
     chunkedgraph_endpoints_common,
+    materialization_common,
+    materialization_endpoints_v2,
+    materialization_endpoints_v3,
+    schema_endpoints_v2,
 )
-import pandas as pd
-import responses
-from responses.matchers import json_params_matcher
-import pyarrow as pa
-from urllib.parse import urlencode
-from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK
-import datetime
-import numpy as np
-from io import BytesIO
+
+from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
 
 
 def test_info_d(myclient):
@@ -82,6 +89,309 @@ class TestMatclient:
         "reference_table": None,
         "voxel_resolution": [4.0, 4.0, 40.0],
     }
+
+    multitable_meta = [
+        {
+            "created": "2023-08-21T21:19:05.917336",
+            "valid": True,
+            "id": 32080,
+            "table_name": "allen_column_mtypes_v2",
+            "aligned_volume": "minnie65_phase3",
+            "schema": "cell_type_reference",
+            "schema_type": "cell_type_reference",
+            "user_id": "56",
+            "description": "Cluster-based M-types for the minnie column corresponding the updated clustering used for the revision of Schneider-Mizell et al. 2023. Maintained and created by Casey Schneider-Mizell [Note: This table 'allen_column_mtypes_v2' will update the 'target_id' foreign_key when updates are made to the 'nucleus_detection_v0' table] ",
+            "notice_text": None,
+            "reference_table": "nucleus_detection_v0",
+            "flat_segmentation_source": None,
+            "write_permission": "PRIVATE",
+            "read_permission": "PUBLIC",
+            "last_modified": "2023-08-21T22:53:37.378621",
+            "voxel_resolution": [4.0, 4.0, 40.0],
+        },
+        {
+            "created": "2020-11-02T18:56:35.530100",
+            "valid": True,
+            "id": 32131,
+            "table_name": "nucleus_detection_v0__minnie3_v1",
+            "aligned_volume": "minnie65_phase3",
+            "schema": "nucleus_detection",
+            "schema_type": "nucleus_detection",
+            "user_id": "121",
+            "description": "A table of nuclei detections from a nucleus detection model developed by Shang Mu, Leila Elabbady, Gayathri Mahalingam and Forrest Collman. Pt is the centroid of the nucleus detection. id corresponds to the flat_segmentation_source segmentID. Only included nucleus detections of volume>25 um^3, below which detections are false positives, though some false positives above that threshold remain. ",
+            "notice_text": None,
+            "reference_table": None,
+            "flat_segmentation_source": "precomputed://https://bossdb-open-data.s3.amazonaws.com/iarpa_microns/minnie/minnie65/nuclei",
+            "write_permission": "PRIVATE",
+            "read_permission": "PUBLIC",
+            "last_modified": "2022-10-25T19:24:28.559914",
+            "segmentation_source": "",
+            "pcg_table_name": "minnie3_v1",
+            "last_updated": "2024-03-12T20:00:00.168161",
+            "annotation_table": "nucleus_detection_v0",
+            "voxel_resolution": [4.0, 4.0, 40.0],
+        },
+    ]
+
+    multischema_meta = {
+        "cell_type_reference": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": {
+                "CellTypeReference": {
+                    "required": ["cell_type", "classification_system", "target_id"],
+                    "properties": {
+                        "cell_type": {
+                            "title": "cell_type",
+                            "type": "string",
+                            "description": "Cell type name",
+                        },
+                        "classification_system": {
+                            "title": "classification_system",
+                            "type": "string",
+                            "description": "Classification system followed",
+                        },
+                        "target_id": {"type": "integer"},
+                        "valid": {
+                            "title": "valid",
+                            "type": ["boolean", "null"],
+                            "default": False,
+                            "description": "is this annotation valid",
+                        },
+                    },
+                    "type": "object",
+                    "additionalProperties": True,
+                }
+            },
+            "$ref": "#/definitions/CellTypeReference",
+        },
+        "nucleus_detection": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": {
+                "SpatialPoint": {
+                    "required": ["position"],
+                    "properties": {"position": {"type": "array"}},
+                    "type": "object",
+                    "additionalProperties": False,
+                },
+                "BoundSpatialPoint": {
+                    "required": ["position"],
+                    "properties": {
+                        "position": {"type": "array"},
+                        "root_id": {"type": "integer"},
+                        "supervoxel_id": {"type": "integer"},
+                    },
+                    "type": "object",
+                    "additionalProperties": False,
+                },
+                "NucleusDetection": {
+                    "required": ["pt"],
+                    "properties": {
+                        "bb_end": {
+                            "type": "object",
+                            "$ref": "#/definitions/SpatialPoint",
+                            "description": "high corner of the bounding box",
+                        },
+                        "bb_start": {
+                            "type": "object",
+                            "$ref": "#/definitions/SpatialPoint",
+                            "description": "low corner of the bounding box",
+                        },
+                        "pt": {
+                            "type": "object",
+                            "$ref": "#/definitions/BoundSpatialPoint",
+                            "description": "the centroid of the nucleus, to be linked to the segmentation",
+                        },
+                        "valid": {
+                            "title": "valid",
+                            "type": ["boolean", "null"],
+                            "default": False,
+                            "description": "is this annotation valid",
+                        },
+                        "volume": {
+                            "title": "volume",
+                            "type": "number",
+                            "format": "float",
+                            "description": "the volume of the nucleus detected in um^3",
+                        },
+                    },
+                    "type": "object",
+                    "additionalProperties": True,
+                },
+            },
+            "$ref": "#/definitions/NucleusDetection",
+        },
+    }
+
+    views_list = {
+        "synapses_pni_2_in_out_degree": {
+            "notice_text": None,
+            "datastack_name": "minnie65_phase3_v1",
+            "id": 1,
+            "voxel_resolution_x": 4.0,
+            "description": "This calculates the number of input and output synapses from individual segment IDs. ",
+            "voxel_resolution_z": 40.0,
+            "live_compatible": False,
+            "voxel_resolution_y": 4.0,
+        },
+        "connections_with_nuclei": {
+            "notice_text": None,
+            "datastack_name": "minnie65_phase3_v1",
+            "id": 2,
+            "voxel_resolution_x": 4.0,
+            "description": "This summarizes connections with number of synapses and summed synapse size, as well as reporting the nucleus id associated with the pt_root_id if there is precisely one in the nucleus_detection_v0 table. \r\n\r\nColumns are pre_pt_root_id, post_pt_root_id, n_syn, sum_size, pre_nuc_id, post_nuc_id.",
+            "voxel_resolution_z": 40.0,
+            "live_compatible": False,
+            "voxel_resolution_y": 4.0,
+        },
+        "nucleus_detection_lookup_v1": {
+            "notice_text": None,
+            "datastack_name": "minnie65_phase3_v1",
+            "id": 3,
+            "voxel_resolution_x": 4.0,
+            "description": "A table that merges the nucleus_detection_v0 table with the nucleus_alternative_points table to provide one root_id column which can be used to lookup segments associated with root_ids, while preserving the geometric center of the nucleus. ",
+            "voxel_resolution_z": 40.0,
+            "live_compatible": True,
+            "voxel_resolution_y": 4.0,
+        },
+        "soma_counts": {
+            "notice_text": None,
+            "datastack_name": "minnie65_phase3_v1",
+            "id": 4,
+            "voxel_resolution_x": 4.0,
+            "description": "This takes the nucleus_detection_lookup_v1 view and the nucleus_ref_neuron_svm table to measure how many nuclei there are per segment_id and how many of those are neurons. \r\n\r\nThe columns are \r\nid: the ID of the nucleus\r\npt_position: the centroid of the nucleus\r\npt_supervoxel_id: the supervoxel of the nucleus in case you want to update it\r\ncell_type: the cell type of the nucleus from the svm model.\r\nneuron_count: how many neurons are associated with this root id\r\ntotal_count: how many total nucleus detections are associated with this root_id",
+            "voxel_resolution_z": 40.0,
+            "live_compatible": False,
+            "voxel_resolution_y": 4.0,
+        },
+        "single_neurons": {
+            "notice_text": None,
+            "datastack_name": "minnie65_phase3_v1",
+            "id": 5,
+            "voxel_resolution_x": 4.0,
+            "description": 'This is a list of all the single neuron objects in the dataset, the id column is the nucleus_id, the root_id is its segment_id (which can change over versions), and then position is the position of the centroid of its nucleus. This is based on the soma_counts view, filtering for cell_type="neuron" and n_neuron=1. ',
+            "voxel_resolution_z": 40.0,
+            "live_compatible": False,
+            "voxel_resolution_y": 4.0,
+        },
+    }
+
+    views_schema = {
+        "synapses_pni_2_in_out_degree": {
+            "root_id": {"type": "integer"},
+            "n_input": {"type": "integer"},
+            "avg_input_size": {"type": "float"},
+            "n_output": {"type": "integer"},
+            "avg_output_size": {"type": "float"},
+        },
+        "connections_with_nuclei": {
+            "pre_pt_root_id": {"type": "integer"},
+            "post_pt_root_id": {"type": "integer"},
+            "n_syn": {"type": "integer"},
+            "sum_size": {"type": "float"},
+            "pre_nuc_id": {"type": "integer"},
+            "post_nuc_id": {"type": "integer"},
+        },
+        "nucleus_detection_lookup_v1": {
+            "id": {"type": "integer"},
+            "volume": {"type": "float"},
+            "pt_position": {"type": "SpatialPoint"},
+            "pt_root_id": {"type": "integer"},
+            "orig_root_id": {"type": "integer"},
+            "pt_supervoxel_id": {"type": "integer"},
+            "pt_position_lookup": {"type": "SpatialPoint"},
+        },
+        "soma_counts": {
+            "id": {"type": "integer"},
+            "pt_position": {"type": "SpatialPoint"},
+            "pt_root_id": {"type": "integer"},
+            "pt_supervoxel_id": {"type": "integer"},
+            "cell_type": {"type": "string"},
+            "neuron_count": {"type": "integer"},
+            "total_count": {"type": "integer"},
+        },
+        "single_neurons": {
+            "id": {"type": "integer"},
+            "pt_root_id": {"type": "integer"},
+            "pt_position": {"type": "SpatialPoint"},
+            "pt_supervoxel_id": {"type": "integer"},
+        },
+    }
+
+    @responses.activate
+    def test_matclient_v3_tableinterface(self, myclient, mocker):
+        myclient = copy.deepcopy(myclient)
+        endpoint_mapping = self.default_mapping
+        endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
+
+        api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
+            endpoint_mapping
+        )
+        responses.add(responses.GET, url=api_versions_url, json=[0, 1], status=200)
+        responses.add(
+            responses.GET,
+            url=materialization_common["get_api_versions"].format_map(endpoint_mapping),
+            json=[3],
+            status=200,
+        )
+
+        versionurl = materialization_endpoints_v3["versions"].format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.GET,
+            url=versionurl,
+            json=[1],
+            status=200,
+            match=[query_param_matcher({"expired": False})],
+        )
+
+        all_tables_meta_url = materialization_endpoints_v3[
+            "all_tables_metadata"
+        ].format_map(endpoint_mapping)
+        responses.add(
+            responses.GET,
+            url=all_tables_meta_url,
+            json=self.multitable_meta,
+            status=200,
+        )
+
+        all_schema_def_url = schema_endpoints_v2["schema_definition_all"].format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.GET,
+            url=all_schema_def_url,
+            json=self.multischema_meta,
+            status=200,
+        )
+
+        get_views_url = materialization_endpoints_v3["get_views"].format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.GET, url=get_views_url, json=self.views_list, status=200
+        )
+
+        get_views_schema_url = materialization_endpoints_v3["view_schemas"].format_map(
+            endpoint_mapping
+        )
+        print(get_views_schema_url)
+        responses.add(
+            responses.GET, url=get_views_schema_url, json=self.views_schema, status=200
+        )
+
+        assert len(myclient.materialize.tables) == 2
+        qry = myclient.materialize.tables.allen_column_mtypes_v2(
+            pt_root_id=[123, 456], target_id=271700
+        )
+        params = qry.filter_kwargs_live
+        assert "allen_column_mtypes_v2" in params.get("filter_equal_dict")
+        assert "nucleus_detection_v0" in params.get("filter_in_dict")
+        assert "allen_column_mtypes_v2" == qry.joins_kwargs.get("joins")[0][0]
+
+        assert "single_neurons" in myclient.materialize.views
+        vqry = myclient.materialize.views.single_neurons(pt_root_id=[123, 456])
+        assert 123 in vqry.filter_kwargs_mat.get("filter_in_dict").get("pt_root_id")
 
     @responses.activate
     def test_matclient(self, myclient, mocker):

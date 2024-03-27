@@ -1,20 +1,21 @@
-import urllib
-import requests
+import datetime
 import json
 import logging
-
-logger = logging.getLogger(__name__)
+import urllib
 import webbrowser
 
-from .session_config import patch_session
 import numpy as np
-import datetime
 import pandas as pd
+import requests
+
+from .session_config import patch_session
+
+logger = logging.getLogger(__name__)
 
 
 class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.ndarray) or isinstance(obj, pd.Series):
+        if isinstance(obj, (np.ndarray, pd.Series, pd.Index)):
             return obj.tolist()
         if isinstance(obj, set):
             return list(obj)
@@ -105,7 +106,7 @@ def _check_authorization_redirect(response):
 {first_url}
 with the current auth configuration.\n
 Read the documentation at 
-https://seung-lab.github.io/CAVEclient/tutorials/authentication/
+https://caveconnectome.github.io/CAVEclient/tutorials/authentication/
 or follow instructions under 
 client.auth.get_new_token() for how to set a valid API token.
 after initializing a global client with
@@ -149,7 +150,7 @@ def _api_endpoints(
                 verify=verify,
             )
             avail_vs_server = set(avail_vs_server)
-        except:
+        except:  # noqa: E722
             avail_vs_server = None
 
         avail_vs_client = set(endpoint_versions.keys())
