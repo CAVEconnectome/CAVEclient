@@ -2,13 +2,14 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
 import numpy as np
-import pandas as pd
 import pytz
+
+import pandas as pd
 
 from .auth import AuthClient
 from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
@@ -182,6 +183,7 @@ class ChunkedGraphClientV1(ClientBase):
         self._default_timestamp = timestamp
         self._table_name = table_name
         self._segmentation_info = None
+        self._semver = self._get_current_semver()
 
     @property
     def default_url_mapping(self):
@@ -190,6 +192,48 @@ class ChunkedGraphClientV1(ClientBase):
     @property
     def table_name(self):
         return self._table_name
+
+    # TODO refactor to base client
+    def _get_current_semver(self):
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["get_current_semver"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            return None
+        else:
+            return response.json()
+
+    @property
+    def major_version(self) -> Optional[int]:
+        if self._semver is None:
+            return None
+        else:
+            return int(self._semver.split(".")[0])
+
+    @property
+    def minor_version(self) -> Optional[int]:
+        if self._semver is None:
+            return None
+        else:
+            return int(self._semver.split(".")[1])
+
+    @property
+    def patch_version(self) -> Optional[int]:
+        if self._semver is None:
+            return None
+        else:
+            return int(self._semver.split(".")[2])
+
+    @property
+    def version(self) -> Optional[str]:
+        return self._semver
+
+    @property
+    def max_version(self) -> str:
+        if self._semver is None:
+            return "2.15.0"  # this is the last version that doesn't have the endpoints
+        else:
+            return self._semver
 
     def _process_timestamp(self, timestamp):
         """Process timestamp with default logic"""
@@ -785,11 +829,11 @@ class ChunkedGraphClientV1(ClientBase):
             Root id of object
         bounds : np.array
             3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates (use
-            `client.chunkedgraph.base_resolution` to view this default resolution for 
-            your chunkedgraph client). Note that the result will include any level 2 
-            nodes which have chunk boundaries within some part of this bounding box, 
-            meaning that the representative point for a given level 2 node could still 
-            be slightly outside of these bounds. If None, returns all level 2 chunks 
+            `client.chunkedgraph.base_resolution` to view this default resolution for
+            your chunkedgraph client). Note that the result will include any level 2
+            nodes which have chunk boundaries within some part of this bounding box,
+            meaning that the representative point for a given level 2 node could still
+            be slightly outside of these bounds. If None, returns all level 2 chunks
             for the root ID.
 
         Returns
@@ -818,7 +862,7 @@ class ChunkedGraphClientV1(ClientBase):
                 "your system administrator to update the chunkedgraph."
             )
             raise ValueError(warning)
-        
+
         r = handle_response(response)
 
         return r["edge_graph"]

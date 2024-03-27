@@ -128,6 +128,7 @@ infoservice_api_versions = {1: infoservice_endpoints_v1, 2: infoservice_endpoint
 pcg_common = "{cg_server_address}/segmentation"
 chunkedgraph_endpoints_common = {
     "get_api_versions": pcg_common + "/api/versions",
+    "get_current_semver": pcg_common + "/api/current_semver",
     "info": pcg_common + "/table/{table_id}/info",
 }
 
