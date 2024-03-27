@@ -8,9 +8,9 @@ from urllib.parse import urlencode
 
 import networkx as nx
 import numpy as np
-import pytz
-
 import pandas as pd
+import pytz
+from packaging.version import Version
 
 from .auth import AuthClient
 from .base import (
@@ -190,7 +190,7 @@ class ChunkedGraphClientV1(ClientBase):
         self._default_timestamp = timestamp
         self._table_name = table_name
         self._segmentation_info = None
-        self._semver = self._get_current_semver()
+        self._server_version = self._get_server_version()
 
     @property
     def default_url_mapping(self):
@@ -201,46 +201,29 @@ class ChunkedGraphClientV1(ClientBase):
         return self._table_name
 
     # TODO refactor to base client
-    def _get_current_semver(self):
+    def _get_server_version(self) -> Optional[Version]:
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["get_current_semver"].format_map(endpoint_mapping)
         response = self.session.get(url)
         if response.status_code == 404:  # server doesn't have this endpoint yet
             return None
         else:
-            return response.json()
+            version_str = response.json()
+            version = Version(version_str)
+            return version
 
     @property
-    def major_version(self) -> Optional[int]:
-        if self._semver is None:
-            return None
+    def server_version(self) -> Optional[Version]:
+        return self._server_version
+
+    @property
+    def max_server_version(self) -> Version:
+        """Old versions of the server will not even have the endpoint to know"""
+        if self._server_version is None:
+            # this is the last version that doesn't have the endpoints
+            return Version("2.15.0")
         else:
-            return int(self._semver.split(".")[0])
-
-    @property
-    def minor_version(self) -> Optional[int]:
-        if self._semver is None:
-            return None
-        else:
-            return int(self._semver.split(".")[1])
-
-    @property
-    def patch_version(self) -> Optional[int]:
-        if self._semver is None:
-            return None
-        else:
-            return int(self._semver.split(".")[2])
-
-    @property
-    def version(self) -> Optional[str]:
-        return self._semver
-
-    @property
-    def max_version(self) -> str:
-        if self._semver is None:
-            return "2.15.0"  # this is the last version that doesn't have the endpoints
-        else:
-            return self._semver
+            return self._server_version
 
     def _process_timestamp(self, timestamp):
         """Process timestamp with default logic"""
@@ -825,7 +808,9 @@ class ChunkedGraphClientV1(ClientBase):
         rd = handle_response(response)
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
-    @check_version_compatibility(kwarg_use_constraints={"bounds": ">=2.15.0"})
+    @check_version_compatibility(
+        method_constraint=">=1.0.0", kwarg_use_constraints={"bounds": ">=2.15.0"}
+    )
     def level2_chunk_graph(self, root_id, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
