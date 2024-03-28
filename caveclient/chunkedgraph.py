@@ -220,7 +220,7 @@ class ChunkedGraphClientV1(ClientBase):
     @property
     def max_server_version(self) -> Version:
         """
-        The version of the remote server, or the last version of the server which 
+        The version of the remote server, or the last version of the server which
         does not have the endpoint for displaying its version if unavailable.
         """
         if self._server_version is None:
