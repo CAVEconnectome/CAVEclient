@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 from urllib.parse import urlencode
 
 import numpy as np
@@ -15,6 +16,31 @@ from caveclient.endpoints import (
 )
 
 from .conftest import TEST_LOCAL_SERVER, test_info
+
+TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
+TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
+TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
+
+test_info = {
+    "viewer_site": "http://neuromancer-seung-import.appspot.com/",
+    "aligned_volume": {
+        "name": "test_volume",
+        "image_source": f"precomputed://https://{TEST_LOCAL_SERVER}/test-em/v1",
+        "id": 1,
+        "description": "This is a test only dataset.",
+    },
+    "synapse_table": "test_synapse_table",
+    "description": "This is the first test datastack. ",
+    "local_server": TEST_LOCAL_SERVER,
+    "segmentation_source": f"graphene://https://{TEST_LOCAL_SERVER}/segmentation/table/test_v1",
+    "soma_table": "test_soma",
+    "analysis_database": None,
+    "viewer_resolution_x": 4.0,
+    "viewer_resolution_y": 4.0,
+    "viewer_resolution_z": 40,
+}
+# version_url = f"{TEST_LOCAL_SERVER}/segmentation/api/current_semver"
+# responses.add(responses.GET, version_url, json="1.0.0", status=200)
 
 
 def binary_body_match(body):
@@ -421,11 +447,13 @@ class TestChunkedgraph:
                 root_id, bounds=bounds
             )
 
-    def test_lvl2subgraph_old_server_fails_bounds(self, myclient):
-        myclient.chunkedgraph._version = "0.1.0"
+    @responses.activate
+    def test_lvl2subgraph_old_server_fails_bounds(self, old_chunkedgraph_client):
+        bounds = np.array([[83875, 85125], [82429, 83679], [20634, 20884]])
+        root_id = 864691136812623475
         with pytest.raises(ServerIncompatibilityError):
-            myclient.chunkedgraph.level2_chunk_graph(
-                0, bounds=np.array([[0, 1], [0, 1], [0, 1]])
+            old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(
+                root_id, bounds=bounds
             )
 
     @responses.activate

@@ -91,6 +91,7 @@ def _raise_for_status(r, log_warning=True):
 
 def handle_response(response, as_json=True, log_warning=True):
     """Deal with potential errors in endpoint response and return json for default case"""
+    # NOTE: consider adding "None on 404" as an option? 
     _raise_for_status(response, log_warning=log_warning)
     _check_authorization_redirect(response)
     if as_json:
