@@ -200,34 +200,7 @@ class ChunkedGraphClientV1(ClientBase):
     def table_name(self):
         return self._table_name
 
-    # TODO refactor to base client
-    def _get_version(self) -> Optional[Version]:
-        endpoint_mapping = self.default_url_mapping
-        url = self._endpoints["get_version"].format_map(endpoint_mapping)
-        response = self.session.get(url)
-        if response.status_code == 404:  # server doesn't have this endpoint yet
-            return None
-        else:
-            version_str = response.json()
-            version = Version(version_str)
-            return version
-
-    @property
-    def server_version(self) -> Optional[Version]:
-        """The version of the remote server."""
-        return self._server_version
-
-    @property
-    def max_server_version(self) -> Version:
-        """
-        The version of the remote server, or the last version of the server which
-        does not have the endpoint for displaying its version if unavailable.
-        """
-        if self._server_version is None:
-            # this is the last version that doesn't have the endpoints
-            return Version("2.15.0")
-        else:
-            return self._server_version
+    
 
     def _process_timestamp(self, timestamp):
         """Process timestamp with default logic"""

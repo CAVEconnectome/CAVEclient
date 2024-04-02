@@ -5,7 +5,7 @@ import textwrap
 import urllib
 import webbrowser
 from functools import wraps
-from typing import Callable
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -231,6 +231,24 @@ class ClientBase(object):
     @property
     def api_version(self):
         return self._api_version
+
+    def _get_version(self) -> Optional[Version]:
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["get_version"].format_map(endpoint_mapping)
+        response = self.session.get(url)
+        # TODO none_on_404 is not a thing
+        response = handle_response(response, as_json=True, none_on_404=True)
+        # if response.status_code == 404:  # server doesn't have this endpoint yet
+        #     return None
+        # else:
+        #     version_str = response.json()
+        #     version = Version(version_str)
+        #     return version
+
+    @property
+    def server_version(self) -> Optional[Version]:
+        """The version of the remote server."""
+        return self._server_version
 
     @staticmethod
     def raise_for_status(r, log_warning=True):
