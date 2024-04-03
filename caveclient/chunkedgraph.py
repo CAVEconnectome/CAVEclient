@@ -3,14 +3,13 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 import pytz
-from packaging.version import Version
 
 from .auth import AuthClient
 from .base import (
@@ -199,8 +198,6 @@ class ChunkedGraphClientV1(ClientBase):
     @property
     def table_name(self):
         return self._table_name
-
-    
 
     def _process_timestamp(self, timestamp):
         """Process timestamp with default logic"""

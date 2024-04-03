@@ -234,16 +234,14 @@ class ClientBase(object):
 
     def _get_version(self) -> Optional[Version]:
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints["get_version"].format_map(endpoint_mapping)
+        url = self._endpoints.get("get_version", None).format_map(endpoint_mapping)
         response = self.session.get(url)
-        # TODO none_on_404 is not a thing
-        response = handle_response(response, as_json=True, none_on_404=True)
-        # if response.status_code == 404:  # server doesn't have this endpoint yet
-        #     return None
-        # else:
-        #     version_str = response.json()
-        #     version = Version(version_str)
-        #     return version
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            return None
+        else:
+            version_str = handle_response(response, as_json=True)
+            version = Version(version_str)
+            return version
 
     @property
     def server_version(self) -> Optional[Version]:
