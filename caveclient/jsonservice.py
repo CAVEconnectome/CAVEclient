@@ -367,8 +367,11 @@ class JSONServiceV1(ClientBase):
         if format_propeties:
             url_mapping = self.default_url_mapping
             url_mapping["state_id"] = state_id
-            get_state_url = self._endpoints["get_property"][:-5].format_map(url_mapping)
+            get_state_url = self._endpoints["get_properties"][:-5].format_map(
+                url_mapping
+            )
             url = "precomputed://" + auth_text + get_state_url
+            return url
         if static_url:
             url = ngl_url + parameter_text + state_id
         else:
