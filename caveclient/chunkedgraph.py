@@ -12,7 +12,13 @@ import pandas as pd
 import pytz
 
 from .auth import AuthClient
-from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
+from .base import (
+    BaseEncoder,
+    ClientBase,
+    _api_endpoints,
+    _check_version_compatibility,
+    handle_response,
+)
 from .endpoints import (
     chunkedgraph_api_versions,
     chunkedgraph_endpoints_common,
@@ -183,6 +189,7 @@ class ChunkedGraphClientV1(ClientBase):
         self._default_timestamp = timestamp
         self._table_name = table_name
         self._segmentation_info = None
+        self._server_version = self._get_version()
 
     @property
     def default_url_mapping(self):
@@ -775,6 +782,7 @@ class ChunkedGraphClientV1(ClientBase):
         rd = handle_response(response)
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
+    @_check_version_compatibility(kwarg_use_constraints={"bounds": ">=2.15.0"})
     def level2_chunk_graph(self, root_id, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
@@ -811,6 +819,8 @@ class ChunkedGraphClientV1(ClientBase):
 
         r = handle_response(response)
 
+        # TODO in theory, could remove this check if we are confident in the server
+        # version fix
         used_bounds = response.headers.get("Used-Bounds")
         used_bounds = used_bounds == "true" or used_bounds == "True"
         if bounds is not None and not used_bounds:
