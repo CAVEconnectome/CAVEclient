@@ -10,6 +10,7 @@ from .base import (
     ClientBase,
     _api_endpoints,
     handle_response,
+    _check_version_compatibility,
 )
 from .endpoints import (
     default_global_server_address,
@@ -186,6 +187,7 @@ class JSONServiceV1(ClientBase):
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
+    @_check_version_compatibility(">=0.4.0")
     def get_property_json(self, state_id):
         """Download a Neuroglancer JSON state
 
@@ -244,6 +246,7 @@ class JSONServiceV1(ClientBase):
         response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
+    @_check_version_compatibility(">=0.4.0")
     def upload_property_json(self, property_json, state_id=None, timestamp=None):
         """Upload a Neuroglancer JSON state
 
