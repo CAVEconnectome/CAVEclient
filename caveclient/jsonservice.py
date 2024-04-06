@@ -9,8 +9,8 @@ from .auth import AuthClient
 from .base import (
     ClientBase,
     _api_endpoints,
-    handle_response,
     _check_version_compatibility,
+    handle_response,
 )
 from .endpoints import (
     default_global_server_address,
