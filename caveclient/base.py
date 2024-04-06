@@ -215,6 +215,7 @@ class ClientBase(object):
         self._api_version = api_version
         self._endpoints = endpoints
         self._fc = over_client
+        self._server_version = self._get_version()
 
     @property
     def fc(self):
@@ -234,7 +235,11 @@ class ClientBase(object):
 
     def _get_version(self) -> Optional[Version]:
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints.get("get_version", None).format_map(endpoint_mapping)
+        endpoint = self._endpoints.get("get_version", None)
+        if endpoint is None:
+            return None
+
+        url = endpoint.format_map(endpoint_mapping)
         response = self.session.get(url)
         if response.status_code == 404:  # server doesn't have this endpoint yet
             return None
@@ -349,8 +354,11 @@ def _version_fails_constraint(version: Version, constraint: str = None):
     if constraint is None:
         return False
     else:
-        specifier = SpecifierSet(constraint)
-        return version not in specifier
+        if version is None:
+            return True
+        else:
+            specifier = SpecifierSet(constraint)
+            return version not in specifier
 
 
 @parametrized

@@ -187,7 +187,7 @@ class JSONServiceV1(ClientBase):
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
-    @_check_version_compatibility(">=0.4.0")
+    @_check_version_compatibility(method_constraint=">=0.4.0")
     def get_property_json(self, state_id):
         """Download a Neuroglancer JSON state
 
