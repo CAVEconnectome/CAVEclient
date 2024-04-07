@@ -407,17 +407,17 @@ def _check_version_compatibility(
                 )
 
                 raise ServerIncompatibilityError(msg)
-
-        for kwarg, kwarg_constraint in kwarg_use_constraints.items():
-            if _version_fails_constraint(self.server_version, kwarg_constraint):
-                msg = (
-                    f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
-                    "is only permitted "
-                    f"for server version {kwarg_constraint}, your server "
-                    f"version is {self.server_version}. Contact your system "
-                    "administrator to update the server version."
-                )
-                raise ServerIncompatibilityError(msg)
+        if kwarg_use_constraints is not None:
+            for kwarg, kwarg_constraint in kwarg_use_constraints.items():
+                if _version_fails_constraint(self.server_version, kwarg_constraint):
+                    msg = (
+                        f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
+                        "is only permitted "
+                        f"for server version {kwarg_constraint}, your server "
+                        f"version is {self.server_version}. Contact your system "
+                        "administrator to update the server version."
+                    )
+                    raise ServerIncompatibilityError(msg)
 
         out = method(*args, **kwargs)
         return out
