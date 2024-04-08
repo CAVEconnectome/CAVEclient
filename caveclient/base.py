@@ -419,7 +419,6 @@ def _check_version_compatibility(
 
             for kwarg, kwarg_constraint in kwarg_use_constraints.items():
                 if check_kwargs.get(kwarg, None) is None:
-                    print(check_kwargs)
                     continue
                 elif _version_fails_constraint(self.server_version, kwarg_constraint):
                     msg = (
