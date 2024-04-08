@@ -808,6 +808,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.jsonservice.JSONServiceV1.get_property_json" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_property_json
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.jsonservice.JSONServiceV1.get_state_json" class="md-nav__link">
     <span class="md-ellipsis">
       get_state_json
@@ -829,6 +838,15 @@
   <a href="#caveclient.jsonservice.JSONServiceV1.save_state_json_local" class="md-nav__link">
     <span class="md-ellipsis">
       save_state_json_local
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.jsonservice.JSONServiceV1.upload_property_json" class="md-nav__link">
+    <span class="md-ellipsis">
+      upload_property_json
     </span>
   </a>
   
@@ -1099,7 +1117,7 @@ Extended documentation for all versions of the state client can be found
 
 
 <h2 id="caveclient.jsonservice.JSONServiceV1.build_neuroglancer_url" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">build_neuroglancer_url</span><span class="p">(</span><span class="n">state_id</span><span class="p">,</span> <span class="n">ngl_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_site</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">static_url</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+          <code class="highlight language-python"><span class="n">build_neuroglancer_url</span><span class="p">(</span><span class="n">state_id</span><span class="p">,</span> <span class="n">ngl_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_site</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">static_url</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">format_propeties</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#caveclient.jsonservice.JSONServiceV1.build_neuroglancer_url" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1176,6 +1194,20 @@ Default is None.</p>
           <td>
             <div class="doc-md-description">
               <p>If True, treats "state_id" as a static URL directly to the JSON and does not use the state service.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>format_propeties</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If True, formats the url as a segment_properties info file</p>
             </div>
           </td>
           <td>
@@ -1277,6 +1309,79 @@ If None, defaults to the value for the datastack or the client.</p>
           <td>
             <div class="doc-md-description">
               <p>JSON-formatted info field from the Neuroglancer deployment</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="caveclient.jsonservice.JSONServiceV1.get_property_json" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">get_property_json</span><span class="p">(</span><span class="n">state_id</span><span class="p">)</span></code>
+
+<a href="#caveclient.jsonservice.JSONServiceV1.get_property_json" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Download a Neuroglancer JSON state</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>state_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID of a JSON state uploaded to the state service.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>JSON specifying a Neuroglancer state.</p>
             </div>
           </td>
         </tr>
@@ -1474,6 +1579,107 @@ If None, defaults to the value for the datastack or the client.</p>
           <td>
             <div class="doc-md-description">
               
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="caveclient.jsonservice.JSONServiceV1.upload_property_json" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">upload_property_json</span><span class="p">(</span><span class="n">property_json</span><span class="p">,</span> <span class="n">state_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.jsonservice.JSONServiceV1.upload_property_json" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Upload a Neuroglancer JSON state</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>propery_json</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Dict representation of a neuroglancer segment properties json</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>state_id</code></td>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>ID of a JSON state uploaded to the state service.
+Using a state_id is an admin feature.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>timestamp</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Timestamp for json state date. Requires state_id.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>state_id of the uploaded JSON state</p>
             </div>
           </td>
         </tr>
