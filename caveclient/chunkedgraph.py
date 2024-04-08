@@ -782,7 +782,7 @@ class ChunkedGraphClientV1(ClientBase):
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
     @_check_version_compatibility(kwarg_use_constraints={"bounds": ">=2.15.0"})
-    def level2_chunk_graph(self, root_id, bounds=None) -> list:
+    def level2_chunk_graph(self, root_id, *, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
 
