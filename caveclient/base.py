@@ -409,7 +409,7 @@ def _check_version_compatibility(
                 )
 
                 raise ServerIncompatibilityError(msg)
-            
+
         if kwarg_use_constraints is not None:
             # this protects against someone passing in a positional argument for the
             # kwarg we are guarding
