@@ -1,7 +1,7 @@
 ---
 title: Changelog
 ---
-## 5.19.0 (April 8, 2024)
+## 5.20.0 (April 8, 2024)
 - Added generalized support for detecting server versions to provide timely exceptions to users
 - Used new support to check that chunkegraph has updated version before using spatial bounds kwarg
 on client.chunkedgraph.level2_chunk_graph
