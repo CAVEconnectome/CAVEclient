@@ -370,6 +370,10 @@ def _check_version_compatibility(
     server versions. If the server version is not compatible with the constraint, an
     error will be raised.
 
+    Note that methods being decorated must use keyword-only arguments for the keywords
+    that are being checked for compatibility. The decorator also assumes that the first
+    argument of the method is the client instance (self).
+
     Parameters
     ----------
     method
