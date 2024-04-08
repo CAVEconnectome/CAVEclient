@@ -430,9 +430,20 @@ class TestChunkedgraph:
                 root_id, bounds=bounds
             )
         with pytest.raises(ServerIncompatibilityError):
-            old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(
-                root_id, bounds
-            )
+            old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(root_id, bounds)
+
+        # should not fail even on old server when bounds are default value
+        # mock a response
+        endpoint_mapping = self._default_endpoint_map
+        endpoint_mapping["root_id"] = root_id
+        url = chunkedgraph_endpoints_v1["lvl2_graph"].format_map(endpoint_mapping)
+        responses.add(
+            responses.GET,
+            json={"edge_graph": []},
+            url=url,
+            headers={"Used-Bounds": "True"},
+        )
+        old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(root_id, bounds=None)
 
     @responses.activate
     def test_get_remeshing(self, myclient):

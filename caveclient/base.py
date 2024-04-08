@@ -409,13 +409,17 @@ def _check_version_compatibility(
                 )
 
                 raise ServerIncompatibilityError(msg)
+            
         if kwarg_use_constraints is not None:
-            # this protects against someone passing in a positional argument for the 
+            # this protects against someone passing in a positional argument for the
             # kwarg we are guarding
-            kwargs.update(zip(method.__code__.co_varnames[1:], args))
+            check_kwargs = kwargs.copy()
+            # add in any positional arguments that are not self to the checking
+            check_kwargs.update(zip(method.__code__.co_varnames[1:], args[1:]))
+
             for kwarg, kwarg_constraint in kwarg_use_constraints.items():
-                if kwargs.get(kwarg, None) is None:
-                    # Constraint kwarg is either not set or is None.
+                if check_kwargs.get(kwarg, None) is None:
+                    print(check_kwargs)
                     continue
                 elif _version_fails_constraint(self.server_version, kwarg_constraint):
                     msg = (
