@@ -429,6 +429,10 @@ class TestChunkedgraph:
             old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(
                 root_id, bounds=bounds
             )
+        with pytest.raises(ServerIncompatibilityError):
+            old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(
+                root_id, bounds
+            )
 
     @responses.activate
     def test_get_remeshing(self, myclient):

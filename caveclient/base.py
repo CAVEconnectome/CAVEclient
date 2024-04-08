@@ -370,9 +370,7 @@ def _check_version_compatibility(
     server versions. If the server version is not compatible with the constraint, an
     error will be raised.
 
-    Note that methods being decorated must use keyword-only arguments for the keywords
-    that are being checked for compatibility. The decorator also assumes that the first
-    argument of the method is the client instance (self).
+    The decorator assumes that the first argument of the method is the client instance (self).
 
     Parameters
     ----------
@@ -412,9 +410,12 @@ def _check_version_compatibility(
 
                 raise ServerIncompatibilityError(msg)
         if kwarg_use_constraints is not None:
+            # this protects against someone passing in a positional argument for the 
+            # kwarg we are guarding
+            kwargs.update(zip(method.__code__.co_varnames[1:], args))
             for kwarg, kwarg_constraint in kwarg_use_constraints.items():
                 if kwargs.get(kwarg, None) is None:
-                    # Constaint kwarg is either not set or is None.
+                    # Constraint kwarg is either not set or is None.
                     continue
                 elif _version_fails_constraint(self.server_version, kwarg_constraint):
                     msg = (
