@@ -6,8 +6,7 @@ name: Production environment tests
 on:
   push:
     branches:
-      - master
-    paths-ignore:
+      - '**'
       - "README.rst"
   pull_request:
     branches: master
