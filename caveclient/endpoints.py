@@ -219,6 +219,11 @@ jsonservice_endpoints_v1 = {
     "upload_state_w_id": json_v1 + "/post/{state_id}",
     "get_state": json_v1 + "/{state_id}",
     "get_state_raw": json_v1 + "/raw/{state_id}",
+    "get_properties": json_v1 + "/property/{state_id}/info",
+    "upload_properties": json_v1 + "/property/post",
+    "get_properties_raw": json_v1 + "/property/raw/{state_id}",
+    "upload_properties_w_id": json_v1 + "/property/post/{state_id}",
+    "get_version": json_v1 + "/version",
 }
 
 json_legacy = "{json_server_address}/nglstate"

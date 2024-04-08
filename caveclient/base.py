@@ -215,6 +215,7 @@ class ClientBase(object):
         self._api_version = api_version
         self._endpoints = endpoints
         self._fc = over_client
+        self._server_version = self._get_version()
 
     @property
     def fc(self):
@@ -234,7 +235,11 @@ class ClientBase(object):
 
     def _get_version(self) -> Optional[Version]:
         endpoint_mapping = self.default_url_mapping
-        url = self._endpoints.get("get_version", None).format_map(endpoint_mapping)
+        endpoint = self._endpoints.get("get_version", None)
+        if endpoint is None:
+            return None
+
+        url = endpoint.format_map(endpoint_mapping)
         response = self.session.get(url)
         if response.status_code == 404:  # server doesn't have this endpoint yet
             return None
@@ -349,8 +354,11 @@ def _version_fails_constraint(version: Version, constraint: str = None):
     if constraint is None:
         return False
     else:
-        specifier = SpecifierSet(constraint)
-        return version not in specifier
+        if version is None:
+            return True
+        else:
+            specifier = SpecifierSet(constraint)
+            return version not in specifier
 
 
 @parametrized
@@ -399,17 +407,17 @@ def _check_version_compatibility(
                 )
 
                 raise ServerIncompatibilityError(msg)
-
-        for kwarg, kwarg_constraint in kwarg_use_constraints.items():
-            if _version_fails_constraint(self.server_version, kwarg_constraint):
-                msg = (
-                    f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
-                    "is only permitted "
-                    f"for server version {kwarg_constraint}, your server "
-                    f"version is {self.server_version}. Contact your system "
-                    "administrator to update the server version."
-                )
-                raise ServerIncompatibilityError(msg)
+        if kwarg_use_constraints is not None:
+            for kwarg, kwarg_constraint in kwarg_use_constraints.items():
+                if _version_fails_constraint(self.server_version, kwarg_constraint):
+                    msg = (
+                        f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
+                        "is only permitted "
+                        f"for server version {kwarg_constraint}, your server "
+                        f"version is {self.server_version}. Contact your system "
+                        "administrator to update the server version."
+                    )
+                    raise ServerIncompatibilityError(msg)
 
         out = method(*args, **kwargs)
         return out
