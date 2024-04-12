@@ -1881,7 +1881,7 @@ class MaterializationClientV2(ClientBase):
                 attrs["dataframe_resolution"] = desired_resolution
 
         attrs.update(kwargs)
-        return attrs
+        return json.loads(json.dumps(attrs, cls=BaseEncoder))
 
 
 class MaterializationClientV3(MaterializationClientV2):
