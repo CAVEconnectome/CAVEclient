@@ -13,7 +13,6 @@ import pyarrow as pa
 import pytz
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
-
 from IPython.display import HTML
 from requests import HTTPError
 
