@@ -97,7 +97,7 @@ def root_id_int_list_check(
             raise ValueError(
                 "When passing a string for 'root_id' make sure the string can be converted to a uint64"
             )
-    elif isinstance(root_id, np.ndarray) or isinstance(root_id, list):
+    elif isinstance(root_id, (list, np.ndarray, pd.Series, pd.Index)):
         if make_unique:
             root_id = np.unique(root_id).astype(np.uint64)
         else:
@@ -1101,7 +1101,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         Parameters
         ----------
-        root_ids : list or array of int
+        root_ids : array-like of int
             Root IDs to check.
         timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs are valid root IDs in the chunked
@@ -1231,7 +1231,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         Parameters
         ----------
-        node_ids : list or array of int
+        node_ids : array-like of int
             Node IDs to check.
         start_timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs were valid after this timestamp.
