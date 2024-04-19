@@ -12,6 +12,7 @@ import pandas as pd
 import pyarrow as pa
 import pytz
 from cachetools import TTLCache, cached
+from cachetools.keys import hashkey
 from IPython.display import HTML
 from requests import HTTPError
 
@@ -1884,6 +1885,18 @@ class MaterializationClientV2(ClientBase):
         return json.loads(json.dumps(attrs, cls=BaseEncoder))
 
 
+def _tables_metadata_key(matclient, *args, **kwargs):
+    if "version" in kwargs:
+        version = kwargs["version"]
+    else:
+        version = matclient.version
+    if "datastack_name" in kwargs:
+        datastack_name = kwargs["datastack_name"]
+    else:
+        datastack_name = matclient.datastack_name
+    return hashkey(datastack_name, version)
+
+
 class MaterializationClientV3(MaterializationClientV2):
     def __init__(self, *args, **kwargs):
         super(MaterializationClientV3, self).__init__(*args, **kwargs)
@@ -1910,7 +1923,7 @@ class MaterializationClientV3(MaterializationClientV2):
             views = None
         self._views = views
 
-    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
+    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
     def get_tables_metadata(
         self,
         datastack_name=None,
