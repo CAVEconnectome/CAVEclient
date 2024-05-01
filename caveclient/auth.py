@@ -188,7 +188,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
 
         return handle_response(response)
 
-    def get_new_token(self, open=False):
+    def get_new_token(self, open=False, no_text=False):
         """Currently, returns instructions for getting a new token based on the current settings and saving it to the local environment. New OAuth tokens are currently not able to be retrieved programmatically.
 
         Parameters
@@ -207,7 +207,8 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                 3b) Set it for the current session only with client.auth.token = "PASTE_YOUR_TOKEN_HERE"
                 Note: If you need to save or load multiple tokens, please read the documentation for details.
                 Warning! Creating a new token by finishing step 2 will invalidate the previous token!"""
-        print(txt)
+        if not no_text:
+            print(txt)
         if open:
             webbrowser.open(auth_url)
         return None
