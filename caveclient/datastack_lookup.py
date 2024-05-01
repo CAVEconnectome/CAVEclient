@@ -56,7 +56,7 @@ def write_map(data, filename=None):
 
 def handle_server_address(datastack, server_address, filename=None, write=False):
     data = read_map(filename)
-    if server_address is not None:
+    if server_address is not None and datastack is not None:
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
             wrote = write_map(data, filename)
