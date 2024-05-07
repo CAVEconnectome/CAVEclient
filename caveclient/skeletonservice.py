@@ -100,6 +100,48 @@ class SkeletonClientV1(ClientBase):
             pool_block=pool_block,
             over_client=over_client,
         )
+    
+    def get_skeleton_by_rid(
+            self,
+            rid):
+ 
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["rid"] = rid
+        url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        return handle_response(response)
+    
+    # def get_skeleton_by_rid_sid(
+    #         self,
+    #         rid,
+    #         output_format,
+    #         # sid,
+    #         # bucket,
+    #         datastack,
+    #         materialize_version,
+    #         root_res_x,
+    #         root_res_y,
+    #         root_res_z,
+    #         collapse_soma,
+    #         collapse_radius):
+ 
+    #     endpoint_mapping = self.default_url_mapping
+    #     endpoint_mapping["rid"] = rid
+    #     endpoint_mapping["output_format"] = output_format
+    #     # endpoint_mapping["bucket"] = ?
+    #     endpoint_mapping["datastack"] = datastack
+    #     endpoint_mapping["materialize_version"] = materialize_version
+    #     endpoint_mapping["root_res_x"] = root_res_x
+    #     endpoint_mapping["root_res_y"] = root_res_y
+    #     endpoint_mapping["root_res_z"] = root_res_z
+    #     endpoint_mapping["collapse_soma"] = collapse_soma
+    #     endpoint_mapping["collapse_radius"] = collapse_radius
+    #     url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+
+    #     response = self.session.get(url)
+    #     return handle_response(response)
+    
 
 client_mapping = {
     1: SkeletonClientV1,
