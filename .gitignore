@@ -118,3 +118,6 @@ notebooks/
 *.mp4
 *.tiff
 .idea/
+
+# Keith's dev stuff
+CAVEclient_Skeleton_dev.ipynb

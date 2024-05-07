@@ -276,7 +276,9 @@ l2cache_endpoints_v1 = {
     "l2cache_table_mapping": l2cache_v1 + "/table_mapping",
 }
 
-l2cache_api_versions = {1: l2cache_endpoints_v1}
+l2cache_api_versions = {
+    1: l2cache_endpoints_v1
+}
 
 # -------------------------------
 # ------ Neuroglancer endpoints
@@ -300,4 +302,7 @@ skeletonservice_endpoints_v1 = {
     "skeleton_info": skeleton_v1 + "/precomputed/{root_id}",
 }
 
-skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}
+skeletonservice_api_versions = {
+    1: skeletonservice_endpoints_v1
+}
+

@@ -8,6 +8,7 @@ from .infoservice import InfoServiceClient, InfoServiceClientV2
 from .jsonservice import JSONService, JSONServiceV1
 from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
+from .skeletonservice import SkeletonClient, SkeletonClientV1
 
 DEFAULT_RETRIES = 3
 
@@ -49,6 +50,7 @@ class CAVEclient(object):
         - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
         - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../client_api/l2cache.md))
         - `client.materialize` is a `MaterializationClient` (see [client.materialize](../client_api/materialize.md))
+        - `client.skeleton` is a `SkeletonClient` (see [client.skeleton](../client_api/skeleton.md))
         - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
         - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
@@ -330,6 +332,7 @@ class CAVEclientFull(CAVEclientGlobal):
         - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
         - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../client_api/l2cache.md))
         - `client.materialize` is a `MaterializationClient` (see [client.materialize](../client_api/materialize.md))
+        - `client.skeleton` is a `SkeletonClient` (see [client.skeleton](../client_api/skeleton.md))
         - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
         - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
@@ -379,6 +382,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._chunkedgraph = None
         self._annotation = None
         self._materialize = None
+        self._skeleton = None
         self._l2cache = None
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
@@ -393,6 +397,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._chunkedgraph = None
         self._annotation = None
         self._materialize = None
+        self._skeleton = None
         self._l2cache = None
 
     @property
@@ -458,6 +463,25 @@ class CAVEclientFull(CAVEclientGlobal):
                 desired_resolution=self.desired_resolution,
             )
         return self._materialize
+
+    @property
+    def skeleton(self) -> SkeletonClientV1:
+        """
+        A client for the skeleton service. See [client.skeleton](../client_api/skeleton.md)
+        for more information.
+        """
+        if self._skeleton is None:
+            self._skeleton = SkeletonClientV1(
+                server_address=self.local_server,
+                auth_client=self.auth,
+                datastack_name=self._datastack_name,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
+                over_client=self,
+                desired_resolution=self.desired_resolution,
+            )
+        return self._skeleton
 
     @property
     def state(self) -> JSONServiceV1:

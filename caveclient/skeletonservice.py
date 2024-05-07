@@ -10,14 +10,12 @@ from .endpoints import (
     skeletonservice_api_versions,
     skeletonservice_common,
 )
-from .endpoints import skeleton_api_versions, skeleton_common
+from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
-server_key = "skeleton_server_address"
-
-SERVER_KEY = "ske_server_address"
+SERVER_KEY = "skeleton_server_address"
 
 
-def SkeletonizationClient(
+def SkeletonClient(
     server_address,
     datastack_name=None,
     auth_client=None,
@@ -27,9 +25,8 @@ def SkeletonizationClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
-    over_client=None,
-) -> "SkeletonizationClient":
-    """Factory for returning SkeletonizationClient
+) -> "SkeletonClientV1":
+    """Factory for returning SkeletonClient
 
     Parameters
     ----------
@@ -60,22 +57,50 @@ def SkeletonizationClient(
         api_version,
         SERVER_KEY,
         server_address,
-        skeleton_common,
-        skeleton_api_versions,
+        skeletonservice_common,
+        skeletonservice_api_versions,
         auth_header,
-        fallback_version=2,
+        fallback_version=1,
         verify=verify,
     )
 
-    return SkeletonizationClient(
+    SkeletonClient = client_mapping[api_version]
+    return SkeletonClient(
         server_address,
         auth_header,
         api_version,
         endpoints,
         SERVER_KEY,
-        datastack_name,
-        version=version,
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
     )
+
+class SkeletonClientV1(ClientBase):
+    def __init__(
+        self,
+        server_address,
+        auth_header,
+        api_version,
+        endpoints,
+        server_name,
+        max_retries=None,
+        pool_maxsize=None,
+        pool_block=None,
+        over_client=None,
+    ):
+        super(SkeletonClientV1, self).__init__(
+            server_address,
+            auth_header,
+            api_version,
+            endpoints,
+            server_name,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
+            over_client=over_client,
+        )
+
+client_mapping = {
+    1: SkeletonClientV1,
+}
