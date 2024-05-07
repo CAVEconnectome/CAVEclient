@@ -1,22 +1,25 @@
-import pytest
-from caveclient import materializationengine
-from caveclient.endpoints import (
-    materialization_endpoints_v2,
-    chunkedgraph_endpoints_common,
-    materialization_endpoints_v3,
-    schema_endpoints_v2,
-    materialization_common,
-)
+import copy
+import datetime
+from io import BytesIO
+from urllib.parse import urlencode
+
+import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pytest
 import responses
 from responses.matchers import json_params_matcher, query_param_matcher
-import pyarrow as pa
-from urllib.parse import urlencode
-import copy
-from .conftest import test_info, TEST_LOCAL_SERVER, TEST_DATASTACK, TEST_GLOBAL_SERVER
-import datetime
-import numpy as np
-from io import BytesIO
+
+from caveclient import materializationengine
+from caveclient.endpoints import (
+    chunkedgraph_endpoints_common,
+    materialization_common,
+    materialization_endpoints_v2,
+    materialization_endpoints_v3,
+    schema_endpoints_v2,
+)
+
+from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
 
 
 def test_info_d(myclient):
@@ -318,40 +321,77 @@ class TestMatclient:
     def test_matclient_v3_tableinterface(self, myclient, mocker):
         myclient = copy.deepcopy(myclient)
         endpoint_mapping = self.default_mapping
-        endpoint_mapping['emas_server_address'] = TEST_GLOBAL_SERVER
+        endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
 
         api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
             endpoint_mapping
         )
-        responses.add(responses.GET, url=api_versions_url, json=[0,1], status=200)
-        responses.add(responses.GET, url=materialization_common['get_api_versions'].format_map(endpoint_mapping), json=[3], status=200)
-        
-        versionurl = materialization_endpoints_v3["versions"].format_map(endpoint_mapping)
-        responses.add(responses.GET, url=versionurl, json=[1], status=200, match=[query_param_matcher({'expired': False})],)
-        
-        all_tables_meta_url = materialization_endpoints_v3["all_tables_metadata"].format_map(endpoint_mapping)
-        responses.add(responses.GET, url=all_tables_meta_url, json=self.multitable_meta, status=200)
+        responses.add(responses.GET, url=api_versions_url, json=[0, 1], status=200)
+        responses.add(
+            responses.GET,
+            url=materialization_common["get_api_versions"].format_map(endpoint_mapping),
+            json=[3],
+            status=200,
+        )
 
-        all_schema_def_url = schema_endpoints_v2["schema_definition_all"].format_map(endpoint_mapping)
-        responses.add(responses.GET, url=all_schema_def_url, json=self.multischema_meta, status=200)
+        versionurl = materialization_endpoints_v3["versions"].format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.GET,
+            url=versionurl,
+            json=[1],
+            status=200,
+            match=[query_param_matcher({"expired": False})],
+        )
 
-        get_views_url = materialization_endpoints_v3["get_views"].format_map(endpoint_mapping)
-        responses.add(responses.GET, url=get_views_url, json=self.views_list, status=200)
+        all_tables_meta_url = materialization_endpoints_v3[
+            "all_tables_metadata"
+        ].format_map(endpoint_mapping)
+        responses.add(
+            responses.GET,
+            url=all_tables_meta_url,
+            json=self.multitable_meta,
+            status=200,
+        )
 
-        get_views_schema_url = materialization_endpoints_v3["view_schemas"].format_map(endpoint_mapping)
+        all_schema_def_url = schema_endpoints_v2["schema_definition_all"].format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.GET,
+            url=all_schema_def_url,
+            json=self.multischema_meta,
+            status=200,
+        )
+
+        get_views_url = materialization_endpoints_v3["get_views"].format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.GET, url=get_views_url, json=self.views_list, status=200
+        )
+
+        get_views_schema_url = materialization_endpoints_v3["view_schemas"].format_map(
+            endpoint_mapping
+        )
         print(get_views_schema_url)
-        responses.add(responses.GET, url=get_views_schema_url, json=self.views_schema, status=200)
+        responses.add(
+            responses.GET, url=get_views_schema_url, json=self.views_schema, status=200
+        )
 
         assert len(myclient.materialize.tables) == 2
-        qry = myclient.materialize.tables.allen_column_mtypes_v2(pt_root_id=[123, 456], target_id=271700)
+        qry = myclient.materialize.tables.allen_column_mtypes_v2(
+            pt_root_id=[123, 456], target_id=271700
+        )
         params = qry.filter_kwargs_live
-        assert 'allen_column_mtypes_v2' in params.get('filter_equal_dict')
-        assert 'nucleus_detection_v0' in params.get('filter_in_dict')
-        assert 'allen_column_mtypes_v2' == qry.joins_kwargs.get('joins')[0][0]
+        assert "allen_column_mtypes_v2" in params.get("filter_equal_dict")
+        assert "nucleus_detection_v0" in params.get("filter_in_dict")
+        assert "allen_column_mtypes_v2" == qry.joins_kwargs.get("joins")[0][0]
 
-        assert 'single_neurons' in myclient.materialize.views
+        assert "single_neurons" in myclient.materialize.views
         vqry = myclient.materialize.views.single_neurons(pt_root_id=[123, 456])
-        assert 123 in vqry.filter_kwargs_mat.get('filter_in_dict').get('pt_root_id')
+        assert 123 in vqry.filter_kwargs_mat.get("filter_in_dict").get("pt_root_id")
 
     @responses.activate
     def test_matclient(self, myclient, mocker):

@@ -8,6 +8,7 @@ import pytz
 import responses
 from responses.matchers import json_params_matcher
 
+from caveclient.base import ServerIncompatibilityError
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     chunkedgraph_endpoints_v1,
@@ -419,6 +420,30 @@ class TestChunkedgraph:
             qlvl2_graph = myclient.chunkedgraph.level2_chunk_graph(
                 root_id, bounds=bounds
             )
+
+    @responses.activate
+    def test_lvl2subgraph_old_server_fails_bounds(self, old_chunkedgraph_client):
+        bounds = np.array([[83875, 85125], [82429, 83679], [20634, 20884]])
+        root_id = 864691136812623475
+        with pytest.raises(ServerIncompatibilityError):
+            old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(
+                root_id, bounds=bounds
+            )
+        with pytest.raises(ServerIncompatibilityError):
+            old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(root_id, bounds)
+
+        # should not fail even on old server when bounds are default value
+        # mock a response
+        endpoint_mapping = self._default_endpoint_map
+        endpoint_mapping["root_id"] = root_id
+        url = chunkedgraph_endpoints_v1["lvl2_graph"].format_map(endpoint_mapping)
+        responses.add(
+            responses.GET,
+            json={"edge_graph": []},
+            url=url,
+            headers={"Used-Bounds": "True"},
+        )
+        old_chunkedgraph_client.chunkedgraph.level2_chunk_graph(root_id, bounds=None)
 
     @responses.activate
     def test_get_remeshing(self, myclient):

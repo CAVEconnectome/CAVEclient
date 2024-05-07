@@ -1,14 +1,13 @@
-import pytest
-from caveclient import CAVEclient
-from caveclient.endpoints import annotation_endpoints_v2, schema_endpoints_v2
-import pandas as pd
-import responses
-from urllib.parse import urlencode
-from .conftest import TEST_DATASTACK, test_info, TEST_LOCAL_SERVER, TEST_GLOBAL_SERVER
-import numpy as np
-from caveclient.base import BaseEncoder
 import json
+
 import jsonschema
+import numpy as np
+import pytest
+import responses
+
+from caveclient.endpoints import annotation_endpoints_v2, schema_endpoints_v2
+
+from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
 
 test_jsonschema = {
     "$schema": "http://json-schema.org/draft-07/schema#",

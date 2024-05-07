@@ -1,4 +1,5 @@
 """PyChunkedgraph service python interface"""
+
 import datetime
 import json
 import logging
@@ -11,7 +12,13 @@ import pandas as pd
 import pytz
 
 from .auth import AuthClient
-from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
+from .base import (
+    BaseEncoder,
+    ClientBase,
+    _api_endpoints,
+    _check_version_compatibility,
+    handle_response,
+)
 from .endpoints import (
     chunkedgraph_api_versions,
     chunkedgraph_endpoints_common,
@@ -90,7 +97,7 @@ def root_id_int_list_check(
             raise ValueError(
                 "When passing a string for 'root_id' make sure the string can be converted to a uint64"
             )
-    elif isinstance(root_id, np.ndarray) or isinstance(root_id, list):
+    elif isinstance(root_id, (list, np.ndarray, pd.Series, pd.Index)):
         if make_unique:
             root_id = np.unique(root_id).astype(np.uint64)
         else:
@@ -774,6 +781,7 @@ class ChunkedGraphClientV1(ClientBase):
         rd = handle_response(response)
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
+    @_check_version_compatibility(kwarg_use_constraints={"bounds": ">=2.15.0"})
     def level2_chunk_graph(self, root_id, bounds=None) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
@@ -785,11 +793,11 @@ class ChunkedGraphClientV1(ClientBase):
             Root id of object
         bounds : np.array
             3x2 bounding box (x,y,z) x (min,max) in chunked graph coordinates (use
-            `client.chunkedgraph.base_resolution` to view this default resolution for 
-            your chunkedgraph client). Note that the result will include any level 2 
-            nodes which have chunk boundaries within some part of this bounding box, 
-            meaning that the representative point for a given level 2 node could still 
-            be slightly outside of these bounds. If None, returns all level 2 chunks 
+            `client.chunkedgraph.base_resolution` to view this default resolution for
+            your chunkedgraph client). Note that the result will include any level 2
+            nodes which have chunk boundaries within some part of this bounding box,
+            meaning that the representative point for a given level 2 node could still
+            be slightly outside of these bounds. If None, returns all level 2 chunks
             for the root ID.
 
         Returns
@@ -807,9 +815,11 @@ class ChunkedGraphClientV1(ClientBase):
 
         url = self._endpoints["lvl2_graph"].format_map(endpoint_mapping)
         response = self.session.get(url, params=query_d)
-        
+
         r = handle_response(response)
 
+        # TODO in theory, could remove this check if we are confident in the server
+        # version fix
         used_bounds = response.headers.get("Used-Bounds")
         used_bounds = used_bounds == "true" or used_bounds == "True"
         if bounds is not None and not used_bounds:
@@ -1091,7 +1101,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         Parameters
         ----------
-        root_ids : list or array of int
+        root_ids : array-like of int
             Root IDs to check.
         timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs are valid root IDs in the chunked
@@ -1221,7 +1231,7 @@ class ChunkedGraphClientV1(ClientBase):
 
         Parameters
         ----------
-        node_ids : list or array of int
+        node_ids : array-like of int
             Node IDs to check.
         start_timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs were valid after this timestamp.

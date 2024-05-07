@@ -1,5 +1,5 @@
-from time import time
 import logging
+from time import time
 
 logger = logging.getLogger(__name__)
 

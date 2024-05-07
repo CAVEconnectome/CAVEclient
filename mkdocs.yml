@@ -1,7 +1,7 @@
 site_name: CAVEclient
-site_url: https://seung-lab.github.io/CAVEclient/
-repo_url: https://github.com/seung-lab/CAVEclient/
-repo_name: seung-lab/CAVEclient
+site_url: https://caveconnectome.github.io/CAVEclient/
+repo_url: https://github.com/CAVEconnectome/CAVEclient/
+repo_name: CAVEconnectome/CAVEclient
 edit_uri: edit/master/docs/
 nav:
   - Home: index.md
@@ -59,6 +59,7 @@ theme:
   features:
     - navigation.indexes
     - navigation.instant
+    - navigation.footer
     # - navigation.path
     - navigation.prune
     # - navigation.sections # toggle to have sections in side nav
@@ -149,7 +150,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/seung-lab/CAVEclient
+      link: https://github.com/CAVEconnectome/CAVEclient
       name: Github
   version:
     provider: mike

@@ -1,7 +1,7 @@
-import jsonschema
 import attrs
-import pandas as pd
+import jsonschema
 import numpy as np
+import pandas as pd
 
 SPATIAL_POINT_CLASSES = ["SpatialPoint", "BoundSpatialPoint"]
 

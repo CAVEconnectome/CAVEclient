@@ -1,26 +1,30 @@
-import urllib
-import requests
+import datetime
 import json
 import logging
-
-logger = logging.getLogger(__name__)
+import textwrap
+import urllib
 import webbrowser
+from functools import wraps
+from typing import Callable, Optional
+
+import numpy as np
+import pandas as pd
+import requests
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 
 from .session_config import patch_session
-import numpy as np
-import datetime
-import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.ndarray) or isinstance(obj, pd.Series):
+        if isinstance(obj, (np.ndarray, pd.Series, pd.Index)):
             return obj.tolist()
         if isinstance(obj, set):
             return list(obj)
-        if isinstance(obj, np.uint64):
-            return int(obj)
-        if isinstance(obj, np.int64):
+        if isinstance(obj, np.integer):
             return int(obj)
         if isinstance(obj, (datetime.datetime, datetime.date)):
             return obj.isoformat()
@@ -85,6 +89,7 @@ def _raise_for_status(r, log_warning=True):
 
 def handle_response(response, as_json=True, log_warning=True):
     """Deal with potential errors in endpoint response and return json for default case"""
+    # NOTE: consider adding "None on 404" as an option?
     _raise_for_status(response, log_warning=log_warning)
     _check_authorization_redirect(response)
     if as_json:
@@ -105,7 +110,7 @@ def _check_authorization_redirect(response):
 {first_url}
 with the current auth configuration.\n
 Read the documentation at 
-https://seung-lab.github.io/CAVEclient/tutorials/authentication/
+https://caveconnectome.github.io/CAVEclient/tutorials/authentication/
 or follow instructions under 
 client.auth.get_new_token() for how to set a valid API token.
 after initializing a global client with
@@ -149,7 +154,7 @@ def _api_endpoints(
                 verify=verify,
             )
             avail_vs_server = set(avail_vs_server)
-        except:
+        except:  # noqa: E722
             avail_vs_server = None
 
         avail_vs_client = set(endpoint_versions.keys())
@@ -208,6 +213,7 @@ class ClientBase(object):
         self._api_version = api_version
         self._endpoints = endpoints
         self._fc = over_client
+        self._server_version = self._get_version()
 
     @property
     def fc(self):
@@ -224,6 +230,26 @@ class ClientBase(object):
     @property
     def api_version(self):
         return self._api_version
+
+    def _get_version(self) -> Optional[Version]:
+        endpoint_mapping = self.default_url_mapping
+        endpoint = self._endpoints.get("get_version", None)
+        if endpoint is None:
+            return None
+
+        url = endpoint.format_map(endpoint_mapping)
+        response = self.session.get(url)
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            return None
+        else:
+            version_str = handle_response(response, as_json=True)
+            version = Version(version_str)
+            return version
+
+    @property
+    def server_version(self) -> Optional[Version]:
+        """The version of the remote server."""
+        return self._server_version
 
     @staticmethod
     def raise_for_status(r, log_warning=True):
@@ -298,3 +324,111 @@ class ClientBaseWithDatastack(ClientBase):
     @property
     def datastack_name(self):
         return self._datastack_name
+
+
+def parametrized(dec):
+    """This decorator allows you to easily create decorators that take arguments"""
+    # REF: https://stackoverflow.com/questions/5929107/decorators-with-parameters
+
+    @wraps(dec)
+    def layer(*args, **kwargs):
+        @wraps(dec)
+        def repl(f):
+            return dec(f, *args, **kwargs)
+
+        return repl
+
+    return layer
+
+
+class ServerIncompatibilityError(Exception):
+    def __init__(self, message):
+        # for readability, wrap the message at 80 characters
+        message = textwrap.fill(message, width=80)
+        super().__init__(message)
+
+
+def _version_fails_constraint(version: Version, constraint: str = None):
+    if constraint is None:
+        return False
+    else:
+        if version is None:
+            return True
+        else:
+            specifier = SpecifierSet(constraint)
+            return version not in specifier
+
+
+@parametrized
+def _check_version_compatibility(
+    method: Callable, method_constraint: str = None, kwarg_use_constraints: dict = None
+) -> Callable:
+    """
+    This decorator is used to check the compatibility of features in the client and
+    server versions. If the server version is not compatible with the constraint, an
+    error will be raised.
+
+    The decorator assumes that the first argument of the method is the client instance (self).
+
+    Parameters
+    ----------
+    method
+        Method of the client to be decorated.
+    method_constraint
+        Version constraint for the method, described as a comparison operator
+        followed by the version number. For example, "<=1.0.0" would indicate that this
+        method is only compatible with server versions less than or equal to 1.0.0.
+    kwarg_use_constraints
+        Dictionary with some number of the method's keyword arguments as keys and
+        version constraints as values. Version constraints are described as a
+        comparison operator followed by the version number. For example, "<=1.0.0"
+        would indicate that the keyword argument is only compatible with server versions
+        less than or equal to 1.0.0. An error will be raised only if the user both
+        provides the keyword argument (even if passing in the default value!) and the
+        server version is not compatible with the constraint.
+
+    Raises
+    ------
+    ServerIncompatibilityError
+        If the server version is not compatible with the constraints.
+    """
+
+    @wraps(method)
+    def wrapper(*args, **kwargs):
+        self = args[0]
+
+        if method_constraint is not None:
+            if _version_fails_constraint(self.server_version, method_constraint):
+                msg = (
+                    f"Use of method `{method.__name__}` is only permitted "
+                    f"for server version {method_constraint}, your server "
+                    f"version is {self.server_version}. Contact your system "
+                    "administrator to update the server version."
+                )
+
+                raise ServerIncompatibilityError(msg)
+
+        if kwarg_use_constraints is not None:
+            # this protects against someone passing in a positional argument for the
+            # kwarg we are guarding
+            check_kwargs = kwargs.copy()
+            # add in any positional arguments that are not self to the checking
+            check_kwargs.update(zip(method.__code__.co_varnames[1:], args[1:]))
+
+            for kwarg, kwarg_constraint in kwarg_use_constraints.items():
+                if check_kwargs.get(kwarg, None) is None:
+                    continue
+                elif _version_fails_constraint(self.server_version, kwarg_constraint):
+                    msg = (
+                        f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
+                        "is only permitted "
+                        f"for server version {kwarg_constraint}, your server "
+                        f"version is {self.server_version}. Contact your system "
+                        "administrator to update the server version."
+                    )
+                    raise ServerIncompatibilityError(msg)
+
+        out = method(*args, **kwargs)
+        return out
+
+    return wrapper

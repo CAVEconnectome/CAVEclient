@@ -28,3 +28,6 @@ To see a glossary of terms used in the documentation, visit the [Glossary (work 
 For information about how to contribute to the documentation or the package, visit the [Contributing](./contributing.md) page.
 Feedback on the documentation is welcome! Please [open an issue](https://github.com/{{ config.repo_name }}/issues/new) or
 use the "Edit this page" button at the top right of any page to suggest changes.
+
+To read a full description of the Connectome Annotation Versioning Engine, including a description of the various services please [read this paper](https://www.biorxiv.org/content/10.1101/2023.07.26.550598v1).
+
