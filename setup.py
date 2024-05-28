@@ -41,5 +41,5 @@ setup(
     include_package_data=True,
     install_requires=required,
     setup_requires=["pytest-runner"],
-    python_requires=">=3.7,<3.12",
+    python_requires=">=3.7",
 )

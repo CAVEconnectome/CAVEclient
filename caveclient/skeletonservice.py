@@ -15,6 +15,10 @@ from .endpoints import skeletonservice_api_versions, skeletonservice_common
 SERVER_KEY = "skeleton_server_address"
 
 
+'''
+Usage
+'''
+
 def SkeletonClient(
     server_address,
     datastack_name=None,
@@ -25,6 +29,7 @@ def SkeletonClient(
     max_retries=None,
     pool_maxsize=None,
     pool_block=None,
+    over_client=None,
 ) -> "SkeletonClientV1":
     """Factory for returning SkeletonClient
 
@@ -74,6 +79,7 @@ def SkeletonClient(
         max_retries=max_retries,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
+        over_client=over_client,
     )
 
 class SkeletonClientV1(ClientBase):
@@ -103,14 +109,17 @@ class SkeletonClientV1(ClientBase):
     
     def get_skeleton_by_rid(
             self,
+            datastack_name,
             rid):
  
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["rid"] = rid
-        url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_id"] = rid
+        # url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+        url = self._endpoints["skeleton_info"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        return handle_response(response)
+        return handle_response(response, False)
     
     # def get_skeleton_by_rid_sid(
     #         self,

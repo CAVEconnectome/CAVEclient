@@ -471,7 +471,7 @@ class CAVEclientFull(CAVEclientGlobal):
         for more information.
         """
         if self._skeleton is None:
-            self._skeleton = SkeletonClientV1(
+            self._skeleton = SkeletonClient(
                 server_address=self.local_server,
                 auth_client=self.auth,
                 datastack_name=self._datastack_name,
@@ -479,7 +479,6 @@ class CAVEclientFull(CAVEclientGlobal):
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
-                desired_resolution=self.desired_resolution,
             )
         return self._skeleton
 
