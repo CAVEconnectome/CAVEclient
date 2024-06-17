@@ -1280,9 +1280,12 @@ class ChunkedGraphClientV1(ClientBase):
 
         return np.isin(node_ids, valid_ids)
 
-    @_check_version_compatibility(kwarg_use_constraints={"latest": ">=2.17.0", "timestamp": ">=2.17.0})
-    def get_root_timestamps(self, root_ids, latest: bool = False,
-                            timestamp: datetime.datetime = None) -> np.ndarray:
+    @_check_version_compatibility(
+        kwarg_use_constraints={"latest": ">=2.17.0", "timestamp": ">=2.17.0"}
+    )
+    def get_root_timestamps(
+        self, root_ids, latest: bool = False, timestamp: datetime.datetime = None
+    ) -> np.ndarray:
         """Retrieves timestamps when roots where created.
 
         Parameters
@@ -1297,7 +1300,7 @@ class ChunkedGraphClientV1(ClientBase):
             if you don't specify a timestamp parameter.
         timestamp: datetime.datetime, optional
             Timestamp to query when using latest=True. Use this to provide consistent results for a particular
-            timestamp.If an ID is still valid at a point in the future past this timestamp, the query will still 
+            timestamp.If an ID is still valid at a point in the future past this timestamp, the query will still
             return this timestamp as the latest moment in time. An error will occur if you provide a timestamp
             for which the root ID is not valid.
 
