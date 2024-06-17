@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -157,7 +157,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -1052,9 +1052,9 @@
 
 
 
-  <div class="doc doc-contents first">
+    <div class="doc doc-contents first">
 
-  
+
       <p>A manager for all clients sharing common datastack and authentication information.</p>
 <p>This client wraps all the other clients and keeps track of the things that need to be consistent across them.
 To instantiate a client:</p>
@@ -1076,166 +1076,165 @@ To instantiate a client:</p>
 <p>All subclients are loaded lazily and share the same datastack name, server address, and auth tokens where used.</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Datastack name for the services. Almost all services need this and will not work if it is not passed.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>server_address</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>URL of the framework server. If None, chooses the default server global.daf-apis.com.
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Datastack name for the services. Almost all services need this and will not work if it is not passed.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>server_address</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>URL of the framework server. If None, chooses the default server global.daf-apis.com.
 Optional, defaults to None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>auth_token_file</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Path to a json file containing the auth token. If None, uses the default location. See Auth client documentation.
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>auth_token_file</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to a json file containing the auth token. If None, uses the default location. See Auth client documentation.
 Optional, defaults to None.</p>
-            </div>
-          </td>
-          <td>
-                <code><span title="caveclient.auth.default_token_file">default_token_file</span></code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>auth_token_key</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Dictionary key for the token in the the JSON file.
+              </div>
+            </td>
+            <td>
+                  <code><span title="caveclient.auth.default_token_file">default_token_file</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>auth_token_key</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary key for the token in the the JSON file.
 Optional, default is 'token'.</p>
-            </div>
-          </td>
-          <td>
-                <code>&#39;token&#39;</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>auth_token</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Direct entry of an auth token. If None, uses the file arguments to find the token.
+              </div>
+            </td>
+            <td>
+                  <code>&#39;token&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>auth_token</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Direct entry of an auth token. If None, uses the file arguments to find the token.
 Optional, default is None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>max_retries</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Sets the default number of retries on failed requests. Optional, by default 2.</p>
-            </div>
-          </td>
-          <td>
-                <code><span title="caveclient.frameworkclient.DEFAULT_RETRIES">DEFAULT_RETRIES</span></code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>pool_maxsize</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>pool_block</code></td>
-          <td>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>desired_resolution</code></td>
-          <td>
-                <code>Iterable[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>] or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If given, should be a list or array of the desired resolution you want queries returned in
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>max_retries</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sets the default number of retries on failed requests. Optional, by default 2.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="caveclient.frameworkclient.DEFAULT_RETRIES">DEFAULT_RETRIES</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>pool_maxsize</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>pool_block</code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>desired_resolution</code></td>
+            <td>
+                  <code>Iterable[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>] or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If given, should be a list or array of the desired resolution you want queries returned in
 useful for materialization queries.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>info_cache</code></td>
-          <td>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>info_cache</code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
-  
+
 
   <div class="doc doc-children">
 
@@ -1250,8 +1249,8 @@ useful for materialization queries.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.annotation" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">annotation</span><span class="p">:</span> <span class="n">AnnotationClientV2</span></code>
-  
+            <code class="highlight language-python"><span class="n">annotation</span><span class="p">:</span> <span class="n">AnnotationClientV2</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1259,11 +1258,11 @@ useful for materialization queries.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.annotation" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the annotation service. See <a href="../annotation/">client.annotation</a>
 for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1272,8 +1271,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.auth" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">auth</span><span class="p">:</span> <span class="n">AuthClient</span></code>
-  
+            <code class="highlight language-python"><span class="n">auth</span><span class="p">:</span> <span class="n">AuthClient</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1281,10 +1280,10 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.auth" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the auth service. See <a href="../auth/">client.auth</a> for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1293,8 +1292,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.chunkedgraph" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">chunkedgraph</span><span class="p">:</span> <span class="n">ChunkedGraphClientV1</span></code>
-  
+            <code class="highlight language-python"><span class="n">chunkedgraph</span><span class="p">:</span> <span class="n">ChunkedGraphClientV1</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1302,11 +1301,11 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.chunkedgraph" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the chunkedgraph service. See <a href="../chunkedgraph/">client.chunkedgraph</a>
 for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1315,8 +1314,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.datastack_name" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span></code>
-  
+            <code class="highlight language-python"><span class="n">datastack_name</span><span class="p">:</span> <span class="nb">str</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1324,10 +1323,10 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.datastack_name" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>The name of the datastack for the client.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1336,8 +1335,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.info" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">info</span><span class="p">:</span> <span class="n">InfoServiceClientV2</span></code>
-  
+            <code class="highlight language-python"><span class="n">info</span><span class="p">:</span> <span class="n">InfoServiceClientV2</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1345,10 +1344,10 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.info" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the info service. See <a href="../info/">client.info</a> for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1357,8 +1356,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.l2cache" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">l2cache</span><span class="p">:</span> <span class="n">L2CacheClientLegacy</span></code>
-  
+            <code class="highlight language-python"><span class="n">l2cache</span><span class="p">:</span> <span class="n">L2CacheClientLegacy</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1366,11 +1365,11 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.l2cache" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the L2 cache service. See <a href="../l2cache/">client.l2cache</a>
 for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1379,8 +1378,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.materialize" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">materialize</span><span class="p">:</span> <span class="n">MaterializationClientType</span></code>
-  
+            <code class="highlight language-python"><span class="n">materialize</span><span class="p">:</span> <span class="n">MaterializationClientType</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1388,11 +1387,11 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.materialize" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the materialization service. See <a href="../materialize/">client.materialize</a>
 for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1401,8 +1400,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.schema" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">schema</span><span class="p">:</span> <span class="n">SchemaClientLegacy</span></code>
-  
+            <code class="highlight language-python"><span class="n">schema</span><span class="p">:</span> <span class="n">SchemaClientLegacy</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1410,11 +1409,11 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.schema" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the EM Annotation Schemas service. See <a href="../schema/">client.schema</a>
 for more information.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1423,8 +1422,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.server_address" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">server_address</span></code>
-  
+            <code class="highlight language-python"><span class="n">server_address</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1432,10 +1431,10 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.server_address" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>The server address for the client.</p>
-  </div>
+    </div>
 
 </div>
 
@@ -1444,8 +1443,8 @@ for more information.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull.state" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">state</span><span class="p">:</span> <span class="n">JSONServiceV1</span></code>
-  
+            <code class="highlight language-python"><span class="n">state</span><span class="p">:</span> <span class="n">JSONServiceV1</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1453,91 +1452,88 @@ for more information.</p>
 <a href="#caveclient.frameworkclient.CAVEclientFull.state" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>A client for the neuroglancer state service. See <a href="../state/">client.state</a>
 for more information.</p>
-  </div>
+    </div>
 
 </div>
-
 
 
 
 <div class="doc doc-object doc-function">
 
 
-
 <h2 id="caveclient.frameworkclient.CAVEclientFull.change_auth" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">change_auth</span><span class="p">(</span><span class="n">auth_token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">change_auth</span><span class="p">(</span><span class="n">auth_token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.frameworkclient.CAVEclientFull.change_auth" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Change the authentication token and reset services.</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>auth_token_file</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>New auth token json file path, by default None, which defaults to the existing state.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>auth_token_key</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>New dictionary key under which the token is stored in the json file, by default None,
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>auth_token_file</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>New auth token json file path, by default None, which defaults to the existing state.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>auth_token_key</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>New dictionary key under which the token is stored in the json file, by default None,
 which defaults to the existing state.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>auth_token</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Direct entry of a new token, by default None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>auth_token</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Direct entry of a new token, by default None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-  </div>
+    </div>
 
 </div>
 
@@ -1545,8 +1541,7 @@ which defaults to the existing state.</p>
 
   </div>
 
-  </div>
-
+    </div>
 
 </div>
 
@@ -1659,7 +1654,7 @@ which defaults to the existing state.</p>
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.dd8806f2.min.js"></script>
+      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>

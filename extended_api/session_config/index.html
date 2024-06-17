@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -157,7 +157,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -1025,12 +1025,11 @@
 
 
 
-  <div class="doc doc-contents first">
+    <div class="doc doc-contents first">
 
-  
+
 
   <div class="doc doc-children">
-
 
 
 
@@ -1043,90 +1042,88 @@
 <div class="doc doc-object doc-function">
 
 
-
 <h2 id="caveclient.session_config.patch_session" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">patch_session</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">patch_session</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.session_config.patch_session" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Patch session to configure retry and poolsize options</p>
 
 
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>session</code></td>
+            <td>
+                  <code>requests session</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Session to modify</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>max_retries</code></td>
+            <td>
+                  <code>Int or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Set the number of retries per request, by default None. If None, defaults to requests package default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>pool_block</code></td>
+            <td>
+                  <code>Bool or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>pool_maxsize</code></td>
+            <td>
+                  <code>Int or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>session</code></td>
-          <td>
-                <code>requests session</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Session to modify</p>
-            </div>
-          </td>
-          <td>
-              <em>required</em>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>max_retries</code></td>
-          <td>
-                <code>Int or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Set the number of retries per request, by default None. If None, defaults to requests package default.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>pool_block</code></td>
-          <td>
-                <code>Bool or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>pool_maxsize</code></td>
-          <td>
-                <code>Int or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
 
@@ -1134,7 +1131,7 @@
 
   </div>
 
-  </div>
+    </div>
 
 </div>
 
@@ -1247,7 +1244,7 @@
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.dd8806f2.min.js"></script>
+      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>

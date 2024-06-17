@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.19">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#caveclient.infoservice.InfoServiceClientV2" class="md-skip">
+        <a href="#caveclient.infoservice.AuthClient" class="md-skip">
           Skip to content
         </a>
       
@@ -157,7 +157,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -819,6 +819,102 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient" class="md-nav__link">
+    <span class="md-ellipsis">
+      AuthClient
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AuthClient">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.request_header" class="md-nav__link">
+    <span class="md-ellipsis">
+      request_header
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.token" class="md-nav__link">
+    <span class="md-ellipsis">
+      token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.get_group_users" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_group_users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.get_new_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_new_token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.get_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.get_tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_tokens
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.get_user_information" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_user_information
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.save_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      save_token
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveclient.infoservice.AuthClient.setup_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      setup_token
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.infoservice.InfoServiceClientV2" class="md-nav__link">
     <span class="md-ellipsis">
       InfoServiceClientV2
@@ -965,6 +1061,15 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.infoservice.handle_response" class="md-nav__link">
+    <span class="md-ellipsis">
+      handle_response
+    </span>
+  </a>
   
 </li>
       
@@ -1166,9 +1271,9 @@
 
 
 
-  <div class="doc doc-contents first">
+    <div class="doc doc-contents first">
 
-  
+
 
   <div class="doc doc-children">
 
@@ -1183,19 +1288,608 @@
 
 
 
+<h2 id="caveclient.infoservice.AuthClient" class="doc doc-heading">
+              <code class="highlight language-python"><span class="n">AuthClient</span><span class="p">(</span><span class="n">token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_address</span><span class="o">=</span><span class="n">default_global_server_address</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#object">object</a></code></p>
+
+
+      <p>Client to find and use auth tokens to access the dynamic annotation framework services.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>token_file</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to a JSON key:value file holding your auth token.
+By default, "~/.cloudvolume/secrets/cave-secret.json"
+(will check deprecated token name "chunkedgraph-secret.json" as well)</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>token_key</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Key for the token in the token_file.
+By default, "token"</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>token</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Direct entry of the token as a string. If provided, overrides the files.
+If None, attempts to use the file paths.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>server_address</code></td>
+            <td>
+                  <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, optional)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>URL to the auth server. By default, uses a default server address.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="caveclient.endpoints.default_global_server_address">default_global_server_address</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="caveclient.infoservice.AuthClient.request_header" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">request_header</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#caveclient.infoservice.AuthClient.request_header" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Formatted request header with the specified token</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="caveclient.infoservice.AuthClient.token" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">token</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+      <small class="doc doc-label doc-label-writable"><code>writable</code></small>
+  </span>
+
+<a href="#caveclient.infoservice.AuthClient.token" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Secret token used to authenticate yourself to the Connectome Annotation Versioning Engine services.</p>
+    </div>
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.get_group_users" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_group_users</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.get_group_users" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Get users in a group</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>group_id</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>ID value for a given group</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of dicts of user ids. Returns empty list if group does not exist.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.get_new_token" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_new_token</span><span class="p">(</span><span class="nb">open</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.get_new_token" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Currently, returns instructions for getting a new token based on the current settings and saving it to the local environment. New OAuth tokens are currently not able to be retrieved programmatically.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>open</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, opens a web browser to the web page where you can generate a new token.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.get_token" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_token</span><span class="p">(</span><span class="n">token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.get_token" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Load a token with a given key the specified token file</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>token_key</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>key in the token file JSON, by default None. If None, uses 'token'.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.get_tokens" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_tokens</span><span class="p">()</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.get_tokens" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Get the tokens setup for this users</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>list[dict]:</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>a list of dictionary of tokens, each with the keys
+"id": the id of this token
+"token": the token (str)
+"user_id": the users id (should be your ID)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.get_user_information" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_user_information</span><span class="p">(</span><span class="n">user_ids</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.get_user_information" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Get user data.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>user_ids</code></td>
+            <td>
+                  <code>list of int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>user_ids to look up</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.save_token" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_token</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token_key</span><span class="o">=</span><span class="n">default_token_key</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">switch_token</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">write_to_server_file</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.save_token" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Conveniently save a token in the correct format.</p>
+<p>After getting a new token by following the instructions in <code>authclient.get_new_token()</code>, you can save it with a fully default configuration by running:</p>
+<p>token = 'my_shiny_new_token'</p>
+<p>authclient.save_token(token=token)</p>
+<p>Now on next load, authclient=AuthClient() will make an authclient instance using this token.
+If you would like to specify more information about the json file where the token will be stored, see the parameters below.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>token</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>New token to save, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>token_key</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Key for the token in the token_file json, by default "token"</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="caveclient.auth.default_token_key">default_token_key</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>overwrite</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Allow an existing token to be changed, by default False</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>token_file</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the token file, by default None. If None, uses the default file location specified above.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>switch_token</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, switch the auth client over into using the new token, by default True</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>write_to_server_file</code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, will write token to a server specific file to support this machine
+interacting with multiple auth servers.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="caveclient.infoservice.AuthClient.setup_token" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">setup_token</span><span class="p">(</span><span class="n">make_new</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">open</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.AuthClient.setup_token" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Currently, returns instructions for getting your auth token based on the current settings and saving it to the local environment.
+New OAuth tokens are currently not able to be retrieved programmatically.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>make_new</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, will make a new token, else prompt you to open a page to
+retrieve an existing token.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>open</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, opens a web browser to the web page where you can retrieve a token.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h2 id="caveclient.infoservice.InfoServiceClientV2" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">InfoServiceClientV2</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">over_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">InfoServiceClientV2</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span> <span class="n">auth_header</span><span class="p">,</span> <span class="n">api_version</span><span class="p">,</span> <span class="n">endpoints</span><span class="p">,</span> <span class="n">server_name</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">over_client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
-  <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="caveclient.base.ClientBaseWithDatastack">ClientBaseWithDatastack</span></code></p>
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="caveclient.base.ClientBaseWithDatastack">ClientBaseWithDatastack</span></code></p>
 
 
 
-  
+
 
   <div class="doc doc-children">
 
@@ -1210,8 +1904,8 @@
 
 
 <h3 id="caveclient.infoservice.InfoServiceClientV2.server_version" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">server_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span></code>
-  
+            <code class="highlight language-python"><span class="n">server_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
@@ -1219,332 +1913,315 @@
 <a href="#caveclient.infoservice.InfoServiceClientV2.server_version" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>The version of the remote server.</p>
-  </div>
+    </div>
 
 </div>
-
 
 
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.annotation_endpoint" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">annotation_endpoint</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">annotation_endpoint</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.annotation_endpoint" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>AnnotationEngine endpoint for a dataset.</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Location of the AnnotationEngine</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Location of the AnnotationEngine</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.get_aligned_volume_info" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_aligned_volume_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_aligned_volume_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.get_aligned_volume_info" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Gets the info record for a aligned_volume</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>datastack_name to look up. If None, uses the one specified by the client. By default None</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True and the information has already been queried for that dataset, then uses the cached version. If False, re-queries the infromation. By default True</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>datastack_name to look up. If None, uses the one specified by the client. By default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True and the information has already been queried for that dataset, then uses the cached version. If False, re-queries the infromation. By default True</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The complete info record for the aligned_volume</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The complete info record for the aligned_volume</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.get_datastack_info" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_datastack_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_datastack_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.get_datastack_info" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Gets the info record for a datastack</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>datastack to look up. If None, uses the one specified by the client. By default None</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True and the information has already been queried for that datastack, then uses the cached version. If False, re-queries the infromation. By default True</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>datastack to look up. If None, uses the one specified by the client. By default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True and the information has already been queried for that datastack, then uses the cached version. If False, re-queries the infromation. By default True</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The complete info record for the datastack</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The complete info record for the datastack</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.get_datastacks" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_datastacks</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">get_datastacks</span><span class="p">()</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.get_datastacks" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Query which datastacks are available at the info service</p>
 
 
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>List of datastack names</p>
-            </div>
-          </td>
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of datastack names</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.get_datastacks_by_aligned_volume" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">get_datastacks_by_aligned_volume</span><span class="p">(</span><span class="n">aligned_volume</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_datastacks_by_aligned_volume</span><span class="p">(</span><span class="n">aligned_volume</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.get_datastacks_by_aligned_volume" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Lookup what datastacks are associated with this aligned volume</p>
 <p>Args:
     aligned_volume (str, optional): aligned volume to lookup. Defaults to None.</p>
@@ -1553,145 +2230,137 @@
 <p>Returns:
     list: a list of datastack string</p>
 
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.image_cloudvolume" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">image_cloudvolume</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">image_cloudvolume</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.image_cloudvolume" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Generate a cloudvolume instance based on the image source, using authentication if needed and
 sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
 is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
 can be overridden.</p>
 <p>Requires cloudvolume to be installed, which is not included by default.</p>
 
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.image_source" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">image_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">image_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.image_source" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Cloud path to the imagery for the dataset</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>format_for</code></td>
-          <td>
-                <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Formats the path for different uses.
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>format_for</code></td>
+            <td>
+                  <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formats the path for different uses.
 If 'raw' (default), the path in the InfoService is passed along.
 If 'cloudvolume', a "precomputed://gs://" type path is converted to a full https URL.
 If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type path.</p>
-            </div>
-          </td>
-          <td>
-                <code>&#39;raw&#39;</code>
-          </td>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;raw&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formatted cloud path to the flat segmentation</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Formatted cloud path to the flat segmentation</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.raise_for_status" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">raise_for_status</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
-  
+            <code class="highlight language-python"><span class="n">raise_for_status</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
   </span>
@@ -1699,346 +2368,421 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
 <a href="#caveclient.infoservice.InfoServiceClientV2.raise_for_status" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
 
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.refresh_stored_data" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">refresh_stored_data</span><span class="p">()</span></code>
+            <code class="highlight language-python"><span class="n">refresh_stored_data</span><span class="p">()</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.refresh_stored_data" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Reload the stored info values from the server.</p>
 
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.segmentation_cloudvolume" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">segmentation_cloudvolume</span><span class="p">(</span><span class="n">use_client_secret</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">segmentation_cloudvolume</span><span class="p">(</span><span class="n">use_client_secret</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.segmentation_cloudvolume" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
 sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
 is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
 can be overridden.</p>
 <p>Requires cloudvolume to be installed, which is not included by default.</p>
 
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.segmentation_source" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">segmentation_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">segmentation_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.segmentation_source" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Cloud path to the chunkgraph-backed Graphene segmentation for a dataset</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>format_for</code></td>
-          <td>
-                <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Formats the path for different uses.
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>format_for</code></td>
+            <td>
+                  <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formats the path for different uses.
 If 'raw' (default), the path in the InfoService is passed along.
 If 'cloudvolume', a "graphene://https://" type path is used
 If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuroglancer.</p>
-            </div>
-          </td>
-          <td>
-                <code>&#39;raw&#39;</code>
-          </td>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;raw&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formatted cloud path to the Graphene segmentation</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Formatted cloud path to the Graphene segmentation</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.synapse_segmentation_source" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">synapse_segmentation_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">synapse_segmentation_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.synapse_segmentation_source" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Cloud path to the synapse segmentation for a dataset</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the dataset to look up. If None, uses the value specified by the client. Default is None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>format_for</code></td>
-          <td>
-                <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Formats the path for different uses.
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the dataset to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>format_for</code></td>
+            <td>
+                  <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formats the path for different uses.
 If 'raw' (default), the path in the InfoService is passed along.
 If 'cloudvolume', a "precomputed://gs://" type path is converted to a full https URL.
 If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type path.</p>
-            </div>
-          </td>
-          <td>
-                <code>&#39;raw&#39;</code>
-          </td>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;raw&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formatted cloud path to the synapse segmentation</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Formatted cloud path to the synapse segmentation</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
-
 
 <div class="doc doc-object doc-function">
 
 
-
 <h3 id="caveclient.infoservice.InfoServiceClientV2.viewer_resolution" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">viewer_resolution</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">viewer_resolution</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClientV2.viewer_resolution" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
-  <div class="doc doc-contents ">
-  
+    <div class="doc doc-contents ">
+
       <p>Get the viewer resolution metadata for this datastack</p>
 
 
-
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If None use the default one configured in the client</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Use the cached value, if False go get a new value from server</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If None use the default one configured in the client</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Use the cached value, if False go get a new value from server</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Voxel resolution as a len(3) np.array</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
 
 
+<h3 id="caveclient.infoservice.InfoServiceClientV2.viewer_site" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">viewer_site</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Voxel resolution as a len(3) np.array</p>
-            </div>
-          </td>
+<a href="#caveclient.infoservice.InfoServiceClientV2.viewer_site" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Get the base Neuroglancer URL for the dataset</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
         </tr>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>use_stored</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base URL for the Neuroglancer viewer</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+
 
   </div>
+
+    </div>
 
 </div>
 
@@ -2046,86 +2790,17 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
 <div class="doc doc-object doc-function">
 
 
+<h2 id="caveclient.infoservice.handle_response" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">handle_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
-<h3 id="caveclient.infoservice.InfoServiceClientV2.viewer_site" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">viewer_site</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
-
-<a href="#caveclient.infoservice.InfoServiceClientV2.viewer_site" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Get the base Neuroglancer URL for the dataset</p>
+<a href="#caveclient.infoservice.handle_response" class="headerlink" title="Permanent link">&para;</a></h2>
 
 
+    <div class="doc doc-contents ">
 
-  <p><span class="doc-section-title">Parameters:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td><code>datastack_name</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>use_stored</code></td>
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
-            </div>
-          </td>
-          <td>
-                <code>True</code>
-          </td>
-        </tr>
-    </tbody>
-  </table>
+      <p>Deal with potential errors in endpoint response and return json for default case</p>
 
-
-
-  <p><span class="doc-section-title">Returns:</span></p>
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-        <tr class="doc-section-item">
-          <td>
-                <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>Base URL for the Neuroglancer viewer</p>
-            </div>
-          </td>
-        </tr>
-    </tbody>
-  </table>
-
-  </div>
+    </div>
 
 </div>
 
@@ -2133,17 +2808,7 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
 
   </div>
 
-  </div>
-
-
-</div>
-
-
-
-
-  </div>
-
-  </div>
+    </div>
 
 </div>
 
@@ -2256,7 +2921,7 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.dd8806f2.min.js"></script>
+      <script src="../../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>
