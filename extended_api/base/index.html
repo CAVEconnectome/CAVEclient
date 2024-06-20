@@ -764,15 +764,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#caveclient.base.patch_session" class="md-nav__link">
-    <span class="md-ellipsis">
-      patch_session
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1197,94 +1188,6 @@
     <div class="doc doc-contents ">
 
       <p>This decorator allows you to easily create decorators that take arguments</p>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h2 id="caveclient.base.patch_session" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">patch_session</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
-
-<a href="#caveclient.base.patch_session" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents ">
-
-      <p>Patch session to configure retry and poolsize options</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>session</code></td>
-            <td>
-                  <code>requests session</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Session to modify</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>max_retries</code></td>
-            <td>
-                  <code>Int or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set the number of retries per request, by default None. If None, defaults to requests package default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>pool_block</code></td>
-            <td>
-                  <code>Bool or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>pool_maxsize</code></td>
-            <td>
-                  <code>Int or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
 
     </div>
 
