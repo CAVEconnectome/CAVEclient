@@ -1082,7 +1082,7 @@ class MaterializationClientV2(ClientBase):
                 root_id_col = sv_col[: -len("supervoxel_id")] + "root_id"
                 # use the future map to update rootIDs
                 if future_map is not None:
-                    df[root_id_col].replace(future_map, inplace=True)
+                    df.replace({root_id_col: future_map}, inplace=True)
                 all_root_ids = np.append(all_root_ids, df[root_id_col].values.copy())
 
             uniq_root_ids = np.unique(all_root_ids)
