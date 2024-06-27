@@ -2,7 +2,7 @@ numpy<2.0.0
 pyarrow>=3
 requests
 urllib3
-pandas
+pandas<3.0.0
 cachetools>=4.2.1
 ipython
 networkx
