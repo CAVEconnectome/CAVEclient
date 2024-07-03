@@ -258,10 +258,12 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def datastack_name(self):
+        """The name of the datastack."""
         return self._datastack_name
 
     @property
     def cg_client(self):
+        """The chunked graph client."""
         if self._cg_client is None:
             if self.fc is not None:
                 self._cg_client = self.fc.chunkedgraph
@@ -271,12 +273,16 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def version(self) -> int:
+        """The version of the materialization. Can be used to set up the
+        client to default to a specific version when timestamps or versions are not
+        specified in queries. If not set, defaults to the most recent version."""
         if self._version is None:
             self._version = self.most_recent_version()
         return self._version
 
     @property
     def homepage(self) -> HTML:
+        """The homepage for the materialization engine."""
         url = (
             f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
         )
@@ -291,6 +297,7 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def tables(self) -> TableManager:
+        """The table manager for the materialization engine."""
         if self._tables is None:
             if self.fc is not None and self.fc._materialize is not None:
                 self._tables = TableManager(self.fc)
@@ -300,6 +307,7 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def views(self) -> ViewManager:
+        """The view manager for the materialization engine."""
         if self._views is None:
             if self.fc is not None and self.fc._materialize is not None:
                 self._views = ViewManager(self.fc)
