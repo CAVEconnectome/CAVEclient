@@ -273,8 +273,8 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def version(self) -> int:
-        """The version of the materialization. Can be used to set up the 
-        client to default to a specific version when timestamps or versions are not 
+        """The version of the materialization. Can be used to set up the
+        client to default to a specific version when timestamps or versions are not
         specified in queries. If not set, defaults to the most recent version."""
         if self._version is None:
             self._version = self.most_recent_version()

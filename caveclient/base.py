@@ -249,7 +249,7 @@ class ClientBase(object):
     @property
     def server_version(self) -> Optional[Version]:
         """The version of the service running on the remote server. Note that this
-        refers to the software running on the server and has nothing to do with the 
+        refers to the software running on the server and has nothing to do with the
         version of the datastack itself."""
         return self._server_version
 
