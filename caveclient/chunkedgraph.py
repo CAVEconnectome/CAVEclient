@@ -3,7 +3,7 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -198,6 +198,18 @@ class ChunkedGraphClientV1(ClientBase):
     def table_name(self):
         return self._table_name
 
+    @property
+    def timestamp(self) -> Optional[datetime.datetime]:
+        """Default timestamp to use in queries that accept a `timestamp` argument.
+        If None, equivalent to querying the current state of the chunkedgraph."""
+        return self._default_timestamp
+
+    @timestamp.setter
+    def timestamp(self, timestamp: Optional[datetime.datetime]):
+        if (timestamp is not None) and (not isinstance(timestamp, datetime.datetime)):
+            raise ValueError("Timestamp must be a datetime.datetime object")
+        self._default_timestamp = timestamp
+
     def _process_timestamp(self, timestamp):
         """Process timestamp with default logic"""
         if timestamp is None:
@@ -217,7 +229,8 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel IDs to look up.
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by
-            default None. If None, uses the current time.
+            default None. If None, uses the `timestamp` property for this client, which 
+            defaults to the current time.
         stop_layer : int or None, optional
             If True, looks up IDs only up to a given stop layer. Default is None.
 
@@ -246,7 +259,8 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel id value
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by
-            default None. If None, uses the current time.
+            default None. If None, uses the `timestamp` property for this client, which 
+            defaults to the current time.
 
         Returns
         -------
