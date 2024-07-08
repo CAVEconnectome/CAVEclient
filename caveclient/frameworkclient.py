@@ -1,3 +1,5 @@
+import datetime
+
 from .annotationengine import AnnotationClient, AnnotationClientV2
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
@@ -31,6 +33,8 @@ class CAVEclient(object):
         desired_resolution=None,
         info_cache=None,
         write_server_cache=True,
+        version: int = None,
+        timestamp: datetime.datetime = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -85,6 +89,14 @@ class CAVEclient(object):
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         write_server_cache: bool, optional
             If True, write the map between datastack and server address to a local cache file that is used to look up server addresses if not provided. Optional, defaults to True.
+        timestamp:
+            The default timestamp to use for queries which use a timestamp. Only one of
+            timestamp or version should be provided. Only used if datastack is provided.
+        version:
+            The default materialization version to use for queries which use a timestamp
+            (will be converted to the appropriate timestamp). Only one of timestamp or
+            version should be provided. Only used if datastack is provided.
+
         """
         server_address = handle_server_address(
             datastack_name, server_address, write=write_server_cache
@@ -113,6 +125,8 @@ class CAVEclient(object):
                 pool_block=pool_block,
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
+                timestamp=timestamp,
+                version=version,
             )
 
 
@@ -299,6 +313,14 @@ class CAVEclientGlobal(object):
         return None
 
 
+def _process_timestamp(timestamp, version):
+    # TODO input validation
+    # make sure only one of timestamp or version is provided as not None
+    # if the version is provided, look up the timestamp associated with it
+    # if the version is not a fixed version, should a warning be raised?
+    return timestamp
+
+
 class CAVEclientFull(CAVEclientGlobal):
     def __init__(
         self,
@@ -312,6 +334,8 @@ class CAVEclientFull(CAVEclientGlobal):
         pool_block=None,
         desired_resolution=None,
         info_cache=None,
+        timestamp: datetime.datetime = None,
+        version: int = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -362,6 +386,13 @@ class CAVEclientFull(CAVEclientGlobal):
             useful for materialization queries.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
+        timestamp:
+            The default timestamp to use for queries which use a timestamp. Only one of
+            timestamp or version should be provided.
+        version:
+            The default materialization version to use for queries which use a timestamp
+            (will be converted to the appropriate timestamp). Only one of timestamp or
+            version should be provided.
         """
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
@@ -384,6 +415,9 @@ class CAVEclientFull(CAVEclientGlobal):
         self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
+
+        self._timestamp = _process_timestamp(timestamp, version)
+        self._version = version
 
     def _reset_services(self):
         self._auth = None
@@ -418,6 +452,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
+                timestamp=self._timestamp,
             )
         return self._chunkedgraph
 
@@ -456,6 +491,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 pool_block=self._pool_block,
                 over_client=self,
                 desired_resolution=self.desired_resolution,
+                version=self._version,  # TODO also pass timestamp? or only use timestamp?
             )
         return self._materialize
 
@@ -497,3 +533,21 @@ class CAVEclientFull(CAVEclientGlobal):
                 over_client=self,
             )
         return self._l2cache
+
+    @property
+    def version(self) -> int:
+        return self._version
+
+    @property
+    def timestamp(self) -> datetime.datetime:
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, value: datetime.datetime):
+        # TODO
+        pass
+
+    @version.setter
+    def version(self, value: int):
+        # TODO
+        pass
