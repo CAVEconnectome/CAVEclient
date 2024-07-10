@@ -3045,7 +3045,7 @@ default None. If None, uses the current time.</p>
 
 
 <h3 id="caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_root_timestamps</span><span class="p">(</span><span class="n">root_ids</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_root_timestamps</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">latest</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -3077,6 +3077,42 @@ default None. If None, uses the current time.</p>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>latest</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If False,  returns the first timestamp that the root_id was valid for each root ID.
+If True, returns the newest/latest timestamp for each root ID.
+Note, this will return the timestamp at which the query was run when the root is currently valid.
+This means that you will get a different answer if you make this same query at a later time
+if you don't specify a timestamp parameter.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>timestamp</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Timestamp to query when using latest=True. Use this to provide consistent results for a particular
+timestamp.If an ID is still valid at a point in the future past this timestamp, the query will still
+return this timestamp as the latest moment in time. An error will occur if you provide a timestamp
+for which the root ID is not valid.</p>
+<p>Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
