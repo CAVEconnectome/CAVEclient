@@ -1280,13 +1280,31 @@ class ChunkedGraphClientV1(ClientBase):
 
         return np.isin(node_ids, valid_ids)
 
-    def get_root_timestamps(self, root_ids) -> np.ndarray:
+    @_check_version_compatibility(
+        kwarg_use_constraints={"latest": ">=2.17.0", "timestamp": ">=2.17.0"}
+    )
+    def get_root_timestamps(
+        self, root_ids, latest: bool = False, timestamp: datetime.datetime = None
+    ) -> np.ndarray:
         """Retrieves timestamps when roots where created.
 
         Parameters
         ----------
         root_ids: Iterable of int
             Iterable of root IDs to query.
+        latest: bool, optional
+            If False,  returns the first timestamp that the root_id was valid for each root ID.
+            If True, returns the newest/latest timestamp for each root ID.
+            Note, this will return the timestamp at which the query was run when the root is currently valid.
+            This means that you will get a different answer if you make this same query at a later time
+            if you don't specify a timestamp parameter.
+        timestamp: datetime.datetime, optional
+            Timestamp to query when using latest=True. Use this to provide consistent results for a particular
+            timestamp.If an ID is still valid at a point in the future past this timestamp, the query will still
+            return this timestamp as the latest moment in time. An error will occur if you provide a timestamp
+            for which the root ID is not valid.
+
+            Defaults to False.
 
         Returns
         -------
@@ -1299,8 +1317,14 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["root_timestamps"].format_map(endpoint_mapping)
 
         data = {"node_ids": root_ids}
+        params = {"latest": latest}
+        if timestamp is not None:
+            params.update(package_timestamp(timestamp, name="timestamp"))
+
         r = handle_response(
-            self.session.post(url, data=json.dumps(data, cls=BaseEncoder))
+            self.session.post(
+                url, data=json.dumps(data, cls=BaseEncoder), params=params
+            )
         )
 
         return np.array(
