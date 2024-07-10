@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional, Union
 
 from .annotationengine import AnnotationClient, AnnotationClientV2
 from .auth import AuthClient, default_token_file
@@ -33,8 +34,7 @@ class CAVEclient(object):
         desired_resolution=None,
         info_cache=None,
         write_server_cache=True,
-        version: int = None,
-        timestamp: datetime.datetime = None,
+        timestamp: Optional[Union[int, datetime.datetime]] = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -90,13 +90,9 @@ class CAVEclient(object):
         write_server_cache: bool, optional
             If True, write the map between datastack and server address to a local cache file that is used to look up server addresses if not provided. Optional, defaults to True.
         timestamp:
-            The default timestamp to use for queries which use a timestamp. Only one of
-            timestamp or version should be provided. Only used if datastack is provided.
-        version:
-            The default materialization version to use for queries which use a timestamp
-            (will be converted to the appropriate timestamp). Only one of timestamp or
-            version should be provided. Only used if datastack is provided.
-
+            The default timestamp to use for queries which use a timestamp. If an
+            integer, will be interpreted as a materialization version and converted to
+            a timestamp internally. Only used if datastack is provided.
         """
         server_address = handle_server_address(
             datastack_name, server_address, write=write_server_cache
@@ -126,7 +122,6 @@ class CAVEclient(object):
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
                 timestamp=timestamp,
-                version=version,
             )
 
 
@@ -313,14 +308,6 @@ class CAVEclientGlobal(object):
         return None
 
 
-def _process_timestamp(timestamp, version):
-    # TODO input validation
-    # make sure only one of timestamp or version is provided as not None
-    # if the version is provided, look up the timestamp associated with it
-    # if the version is not a fixed version, should a warning be raised?
-    return timestamp
-
-
 class CAVEclientFull(CAVEclientGlobal):
     def __init__(
         self,
@@ -334,8 +321,7 @@ class CAVEclientFull(CAVEclientGlobal):
         pool_block=None,
         desired_resolution=None,
         info_cache=None,
-        timestamp: datetime.datetime = None,
-        version: int = None,
+        timestamp: Optional[Union[int, datetime.datetime]] = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -387,12 +373,9 @@ class CAVEclientFull(CAVEclientGlobal):
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         timestamp:
-            The default timestamp to use for queries which use a timestamp. Only one of
-            timestamp or version should be provided.
-        version:
-            The default materialization version to use for queries which use a timestamp
-            (will be converted to the appropriate timestamp). Only one of timestamp or
-            version should be provided.
+            The default timestamp to use for queries which use a timestamp. If an
+            integer, will be interpreted as a materialization version and converted to
+            a timestamp internally. Only used if datastack is provided.
         """
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
@@ -416,8 +399,7 @@ class CAVEclientFull(CAVEclientGlobal):
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
 
-        self._timestamp = _process_timestamp(timestamp, version)
-        self._version = version
+        self._timestamp = self._validate_timestamp(timestamp)
 
     def _reset_services(self):
         self._auth = None
@@ -491,7 +473,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 pool_block=self._pool_block,
                 over_client=self,
                 desired_resolution=self.desired_resolution,
-                version=self._version,  # TODO also pass timestamp? or only use timestamp?
+                timestamp=self._timestamp,
             )
         return self._materialize
 
@@ -534,20 +516,23 @@ class CAVEclientFull(CAVEclientGlobal):
             )
         return self._l2cache
 
-    @property
-    def version(self) -> int:
-        return self._version
+    def _validate_timestamp(self, timestamp: Optional[Union[int, datetime.datetime]]):
+        # if the version is provided, look up the timestamp associated with it
+        if isinstance(timestamp, int):
+            if timestamp in self.materialize.get_versions(expired=True):
+                timestamp = self.materialize.get_timestamp(timestamp)
+        if not isinstance(timestamp, datetime.datetime):
+            raise ValueError("Timestamp must be a datetime object or integer version.")
+        return timestamp
 
     @property
     def timestamp(self) -> datetime.datetime:
         return self._timestamp
 
     @timestamp.setter
-    def timestamp(self, value: datetime.datetime):
-        # TODO
-        pass
-
-    @version.setter
-    def version(self, value: int):
-        # TODO
-        pass
+    def timestamp(self, value: Union[datetime.datetime, int]):
+        self._timestamp = self._validate_timestamp(value)
+        if self._materialize is not None:
+            self._materialize.timestamp = self._timestamp
+        if self._chunkedgraph is not None:
+            self._chunkedgraph.timestamp = self._timestamp

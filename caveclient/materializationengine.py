@@ -151,6 +151,7 @@ def MaterializationClient(
     pool_block=None,
     desired_resolution=None,
     over_client=None,
+    timestamp: Optional[Union[datetime, int]] = None,
 ) -> "MaterializationClientType":
     """Factory for returning AnnotationClient
 
@@ -175,6 +176,10 @@ def MaterializationClient(
     desired_resolution : Iterable[float] or None, optional
         If given, should be a list or array of the desired resolution you want queries returned in
         useful for materialization queries.
+    timestamp :
+        The default timestamp to use for queries which use a timestamp. If an
+        integer, will be interpreted as a materialization version and converted to
+        a timestamp internally.
 
     Returns
     -------
@@ -214,6 +219,7 @@ def MaterializationClient(
         pool_block=pool_block,
         over_client=over_client,
         desired_resolution=desired_resolution,
+        timestamp=timestamp,
     )
 
 
@@ -235,6 +241,7 @@ class MaterializationClientV2(ClientBase):
         pool_block=None,
         over_client=None,
         desired_resolution=None,
+        timestamp: Optional[Union[datetime, int]] = None,
     ):
         super(MaterializationClientV2, self).__init__(
             server_address,
@@ -248,6 +255,7 @@ class MaterializationClientV2(ClientBase):
             pool_block=pool_block,
             over_client=over_client,
         )
+        self.timestamp = timestamp
         self._datastack_name = datastack_name
         self._version = version
         self._cg_client = cg_client
@@ -280,6 +288,33 @@ class MaterializationClientV2(ClientBase):
             self._version = self.most_recent_version()
         return self._version
 
+    @version.setter
+    def version(self, x):
+        if int(x) in self.get_versions():
+            self._version = int(x)
+        else:
+            raise ValueError("Version not in materialized database")
+
+    @property
+    def timestamp(self) -> Optional[datetime]:
+        """Default timestamp to use in queries that accept a `timestamp` argument.
+        If None, equivalent to querying the most recent materialization. If this
+        MaterializationClient has a parent CAVEclient, then this timestamp can only be 
+        modified at the CAVEclient level."""
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, timestamp: datetime):
+        if self.fc is not None:
+            msg = (
+                "Cannot modify timestamp on a MaterializationClient with a parent "
+                "CAVEclient"
+            )
+            raise ValueError(msg)
+        if not isinstance(timestamp, datetime.datetime):
+            raise ValueError("Timestamp must be a datetime.datetime object")
+        self._default_timestamp = timestamp
+
     @property
     def homepage(self) -> HTML:
         """The homepage for the materialization engine."""
@@ -287,13 +322,6 @@ class MaterializationClientV2(ClientBase):
             f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
         )
         return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
-
-    @version.setter
-    def version(self, x):
-        if int(x) in self.get_versions():
-            self._version = int(x)
-        else:
-            raise ValueError("Version not in materialized database")
 
     @property
     def tables(self) -> TableManager:

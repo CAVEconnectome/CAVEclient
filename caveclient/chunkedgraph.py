@@ -201,12 +201,20 @@ class ChunkedGraphClientV1(ClientBase):
     @property
     def timestamp(self) -> Optional[datetime.datetime]:
         """Default timestamp to use in queries that accept a `timestamp` argument.
-        If None, equivalent to querying the current state of the chunkedgraph."""
+        If None, equivalent to querying the current state of the chunkedgraph. If this
+        ChunkedgraphClient has a parent CAVEclient, then this timestamp can only be
+        modified at the CAVEclient level."""
         return self._default_timestamp
 
     @timestamp.setter
-    def timestamp(self, timestamp: Optional[datetime.datetime]):
-        if (timestamp is not None) and (not isinstance(timestamp, datetime.datetime)):
+    def timestamp(self, timestamp: datetime.datetime):
+        if self.fc is not None:
+            msg = (
+                "Cannot modify timestamp on a ChunkedGraphClient with a parent "
+                "CAVEclient"
+            )
+            raise ValueError(msg)
+        if not isinstance(timestamp, datetime.datetime):
             raise ValueError("Timestamp must be a datetime.datetime object")
         self._default_timestamp = timestamp
 
@@ -1254,7 +1262,8 @@ class ChunkedGraphClientV1(ClientBase):
             Defaults to None (assumes now).
         end_timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs were valid before this timestamp.
-            Defaults to None (assumes now).
+            If None, uses the `timestamp` property for this client, which
+            defaults to the current time.
 
         Returns
         -------
