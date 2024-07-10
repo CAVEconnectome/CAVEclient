@@ -5,7 +5,7 @@ import textwrap
 import urllib
 import webbrowser
 from functools import wraps
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -348,7 +348,9 @@ class ServerIncompatibilityError(Exception):
         super().__init__(message)
 
 
-def _version_fails_constraint(version: Version, constraint: str | Iterable[str] = None):
+def _version_fails_constraint(
+    version: Version, constraint: Optional[Union[str, Iterable[str]]] = None
+):
     """Check if a version fails a constraint
 
     Parameters
