@@ -113,10 +113,9 @@ def concatenate_position_columns(df, inplace=False):
     return df2
 
 
-def convert_timestamp(ts: datetime):
+def convert_timestamp(ts: Optional[Union[datetime, float]]):
     if ts == "now":
         ts = datetime.now(timezone.utc)
-
     if isinstance(ts, datetime):
         if ts.tzinfo is None:
             return pytz.UTC.localize(dt=ts)
@@ -299,7 +298,7 @@ class MaterializationClientV2(ClientBase):
     def timestamp(self) -> Optional[datetime]:
         """Default timestamp to use in queries that accept a `timestamp` argument.
         If None, equivalent to querying the most recent materialization. If this
-        MaterializationClient has a parent CAVEclient, then this timestamp can only be 
+        MaterializationClient has a parent CAVEclient, then this timestamp can only be
         modified at the CAVEclient level."""
         return self._timestamp
 
@@ -733,7 +732,7 @@ class MaterializationClientV2(ClientBase):
             Version to query, by default None.
             If None, defaults to one specified in client.
         timestamp : datetime.datetime, optional
-            Timestamp to query, by default None. If passsed will do a live query.
+            Timestamp to query, by default None. If passed will do a live query.
             Error if also passing a materialization version
         metadata : bool, optional
             Toggle to return metadata (default True), by default True. If True
