@@ -203,7 +203,7 @@ class JSONServiceV1(ClientBase):
         """
         url_mapping = self.default_url_mapping
         url_mapping["state_id"] = state_id
-        url = self._endpoints["get_property"].format_map(url_mapping)
+        url = self._endpoints["get_properties"].format_map(url_mapping)
         response = self.session.get(url)
         handle_response(response, as_json=False)
         return json.loads(response.content)
