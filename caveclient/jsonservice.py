@@ -367,7 +367,7 @@ class JSONServiceV1(ClientBase):
             target_site_error = "A specified target_site must be one of 'seunglab', 'cave-explorer' or 'mainline'"
             raise ValueError(target_site_error)
 
-        if format_propeties:
+        if format_properties:
             url_mapping = self.default_url_mapping
             url_mapping["state_id"] = state_id
             get_state_url = self._endpoints["get_properties"][:-5].format_map(
