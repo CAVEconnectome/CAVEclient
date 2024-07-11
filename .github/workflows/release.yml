@@ -27,6 +27,7 @@ jobs:
     name: Bump version
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       id-token: write
     outputs:
       VERSION: ${{ steps.get-version.outputs.VERSION }}
