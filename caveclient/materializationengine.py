@@ -137,6 +137,35 @@ def string_format_timestamp(ts):
         return ts
 
 
+def _check_select_columns_and_timestamp(
+    select_columns: Optional[Union[list, dict]], timestamp: Optional[datetime]
+) -> None:
+    if timestamp is not None and select_columns is not None:
+        if isinstance(select_columns, list):
+            select_values = select_columns
+        elif isinstance(select_columns, dict):
+            select_values = list(select_columns.values())
+        else:
+            return
+
+        has_root = False
+        has_supervoxel = False
+        for select_value in select_values:
+            if "root_id" in select_value:
+                has_root = True
+            if "supervoxel_id" in select_value:
+                has_supervoxel = True
+        if has_root and not has_supervoxel:
+            msg = (
+                "It looks like you are selecting a root ID column without "
+                "selecting the corresponding supervoxel ID column. This is likely "
+                "to cause issues with incorrect root IDs being returned for some "
+                "versions of the materialization engine. Please select the "
+                "corresponding supervoxel ID column as well."
+            )
+            raise ValueError(msg)
+
+
 def MaterializationClient(
     server_address,
     datastack_name=None,
@@ -1521,6 +1550,8 @@ class MaterializationClientV2(ClientBase):
         return_df = True
         if self.cg_client is None:
             raise ValueError("You must have a cg_client to run live_query")
+
+        _check_select_columns_and_timestamp(select_columns, timestamp)
 
         if datastack_name is None:
             datastack_name = self.datastack_name
