@@ -312,7 +312,7 @@ class JSONServiceV1(ClientBase):
         ngl_url=None,
         target_site=None,
         static_url=False,
-        format_propeties=False,
+        format_properties=False,
     ):
         """Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.
         If the datastack is specified, this is prepopulated from the info file field "viewer_site".
@@ -331,7 +331,7 @@ class JSONServiceV1(ClientBase):
             Default is None.
         static_url : bool
             If True, treats "state_id" as a static URL directly to the JSON and does not use the state service.
-        format_propeties : bool
+        format_properties : bool
             If True, formats the url as a segment_properties info file
         Returns
         -------
@@ -367,7 +367,7 @@ class JSONServiceV1(ClientBase):
             target_site_error = "A specified target_site must be one of 'seunglab', 'cave-explorer' or 'mainline'"
             raise ValueError(target_site_error)
 
-        if format_propeties:
+        if format_properties:
             url_mapping = self.default_url_mapping
             url_mapping["state_id"] = state_id
             get_state_url = self._endpoints["get_properties"][:-5].format_map(
