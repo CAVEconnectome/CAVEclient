@@ -276,7 +276,7 @@ class MaterializationClientV2(ClientBase):
         """The version of the materialization. Can be used to set up the
         client to default to a specific version when timestamps or versions are not
         specified in queries. If not set, defaults to the most recent version.
-        
+
         Note that if this materialization client is attached to a framework client,
         the version must be set at the framework client level.
         """
