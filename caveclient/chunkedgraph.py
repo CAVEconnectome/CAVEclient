@@ -3,7 +3,7 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Tuple, Union, Optional
+from typing import Iterable, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -186,9 +186,10 @@ class ChunkedGraphClientV1(ClientBase):
             over_client=over_client,
         )
         self._default_url_mapping["table_id"] = table_name
-        self._default_timestamp = timestamp
         self._table_name = table_name
         self._segmentation_info = None
+
+        self.timestamp = timestamp
 
     @property
     def default_url_mapping(self):
@@ -197,19 +198,35 @@ class ChunkedGraphClientV1(ClientBase):
     @property
     def table_name(self):
         return self._table_name
-    
+
     @property
     def timestamp(self) -> Optional[datetime.datetime]:
-        if self.fc is None: 
+        if self.fc is None:
             return self._default_timestamp
-        else: 
+        else:
             return self.fc.timestamp
-        
 
-    def _process_timestamp(self, timestamp):
+    @timestamp.setter
+    def timestamp(self, value: Optional[datetime.datetime]):
+        if self.fc is not None and value is not None:
+            msg = (
+                "Cannot set `timestamp` when attached to a framework client, set a "
+                "version at the framework client level instead."
+            )
+            raise ValueError(msg)
+        if value is None or isinstance(value, datetime.datetime):
+            self._default_timestamp = value
+        else:
+            raise ValueError("`timestamp` must be a datetime object or None.")
+
+    def _process_timestamp(
+        self, timestamp: Optional[datetime.datetime]
+    ) -> datetime.datetime:
         """Process timestamp with default logic"""
         if timestamp is None:
             if self.timestamp is not None:
+                # refers to the framework client if it exists, otherwise uses the
+                # value set for this chunkedgraph client
                 return self.timestamp
             else:
                 return datetime.datetime.now(datetime.timezone.utc)
