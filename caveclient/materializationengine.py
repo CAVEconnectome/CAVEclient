@@ -276,7 +276,7 @@ class MaterializationClientV2(ClientBase):
         """The version of the materialization. Can be used to set up the
         client to default to a specific version when timestamps or versions are not
         specified in queries. If not set, defaults to the most recent version."""
-        if self.fc is not None: 
+        if self.fc is not None:
             return self.fc.version
         if self._version is None:
             self._version = self.most_recent_version()
@@ -1910,28 +1910,57 @@ def _tables_metadata_key(matclient, *args, **kwargs):
 class MaterializationClientV3(MaterializationClientV2):
     def __init__(self, *args, **kwargs):
         super(MaterializationClientV3, self).__init__(*args, **kwargs)
-        metadata = []
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            metadata.append(
-                executor.submit(
-                    self.get_tables_metadata,
-                )
-            )
-            metadata.append(executor.submit(self.fc.schema.schema_definition_all))
-            metadata.append(executor.submit(self.get_views))
-            metadata.append(executor.submit(self.get_view_schemas))
-        tables = None
-        if self.fc is not None:
-            if metadata[0].result() is not None and metadata[1].result() is not None:
-                tables = TableManager(
-                    self.fc, metadata[0].result(), metadata[1].result()
-                )
-        self._tables = tables
-        if self.fc is not None:
-            views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
-        else:
-            views = None
-        self._views = views
+
+    @property
+    def tables(self) -> TableManager:
+        """The table manager for the materialization engine."""
+        if self._tables is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                metadata = []
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    metadata.append(
+                        executor.submit(
+                            self.get_tables_metadata,
+                        )
+                    )
+                    metadata.append(
+                        executor.submit(self.fc.schema.schema_definition_all)
+                    )
+
+                if (
+                    metadata[0].result() is not None
+                    and metadata[1].result() is not None
+                ):
+                    tables = TableManager(
+                        self.fc, metadata[0].result(), metadata[1].result()
+                    )
+                else:
+                    # TODO is this right?
+                    tables = None
+                self._tables = tables
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._tables
+
+    @property
+    def views(self) -> ViewManager:
+        """The view manager for the materialization engine."""
+        if self._views is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                metadata = []
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    metadata.append(
+                        executor.submit(
+                            self.get_views,
+                        )
+                    )
+                    metadata.append(executor.submit(self.get_view_schemas))
+
+                views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
+                self._views = views
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._views
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
     def get_tables_metadata(
