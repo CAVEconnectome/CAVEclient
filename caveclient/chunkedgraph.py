@@ -190,6 +190,11 @@ class ChunkedGraphClientV1(ClientBase):
         self._segmentation_info = None
 
         # self.timestamp = timestamp
+        if over_client is not None and timestamp is not None:
+            raise ValueError(
+                "Cannot set `timestamp` when attached to a CAVEclient, set a "
+                "version at the CAVEclient level instead."
+            )
         if timestamp is None or isinstance(timestamp, datetime.datetime):
             self._default_timestamp = timestamp
         else:
