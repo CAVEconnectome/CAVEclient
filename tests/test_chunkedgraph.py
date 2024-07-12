@@ -59,10 +59,15 @@ class TestChunkedgraph:
             # match=[binary_body_match(svids.tobytes())],
         )
 
-        new_root_ids = myclient.chunkedgraph.get_roots(svids, timestamp=now)
+        # detach the parent client just to be able to set a default timestamp for 
+        # the chunkedgraph client
+        cg = myclient.chunkedgraph
+        cg._fc = None
+
+        new_root_ids = cg.get_roots(svids, timestamp=now)
         assert np.all(new_root_ids == root_ids)
-        myclient.chunkedgraph._default_timestamp = now
-        new_root_ids = myclient.chunkedgraph.get_roots(svids)
+        cg._default_timestamp = now
+        new_root_ids = cg.get_roots(svids)
         assert np.all(new_root_ids == root_ids)
 
         query_d = package_timestamp(now)
@@ -74,7 +79,7 @@ class TestChunkedgraph:
             body=root_ids.tobytes(),
             # match=[binary_body_match(svids.tobytes())],
         )
-        new_root_ids = myclient.chunkedgraph.get_roots(
+        new_root_ids = cg.get_roots(
             svids, timestamp=now, stop_layer=3
         )
         assert np.all(new_root_ids == root_ids)

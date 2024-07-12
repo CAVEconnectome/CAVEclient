@@ -280,7 +280,7 @@ class MaterializationClientV2(ClientBase):
         Note that if this materialization client is attached to a framework client,
         the version must be set at the framework client level.
         """
-        if self.fc is not None:
+        if self.fc is not None and self.fc.version is not None:
             return self.fc.version
         if self._version is None:
             self._version = self.most_recent_version()
@@ -503,7 +503,7 @@ class MaterializationClientV2(ClientBase):
         self,
         table_name: str,
         datastack_name=None,
-        version: int = None,
+        version: Optional[int] = None,
         log_warning: bool = True,
     ):
         """Get metadata about a table
