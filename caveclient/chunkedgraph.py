@@ -3,7 +3,7 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple, Union, Optional
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -197,12 +197,20 @@ class ChunkedGraphClientV1(ClientBase):
     @property
     def table_name(self):
         return self._table_name
+    
+    @property
+    def timestamp(self) -> Optional[datetime.datetime]:
+        if self.fc is None: 
+            return self._default_timestamp
+        else: 
+            return self.fc.timestamp
+        
 
     def _process_timestamp(self, timestamp):
         """Process timestamp with default logic"""
         if timestamp is None:
-            if self._default_timestamp is not None:
-                return self._default_timestamp
+            if self.timestamp is not None:
+                return self.timestamp
             else:
                 return datetime.datetime.now(datetime.timezone.utc)
         else:

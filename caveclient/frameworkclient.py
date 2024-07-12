@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from .annotationengine import AnnotationClient, AnnotationClientV2
@@ -390,7 +391,7 @@ class CAVEclientFull(CAVEclientGlobal):
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
 
-        # this uses the setter, and also interprets the timestamp
+        # this uses the setter, and also sets the timestamp
         self.version = version
 
     @property
@@ -412,6 +413,10 @@ class CAVEclientFull(CAVEclientGlobal):
                 )
         else:
             raise ValueError("Version must be an integer or None.")
+
+    @property
+    def timestamp(self) -> Optional[datetime]:
+        return self._timestamp
 
     def _reset_services(self):
         self._auth = None
@@ -446,7 +451,6 @@ class CAVEclientFull(CAVEclientGlobal):
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
-                timestamp=self.timestamp,
             )
         return self._chunkedgraph
 

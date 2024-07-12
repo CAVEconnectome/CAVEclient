@@ -275,12 +275,29 @@ class MaterializationClientV2(ClientBase):
     def version(self) -> int:
         """The version of the materialization. Can be used to set up the
         client to default to a specific version when timestamps or versions are not
-        specified in queries. If not set, defaults to the most recent version."""
+        specified in queries. If not set, defaults to the most recent version.
+        
+        Note that if this materialization client is attached to a framework client,
+        the version must be set at the framework client level.
+        """
         if self.fc is not None:
             return self.fc.version
         if self._version is None:
             self._version = self.most_recent_version()
         return self._version
+
+    @version.setter
+    def version(self, x: Optional[int]):
+        if self.fc is not None:
+            msg = (
+                "Cannot set version for materialization client when attached to a "
+                "framework client, set at the framework client level instead."
+            )
+            raise ValueError(msg)
+        if int(x) in self.get_versions(expired=True):
+            self._version = int(x)
+        else:
+            raise ValueError("Version not in materialized database")
 
     @property
     def homepage(self) -> HTML:
@@ -289,13 +306,6 @@ class MaterializationClientV2(ClientBase):
             f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
         )
         return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
-
-    @version.setter
-    def version(self, x):
-        if int(x) in self.get_versions():
-            self._version = int(x)
-        else:
-            raise ValueError("Version not in materialized database")
 
     @property
     def tables(self) -> TableManager:
