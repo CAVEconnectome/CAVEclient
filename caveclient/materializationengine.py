@@ -291,7 +291,7 @@ class MaterializationClientV2(ClientBase):
         if self.fc is not None:
             msg = (
                 "Cannot set version for materialization client when attached to a "
-                "framework client, set at the framework client level instead."
+                "framework client, set at the CAVEclient level instead."
             )
             raise ValueError(msg)
         if int(x) in self.get_versions(expired=True):
