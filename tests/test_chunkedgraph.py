@@ -74,7 +74,9 @@ class TestChunkedgraph:
             body=root_ids.tobytes(),
             # match=[binary_body_match(svids.tobytes())],
         )
-        new_root_ids = myclient.chunkedgraph.get_roots(svids, timestamp=now, stop_layer=3)
+        new_root_ids = myclient.chunkedgraph.get_roots(
+            svids, timestamp=now, stop_layer=3
+        )
         assert np.all(new_root_ids == root_ids)
 
         endpoint_mapping["supervoxel_id"] = svids[0]
