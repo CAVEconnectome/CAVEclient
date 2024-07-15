@@ -479,7 +479,7 @@ class TestMatclient:
             offset=0,
         )
         assert len(df) == 1000
-        assert type(df) == pd.DataFrame
+        assert isinstance(df, pd.DataFrame)
         assert df.attrs["table_id"] == self.table_metadata["id"]
 
         correct_metadata = [
