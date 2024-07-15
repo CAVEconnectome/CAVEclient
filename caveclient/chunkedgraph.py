@@ -188,17 +188,7 @@ class ChunkedGraphClientV1(ClientBase):
         self._default_url_mapping["table_id"] = table_name
         self._table_name = table_name
         self._segmentation_info = None
-
-        # self.timestamp = timestamp
-        if over_client is not None and timestamp is not None:
-            raise ValueError(
-                "Cannot set `timestamp` when attached to a CAVEclient, set a "
-                "version at the CAVEclient level instead."
-            )
-        if timestamp is None or isinstance(timestamp, datetime.datetime):
-            self._default_timestamp = timestamp
-        else:
-            raise ValueError("`timestamp` must be a datetime object or None.")
+        self._default_timestamp = timestamp
 
     @property
     def default_url_mapping(self):
@@ -212,14 +202,14 @@ class ChunkedGraphClientV1(ClientBase):
     def timestamp(self) -> Optional[datetime.datetime]:
         """The default timestamp for queries which expect a timestamp. If None, uses the
         current time."""
-        if self.fc is None:
+        if self.fc is None or self.fc.timestamp is None:
             return self._default_timestamp
         else:
             return self.fc.timestamp
 
     @timestamp.setter
     def timestamp(self, value: Optional[datetime.datetime]):
-        if self.fc is not None and self.fc.version is not None:
+        if self.fc is not None and self.fc.timestamp is not None:
             msg = (
                 "Cannot set `timestamp` when attached to a CAVEclient with a version, "
                 "set a version at the CAVEclient level instead."
