@@ -186,9 +186,9 @@ class ChunkedGraphClientV1(ClientBase):
             over_client=over_client,
         )
         self._default_url_mapping["table_id"] = table_name
+        self._default_timestamp = timestamp
         self._table_name = table_name
         self._segmentation_info = None
-        self._default_timestamp = timestamp
 
     @property
     def default_url_mapping(self):
