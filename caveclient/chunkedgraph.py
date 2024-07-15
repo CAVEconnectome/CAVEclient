@@ -219,10 +219,10 @@ class ChunkedGraphClientV1(ClientBase):
 
     @timestamp.setter
     def timestamp(self, value: Optional[datetime.datetime]):
-        if self.fc is not None:
+        if self.fc is not None and self.fc.version is not None:
             msg = (
-                "Cannot set `timestamp` when attached to a CAVEclient, set a "
-                "version at the CAVEclient level instead."
+                "Cannot set `timestamp` when attached to a CAVEclient with a version, "
+                "set a version at the CAVEclient level instead."
             )
             raise ValueError(msg)
         if value is None or isinstance(value, datetime.datetime):
