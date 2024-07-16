@@ -1113,7 +1113,6 @@ class ChunkedGraphClientV1(ClientBase):
         """
         root_id = root_id_int_list_check(root_id, make_unique=True)
 
-        # TODO feels like there should be a timestamp call here if timestamp is set?
         timestamp_future = self.get_root_timestamps(root_id).max()
 
         lineage_graph = self.get_lineage_graph(
@@ -1398,7 +1397,6 @@ class ChunkedGraphClientV1(ClientBase):
         endpoint_mapping = self.default_url_mapping
 
         params = {}
-        # TODO should anything happen with client timestamps here?
         if timestamp_past is not None:
             params.update(package_timestamp(timestamp_past, name="timestamp_past"))
         if timestamp_future is not None:
