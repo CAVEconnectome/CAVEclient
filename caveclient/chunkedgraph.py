@@ -218,7 +218,7 @@ class ChunkedGraphClientV1(ClientBase):
         if value is None or isinstance(value, datetime.datetime):
             self._default_timestamp = value
         else:
-            raise ValueError("`timestamp` must be a datetime object or None.")
+            raise TypeError("`timestamp` must be a datetime object or None.")
 
     def _process_timestamp(
         self, timestamp: Optional[datetime.datetime]

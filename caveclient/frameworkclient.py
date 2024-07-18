@@ -412,7 +412,7 @@ class CAVEclientFull(CAVEclientGlobal):
                     f"Version {version} is not available for this datastack."
                 )
         else:
-            raise ValueError("Version must be an integer or None.")
+            raise TypeError("Version must be an integer or None.")
 
     @property
     def timestamp(self) -> Optional[datetime]:
