@@ -364,6 +364,21 @@ def make_class_vals(
     return class_vals
 
 
+def rename_fields(filter_dict, cls):
+    rename_map = {}
+    for a in attrs.fields(type(cls)):
+        if a.metadata.get("original_name"):
+            rename_map[a.name] = a.metadata["original_name"]
+    fix_dict = {}
+    for tn in filter_dict:
+        for k in filter_dict[tn]:
+            if k in rename_map:
+                fix_dict[tn] = k
+    for tn, k in fix_dict.items():
+        filter_dict[tn][rename_map[k]] = filter_dict[tn].pop(k)
+    return filter_dict
+
+
 def make_kwargs_mixin(client, is_view=False, live_compatible=True):
     class BaseQueryKwargs(object):
         def __attrs_post_init__(self):
@@ -387,6 +402,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 )
                 for tn in tables
             }
+            filter_equal_dict = rename_fields(filter_equal_dict, self)
+
             filter_in_dict = {
                 tn: filter_empty(
                     attrs.asdict(
@@ -400,6 +417,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 )
                 for tn in tables
             }
+            filter_in_dict = rename_fields(filter_in_dict, self)
+
             spatial_dict = {
                 tn: update_spatial_dict(
                     attrs.asdict(
@@ -412,6 +431,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 )
                 for tn in tables
             }
+            spatial_dict = rename_fields(spatial_dict, self)
 
             self.filter_kwargs_live = {
                 "filter_equal_dict": replace_empty_with_none(
