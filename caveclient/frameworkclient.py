@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional
+
 from .annotationengine import AnnotationClient, AnnotationClientV2
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
@@ -31,6 +34,7 @@ class CAVEclient(object):
         desired_resolution=None,
         info_cache=None,
         write_server_cache=True,
+        version: Optional[int] = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -113,6 +117,7 @@ class CAVEclient(object):
                 pool_block=pool_block,
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
+                version=version,
             )
 
 
@@ -312,6 +317,7 @@ class CAVEclientFull(CAVEclientGlobal):
         pool_block=None,
         desired_resolution=None,
         info_cache=None,
+        version: Optional[int] = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -384,6 +390,33 @@ class CAVEclientFull(CAVEclientGlobal):
         self.local_server = self.info.local_server()
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
+
+        # this uses the setter, and also sets the timestamp
+        self.version = version
+
+    @property
+    def version(self) -> Optional[int]:
+        return self._version
+
+    @version.setter
+    def version(self, version: Optional[int]):
+        if version is None:
+            self._version = None
+            self._timestamp = None
+        elif isinstance(version, int):
+            if version in self.materialize.get_versions(expired=True):
+                self._version = version
+                self._timestamp = self.materialize.get_timestamp(version)
+            else:
+                raise ValueError(
+                    f"Version {version} is not available for this datastack."
+                )
+        else:
+            raise TypeError("Version must be an integer or None.")
+
+    @property
+    def timestamp(self) -> Optional[datetime]:
+        return self._timestamp
 
     def _reset_services(self):
         self._auth = None
