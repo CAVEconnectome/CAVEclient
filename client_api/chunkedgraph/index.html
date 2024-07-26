@@ -676,6 +676,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.timestamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      timestamp
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info" class="md-nav__link">
     <span class="md-ellipsis">
       segmentation_info
@@ -1294,6 +1303,29 @@ version of the datastack itself.</p>
 
 
 
+<h2 id="caveclient.chunkedgraph.ChunkedGraphClientV1.timestamp" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">]</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+      <small class="doc doc-label doc-label-writable"><code>writable</code></small>
+  </span>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClientV1.timestamp" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+      <p>The default timestamp for queries which expect a timestamp. If None, uses the
+current time.</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h2 id="caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">segmentation_info</span></code>
 
@@ -1425,7 +1457,8 @@ version of the datastack itself.</p>
             <td>
               <div class="doc-md-description">
                 <p>UTC datetime to specify the state of the chunkedgraph at which to query, by
-default None. If None, uses the current time.</p>
+default None. If None, uses the <code>timestamp</code> property for this client, which
+defaults to the current time.</p>
               </div>
             </td>
             <td>
@@ -1523,7 +1556,8 @@ default None. If None, uses the current time.</p>
             <td>
               <div class="doc-md-description">
                 <p>UTC datetime to specify the state of the chunkedgraph at which to query, by
-default None. If None, uses the current time.</p>
+default None. If None, uses the <code>timestamp</code> property for this client, which
+defaults to the current time.</p>
               </div>
             </td>
             <td>
@@ -3252,7 +3286,8 @@ tracing the history of the object in terms of merges and splits.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Cutoff for the lineage graph going forwards in time. By default, None.</p>
+                <p>Cutoff for the lineage graph going forwards in time. By default, uses the
+<code>timestamp</code> property for this client, which defaults to the current time.</p>
               </div>
             </td>
             <td>
@@ -3417,8 +3452,8 @@ timestamp. Can be used to find the "latest" root IDs associated with an object.<
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Timestamp of where to query IDs from. If None then will assume you want
-till now.</p>
+                <p>Timestamp of where to query IDs from. If None, uses the <code>timestamp</code> property
+for this client, which defaults to the current time.</p>
               </div>
             </td>
             <td>
@@ -3601,7 +3636,8 @@ root). By default, None.</p>
             <td>
               <div class="doc-md-description">
                 <p>Timestamp to check whether these IDs are valid root IDs in the chunked
-graph. Defaults to None (assumes now).</p>
+graph. If None, uses the <code>timestamp</code> property for this client, which
+defaults to the current time.</p>
               </div>
             </td>
             <td>
@@ -3688,8 +3724,9 @@ scale of chunks. Higher layers are coarser.</p>
             <td>
               <div class="doc-md-description">
                 <p>Datetime at which "latest" roots are being computed, by default None. If
-None, the current time is used. Note that this has to be a timestamp after
-the creation of the <code>root_id</code>.</p>
+None, uses the <code>timestamp</code> property for this client, which defaults to the
+current time. Note that this has to be a timestamp after the creation of the
+<code>root_id</code>.</p>
               </div>
             </td>
             <td>
@@ -3816,7 +3853,8 @@ Defaults to None (assumes now).</p>
             <td>
               <div class="doc-md-description">
                 <p>Timestamp to check whether these IDs were valid before this timestamp.
-Defaults to None (assumes now).</p>
+If None, uses the <code>timestamp</code> property for this client, which defaults to
+the current time.</p>
               </div>
             </td>
             <td>
@@ -3916,11 +3954,12 @@ if you don't specify a timestamp parameter.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Timestamp to query when using latest=True. Use this to provide consistent results for a particular
-timestamp.If an ID is still valid at a point in the future past this timestamp, the query will still
-return this timestamp as the latest moment in time. An error will occur if you provide a timestamp
-for which the root ID is not valid.</p>
-<p>Defaults to False.</p>
+                <p>Timestamp to query when using latest=True. Use this to provide consistent
+results for a particular timestamp. If an ID is still valid at a point in
+the future past this timestamp, the query will still return this timestamp
+as the latest moment in time. An error will occur if you provide a timestamp
+for which the root ID is not valid. If None, uses the <code>timestamp</code> property
+for this client, which defaults to the current time.</p>
               </div>
             </td>
             <td>

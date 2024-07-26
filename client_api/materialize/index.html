@@ -1374,6 +1374,8 @@ version of the datastack itself.</p>
       <p>The version of the materialization. Can be used to set up the
 client to default to a specific version when timestamps or versions are not
 specified in queries. If not set, defaults to the most recent version.</p>
+<p>Note that if this materialization client is attached to a CAVEclient,
+the version must be set at the CAVEclient level.</p>
     </div>
 
 </div>
@@ -1461,7 +1463,8 @@ specified in queries. If not set, defaults to the most recent version.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to get. If None, uses the one specified in the client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -1560,7 +1563,8 @@ Will be set correctly if you are using the framework_client</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>the version to query, else get the tables in the most recent version</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -1639,11 +1643,12 @@ Will be set correctly if you are using the framework_client</p>
           <tr class="doc-section-item">
             <td><code>version</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to get. If None, uses the one specified in the client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -1726,7 +1731,8 @@ Will be set correctly if you are using the framework_client</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Materialization version, by default None. If None, defaults to the value set in the client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -1892,7 +1898,8 @@ Will be set correctly if you are using the framework_client</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Materialization version, by default None. If None, defaults to the value set in the client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -2152,11 +2159,12 @@ If None, uses the one specified in the client.</p>
           <tr class="doc-section-item">
             <td><code>materialization_version</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to query. If None, will use version set by client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -2249,11 +2257,12 @@ If None, uses the one specified in the client.</p>
           <tr class="doc-section-item">
             <td><code>materialization_version</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to query. If None, will use version set by client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -2332,7 +2341,7 @@ If None, uses the one specified in the client.</p>
           <tr class="doc-section-item">
             <td><code>materialization_version</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2415,11 +2424,12 @@ If None, uses the one specified in the client.</p>
           <tr class="doc-section-item">
             <td><code>version</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to query. If None, uses the one specified in the client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -2779,7 +2789,8 @@ data is returned as one column with [x,y,z] array (slower)</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>version to query. If None defaults to one specified in client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -4011,8 +4022,8 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to query, by default None.
-If None, defaults to one specified in client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -4347,8 +4358,8 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to query, by default None.
-If None, defaults to one specified in client.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
@@ -4675,12 +4686,12 @@ useful for materialization queries.</p>
           <tr class="doc-section-item">
             <td><code>materialization_version</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Version to query. If passed, do not pass timestamp. Defaults to
-<code>self.materialization_version</code> if not specified.</p>
+                <p>The version of the datastack to query. If None, will query the client
+<code>version</code>, which defaults to the most recent version.</p>
               </div>
             </td>
             <td>
