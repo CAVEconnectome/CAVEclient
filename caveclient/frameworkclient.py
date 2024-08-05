@@ -89,6 +89,9 @@ class CAVEclient(object):
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         write_server_cache: bool, optional
             If True, write the map between datastack and server address to a local cache file that is used to look up server addresses if not provided. Optional, defaults to True.
+        version:
+            The default materialization version of the datastack to use. If None, the
+            latest version is used. Optional, defaults to None.
         """
         server_address = handle_server_address(
             datastack_name, server_address, write=write_server_cache
@@ -368,6 +371,9 @@ class CAVEclientFull(CAVEclientGlobal):
             useful for materialization queries.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
+        version:
+            The default materialization version of the datastack to use. If None, the
+            latest version is used. Optional, defaults to None.
         """
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
@@ -396,6 +402,9 @@ class CAVEclientFull(CAVEclientGlobal):
 
     @property
     def version(self) -> Optional[int]:
+        """The default materialization version of the datastack to use for queries which
+        expect a version. Also sets the timestamp to the corresponding timestamp of the
+        version for queries which rely on a timestamp."""
         return self._version
 
     @version.setter
@@ -416,6 +425,7 @@ class CAVEclientFull(CAVEclientGlobal):
 
     @property
     def timestamp(self) -> Optional[datetime]:
+        """The default timestamp to use for queries which rely on a timestamp."""
         return self._timestamp
 
     def _reset_services(self):
