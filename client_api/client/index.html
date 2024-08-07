@@ -694,6 +694,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.frameworkclient.CAVEclientFull.timestamp" class="md-nav__link">
+    <span class="md-ellipsis">
+      timestamp
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.frameworkclient.CAVEclientFull.version" class="md-nav__link">
+    <span class="md-ellipsis">
+      version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.frameworkclient.CAVEclientFull.change_auth" class="md-nav__link">
     <span class="md-ellipsis">
       change_auth
@@ -1230,6 +1248,21 @@ useful for materialization queries.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td><code>version</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The default materialization version of the datastack to use. If None, the
+latest version is used. Optional, defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -1456,6 +1489,51 @@ for more information.</p>
 
       <p>A client for the neuroglancer state service. See <a href="../state/">client.state</a>
 for more information.</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="caveclient.frameworkclient.CAVEclientFull.timestamp" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">timestamp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">]</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#caveclient.frameworkclient.CAVEclientFull.timestamp" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+      <p>The default timestamp to use for queries which rely on a timestamp.</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="caveclient.frameworkclient.CAVEclientFull.version" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+      <small class="doc doc-label doc-label-writable"><code>writable</code></small>
+  </span>
+
+<a href="#caveclient.frameworkclient.CAVEclientFull.version" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+      <p>The default materialization version of the datastack to use for queries which
+expect a version. Also sets the timestamp to the corresponding timestamp of the
+version for queries which rely on a timestamp.</p>
     </div>
 
 </div>

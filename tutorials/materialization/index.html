@@ -1053,11 +1053,17 @@ using
 <a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_version_metadata">client.materialize.get_version_metadata()</a> or
 all versions using
 <a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_versions_metadata">client.materialize.get_versions_metadata()</a>.</p>
-<p>To change the default version, alter the .version property of the
-materialization client.</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">9</span>
+<p>To change the default version, alter the <code>.version</code> property of the
+client. This will change the version for all subsequent calls which expect one, unless
+you specify a different version in the method call. Note that this also sets the
+<code>timestamp</code> property of the client to the timestamp of the version for methods which
+expect a timestamp.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="mi">9</span>
 </code></pre></div>
-<p>or specify the version when making a particular call.</p>
+<p>You can also specify the version when you initialize the client, e.g.:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">CAVEclient</span><span class="p">(</span><span class="s1">&#39;minnie65_public&#39;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">661</span><span class="p">)</span>
+</code></pre></div>
+<p>Or, you can specify the version when making a particular method call.</p>
 <h3 id="browsing-versions">Browsing versions<a class="headerlink" href="#browsing-versions" title="Permanent link">&para;</a></h3>
 <p>To see what tables are available in a version you can use
 <a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_tables">client.materialize.get_tables()</a>.</p>
