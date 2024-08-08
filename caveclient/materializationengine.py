@@ -685,6 +685,7 @@ class MaterializationClientV2(ClientBase):
         desired_resolution: Iterable = None,
         get_counts: bool = False,
         random_sample: int = None,
+        log_warning: bool = True,
     ):
         """Generic query on materialization tables
 
@@ -743,6 +744,8 @@ class MaterializationClientV2(ClientBase):
         random_sample : int, optional
             If given, will do a tablesample of the of the table to return that many
             annotations
+        log_warning : bool, optional
+            Whether to log warnings, by default True
 
         Returns
         -------
@@ -774,6 +777,7 @@ class MaterializationClientV2(ClientBase):
                     merge_reference=merge_reference,
                     desired_resolution=desired_resolution,
                     random_sample=random_sample,
+                    log_warning=log_warning,
                 )
         if materialization_version is None:
             materialization_version = self.version
@@ -814,7 +818,7 @@ class MaterializationClientV2(ClientBase):
             params=query_args,
             stream=~return_df,
         )
-        self.raise_for_status(response)
+        self.raise_for_status(response, log_warning=log_warning)
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -881,6 +885,7 @@ class MaterializationClientV2(ClientBase):
         metadata: bool = True,
         desired_resolution: Iterable = None,
         random_sample: int = None,
+        log_warning: bool = True,
     ):
         """Generic query on materialization tables
 
@@ -935,6 +940,8 @@ class MaterializationClientV2(ClientBase):
             defaults.
         random_sample : int, optional
             if given, will do a tablesample of the table to return that many annotations
+        log_warning : bool, optional
+            Whether to log warnings, by default True
 
         Returns
         -------
@@ -974,7 +981,7 @@ class MaterializationClientV2(ClientBase):
             params=query_args,
             stream=~return_df,
         )
-        self.raise_for_status(response)
+        self.raise_for_status(response, log_warning=log_warning)
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -1259,6 +1266,7 @@ class MaterializationClientV2(ClientBase):
         desired_resolution: Iterable = None,
         allow_missing_lookups: bool = False,
         random_sample: int = None,
+        log_warning: bool = True,
     ):
         """Beta method for querying cave annotation tables with rootIDs and annotations
         at a particular timestamp.  Note: this method requires more explicit mapping of
@@ -1305,6 +1313,8 @@ class MaterializationClientV2(ClientBase):
             If there are annotations without supervoxels and root IDs yet, allow results.
         random_sample:
             If given, will do a table sample of the table to return that many annotations.
+        log_warning:
+            Whether to log warnings.
 
         Returns
         -------
@@ -1406,7 +1416,7 @@ class MaterializationClientV2(ClientBase):
             stream=~return_df,
             verify=self.verify,
         )
-        self.raise_for_status(response)
+        self.raise_for_status(response, log_warning=log_warning)
 
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
@@ -1476,6 +1486,7 @@ class MaterializationClientV2(ClientBase):
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
         random_sample: int = None,
+        log_warning: bool = True,
     ):
         """Generic query on materialization tables
 
@@ -1529,6 +1540,8 @@ class MaterializationClientV2(ClientBase):
             the table and should be in the resolution specified in the table metadata.
         random_sample : int, optional
             If given, will do a tablesample of the table to return that many annotations.
+        log_warning : bool, optional
+            Whether to log warnings.
 
         Returns
         -------
@@ -1575,6 +1588,7 @@ class MaterializationClientV2(ClientBase):
                             desired_resolution=desired_resolution,
                             return_df=True,
                             random_sample=random_sample,
+                            log_warning=log_warning,
                         )
                     else:
                         timestamp_start = ts
@@ -1653,7 +1667,7 @@ class MaterializationClientV2(ClientBase):
                 stream=~return_df,
                 verify=self.verify,
             )
-            self.raise_for_status(response)
+            self.raise_for_status(response, log_warning=log_warning)
 
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
@@ -2043,6 +2057,7 @@ class MaterializationClientV3(MaterializationClientV2):
         allow_missing_lookups: bool = False,
         allow_invalid_root_ids: bool = False,
         random_sample: int = None,
+        log_warning: bool = True,
     ):
         """Beta method for querying cave annotation tables with root IDs and annotations
         at a particular timestamp.  Note: this method requires more explicit mapping of
@@ -2095,6 +2110,8 @@ class MaterializationClientV3(MaterializationClientV2):
             an error.
         random_sample:
             If given, will do a table sample of the table to return that many annotations.
+        log_warning:
+            Whether to log warnings.
 
         Returns
         -------
@@ -2203,7 +2220,7 @@ it will likely get removed in future versions. "
             stream=~return_df,
             verify=self.verify,
         )
-        self.raise_for_status(response)
+        self.raise_for_status(response, log_warning=log_warning)
 
         with MyTimeIt("deserialize"):
             with warnings.catch_warnings():
