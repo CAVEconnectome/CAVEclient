@@ -2567,7 +2567,7 @@ If None, uses the one specified in the client.</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.join_query" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">join_query</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">join_query</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.join_query" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2841,6 +2841,20 @@ defaults.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td><code>log_warning</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to log warnings, by default True</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -2875,7 +2889,7 @@ defaults.</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.live_live_query" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">live_live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">joins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_missing_lookups</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_invalid_root_ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">live_live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">joins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_missing_lookups</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_invalid_root_ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.live_live_query" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -3164,6 +3178,20 @@ an error.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td><code>log_warning</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to log warnings.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -3237,7 +3265,7 @@ an error.</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.live_query" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">post_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">post_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.live_query" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -3508,6 +3536,20 @@ the table and should be in the resolution specified in the table metadata.</p>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>log_warning</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to log warnings.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
             </td>
           </tr>
       </tbody>
@@ -3821,7 +3863,7 @@ Will be set correctly if you are using the framework_client</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.query_table" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">query_table</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">query_table</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.query_table" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -4121,6 +4163,20 @@ annotations</p>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>log_warning</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to log warnings, by default True</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
             </td>
           </tr>
       </tbody>
