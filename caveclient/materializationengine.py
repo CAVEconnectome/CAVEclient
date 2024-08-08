@@ -258,10 +258,12 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def datastack_name(self):
+        """The name of the datastack."""
         return self._datastack_name
 
     @property
     def cg_client(self):
+        """The chunked graph client."""
         if self._cg_client is None:
             if self.fc is not None:
                 self._cg_client = self.fc.chunkedgraph
@@ -271,26 +273,43 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def version(self) -> int:
+        """The version of the materialization. Can be used to set up the
+        client to default to a specific version when timestamps or versions are not
+        specified in queries. If not set, defaults to the most recent version.
+
+        Note that if this materialization client is attached to a CAVEclient,
+        the version must be set at the CAVEclient level.
+        """
+        if self.fc is not None and self.fc.version is not None:
+            return self.fc.version
         if self._version is None:
             self._version = self.most_recent_version()
         return self._version
 
-    @property
-    def homepage(self) -> HTML:
-        url = (
-            f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
-        )
-        return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
-
     @version.setter
-    def version(self, x):
-        if int(x) in self.get_versions():
+    def version(self, x: Optional[int]):
+        if self.fc is not None and self.fc.version is not None:
+            msg = (
+                "Cannot set `version` for materialization client when attached to a "
+                "CAVEclient with a version, set at the CAVEclient level instead."
+            )
+            raise ValueError(msg)
+        if int(x) in self.get_versions(expired=True):
             self._version = int(x)
         else:
             raise ValueError("Version not in materialized database")
 
     @property
+    def homepage(self) -> HTML:
+        """The homepage for the materialization engine."""
+        url = (
+            f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
+        )
+        return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
+
+    @property
     def tables(self) -> TableManager:
+        """The table manager for the materialization engine."""
         if self._tables is None:
             if self.fc is not None and self.fc._materialize is not None:
                 self._tables = TableManager(self.fc)
@@ -300,6 +319,7 @@ class MaterializationClientV2(ClientBase):
 
     @property
     def views(self) -> ViewManager:
+        """The view manager for the materialization engine."""
         if self._views is None:
             if self.fc is not None and self.fc._materialize is not None:
                 self._views = ViewManager(self.fc)
@@ -353,7 +373,7 @@ class MaterializationClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    def get_tables(self, datastack_name=None, version=None):
+    def get_tables(self, datastack_name=None, version: Optional[int] = None):
         """Gets a list of table names for a datastack
 
         Parameters
@@ -363,7 +383,8 @@ class MaterializationClientV2(ClientBase):
             If None, uses the one specified in the client.
             Will be set correctly if you are using the framework_client
         version : int or None, optional
-            the version to query, else get the tables in the most recent version
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
 
         Returns
         -------
@@ -399,13 +420,16 @@ class MaterializationClientV2(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    def get_version_metadata(self, version: int = None, datastack_name: str = None):
+    def get_version_metadata(
+        self, version: Optional[int] = None, datastack_name: str = None
+    ):
         """Get metadata about a version
 
         Parameters
         ----------
         version : int or None, optional
-            Materialization version, by default None. If None, defaults to the value set in the client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         datastack_name : str or None, optional
             Datastack name, by default None. If None, defaults to the value set in the client.
 
@@ -430,13 +454,14 @@ class MaterializationClientV2(ClientBase):
         d["expires_on"] = convert_timestamp(d["expires_on"])
         return d
 
-    def get_timestamp(self, version: int = None, datastack_name: str = None):
+    def get_timestamp(self, version: Optional[int] = None, datastack_name: str = None):
         """Get datetime.datetime timestamp for a materialization version.
 
         Parameters
         ----------
         version : int or None, optional
-            Materialization version, by default None. If None, defaults to the value set in the client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         datastack_name : str or None, optional
             Datastack name, by default None. If None, defaults to the value set in the client.
 
@@ -483,7 +508,7 @@ class MaterializationClientV2(ClientBase):
         self,
         table_name: str,
         datastack_name=None,
-        version: int = None,
+        version: Optional[int] = None,
         log_warning: bool = True,
     ):
         """Get metadata about a table
@@ -495,7 +520,8 @@ class MaterializationClientV2(ClientBase):
         datastack_name : str or None, optional
             Name of the datastack_name. If None, uses the one specified in the client.
         version : int, optional
-            Version to get. If None, uses the one specified in the client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         log_warning : bool, optional
             Whether to print out warnings to the logger. Defaults to True.
 
@@ -652,7 +678,7 @@ class MaterializationClientV2(ClientBase):
         datastack_name: str = None,
         return_df: bool = True,
         split_positions: bool = False,
-        materialization_version: int = None,
+        materialization_version: Optional[int] = None,
         timestamp: Optional[datetime] = None,
         metadata: bool = True,
         merge_reference: bool = True,
@@ -694,8 +720,8 @@ class MaterializationClientV2(ClientBase):
             Whether to break position columns into x,y,z columns, by default False.
             If False data is returned as one column with [x,y,z] array (slower)
         materialization_version : int, optional
-            Version to query, by default None.
-            If None, defaults to one specified in client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         timestamp : datetime.datetime, optional
             Timestamp to query, by default None. If passsed will do a live query.
             Error if also passing a materialization version
@@ -899,7 +925,8 @@ class MaterializationClientV2(ClientBase):
             whether to break position columns into x,y,z columns default False, if False
             data is returned as one column with [x,y,z] array (slower)
         materialization_version : int, optional
-            version to query. If None defaults to one specified in client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         metadata : bool, optional
             toggle to return metadata If True (and return_df is also True), return
             table and query metadata in the df.attr dictionary.
@@ -1082,7 +1109,7 @@ class MaterializationClientV2(ClientBase):
                 root_id_col = sv_col[: -len("supervoxel_id")] + "root_id"
                 # use the future map to update rootIDs
                 if future_map is not None:
-                    df[root_id_col].replace(future_map, inplace=True)
+                    df.replace({root_id_col: future_map}, inplace=True)
                 all_root_ids = np.append(all_root_ids, df[root_id_col].values.copy())
 
             uniq_root_ids = np.unique(all_root_ids)
@@ -1706,7 +1733,7 @@ class MaterializationClientV2(ClientBase):
         offset: int = None,
         split_positions: bool = False,
         desired_resolution: Iterable[float] = None,
-        materialization_version: int = None,
+        materialization_version: Optional[int] = None,
         synapse_table: str = None,
         datastack_name: str = None,
         metadata: bool = True,
@@ -1748,8 +1775,8 @@ class MaterializationClientV2(ClientBase):
             List or array of the desired resolution you want queries returned in
             useful for materialization queries.
         materialization_version:
-            Version to query. If passed, do not pass timestamp. Defaults to
-            `self.materialization_version` if not specified.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         metadata:
             Whether to attach metadata to dataframe in the df.attr dictionary.
 
@@ -1900,34 +1927,63 @@ def _tables_metadata_key(matclient, *args, **kwargs):
 class MaterializationClientV3(MaterializationClientV2):
     def __init__(self, *args, **kwargs):
         super(MaterializationClientV3, self).__init__(*args, **kwargs)
-        metadata = []
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            metadata.append(
-                executor.submit(
-                    self.get_tables_metadata,
-                )
-            )
-            metadata.append(executor.submit(self.fc.schema.schema_definition_all))
-            metadata.append(executor.submit(self.get_views))
-            metadata.append(executor.submit(self.get_view_schemas))
-        tables = None
-        if self.fc is not None:
-            if metadata[0].result() is not None and metadata[1].result() is not None:
-                tables = TableManager(
-                    self.fc, metadata[0].result(), metadata[1].result()
-                )
-        self._tables = tables
-        if self.fc is not None:
-            views = ViewManager(self.fc, metadata[2].result(), metadata[3].result())
-        else:
-            views = None
-        self._views = views
+
+    @property
+    def tables(self) -> TableManager:
+        """The table manager for the materialization engine."""
+        if self._tables is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                metadata = []
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    metadata.append(
+                        executor.submit(
+                            self.get_tables_metadata,
+                        )
+                    )
+                    metadata.append(
+                        executor.submit(self.fc.schema.schema_definition_all)
+                    )
+
+                if (
+                    metadata[0].result() is not None
+                    and metadata[1].result() is not None
+                ):
+                    tables = TableManager(
+                        self.fc, metadata[0].result(), metadata[1].result()
+                    )
+                else:
+                    # TODO fix this for when the metadata is not available
+                    tables = None
+                self._tables = tables
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._tables
+
+    @property
+    def views(self) -> ViewManager:
+        """The view manager for the materialization engine."""
+        if self._views is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                metadata = []
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    metadata.append(
+                        executor.submit(
+                            self.get_views,
+                        )
+                    )
+                    metadata.append(executor.submit(self.get_view_schemas))
+
+                views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
+                self._views = views
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._views
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
     def get_tables_metadata(
         self,
         datastack_name=None,
-        version: int = None,
+        version: Optional[int] = None,
         log_warning: bool = True,
     ) -> dict:
         """Get metadata about tables
@@ -1937,7 +1993,8 @@ class MaterializationClientV3(MaterializationClientV2):
         datastack_name : str or None, optional
             Name of the datastack_name. If None, uses the one specified in the client.
         version :
-            Version to get. If None, uses the one specified in the client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         log_warning :
             Whether to print out warnings to the logger. Defaults to True.
 
@@ -2199,14 +2256,15 @@ it will likely get removed in future versions. "
                 )
         return df
 
-    def get_views(self, version: int = None, datastack_name: str = None):
+    def get_views(self, version: Optional[int] = None, datastack_name: str = None):
         """
         Get all available views for a version
 
         Parameters
         ----------
         version :
-            Version to query. If None, uses the one specified in the client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         datastack_name :
             Datastack to query. If None, uses the one specified in the client.
 
@@ -2230,7 +2288,7 @@ it will likely get removed in future versions. "
     def get_view_metadata(
         self,
         view_name: str,
-        materialization_version: int = None,
+        materialization_version: Optional[int] = None,
         datastack_name: str = None,
         log_warning: bool = True,
     ):
@@ -2241,7 +2299,8 @@ it will likely get removed in future versions. "
         view_name :
             Name of view to query.
         materialization_version :
-            Version to query. If None, will use version set by client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         log_warning :
             Whether to log warnings.
 
@@ -2268,7 +2327,7 @@ it will likely get removed in future versions. "
     def get_view_schema(
         self,
         view_name: str,
-        materialization_version: int = None,
+        materialization_version: Optional[int] = None,
         datastack_name: str = None,
         log_warning: bool = True,
     ):
@@ -2279,7 +2338,8 @@ it will likely get removed in future versions. "
         view_name:
             Name of view to query.
         materialization_version:
-            Version to query. If None, will use version set by client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         log_warning:
             Whether to log warnings.
 
@@ -2305,7 +2365,7 @@ it will likely get removed in future versions. "
 
     def get_view_schemas(
         self,
-        materialization_version: int = None,
+        materialization_version: Optional[int] = None,
         datastack_name: str = None,
         log_warning: bool = True,
     ):
@@ -2351,7 +2411,7 @@ it will likely get removed in future versions. "
         datastack_name: str = None,
         return_df: bool = True,
         split_positions: bool = False,
-        materialization_version: int = None,
+        materialization_version: Optional[int] = None,
         metadata: bool = True,
         merge_reference: bool = True,
         desired_resolution: Iterable = None,
@@ -2392,8 +2452,8 @@ it will likely get removed in future versions. "
             Whether to break position columns into x,y,z columns, by default False.
             If False data is returned as one column with [x,y,z] array (slower)
         materialization_version : int, optional
-            Version to query, by default None.
-            If None, defaults to one specified in client.
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
         metadata : bool, optional
             Toggle to return metadata (default True), by default True. If True
             (and return_df is also True), return table and query metadata in the

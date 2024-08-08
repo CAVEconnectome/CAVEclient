@@ -5,7 +5,7 @@ import textwrap
 import urllib
 import webbrowser
 from functools import wraps
-from typing import Callable, Optional
+from typing import Callable, Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -248,7 +248,9 @@ class ClientBase(object):
 
     @property
     def server_version(self) -> Optional[Version]:
-        """The version of the remote server."""
+        """The version of the service running on the remote server. Note that this
+        refers to the software running on the server and has nothing to do with the
+        version of the datastack itself."""
         return self._server_version
 
     @staticmethod
@@ -348,15 +350,43 @@ class ServerIncompatibilityError(Exception):
         super().__init__(message)
 
 
-def _version_fails_constraint(version: Version, constraint: str = None):
+def _version_fails_constraint(
+    version: Version, constraint: Optional[Union[str, Iterable[str]]] = None
+):
+    """Check if a version fails a constraint
+
+    Parameters
+    ----------
+    version : Version
+        The version to check
+    constraint : str | Iterable[str]
+        The constraint to check against. Can be a single string or a list of strings.
+        If a list of constraints will return False as long there is at least one contraint
+        that it meets.
+
+        Note: if you want to have an AND constraint you can pass in a complex string, i.e. "<=1.0.0,>0.5.0"
+        either as a single string or one in the list.
+
+    Returns
+    -------
+    bool
+        True if the version fails the constraint(s), False otherwise.
+    """
     if constraint is None:
         return False
     else:
         if version is None:
             return True
         else:
-            specifier = SpecifierSet(constraint)
-            return version not in specifier
+            if isinstance(constraint, str):
+                specifier = SpecifierSet(constraint)
+                return version not in specifier
+            else:
+                specifiers = []
+                for c in constraint:
+                    specifiers.append(SpecifierSet(c))
+                # if any of the constraints are met, return False
+                return all(version not in s for s in specifiers)
 
 
 @parametrized
@@ -386,6 +416,9 @@ def _check_version_compatibility(
         less than or equal to 1.0.0. An error will be raised only if the user both
         provides the keyword argument (even if passing in the default value!) and the
         server version is not compatible with the constraint.
+
+        note you can also pass in a list of constraints to check against,
+        if any of the constraints are met.
 
     Raises
     ------

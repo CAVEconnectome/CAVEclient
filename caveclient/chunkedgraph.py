@@ -3,7 +3,7 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -198,11 +198,37 @@ class ChunkedGraphClientV1(ClientBase):
     def table_name(self):
         return self._table_name
 
-    def _process_timestamp(self, timestamp):
+    @property
+    def timestamp(self) -> Optional[datetime.datetime]:
+        """The default timestamp for queries which expect a timestamp. If None, uses the
+        current time."""
+        if self.fc is None or self.fc.timestamp is None:
+            return self._default_timestamp
+        else:
+            return self.fc.timestamp
+
+    @timestamp.setter
+    def timestamp(self, value: Optional[datetime.datetime]):
+        if self.fc is not None and self.fc.timestamp is not None:
+            msg = (
+                "Cannot set `timestamp` when attached to a CAVEclient with a version, "
+                "set a version at the CAVEclient level instead."
+            )
+            raise ValueError(msg)
+        if value is None or isinstance(value, datetime.datetime):
+            self._default_timestamp = value
+        else:
+            raise TypeError("`timestamp` must be a datetime object or None.")
+
+    def _process_timestamp(
+        self, timestamp: Optional[datetime.datetime]
+    ) -> datetime.datetime:
         """Process timestamp with default logic"""
         if timestamp is None:
-            if self._default_timestamp is not None:
-                return self._default_timestamp
+            if self.timestamp is not None:
+                # refers to the framework client if it exists, otherwise uses the
+                # value set for this chunkedgraph client
+                return self.timestamp
             else:
                 return datetime.datetime.now(datetime.timezone.utc)
         else:
@@ -217,7 +243,8 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel IDs to look up.
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by
-            default None. If None, uses the current time.
+            default None. If None, uses the `timestamp` property for this client, which
+            defaults to the current time.
         stop_layer : int or None, optional
             If True, looks up IDs only up to a given stop layer. Default is None.
 
@@ -246,7 +273,8 @@ class ChunkedGraphClientV1(ClientBase):
             Supervoxel id value
         timestamp : datetime.datetime, optional
             UTC datetime to specify the state of the chunkedgraph at which to query, by
-            default None. If None, uses the current time.
+            default None. If None, uses the `timestamp` property for this client, which
+            defaults to the current time.
 
         Returns
         -------
@@ -921,7 +949,8 @@ class ChunkedGraphClientV1(ClientBase):
         timestamp_past : datetime.datetime or None, optional
             Cutoff for the lineage graph backwards in time. By default, None.
         timestamp_future : datetime.datetime or None, optional
-            Cutoff for the lineage graph going forwards in time. By default, None.
+            Cutoff for the lineage graph going forwards in time. By default, uses the
+            `timestamp` property for this client, which defaults to the current time.
         as_nx_graph: bool
             If True, a NetworkX graph is returned.
         exclude_links_to_future: bool
@@ -966,6 +995,8 @@ class ChunkedGraphClientV1(ClientBase):
             params.update(package_timestamp(timestamp_past, name="timestamp_past"))
         if timestamp_future is not None:
             params.update(package_timestamp(timestamp_future, name="timestamp_future"))
+        else:
+            params.update(package_timestamp(self.timestamp), name="timestamp_future")
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
         data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
@@ -1014,8 +1045,8 @@ class ChunkedGraphClientV1(ClientBase):
         root_id : int
             Object root ID.
         timestamp : datetime.datetime or None, optional
-            Timestamp of where to query IDs from. If None then will assume you want
-            till now.
+            Timestamp of where to query IDs from. If None, uses the `timestamp` property
+            for this client, which defaults to the current time.
         timestamp_future : datetime.datetime or None, optional
             DEPRECATED name, use `timestamp` instead.
             Timestamp to suggest IDs from (note can be in the past relative to the
@@ -1033,9 +1064,9 @@ class ChunkedGraphClientV1(ClientBase):
             logger.warning("timestamp_future is deprecated, use timestamp instead")
             timestamp = timestamp_future
 
-        if timestamp is None:
-            timestamp = datetime.datetime.now(datetime.timezone.utc)
-        elif timestamp.tzinfo is None:
+        timestamp = self._process_timestamp(timestamp)
+
+        if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
 
         # or if timestamp_root is less than timestamp_future
@@ -1105,7 +1136,8 @@ class ChunkedGraphClientV1(ClientBase):
             Root IDs to check.
         timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs are valid root IDs in the chunked
-            graph. Defaults to None (assumes now).
+            graph. If None, uses the `timestamp` property for this client, which
+            defaults to the current time.
 
         Returns
         -------
@@ -1118,7 +1150,7 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["is_latest_roots"].format_map(endpoint_mapping)
 
         if timestamp is None:
-            timestamp = self._default_timestamp
+            timestamp = self.timestamp
         if timestamp is not None:
             query_d = package_timestamp(self._process_timestamp(timestamp))
         else:
@@ -1152,8 +1184,9 @@ class ChunkedGraphClientV1(ClientBase):
             Root ID of the potentially outdated object.
         timestamp : datetime, optional
             Datetime at which "latest" roots are being computed, by default None. If
-            None, the current time is used. Note that this has to be a timestamp after
-            the creation of the `root_id`.
+            None, uses the `timestamp` property for this client, which defaults to the
+            current time. Note that this has to be a timestamp after the creation of the
+            `root_id`.
         stop_layer : int, optional
             Chunk level at which to compute overlap, by default None.
             No value will take the 4th from the top layer, which emphasizes speed and
@@ -1238,7 +1271,8 @@ class ChunkedGraphClientV1(ClientBase):
             Defaults to None (assumes now).
         end_timestamp : datetime.datetime, optional
             Timestamp to check whether these IDs were valid before this timestamp.
-            Defaults to None (assumes now).
+            If None, uses the `timestamp` property for this client, which defaults to
+            the current time.
 
         Returns
         -------
@@ -1251,7 +1285,7 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["valid_nodes"].format_map(endpoint_mapping)
 
         if end_timestamp is None:
-            end_timestamp = self._default_timestamp
+            end_timestamp = self.timestamp
 
         if start_timestamp is None:
             start_timestamp = datetime.datetime(2000, 1, 1)
@@ -1280,13 +1314,34 @@ class ChunkedGraphClientV1(ClientBase):
 
         return np.isin(node_ids, valid_ids)
 
-    def get_root_timestamps(self, root_ids) -> np.ndarray:
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "latest": [">=2.17.0", ">=1.25.0"],
+            "timestamp": [">=2.17.0", ">=1.25.0"],
+        }
+    )
+    def get_root_timestamps(
+        self, root_ids, latest: bool = False, timestamp: datetime.datetime = None
+    ) -> np.ndarray:
         """Retrieves timestamps when roots where created.
 
         Parameters
         ----------
         root_ids: Iterable of int
             Iterable of root IDs to query.
+        latest: bool, optional
+            If False,  returns the first timestamp that the root_id was valid for each root ID.
+            If True, returns the newest/latest timestamp for each root ID.
+            Note, this will return the timestamp at which the query was run when the root is currently valid.
+            This means that you will get a different answer if you make this same query at a later time
+            if you don't specify a timestamp parameter.
+        timestamp: datetime.datetime, optional
+            Timestamp to query when using latest=True. Use this to provide consistent
+            results for a particular timestamp. If an ID is still valid at a point in
+            the future past this timestamp, the query will still return this timestamp
+            as the latest moment in time. An error will occur if you provide a timestamp
+            for which the root ID is not valid. If None, uses the `timestamp` property
+            for this client, which defaults to the current time.
 
         Returns
         -------
@@ -1299,8 +1354,16 @@ class ChunkedGraphClientV1(ClientBase):
         url = self._endpoints["root_timestamps"].format_map(endpoint_mapping)
 
         data = {"node_ids": root_ids}
+        params = {"latest": latest}
+
+        timestamp = self._process_timestamp(timestamp)
+        if timestamp is not None:
+            params.update(package_timestamp(timestamp, name="timestamp"))
+
         r = handle_response(
-            self.session.post(url, data=json.dumps(data, cls=BaseEncoder))
+            self.session.post(
+                url, data=json.dumps(data, cls=BaseEncoder), params=params
+            )
         )
 
         return np.array(

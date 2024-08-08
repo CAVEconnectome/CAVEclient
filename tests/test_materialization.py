@@ -467,7 +467,6 @@ class TestMatclient:
 
         meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
         responses.add(responses.GET, url=meta_url, json=self.table_metadata)
-
         df = myclient.materialize.query_table(
             test_info["synapse_table"],
             filter_in_dict={"pre_pt_root_id": [500]},
@@ -477,7 +476,7 @@ class TestMatclient:
             offset=0,
         )
         assert len(df) == 1000
-        assert type(df) == pd.DataFrame
+        assert isinstance(df, pd.DataFrame)
         assert df.attrs["table_id"] == self.table_metadata["id"]
 
         correct_metadata = [

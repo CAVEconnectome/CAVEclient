@@ -47,14 +47,23 @@ using
 all versions using
 [client.materialize.get_versions_metadata()]({{ client_api_paths.materialize }}.get_versions_metadata).
 
-To change the default version, alter the .version property of the
-materialization client.
+To change the default version, alter the `.version` property of the
+client. This will change the version for all subsequent calls which expect one, unless
+you specify a different version in the method call. Note that this also sets the
+`timestamp` property of the client to the timestamp of the version for methods which
+expect a timestamp.
 
 ```python
-client.materialize.version = 9
+client.version = 9
 ```
 
-or specify the version when making a particular call.
+You can also specify the version when you initialize the client, e.g.:
+
+```python
+client = CAVEclient('minnie65_public', version=661)
+```
+
+Or, you can specify the version when making a particular method call.
 
 ## Browsing versions
 
