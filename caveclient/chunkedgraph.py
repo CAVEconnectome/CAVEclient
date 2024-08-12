@@ -1365,9 +1365,16 @@ class ChunkedGraphClientV1(ClientBase):
                 url, data=json.dumps(data, cls=BaseEncoder), params=params
             )
         )
+        if latest:
+            delta_t = datetime.timedelta(milliseconds=1)
+        else:
+            delta_t = datetime.timedelta(milliseconds=0)
 
         return np.array(
-            [datetime.datetime.fromtimestamp(ts, pytz.UTC) for ts in r["timestamp"]]
+            [
+                datetime.datetime.fromtimestamp(ts, pytz.UTC) - delta_t
+                for ts in r["timestamp"]
+            ]
         )
 
     def get_past_ids(
