@@ -1,6 +1,9 @@
 ---
 title: Changelog
 ---
+## 5.25.0
+- Added ability to suppress table warnings in client.materialize.query_table and similar methods by setting `log_warnings=False`
+
 ## 5.20.0 (April 8, 2024)
 - Added generalized support for detecting server versions to provide timely exceptions to users
 - Used new support to check that chunkegraph has updated version before using spatial bounds kwarg
