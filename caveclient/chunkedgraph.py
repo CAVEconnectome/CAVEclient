@@ -1316,8 +1316,8 @@ class ChunkedGraphClientV1(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "latest": ["<2,>=1.25.0", ">1,>=2.17.0"],
-            "timestamp": ["<2,>=1.25.0", ">1,>=2.17.0"],
+            "latest": ["<2,>=1.25.0", "<3,>=2.17.0"],
+            "timestamp": ["<2,>=1.25.0", "<3,>=2.17.0"],
         }
     )
     def get_root_timestamps(
