@@ -1316,8 +1316,8 @@ class ChunkedGraphClientV1(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "latest": ["<2,>=1.25.0", "<3,>=2.17.0"],
-            "timestamp": ["<2,>=1.25.0", "<3,>=2.17.0"],
+            "latest": ["<2,>=1.25.0", "<3,>=2.16.2"],
+            "timestamp": ["<2,>=1.25.0", "<3,>=2.16.2"],
         }
     )
     def get_root_timestamps(
@@ -1347,6 +1347,7 @@ class ChunkedGraphClientV1(ClientBase):
         -------
         np.array of datetime.datetime
             Array of timestamps when `root_ids` were created.
+            If a root id was not yet created by the timestamp (if provided), it will have an entry of None.
         """
         root_ids = root_id_int_list_check(root_ids, make_unique=False)
 
@@ -1373,6 +1374,8 @@ class ChunkedGraphClientV1(ClientBase):
         return np.array(
             [
                 datetime.datetime.fromtimestamp(ts, pytz.UTC) - delta_t
+                if ts != 0
+                else None
                 for ts in r["timestamp"]
             ]
         )
