@@ -1339,8 +1339,8 @@ class ChunkedGraphClientV1(ClientBase):
             Timestamp to query when using latest=True. Use this to provide consistent
             results for a particular timestamp. If an ID is still valid at a point in
             the future past this timestamp, the query will still return this timestamp
-            as the latest moment in time. An error will occur if you provide a timestamp
-            for which the root ID is not valid. If None, uses the `timestamp` property
+            as the latest moment in time. If a root id is not yet created by the timestamp,
+            the value for that entry will be None. If None, uses the `timestamp` property
             for this client, which defaults to the current time.
 
         Returns
