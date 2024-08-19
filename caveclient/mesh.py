@@ -11,6 +11,7 @@ from typing import Union, Optional, Literal
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import numpy as np
+import os
 
 
 def _convert_to_trimesh(mesh):
@@ -116,16 +117,32 @@ class MeshClient(object):
         root_ids: list,
         location: Optional[Union[str, Path]] = None,
         format: Literal["stl", "ply", "glb"] = "glb",
-        n_processes=1,
-        meshes_per_block=4,
+        n_processes=-1,
+        meshes_per_block=2,
     ):
-        """Save a list of root ids to commonly supported files.
+        """Download meshes to a file directory
 
         Parameters
         ----------
+        root_ids : list
+            List of root ids to download
+        location : Optional[Union[str, Path]], optional
+            Name of target directory or , by default None
+        format : Literal["stl", "ply", "glb"], optional
+            Mesh file format readable by Trimesh, by default "glb".
+        n_processes : int, optional
+            Number of parallel download processes. If -1, use all available cpus. By default -1.
+        meshes_per_block : int, optional
+            Number of meshes to download per block, by default 2.
         """
         if isinstance(location, str):
             location = Path(location)
+
+        if not location.exists():
+            os.makedirs(location)
+        if n_processes == -1:
+            n_processes = os.cpu_count()
+
         exe = ProcessPoolExecutor(max_workers=n_processes)
         root_id_list = np.array_split(root_ids, len(root_ids) // meshes_per_block)
 
