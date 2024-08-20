@@ -107,6 +107,19 @@ class SkeletonClientV1(ClientBase):
             over_client=over_client,
         )
     
+    def get_skeleton_info(
+        self,
+        datastack_name,
+    ):
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+
+        url = self._endpoints["skeleton_info"].format_map(endpoint_mapping)
+        print(f"get_skeleton_info() url: {url}")
+
+        response = self.session.get(url)
+        return handle_response(response, False)
+    
     def get_skeleton_by_datastack_and_rid(
         self,
         datastack_name,
@@ -114,10 +127,9 @@ class SkeletonClientV1(ClientBase):
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["rid"] = rid
+        endpoint_mapping["root_id"] = rid
 
-        # url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        url = self._endpoints["skeleton_info"].format_map(endpoint_mapping)
+        url = self._endpoints["skeleton_by_rid"].format_map(endpoint_mapping)
         print(f"get_skeleton_by_datastack_and_rid() url: {url}")
 
         response = self.session.get(url)
@@ -126,18 +138,25 @@ class SkeletonClientV1(ClientBase):
     def get_skeleton_by_full_desc(
         self,
         datastack_name,
+        skeleton_version,
         rid,
         output_format,
+        # bucket,
+        # verbose_level,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack"] = datastack_name
-        endpoint_mapping["rid"] = rid
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        endpoint_mapping["root_id"] = rid
         endpoint_mapping["output_format"] = output_format
+        # endpoint_mapping["bucket"] = bucket
+        # endpoint_mapping["verbose_level_"] = verbose_level
 
-        url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+        url = self._endpoints["get_skeleton_by_full_desc"].format_map(endpoint_mapping)
+        print(f"get_skeleton_by_full_desc() url: {url}")
 
         response = self.session.get(url)
-        return handle_response(response)
+        return handle_response(response, False)
     
 
 client_mapping = {
