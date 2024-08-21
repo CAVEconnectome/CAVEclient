@@ -1,3 +1,4 @@
+from typing import Optional
 
 from .auth import AuthClient
 from .base import (
@@ -6,7 +7,6 @@ from .base import (
     handle_response,
 )
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
-from typing import Optional
 
 SERVER_KEY = "skeleton_server_address"
 
@@ -53,30 +53,6 @@ class SkeletonClient(ClientBase):
             pool_block=pool_block,
             over_client=over_client,
         )
-    
-    def get_skeleton_info(
-        self,
-        datastack_name,
-    ):
-        """Gets basic skeleton information for a datastack
-
-        Parameters
-        ----------
-        datastack_name : str
-            The name of the datastack to check
-
-        Returns
-        -------
-        bool
-            JSON description
-        """
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-
-        url = self._endpoints["skeleton_info"].format_map(endpoint_mapping)
-
-        response = self.session.get(url)
-        return handle_response(response, False)
     
     def get_skeleton(
         self,
