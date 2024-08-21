@@ -5,14 +5,8 @@ from .base import (
     _api_endpoints,
     handle_response,
 )
-from .endpoints import (
-    default_global_server_address,
-    skeletonservice_api_versions,
-    skeletonservice_common,
-)
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
-import os
-from typing import List, Optional
+from typing import Optional
 
 SERVER_KEY = "skeleton_server_address"
 
