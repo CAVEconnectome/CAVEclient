@@ -95,12 +95,12 @@ class SkeletonClient(ClientBase):
 
         Parameters
         ----------
+        root_id : int
+            The root id of the skeleton to retrieve
         datastack_name : str
             The name of the datastack to check
         skeleton_version : int
-            The skeleton version to generate and retrieve. Options are documented in SkeletonService.
-        rid : int
-            The root id of the skeleton to retrieve
+            The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.
         output_format : string
             The format to retrieve. Options are documented in SkeletonService.
 
