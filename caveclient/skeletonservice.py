@@ -11,9 +11,10 @@ from .endpoints import skeletonservice_api_versions, skeletonservice_common
 SERVER_KEY = "skeleton_server_address"
 
 
-'''
+"""
 Usage
-'''
+"""
+
 
 class SkeletonClient(ClientBase):
     def __init__(
@@ -53,13 +54,13 @@ class SkeletonClient(ClientBase):
             pool_block=pool_block,
             over_client=over_client,
         )
-    
+
     def get_skeleton(
         self,
         root_id: int,
-        datastack_name:   Optional[str] =None,
-        skeleton_version: Optional[int] =0,
-        output_format:    Optional[str] ='precomputed',
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 0,
+        output_format: Optional[str] = "precomputed",
     ):
         """Gets basic skeleton information for a datastack
 
@@ -89,4 +90,3 @@ class SkeletonClient(ClientBase):
 
         response = self.session.get(url)
         return handle_response(response, False)
-    
