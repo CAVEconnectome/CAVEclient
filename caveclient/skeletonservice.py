@@ -1,13 +1,9 @@
-from typing import Optional, Literal
+from typing import Optional
 
 from frameworkclient import CAVEclientFull
 
 from .auth import AuthClient
-from .base import (
-    ClientBase,
-    _api_endpoints,
-    handle_response,
-)
+from .base import ClientBase, _api_endpoints, handle_response
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
 SERVER_KEY = "skeleton_server_address"
@@ -22,13 +18,13 @@ class SkeletonClient(ClientBase):
     def __init__(
         self,
         server_address: str,
-        auth_client: Optional[AuthClient]=None,
-        api_version: str="latest",
-        verify: bool=True,
-        max_retries: int=None,
-        pool_maxsize:int =None,
-        pool_block: bool=None,
-        over_client: CAVEclientFull=None,
+        auth_client: Optional[AuthClient] = None,
+        api_version: str = "latest",
+        verify: bool = True,
+        max_retries: int = None,
+        pool_maxsize: int = None,
+        pool_block: bool = None,
+        over_client: CAVEclientFull = None,
     ):
         if auth_client is None:
             auth_client = AuthClient()
@@ -62,7 +58,9 @@ class SkeletonClient(ClientBase):
         root_id: int,
         datastack_name: Optional[str] = None,
         skeleton_version: Optional[int] = 0,
-        output_format: Literal['none', 'h5', 'swc', 'json', 'arrays', 'precomputed'] = 'precomputed',
+        output_format: Literal[
+            "none", "h5", "swc", "json", "arrays", "precomputed"
+        ] = "precomputed",
     ):
         """Gets basic skeleton information for a datastack
 
