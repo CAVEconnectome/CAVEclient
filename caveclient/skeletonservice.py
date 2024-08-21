@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Literal
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints, handle_response
@@ -23,7 +23,7 @@ class SkeletonClient(ClientBase):
         max_retries: int = None,
         pool_maxsize: int = None,
         pool_block: bool = None,
-        over_client: Optional[CAVEclientFull] = None,
+        over_client: Optional[CAVEclientFull] = None,  # noqa: F821 # type: ignore
     ):
         if auth_client is None:
             auth_client = AuthClient()
