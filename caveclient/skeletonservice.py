@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Optional, Literal
+
+from typing import Literal, Optional
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints, handle_response
