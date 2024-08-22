@@ -48,6 +48,7 @@ class SkeletonClient(ClientBase):
             api_version,
             endpoints,
             SERVER_KEY,
+            verify=verify,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
