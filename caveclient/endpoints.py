@@ -297,8 +297,11 @@ skeletonservice_common = {}
 skeleton_v1 = "{skeleton_server_address}/api/v1"
 skeletonservice_endpoints_v1 = {
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
-    "get_skeleton_via_rid": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{root_id}",
-    "get_skeleton_via_skvn_rid": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
-    "get_skeleton_via_skvn_rid_fmt": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
+    "get_skeleton_via_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{root_id}",
+    "get_skeleton_via_skvn_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
+    "get_skeleton_via_skvn_rid_fmt": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
 }
 skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}
