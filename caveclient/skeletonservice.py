@@ -18,6 +18,7 @@ class SkeletonClient(ClientBase):
     def __init__(
         self,
         server_address: str,
+        datastack_name=None,
         auth_client: Optional[AuthClient] = None,
         api_version: str = "latest",
         verify: bool = True,
@@ -53,11 +54,84 @@ class SkeletonClient(ClientBase):
             over_client=over_client,
         )
 
+        self._datastack_name = datastack_name
+    
+    def run_endpoint_tests(self):
+        if self._datastack_name is not None:
+            # I could write a complicated test that confirms that an AssertionError is raised
+            # when datastack_name and self._datastack_name are both None, but I'm just don't want to at the moment.
+            # The combinatorial explosion of test varieties is getting out of hand.
+            url = self.build_endpoint(123456789, None, None, "precomputed").split('/', 6)[-1]
+            assert url == f"{self._datastack_name}/precomputed/skeleton/123456789"
+
+            url = self.build_endpoint(123456789, None, None, "json").split('/', 6)[-1]
+            assert url == f"{self._datastack_name}/precomputed/skeleton/0/123456789/json"
+
+        url = self.build_endpoint(123456789, "test_datastack", None, "precomputed").split('/', 6)[-1]
+        assert url == "test_datastack/precomputed/skeleton/123456789"
+
+        url = self.build_endpoint(123456789, "test_datastack", None, "json").split('/', 6)[-1]
+        assert url == "test_datastack/precomputed/skeleton/0/123456789/json"
+
+        url = self.build_endpoint(123456789, "test_datastack", 0, "precomputed").split('/', 6)[-1]
+        assert url == "test_datastack/precomputed/skeleton/0/123456789"
+
+        url = self.build_endpoint(123456789, "test_datastack", 0, "json").split('/', 6)[-1]
+        assert url == "test_datastack/precomputed/skeleton/0/123456789/json"
+
+        url = self.build_endpoint(123456789, "test_datastack", 1, "precomputed").split('/', 6)[-1]
+        assert url == "test_datastack/precomputed/skeleton/1/123456789"
+
+        url = self.build_endpoint(123456789, "test_datastack", 1, "json").split('/', 6)[-1]
+        assert url == "test_datastack/precomputed/skeleton/1/123456789/json"
+
+    def build_endpoint(
+        self,
+        root_id: int,
+        datastack_name: str,
+        skeleton_version: int,
+        output_format: str,
+    ):
+        """
+        Building the URL in a separate function facilities testing
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+        
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_id"] = root_id
+
+        if skeleton_version is None:
+            # Pylance incorrectly thinks that skeleton_version cannot be None here,
+            # but it most certainly can, and that is precisely how I intended it.
+            # Google searching revealed this as a known problem with Pylance and Selenium,
+            # but I have not been successful in solving it yet.
+            if output_format == "precomputed":
+                endpoint = "get_skeleton_via_rid"
+            else:
+                # Note that there isn't currently an endpoint for this scenario,
+                # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
+                endpoint_mapping["skeleton_version"] = 0
+                endpoint_mapping["output_format"] = output_format
+                endpoint = "get_skeleton_via_skvn_rid_fmt"
+        else:
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            if output_format == "precomputed":
+                endpoint = "get_skeleton_via_skvn_rid"
+            else:
+                endpoint_mapping["output_format"] = output_format
+                endpoint = "get_skeleton_via_skvn_rid_fmt"
+        
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        return url
+
     def get_skeleton(
         self,
         root_id: int,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = None,
         output_format: Literal[
             "none", "h5", "swc", "json", "arrays", "precomputed"
         ] = "precomputed",
@@ -80,13 +154,7 @@ class SkeletonClient(ClientBase):
         bool
             A skeleton in indicated format
         """
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack"] = datastack_name
-        endpoint_mapping["skeleton_version"] = skeleton_version
-        endpoint_mapping["root_id"] = root_id
-        endpoint_mapping["output_format"] = output_format
-
-        url = self._endpoints["get_skeleton"].format_map(endpoint_mapping)
+        url = self.build_endpoint(root_id, datastack_name, skeleton_version, output_format)
 
         response = self.session.get(url)
         return handle_response(response, False)
