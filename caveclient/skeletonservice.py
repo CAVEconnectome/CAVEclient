@@ -60,7 +60,7 @@ class SkeletonClient(ClientBase):
     def run_endpoint_tests(self):
         def parse(url):
             return url.split("/", 6)[-1]
-        
+
         rid = 123456789
         ds = "test_datastack"
         innards = "/precomputed/skeleton/"
