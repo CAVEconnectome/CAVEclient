@@ -58,49 +58,40 @@ class SkeletonClient(ClientBase):
         self._datastack_name = datastack_name
 
     def run_endpoint_tests(self):
+        def parse(url):
+            return url.split("/", 6)[-1]
+        
+        rid = 123456789
+        ds = "test_datastack"
+        innards = "/precomputed/skeleton/"
+
         if self._datastack_name is not None:
             # I could write a complicated test that confirms that an AssertionError is raised
             # when datastack_name and self._datastack_name are both None, but I'm just don't want to at the moment.
             # The combinatorial explosion of test varieties is getting out of hand.
-            url = self.build_endpoint(123456789, None, None, "precomputed").split(
-                "/", 6
-            )[-1]
-            assert url == f"{self._datastack_name}/precomputed/skeleton/123456789"
+            url = parse(self.build_endpoint(rid, None, None, "precomputed"))
+            assert url == f"{self._datastack_name}{innards}{rid}"
 
-            url = self.build_endpoint(123456789, None, None, "json").split("/", 6)[-1]
-            assert (
-                url == f"{self._datastack_name}/precomputed/skeleton/0/123456789/json"
-            )
+            url = parse(self.build_endpoint(rid, None, None, "json"))
+            assert url == f"{self._datastack_name}{innards}0/{rid}/json"
 
-        url = self.build_endpoint(
-            123456789, "test_datastack", None, "precomputed"
-        ).split("/", 6)[-1]
-        assert url == "test_datastack/precomputed/skeleton/123456789"
+        url = parse(self.build_endpoint(rid, ds, None, "precomputed"))
+        assert url == f"{ds}{innards}{rid}"
 
-        url = self.build_endpoint(123456789, "test_datastack", None, "json").split(
-            "/", 6
-        )[-1]
-        assert url == "test_datastack/precomputed/skeleton/0/123456789/json"
+        url = parse(self.build_endpoint(rid, ds, None, "json"))
+        assert url == f"{ds}{innards}0/{rid}/json"
 
-        url = self.build_endpoint(123456789, "test_datastack", 0, "precomputed").split(
-            "/", 6
-        )[-1]
-        assert url == "test_datastack/precomputed/skeleton/0/123456789"
+        url = parse(self.build_endpoint(rid, ds, 0, "precomputed"))
+        assert url == f"{ds}{innards}0/{rid}"
 
-        url = self.build_endpoint(123456789, "test_datastack", 0, "json").split("/", 6)[
-            -1
-        ]
-        assert url == "test_datastack/precomputed/skeleton/0/123456789/json"
+        url = parse(self.build_endpoint(rid, ds, 0, "json"))
+        assert url == f"{ds}{innards}0/{rid}/json"
 
-        url = self.build_endpoint(123456789, "test_datastack", 1, "precomputed").split(
-            "/", 6
-        )[-1]
-        assert url == "test_datastack/precomputed/skeleton/1/123456789"
+        url = parse(self.build_endpoint(rid, ds, 1, "precomputed"))
+        assert url == f"{ds}{innards}1/{rid}"
 
-        url = self.build_endpoint(123456789, "test_datastack", 1, "json").split("/", 6)[
-            -1
-        ]
-        assert url == "test_datastack/precomputed/skeleton/1/123456789/json"
+        url = parse(self.build_endpoint(rid, ds, 1, "json"))
+        assert url == f"{ds}{innards}1/{rid}/json"
 
     def build_endpoint(
         self,
