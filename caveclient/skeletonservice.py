@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import h5py
+from io import BytesIO
 from typing import Literal, Optional
+import pandas as pd
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints, handle_response
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
+
+from cloudfiles import CloudFiles
+import cloudvolume
 
 SERVER_KEY = "skeleton_server_address"
 
@@ -159,12 +165,45 @@ class SkeletonClient(ClientBase):
 
         Returns
         -------
-        bool
-            A skeleton in indicated format
+        The return type will vary greatly depending on the output_format parameter. The options are:
+        - 'none': No return value (this can be used to generate a skeleton without retrieving it)
+        - 'precomputed': A cloudvolume.Skeleton object
+        - 'json': A dictionary
+        - 'arrays': A dictionary (literally a subset of the json response)
+        - 'swc': A pandas DataFrame
+        - 'h5': An h5py file object
         """
         url = self.build_endpoint(
             root_id, datastack_name, skeleton_version, output_format
         )
 
         response = self.session.get(url)
-        return handle_response(response, False)
+
+        if output_format == "none":
+            return
+        if output_format == "precomputed":
+            sk = cloudvolume.Skeleton.from_precomputed(response.content)
+            return sk
+        if output_format == "json":
+            return response.json()
+        if output_format == "arrays":
+            return response.json()
+        if output_format == "swc":
+            # Curiously, the response is quoted and contains a terminal endline. Sigh.
+            parts = response.text.strip()[1:-1].split('/')
+            dir_, filename = '/'.join(parts[0:-1]), parts[-1]
+            cf = CloudFiles(dir_)
+            skeleton_bytes = cf.get(filename)
+            arr = [[float(v) for v in row.split()] for row in skeleton_bytes.decode().split('\n')]
+            # I got the SWC column header from skeleton_plot.skel_io.py
+            df = pd.DataFrame(arr, columns=['id', 'type', 'x', 'y', 'z', 'radius', 'parent'])
+            return df
+        if output_format == "h5":
+            parts = response.text.strip()[1:-1].split('/')
+            dir_, filename = '/'.join(parts[0:-1]), parts[-1]
+            cf = CloudFiles(dir_)
+            skeleton_bytes = cf.get(filename)
+            skeleton_bytesio = BytesIO(skeleton_bytes)
+            return h5py.File(skeleton_bytesio, 'r')
+        
+        raise ValueError(f"Unknown output format: {output_format}")
