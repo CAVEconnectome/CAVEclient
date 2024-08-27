@@ -20,6 +20,15 @@ Usage
 """
 
 
+class NoL2CacheException(Exception):
+    def __init__(self, value=""):
+        """
+        Parameters:
+        value (str) [optional]: A more detailed description of the error, if desired.
+        """
+        super().__init__(f"No L2Cache found. {value}".strip())
+
+
 class SkeletonClient(ClientBase):
     def __init__(
         self,
@@ -62,8 +71,12 @@ class SkeletonClient(ClientBase):
         )
 
         self._datastack_name = datastack_name
+    
+    def _test_l2cache_exception(self):
+        raise NoL2CacheException(
+            "This is a test of SkeletonClient's behavior when no L2Cache is found.")
 
-    def run_endpoint_tests(self):
+    def _run_endpoint_tests(self):
         def parse(url):
             return url.split("/", 6)[-1]
 
@@ -173,6 +186,9 @@ class SkeletonClient(ClientBase):
         - 'swc': A pandas DataFrame
         - 'h5': An h5py file object
         """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
         url = self.build_endpoint(
             root_id, datastack_name, skeleton_version, output_format
         )
