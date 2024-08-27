@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import h5py
 from io import BytesIO
 from typing import Literal, Optional
 import pandas as pd
+import h5py
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
