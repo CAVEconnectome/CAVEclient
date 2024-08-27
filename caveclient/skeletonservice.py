@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from io import BytesIO
 from typing import Literal, Optional
-import pandas as pd
+
+import cloudvolume
 import h5py
+import pandas as pd
+from cloudfiles import CloudFiles
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
-
-from cloudfiles import CloudFiles
-import cloudvolume
 
 SERVER_KEY = "skeleton_server_address"
 
