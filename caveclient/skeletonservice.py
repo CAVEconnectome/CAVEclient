@@ -71,10 +71,11 @@ class SkeletonClient(ClientBase):
         )
 
         self._datastack_name = datastack_name
-    
+
     def _test_l2cache_exception(self):
         raise NoL2CacheException(
-            "This is a test of SkeletonClient's behavior when no L2Cache is found.")
+            "This is a test of SkeletonClient's behavior when no L2Cache is found."
+        )
 
     def _run_endpoint_tests(self):
         def parse(url):
@@ -206,20 +207,25 @@ class SkeletonClient(ClientBase):
             return response.json()
         if output_format == "swc":
             # Curiously, the response is quoted and contains a terminal endline. Sigh.
-            parts = response.text.strip()[1:-1].split('/')
-            dir_, filename = '/'.join(parts[0:-1]), parts[-1]
+            parts = response.text.strip()[1:-1].split("/")
+            dir_, filename = "/".join(parts[0:-1]), parts[-1]
             cf = CloudFiles(dir_)
             skeleton_bytes = cf.get(filename)
-            arr = [[float(v) for v in row.split()] for row in skeleton_bytes.decode().split('\n')]
+            arr = [
+                [float(v) for v in row.split()]
+                for row in skeleton_bytes.decode().split("\n")
+            ]
             # I got the SWC column header from skeleton_plot.skel_io.py
-            df = pd.DataFrame(arr, columns=['id', 'type', 'x', 'y', 'z', 'radius', 'parent'])
+            df = pd.DataFrame(
+                arr, columns=["id", "type", "x", "y", "z", "radius", "parent"]
+            )
             return df
         if output_format == "h5":
-            parts = response.text.strip()[1:-1].split('/')
-            dir_, filename = '/'.join(parts[0:-1]), parts[-1]
+            parts = response.text.strip()[1:-1].split("/")
+            dir_, filename = "/".join(parts[0:-1]), parts[-1]
             cf = CloudFiles(dir_)
             skeleton_bytes = cf.get(filename)
             skeleton_bytesio = BytesIO(skeleton_bytes)
-            return h5py.File(skeleton_bytesio, 'r')
-        
+            return h5py.File(skeleton_bytesio, "r")
+
         raise ValueError(f"Unknown output format: {output_format}")
