@@ -6,7 +6,7 @@ from typing import Literal, Optional
 import pandas as pd
 
 from .auth import AuthClient
-from .base import ClientBase, _api_endpoints, handle_response
+from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
 from cloudfiles import CloudFiles
