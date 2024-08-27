@@ -3,10 +3,23 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Literal, Optional
 
-import cloudvolume
-import h5py
 import pandas as pd
-from cloudfiles import CloudFiles
+
+try:
+    import cloudvolume
+    CLOUDVOLUME_AVAILABLE = True
+except ImportError:
+    CLOUDVOLUME_AVAILABLE = False
+try:
+    import h5py
+    H5PY_AVAILABLE = True
+except ImportError:
+    H5PY_AVAILABLE = False
+try:
+    from cloudfiles import CloudFiles
+    CLOUDFILES_AVAILABLE = True
+except ImportError:
+    CLOUDFILES_AVAILABLE = False
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
@@ -199,13 +212,16 @@ class SkeletonClient(ClientBase):
         if output_format == "none":
             return
         if output_format == "precomputed":
-            sk = cloudvolume.Skeleton.from_precomputed(response.content)
-            return sk
+            if not CLOUDVOLUME_AVAILABLE:
+                raise ImportError("'precomputed' output format requires cloudvolume, which is not available.")
+            return cloudvolume.Skeleton.from_precomputed(response.content)
         if output_format == "json":
             return response.json()
         if output_format == "arrays":
             return response.json()
         if output_format == "swc":
+            if not CLOUDFILES_AVAILABLE:
+                raise ImportError("'swc' output format requires cloudvolume, which is not available.")
             # Curiously, the response is quoted and contains a terminal endline. Sigh.
             parts = response.text.strip()[1:-1].split("/")
             dir_, filename = "/".join(parts[0:-1]), parts[-1]
@@ -221,6 +237,10 @@ class SkeletonClient(ClientBase):
             )
             return df
         if output_format == "h5":
+            if not CLOUDFILES_AVAILABLE:
+                raise ImportError("'h5' output format requires cloudvolume, which is not available.")
+            if not H5PY_AVAILABLE:
+                raise ImportError("'h5' output format requires h5py, which is not available.")
             parts = response.text.strip()[1:-1].split("/")
             dir_, filename = "/".join(parts[0:-1]), parts[-1]
             cf = CloudFiles(dir_)
