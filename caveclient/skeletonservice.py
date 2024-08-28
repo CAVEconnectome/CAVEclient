@@ -106,7 +106,7 @@ class SkeletonClient(ClientBase):
             "This is a test of SkeletonClient's behavior when no L2Cache is found."
         )
 
-    def _run_endpoint_tests(self):
+    def _test_endpoints(self):
         def parse(url):
             return url.split("/", 6)[-1]
 
