@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from io import BytesIO
+import logging
 from typing import Literal, Optional
 
 import pandas as pd
 
 try:
     import cloudvolume
+
+    logging.warning(
+        "cloudvolume not installed. Some output formats will not be available."
+    )
 
     CLOUDVOLUME_AVAILABLE = True
 except ImportError:
@@ -15,12 +20,18 @@ except ImportError:
 try:
     import h5py
 
+    logging.warning("h5py not installed. Some output formats will not be available.")
+
     H5PY_AVAILABLE = True
 except ImportError:
     H5PY_AVAILABLE = False
 
 try:
     from cloudfiles import CloudFiles
+
+    logging.warning(
+        "cloudfiles not installed. Some output formats will not be available."
+    )
 
     CLOUDFILES_AVAILABLE = True
 except ImportError:
@@ -180,7 +191,7 @@ class SkeletonClient(ClientBase):
         skeleton_version: Optional[int] = None,
         output_format: Literal[
             "none", "h5", "swc", "json", "arrays", "precomputed"
-        ] = "precomputed",
+        ] = "none",
     ):
         """Gets basic skeleton information for a datastack
 
