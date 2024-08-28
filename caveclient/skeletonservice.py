@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from io import BytesIO
 import logging
+from io import BytesIO
 from typing import Literal, Optional
 
 import pandas as pd
-
 from packaging.version import Version
 
 try:
@@ -102,7 +101,7 @@ class SkeletonClient(ClientBase):
         )
 
         self._datastack_name = datastack_name
-    
+
     def _test_get_version(self) -> Optional[Version]:
         print("_test_get_version()")
         endpoint_mapping = self.default_url_mapping
