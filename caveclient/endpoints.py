@@ -294,8 +294,10 @@ ngl_endpoints_common = {
 
 skeletonservice_common = {}
 
-skeleton_v1 = "{skeleton_server_address}/skeletoncache/api/v1"
+skeleton_common = "{skeleton_server_address}/skeletoncache/api"
+skeleton_v1 = "{skeleton_common}/v1"
 skeletonservice_endpoints_v1 = {
+    "get_version": skeleton_common + "/version",
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
     "get_skeleton_via_rid": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{root_id}",

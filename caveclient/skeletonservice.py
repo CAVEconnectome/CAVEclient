@@ -6,6 +6,8 @@ from typing import Literal, Optional
 
 import pandas as pd
 
+from packaging.version import Version
+
 try:
     import cloudvolume
 
@@ -100,6 +102,28 @@ class SkeletonClient(ClientBase):
         )
 
         self._datastack_name = datastack_name
+    
+    def _test_get_version(self) -> Optional[Version]:
+        print("_test_get_version()")
+        endpoint_mapping = self.default_url_mapping
+        endpoint = self._endpoints.get("get_version_test", None)
+        print(f"endpoint: {endpoint}")
+        if endpoint is None:
+            return None
+
+        url = endpoint.format_map(endpoint_mapping)
+        print(f"url: {url}")
+        response = self.session.get(url)
+        print(f"response: {response}")
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            print("404")
+            return None
+        else:
+            version_str = response.json()
+            print(f"version_str: {type(version_str)} {version_str}")
+            version = Version(version_str)
+            print(f"version: {version}")
+            return version
 
     def _test_l2cache_exception(self):
         raise NoL2CacheException(
