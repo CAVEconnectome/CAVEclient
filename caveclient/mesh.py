@@ -117,17 +117,17 @@ class MeshClient(object):
         root_ids: list,
         location: Optional[Union[str, Path]] = None,
         format: Literal["stl", "ply", "glb"] = "glb",
-        n_processes=-1,
-        meshes_per_block=2,
+        n_processes: int = -1,
+        meshes_per_block: int = 2,
     ):
-        """Download meshes to a file directory
+        """Download and save meshes in standard formats to a directory. Requires trimesh installed.
 
         Parameters
         ----------
         root_ids : list
             List of root ids to download
         location : Optional[Union[str, Path]], optional
-            Name of target directory or , by default None
+            Target directory, by default None
         format : Literal["stl", "ply", "glb"], optional
             Mesh file format readable by Trimesh, by default "glb".
         n_processes : int, optional
@@ -135,9 +135,10 @@ class MeshClient(object):
         meshes_per_block : int, optional
             Number of meshes to download per block, by default 2.
         """
+        if location is None:
+            location = ""
         if isinstance(location, str):
             location = Path(location)
-
         if not location.exists():
             os.makedirs(location)
         if n_processes == -1:
