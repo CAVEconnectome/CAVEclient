@@ -3,9 +3,9 @@ import logging
 import os
 import urllib
 import webbrowser
+from typing import Optional
 
 import requests
-from typing import Optional
 
 from .base import (
     handle_response,
