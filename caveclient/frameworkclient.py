@@ -306,6 +306,9 @@ class CAVEclientGlobal(object):
     def datastack_name(self) -> None:
         return None
 
+    def __repr__(self):
+        return f"CAVEclient<datastack=None, server_address={self.self.server_address}>"
+
 
 class CAVEclientFull(CAVEclientGlobal):
     def __init__(
@@ -394,6 +397,8 @@ class CAVEclientFull(CAVEclientGlobal):
         self._l2cache = None
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
+        self.auth.local_server = self.local_server
+
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
 
@@ -540,3 +545,6 @@ class CAVEclientFull(CAVEclientGlobal):
                 over_client=self,
             )
         return self._l2cache
+
+    def __repr__(self):
+        return f"CAVEclient<datastack_name={self.datastack_name}, server_address={self.server_address}>"
