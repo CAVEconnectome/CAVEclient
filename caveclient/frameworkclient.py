@@ -307,7 +307,7 @@ class CAVEclientGlobal(object):
         return None
 
     def __repr__(self):
-        return f"CAVEclient<datastack=None, server_address={self.self.server_address}>"
+        return f"CAVEclient<datastack=None, server_address={self.server_address}>"
 
 
 class CAVEclientFull(CAVEclientGlobal):
