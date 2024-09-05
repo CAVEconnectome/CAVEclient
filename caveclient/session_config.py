@@ -4,11 +4,13 @@ from urllib3.util.retry import Retry
 DEFAULT_RETRIES = requests.adapters.DEFAULT_RETRIES
 DEFAULT_POOLSIZE = requests.adapters.DEFAULT_POOLSIZE
 DEFAULT_POOLBLOCK = requests.adapters.DEFAULT_POOLBLOCK
+DEFAULT_RETRY_BACKOFF = 0.1
 
 
 def patch_session(
     session,
     max_retries=None,
+    retry_backoff=None,
     pool_block=None,
     pool_maxsize=None,
 ):
@@ -27,16 +29,18 @@ def patch_session(
     """
     if max_retries is None:
         retries = DEFAULT_RETRIES
-    else:
-        retries = Retry(
-            total=max_retries,
-            backoff_factor=0.1,
-            status_forcelist=[502, 503, 504],
-        )
     if pool_block is None:
         pool_block = DEFAULT_POOLBLOCK
     if pool_maxsize is None:
         pool_maxsize = DEFAULT_POOLSIZE
+    if retry_backoff is None:
+        retry_backoff = DEFAULT_RETRY_BACKOFF
+        
+    retries = Retry(
+        total=max_retries,
+        backoff_factor=retry_backoff,
+        status_forcelist=[502, 503, 504],
+    )
 
     http = requests.adapters.HTTPAdapter(
         pool_maxsize=pool_maxsize,

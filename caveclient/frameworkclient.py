@@ -12,8 +12,6 @@ from .jsonservice import JSONService, JSONServiceV1
 from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
 
-DEFAULT_RETRIES = 3
-
 
 class GlobalClientError(Exception):
     pass
@@ -28,7 +26,8 @@ class CAVEclient(object):
         auth_token_key=None,
         auth_token=None,
         global_only=False,
-        max_retries=DEFAULT_RETRIES,
+        max_retries=3,
+        retry_backoff=0.1,
         pool_maxsize=None,
         pool_block=None,
         desired_resolution=None,
@@ -104,6 +103,7 @@ class CAVEclient(object):
                 auth_token_key=auth_token_key,
                 auth_token=auth_token,
                 max_retries=max_retries,
+                retry_backoff=retry_backoff,
                 pool_maxsize=pool_maxsize,
                 pool_block=pool_block,
                 info_cache=info_cache,
@@ -116,6 +116,7 @@ class CAVEclient(object):
                 auth_token_key=auth_token_key,
                 auth_token=auth_token,
                 max_retries=max_retries,
+                retry_backoff=retry_backoff,
                 pool_maxsize=pool_maxsize,
                 pool_block=pool_block,
                 desired_resolution=desired_resolution,
@@ -132,6 +133,7 @@ class CAVEclientGlobal(object):
         auth_token_key=None,
         auth_token=None,
         max_retries=DEFAULT_RETRIES,
+        retry_backoff=0.1,
         pool_maxsize=None,
         pool_block=None,
         info_cache=None,
@@ -187,6 +189,7 @@ class CAVEclientGlobal(object):
             auth_token=auth_token,
         )
         self._max_retries = max_retries
+        self._retry_backoff = retry_backoff
         self._pool_maxsize = pool_maxsize
         self._pool_block = pool_block
         self._info_cache = info_cache
@@ -248,6 +251,7 @@ class CAVEclientGlobal(object):
                 datastack_name=self.datastack_name,
                 auth_client=self.auth,
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -266,6 +270,7 @@ class CAVEclientGlobal(object):
                 server_address=self.server_address,
                 auth_client=self.auth,
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -283,6 +288,7 @@ class CAVEclientGlobal(object):
                 server_address=self.server_address,
                 auth_client=self.auth,
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -316,6 +322,7 @@ class CAVEclientFull(CAVEclientGlobal):
         auth_token_key="token",
         auth_token=None,
         max_retries=DEFAULT_RETRIES,
+        retry_backoff=0.1,
         pool_maxsize=None,
         pool_block=None,
         desired_resolution=None,
@@ -381,6 +388,7 @@ class CAVEclientFull(CAVEclientGlobal):
             auth_token_key=auth_token_key,
             auth_token=auth_token,
             max_retries=max_retries,
+            retry_backoff=retry_backoff,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             info_cache=info_cache,
@@ -458,6 +466,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 server_address=self.local_server,
                 auth_client=self.auth,
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -476,6 +485,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 aligned_volume_name=self._aligned_volume_name,
                 auth_client=self.auth,
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -495,6 +505,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 datastack_name=self._datastack_name,
                 synapse_table=self.info.get_datastack_info().get("synapse_table", None),
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -514,6 +525,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 auth_client=self.auth,
                 ngl_url=self.info.viewer_site(),
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
@@ -535,6 +547,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 auth_client=self.auth,
                 table_name=table_name,
                 max_retries=self._max_retries,
+                retry_backoff=self._retry_backoff,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
                 over_client=self,
