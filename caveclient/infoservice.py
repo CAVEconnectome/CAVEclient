@@ -228,7 +228,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             raise ValueError(
                 "Must specify aligned_volume_id or provide datastack_name in init"
             )
-        
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume
         url = self._endpoints["datastacks_from_aligned_volume"].format_map(
