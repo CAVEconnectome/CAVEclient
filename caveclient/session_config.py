@@ -5,6 +5,7 @@ DEFAULT_RETRIES = requests.adapters.DEFAULT_RETRIES
 DEFAULT_POOLSIZE = requests.adapters.DEFAULT_POOLSIZE
 DEFAULT_POOLBLOCK = requests.adapters.DEFAULT_POOLBLOCK
 DEFAULT_RETRY_BACKOFF = 0.1
+DEFAULT_BACKOFF_MAX = 120
 
 
 def patch_session(
@@ -35,11 +36,14 @@ def patch_session(
         pool_maxsize = DEFAULT_POOLSIZE
     if retry_backoff is None:
         retry_backoff = DEFAULT_RETRY_BACKOFF
-        
+
     retries = Retry(
         total=max_retries,
         backoff_factor=retry_backoff,
-        status_forcelist=[502, 503, 504],
+        status_forcelist=tuple(range(401, 600)),
+        allowed_methods=frozenset(["GET", "POST"]),
+        backoff_max=DEFAULT_BACKOFF_MAX,
+        raise_on_status=False,
     )
 
     http = requests.adapters.HTTPAdapter(
