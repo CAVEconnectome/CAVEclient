@@ -11,6 +11,7 @@ from .infoservice import InfoServiceClient, InfoServiceClientV2
 from .jsonservice import JSONService, JSONServiceV1
 from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
+from .skeletonservice import SkeletonClient
 
 
 class GlobalClientError(Exception):
@@ -52,6 +53,7 @@ class CAVEclient(object):
         - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
         - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../client_api/l2cache.md))
         - `client.materialize` is a `MaterializationClient` (see [client.materialize](../client_api/materialize.md))
+        - `client.skeleton` is a `SkeletonClient` (see [client.skeleton](../client_api/skeleton.md))
         - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
         - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
@@ -312,6 +314,9 @@ class CAVEclientGlobal(object):
     def datastack_name(self) -> None:
         return None
 
+    def __repr__(self):
+        return f"CAVEclient<datastack=None, server_address={self.server_address}>"
+
 
 class CAVEclientFull(CAVEclientGlobal):
     def __init__(
@@ -346,6 +351,7 @@ class CAVEclientFull(CAVEclientGlobal):
         - `client.info` is an `InfoServiceClient` (see [client.info](../client_api/info.md))
         - `client.l2cache` is an `L2CacheClient` (see [client.l2cache](../client_api/l2cache.md))
         - `client.materialize` is a `MaterializationClient` (see [client.materialize](../client_api/materialize.md))
+        - `client.skeleton` is a `SkeletonClient` (see [client.skeleton](../client_api/skeleton.md))
         - `client.schema` is a `SchemaClient` (see [client.schema](../client_api/schema.md))
         - `client.state` is a neuroglancer `JSONService` (see [client.state](../client_api/state.md))
 
@@ -399,9 +405,12 @@ class CAVEclientFull(CAVEclientGlobal):
         self._chunkedgraph = None
         self._annotation = None
         self._materialize = None
+        self._skeleton = None
         self._l2cache = None
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
+        self.auth.local_server = self.local_server
+
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
 
@@ -444,6 +453,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._chunkedgraph = None
         self._annotation = None
         self._materialize = None
+        self._skeleton = None
         self._l2cache = None
 
     @property
@@ -514,6 +524,24 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._materialize
 
     @property
+    def skeleton(self) -> SkeletonClient:
+        """
+        A client for the skeleton service. See [client.skeleton](../client_api/skeleton.md)
+        for more information.
+        """
+        if self._skeleton is None:
+            self._skeleton = SkeletonClient(
+                server_address=self.local_server,
+                auth_client=self.auth,
+                datastack_name=self._datastack_name,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
+                over_client=self,
+            )
+        return self._skeleton
+
+    @property
     def state(self) -> JSONServiceV1:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
@@ -553,3 +581,6 @@ class CAVEclientFull(CAVEclientGlobal):
                 over_client=self,
             )
         return self._l2cache
+
+    def __repr__(self):
+        return f"CAVEclient<datastack_name={self.datastack_name}, server_address={self.server_address}>"

@@ -93,3 +93,4 @@ is named `client`, the subclients for each service are:
 - InfoService : `client.info`
 - EM Annotation Schemas : `client.schemas`
 - JSON Neuroglancer State Service : `client.state`
+- Skeleton Service : `client.skeletonservice`

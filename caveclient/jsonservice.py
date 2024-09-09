@@ -2,6 +2,7 @@ import json
 import numbers
 import os
 import re
+from typing import Optional
 
 import numpy as np
 
@@ -251,7 +252,12 @@ class JSONServiceV1(ClientBase):
         return int(response_re.groups()[0])
 
     @_check_version_compatibility(">=0.4.0")
-    def upload_property_json(self, property_json, state_id=None, timestamp=None):
+    def upload_property_json(
+        self,
+        property_json,
+        state_id=None,
+        max_size: Optional[int] = 2_500_000,
+    ):
         """Upload a Neuroglancer JSON state
 
         Parameters
@@ -261,8 +267,9 @@ class JSONServiceV1(ClientBase):
         state_id : int
             ID of a JSON state uploaded to the state service.
             Using a state_id is an admin feature.
-        timestamp: time.time
-            Timestamp for json state date. Requires state_id.
+        max_size: int
+            Maximum size in bytes for the data to upload. Default is 2.5MB. Set to None
+            for no limit.
 
         Returns
         -------
@@ -278,12 +285,23 @@ class JSONServiceV1(ClientBase):
             url_mapping["state_id"] = state_id
             url = self._endpoints["upload_properties_w_id"].format_map(url_mapping)
 
+        data = json.dumps(
+            property_json,
+            default=neuroglancer_json_encoder,
+        )
+
+        # get size in bytes of data to upload
+        data_size = len(data.encode("utf-8"))
+
+        if max_size is not None and data_size > max_size:
+            msg = f"Data size {data_size} exceeds maximum size of {max_size} bytes. "
+            msg += "Please reduce the size of the data or increase the `max_size` "
+            msg += "if your state server can handle larger inputs."
+            raise ValueError(msg)
+
         response = self.session.post(
             url,
-            data=json.dumps(
-                property_json,
-                default=neuroglancer_json_encoder,
-            ),
+            data=data,
         )
         handle_response(response, as_json=False)
         response_re = re.search(".*\/(\d+)", str(response.content))
