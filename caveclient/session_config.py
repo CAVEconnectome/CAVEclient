@@ -7,6 +7,7 @@ SESSION_DEFAULTS = {
     "pool_maxsize": requests.adapters.DEFAULT_POOLSIZE,
     "retry_backoff": 0.1,
     "backoff_max": 120,
+    "status_forcelist": [502, 503, 504],
 }
 
 
@@ -42,7 +43,7 @@ def patch_session(
     retries = Retry(
         total=max_retries,
         backoff_factor=retry_backoff,
-        status_forcelist=tuple(range(401, 600)),
+        status_forcelist=SESSION_DEFAULTS["status_forcelist"],
         allowed_methods=frozenset(["GET", "POST"]),
         backoff_max=SESSION_DEFAULTS["backoff_max"],
         raise_on_status=False,
