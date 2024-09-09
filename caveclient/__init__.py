@@ -1,4 +1,4 @@
-__version__ = "5.26.0"
+__version__ = "5.28.1"
 
 from .frameworkclient import CAVEclient
 from .session_config import SESSION_DEFAULTS
