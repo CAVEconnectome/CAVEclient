@@ -185,7 +185,6 @@ class ClientBase(object):
         server_name,
         verify=True,
         max_retries=None,
-        retry_backoff=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
@@ -197,7 +196,6 @@ class ClientBase(object):
         patch_session(
             self.session,
             max_retries=max_retries,
-            retry_backoff=retry_backoff,
             pool_block=pool_block,
             pool_maxsize=pool_maxsize,
         )
@@ -307,7 +305,6 @@ class ClientBaseWithDatastack(ClientBase):
         datastack_name,
         verify=True,
         max_retries=None,
-        retry_backoff=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
@@ -320,7 +317,6 @@ class ClientBaseWithDatastack(ClientBase):
             server_name,
             verify=verify,
             max_retries=max_retries,
-            retry_backoff=retry_backoff,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
