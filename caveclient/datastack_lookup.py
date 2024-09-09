@@ -1,7 +1,8 @@
-import os
 import json
-from . import auth
 import logging
+import os
+
+from . import auth
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ def read_map(filename=None):
         with open(os.path.expanduser(filename), "r") as f:
             data = json.load(f)
         return data
-    except:
+    except:  # noqa E722
         return {}
 
 
@@ -55,7 +56,7 @@ def write_map(data, filename=None):
 
 def handle_server_address(datastack, server_address, filename=None, write=False):
     data = read_map(filename)
-    if server_address is not None:
+    if server_address is not None and datastack is not None:
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
             wrote = write_map(data, filename)

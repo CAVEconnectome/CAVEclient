@@ -47,14 +47,23 @@ using
 all versions using
 [client.materialize.get_versions_metadata()]({{ client_api_paths.materialize }}.get_versions_metadata).
 
-To change the default version, alter the .version property of the
-materialization client.
+To change the default version, alter the `.version` property of the
+client. This will change the version for all subsequent calls which expect one, unless
+you specify a different version in the method call. Note that this also sets the
+`timestamp` property of the client to the timestamp of the version for methods which
+expect a timestamp.
 
 ```python
-client.materialize.version = 9
+client.version = 9
 ```
 
-or specify the version when making a particular call.
+You can also specify the version when you initialize the client, e.g.:
+
+```python
+client = CAVEclient('minnie65_public', version=661)
+```
+
+Or, you can specify the version when making a particular method call.
 
 ## Browsing versions
 
@@ -320,6 +329,20 @@ identical between querying all types of tables and queries. To see the
 complete list of fields that can be queried, you can tab-autocomplete or
 in Jupyter or IPython glance at the docstring with
 `client.materialize.tables.nucleus_detection_v0?`.
+
+In addition to filtering by one or many values, you can also do spatial queries.
+To find only annotations within a particular bounding box, you need to specify the
+spatial point (e.g. `pt_position`). For each such spatial point, there will be an
+argument `{spatial_point_position}_bbox` (e.g. `pt_position_bbox`) that accepts a 2x3 list
+of coordinates specifying the upper and lower bounds for the query. For example, to
+find all nucleus centroids within a particular bounding box, it would be:
+
+```python
+bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+nuc_df = client.materialize.tables.nucleus_detection_v0(
+    pt_position_bbox=bounding_box
+).query()
+```
 
 If you need to specify the table programmatically, you can also use a
 dictionary-style approach to getting the table filtering function. For

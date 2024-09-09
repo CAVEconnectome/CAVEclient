@@ -10,7 +10,7 @@ supervoxels that are locally connected to one another within a single
 level 2 spatial "chunk" of the data. The Level 2 Cache, is a service
 whose job it is to track and update relevant statistics about every
 level 2 node within the a chunkedgraph. The source code of this service
-can be found [here](https://github.com/seung-lab/pcgl2cache).
+can be found [here](https://github.com/CAVEconnectome/PCGL2Cache).
 
 ## Finding Level 2 Nodes
 

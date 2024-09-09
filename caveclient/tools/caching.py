@@ -1,5 +1,6 @@
-from caveclient import CAVEclient
 from cachetools import TTLCache, cached, keys
+
+from caveclient import CAVEclient
 
 info_cache_cache = TTLCache(maxsize=32, ttl=3600)
 

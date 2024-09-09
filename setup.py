@@ -31,7 +31,7 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     version=find_version("caveclient", "__init__.py"),
     name="caveclient",
-    description="a service for interacting with the Connectome Annotation Versioning Engine",
+    description="A client for interacting with the Connectome Annotation Versioning Engine",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Forrest Collman, Casey Schneider-Mizell, Sven Dorkenwald",
@@ -41,5 +41,5 @@ setup(
     include_package_data=True,
     install_requires=required,
     setup_requires=["pytest-runner"],
-    python_requires=">=3.7,<3.12",
+    python_requires=">=3.7",
 )
