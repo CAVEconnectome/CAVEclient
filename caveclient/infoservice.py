@@ -28,7 +28,6 @@ def InfoServiceClient(
     api_version="latest",
     verify=True,
     max_retries=None,
-    retry_backoff=None,
     pool_maxsize=None,
     pool_block=None,
     over_client=None,
@@ -61,7 +60,6 @@ def InfoServiceClient(
         datastack_name,
         verify=verify,
         max_retries=max_retries,
-        retry_backoff=retry_backoff,
         pool_maxsize=pool_maxsize,
         pool_block=pool_block,
         over_client=over_client,
@@ -80,7 +78,6 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         datastack_name,
         verify=True,
         max_retries=None,
-        retry_backoff=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
@@ -95,7 +92,6 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             datastack_name,
             verify=verify,
             max_retries=max_retries,
-            retry_backoff=retry_backoff,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
@@ -228,7 +224,7 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             raise ValueError(
                 "Must specify aligned_volume_id or provide datastack_name in init"
             )
-
+        print(aligned_volume)
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume
         url = self._endpoints["datastacks_from_aligned_volume"].format_map(
