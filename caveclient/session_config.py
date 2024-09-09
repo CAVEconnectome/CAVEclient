@@ -1,11 +1,13 @@
 import requests
 from urllib3.util.retry import Retry
 
-DEFAULT_RETRIES = requests.adapters.DEFAULT_RETRIES
-DEFAULT_POOLSIZE = requests.adapters.DEFAULT_POOLSIZE
-DEFAULT_POOLBLOCK = requests.adapters.DEFAULT_POOLBLOCK
-DEFAULT_RETRY_BACKOFF = 0.1
-DEFAULT_BACKOFF_MAX = 120
+SESSION_DEFAULTS = {
+    "max_retries": requests.adapters.DEFAULT_RETRIES,
+    "pool_block": requests.adapters.DEFAULT_POOLBLOCK,
+    "pool_maxsize": requests.adapters.DEFAULT_POOLSIZE,
+    "retry_backoff": 0.1,
+    "backoff_max": 120,
+}
 
 
 def patch_session(
@@ -29,20 +31,20 @@ def patch_session(
         Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
     """
     if max_retries is None:
-        retries = DEFAULT_RETRIES
+        retries = SESSION_DEFAULTS["max_retries"]
     if pool_block is None:
-        pool_block = DEFAULT_POOLBLOCK
+        pool_block = SESSION_DEFAULTS["pool_block"]
     if pool_maxsize is None:
-        pool_maxsize = DEFAULT_POOLSIZE
+        pool_maxsize = SESSION_DEFAULTS["pool_maxsize"]
     if retry_backoff is None:
-        retry_backoff = DEFAULT_RETRY_BACKOFF
+        retry_backoff = SESSION_DEFAULTS["retry_backoff"]
 
     retries = Retry(
         total=max_retries,
         backoff_factor=retry_backoff,
         status_forcelist=tuple(range(401, 600)),
         allowed_methods=frozenset(["GET", "POST"]),
-        backoff_max=DEFAULT_BACKOFF_MAX,
+        backoff_max=SESSION_DEFAULTS["backoff_max"],
         raise_on_status=False,
     )
 
