@@ -10,32 +10,32 @@ from packaging.version import Version
 try:
     import cloudvolume
 
+    CLOUDVOLUME_AVAILABLE = True
+except ImportError:
     logging.warning(
         "cloudvolume not installed. Some output formats will not be available."
     )
 
-    CLOUDVOLUME_AVAILABLE = True
-except ImportError:
     CLOUDVOLUME_AVAILABLE = False
 
 try:
     import h5py
 
-    logging.warning("h5py not installed. Some output formats will not be available.")
-
     H5PY_AVAILABLE = True
 except ImportError:
+    logging.warning("h5py not installed. Some output formats will not be available.")
+
     H5PY_AVAILABLE = False
 
 try:
     from cloudfiles import CloudFiles
 
+    CLOUDFILES_AVAILABLE = True
+except ImportError:
     logging.warning(
         "cloudfiles not installed. Some output formats will not be available."
     )
 
-    CLOUDFILES_AVAILABLE = True
-except ImportError:
     CLOUDFILES_AVAILABLE = False
 
 from .auth import AuthClient
