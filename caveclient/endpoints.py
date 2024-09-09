@@ -25,6 +25,11 @@ annotation_endpoints_v2 = {
     + "/aligned_volume/{aligned_volume_name}/table/{table_name}/count",
 }
 
+annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}
+
+# -------------------------------
+# ------ MaterializationEngine endpoints
+# -------------------------------
 
 materialization_common = {
     "get_api_versions": "{me_server_address}/materialize/api/versions"
@@ -93,8 +98,6 @@ materialization_api_versions = {
     2: materialization_endpoints_v2,
     3: materialization_endpoints_v3,
 }
-
-annotation_api_versions = {0: annotation_endpoints_legacy, 2: annotation_endpoints_v2}
 
 # -------------------------------
 # ------ Infoservice endpoints
@@ -284,3 +287,23 @@ ngl_endpoints_common = {
     "get_info": "{ngl_url}/version.json",
     "fallback_ngl_url": fallback_ngl_endpoint,
 }
+
+# -------------------------------
+# ------ Skeleton endpoints
+# -------------------------------
+
+skeletonservice_common = {}
+
+skeleton_common = "{skeleton_server_address}/skeletoncache/api"
+skeleton_v1 = "{skeleton_server_address}/skeletoncache/api/v1"
+skeletonservice_endpoints_v1 = {
+    "get_version": skeleton_common + "/version",
+    "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
+    "get_skeleton_via_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{root_id}",
+    "get_skeleton_via_skvn_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
+    "get_skeleton_via_skvn_rid_fmt": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
+}
+skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}
