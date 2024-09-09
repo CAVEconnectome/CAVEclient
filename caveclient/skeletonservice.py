@@ -1,145 +1,298 @@
+from __future__ import annotations
+
+import logging
+from io import BytesIO
+from typing import Literal, Optional
+
+import pandas as pd
+from packaging.version import Version
+
+try:
+    import cloudvolume
+
+    logging.warning(
+        "cloudvolume not installed. Some output formats will not be available."
+    )
+
+    CLOUDVOLUME_AVAILABLE = True
+except ImportError:
+    CLOUDVOLUME_AVAILABLE = False
+
+try:
+    import h5py
+
+    logging.warning("h5py not installed. Some output formats will not be available.")
+
+    H5PY_AVAILABLE = True
+except ImportError:
+    H5PY_AVAILABLE = False
+
+try:
+    from cloudfiles import CloudFiles
+
+    logging.warning(
+        "cloudfiles not installed. Some output formats will not be available."
+    )
+
+    CLOUDFILES_AVAILABLE = True
+except ImportError:
+    CLOUDFILES_AVAILABLE = False
 
 from .auth import AuthClient
-from .base import (
-    ClientBase,
-    _api_endpoints,
-    handle_response,
-)
-from .endpoints import (
-    default_global_server_address,
-    skeletonservice_api_versions,
-    skeletonservice_common,
-)
+from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
 SERVER_KEY = "skeleton_server_address"
 
 
-'''
+"""
 Usage
-'''
+"""
 
-def SkeletonClient(
-    server_address,
-    datastack_name=None,
-    auth_client=None,
-    api_version="latest",
-    version=None,
-    verify=True,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-) -> "SkeletonClientV1":
-    """Factory for returning SkeletonClient
 
-    Parameters
-    ----------
-    server_address : str
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
-        Name of the datastack.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    version : default version to query
-        if None will default to latest version
+class NoL2CacheException(Exception):
+    def __init__(self, value=""):
+        """
+        Parameters:
+        value (str) [optional]: A more detailed description of the error, if desired.
+        """
+        super().__init__(f"No L2Cache found. {value}".strip())
 
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
-    """
 
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        SERVER_KEY,
-        server_address,
-        skeletonservice_common,
-        skeletonservice_api_versions,
-        auth_header,
-        fallback_version=1,
-        verify=verify,
-    )
-
-    SkeletonClient = client_mapping[api_version]
-    return SkeletonClient(
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        SERVER_KEY,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-    )
-
-class SkeletonClientV1(ClientBase):
+class SkeletonClient(ClientBase):
     def __init__(
         self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
-        max_retries=None,
-        pool_maxsize=None,
-        pool_block=None,
-        over_client=None,
+        server_address: str,
+        datastack_name=None,
+        auth_client: Optional[AuthClient] = None,
+        api_version: str = "latest",
+        verify: bool = True,
+        max_retries: int = None,
+        pool_maxsize: int = None,
+        pool_block: bool = None,
+        over_client: Optional[CAVEclientFull] = None,  # noqa: F821 # type: ignore
     ):
-        super(SkeletonClientV1, self).__init__(
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            skeletonservice_common,
+            skeletonservice_api_versions,
+            auth_header,
+            fallback_version=1,
+            verify=verify,
+        )
+
+        super(SkeletonClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
+            verify=verify,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
         )
-    
-    def get_skeleton_by_datastack_and_rid(
+
+        self._datastack_name = datastack_name
+
+    def _test_get_version(self) -> Optional[Version]:
+        print("_test_get_version()")
+        endpoint_mapping = self.default_url_mapping
+        endpoint = self._endpoints.get("get_version_test", None)
+        print(f"endpoint: {endpoint}")
+        if endpoint is None:
+            return None
+
+        url = endpoint.format_map(endpoint_mapping)
+        print(f"url: {url}")
+        response = self.session.get(url)
+        print(f"response: {response}")
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            print("404")
+            return None
+        else:
+            version_str = response.json()
+            print(f"version_str: {type(version_str)} {version_str}")
+            version = Version(version_str)
+            print(f"version: {version}")
+            return version
+
+    def _test_l2cache_exception(self):
+        raise NoL2CacheException(
+            "This is a test of SkeletonClient's behavior when no L2Cache is found."
+        )
+
+    def _test_endpoints(self):
+        def parse(url):
+            return url.split("/", 6)[-1]
+
+        rid = 123456789
+        ds = "test_datastack"
+        innards = "/precomputed/skeleton/"
+
+        if self._datastack_name is not None:
+            # I could write a complicated test that confirms that an AssertionError is raised
+            # when datastack_name and self._datastack_name are both None, but I'm just don't want to at the moment.
+            # The combinatorial explosion of test varieties is getting out of hand.
+            url = parse(self.build_endpoint(rid, None, None, "precomputed"))
+            assert url == f"{self._datastack_name}{innards}{rid}"
+
+            url = parse(self.build_endpoint(rid, None, None, "json"))
+            assert url == f"{self._datastack_name}{innards}0/{rid}/json"
+
+        url = parse(self.build_endpoint(rid, ds, None, "precomputed"))
+        assert url == f"{ds}{innards}{rid}"
+
+        url = parse(self.build_endpoint(rid, ds, None, "json"))
+        assert url == f"{ds}{innards}0/{rid}/json"
+
+        url = parse(self.build_endpoint(rid, ds, 0, "precomputed"))
+        assert url == f"{ds}{innards}0/{rid}"
+
+        url = parse(self.build_endpoint(rid, ds, 0, "json"))
+        assert url == f"{ds}{innards}0/{rid}/json"
+
+        url = parse(self.build_endpoint(rid, ds, 1, "precomputed"))
+        assert url == f"{ds}{innards}1/{rid}"
+
+        url = parse(self.build_endpoint(rid, ds, 1, "json"))
+        assert url == f"{ds}{innards}1/{rid}/json"
+
+    def build_endpoint(
         self,
-        datastack_name,
-        rid,
+        root_id: int,
+        datastack_name: str,
+        skeleton_version: int,
+        output_format: str,
     ):
+        """
+        Building the URL in a separate function facilities testing
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["rid"] = rid
+        endpoint_mapping["root_id"] = root_id
 
-        # url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
-        url = self._endpoints["skeleton_info"].format_map(endpoint_mapping)
-        print(f"get_skeleton_by_datastack_and_rid() url: {url}")
+        if skeleton_version is None:
+            # Pylance incorrectly thinks that skeleton_version cannot be None here,
+            # but it most certainly can, and that is precisely how I intended it.
+            # Google searching revealed this as a known problem with Pylance and Selenium,
+            # but I have not been successful in solving it yet.
+            if output_format == "precomputed":
+                endpoint = "get_skeleton_via_rid"
+            else:
+                # Note that there isn't currently an endpoint for this scenario,
+                # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
+                endpoint_mapping["skeleton_version"] = 0
+                endpoint_mapping["output_format"] = output_format
+                endpoint = "get_skeleton_via_skvn_rid_fmt"
+        else:
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            if output_format == "precomputed":
+                endpoint = "get_skeleton_via_skvn_rid"
+            else:
+                endpoint_mapping["output_format"] = output_format
+                endpoint = "get_skeleton_via_skvn_rid_fmt"
 
-        response = self.session.get(url)
-        return handle_response(response, False)
-    
-    def get_skeleton_by_full_desc(
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        return url
+
+    def get_skeleton(
         self,
-        datastack_name,
-        rid,
-        output_format,
+        root_id: int,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = None,
+        output_format: Literal[
+            "none", "h5", "swc", "json", "arrays", "precomputed"
+        ] = "none",
     ):
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack"] = datastack_name
-        endpoint_mapping["rid"] = rid
-        endpoint_mapping["output_format"] = output_format
+        """Gets basic skeleton information for a datastack
 
-        url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
+        Parameters
+        ----------
+        root_id : int
+            The root id of the skeleton to retrieve
+        datastack_name : str
+            The name of the datastack to check
+        skeleton_version : int
+            The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.
+        output_format : string
+            The format to retrieve. Options are 'none', 'h5', 'swc', 'json', 'arrays', 'precomputed'
+
+        Returns
+        -------
+        The return type will vary greatly depending on the output_format parameter. The options are:
+        - 'none': No return value (this can be used to generate a skeleton without retrieving it)
+        - 'precomputed': A cloudvolume.Skeleton object
+        - 'json': A dictionary
+        - 'arrays': A dictionary (literally a subset of the json response)
+        - 'swc': A pandas DataFrame
+        - 'h5': An h5py file object
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        url = self.build_endpoint(
+            root_id, datastack_name, skeleton_version, output_format
+        )
 
         response = self.session.get(url)
-        return handle_response(response)
-    
 
-client_mapping = {
-    1: SkeletonClientV1,
-}
+        if output_format == "none":
+            return
+        if output_format == "precomputed":
+            if not CLOUDVOLUME_AVAILABLE:
+                raise ImportError(
+                    "'precomputed' output format requires cloudvolume, which is not available."
+                )
+            return cloudvolume.Skeleton.from_precomputed(response.content)
+        if output_format == "json":
+            return response.json()
+        if output_format == "arrays":
+            return response.json()
+        if output_format == "swc":
+            if not CLOUDFILES_AVAILABLE:
+                raise ImportError(
+                    "'swc' output format requires cloudvolume, which is not available."
+                )
+            # Curiously, the response is quoted and contains a terminal endline. Sigh.
+            parts = response.text.strip()[1:-1].split("/")
+            dir_, filename = "/".join(parts[0:-1]), parts[-1]
+            cf = CloudFiles(dir_)
+            skeleton_bytes = cf.get(filename)
+            arr = [
+                [float(v) for v in row.split()]
+                for row in skeleton_bytes.decode().split("\n")
+            ]
+            # I got the SWC column header from skeleton_plot.skel_io.py
+            df = pd.DataFrame(
+                arr, columns=["id", "type", "x", "y", "z", "radius", "parent"]
+            )
+            return df
+        if output_format == "h5":
+            if not CLOUDFILES_AVAILABLE:
+                raise ImportError(
+                    "'h5' output format requires cloudvolume, which is not available."
+                )
+            if not H5PY_AVAILABLE:
+                raise ImportError(
+                    "'h5' output format requires h5py, which is not available."
+                )
+            parts = response.text.strip()[1:-1].split("/")
+            dir_, filename = "/".join(parts[0:-1]), parts[-1]
+            cf = CloudFiles(dir_)
+            skeleton_bytes = cf.get(filename)
+            skeleton_bytesio = BytesIO(skeleton_bytes)
+            return h5py.File(skeleton_bytesio, "r")
+
+        raise ValueError(f"Unknown output format: {output_format}")

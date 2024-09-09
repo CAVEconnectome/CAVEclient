@@ -432,9 +432,13 @@ def _check_version_compatibility(
 
         if method_constraint is not None:
             if _version_fails_constraint(self.server_version, method_constraint):
+                if isinstance(method_constraint, str):
+                    ms_list = [method_constraint]
+                else:
+                    ms_list = method_constraint
                 msg = (
                     f"Use of method `{method.__name__}` is only permitted "
-                    f"for server version {method_constraint}, your server "
+                    f"for server version {' or '.join(ms_list)}. Your server "
                     f"version is {self.server_version}. Contact your system "
                     "administrator to update the server version."
                 )
@@ -452,10 +456,14 @@ def _check_version_compatibility(
                 if check_kwargs.get(kwarg, None) is None:
                     continue
                 elif _version_fails_constraint(self.server_version, kwarg_constraint):
+                    if isinstance(kwarg_constraint, str):
+                        kw_list = [kwarg_constraint]
+                    else:
+                        kw_list = kwarg_constraint
                     msg = (
                         f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
                         "is only permitted "
-                        f"for server version {kwarg_constraint}, your server "
+                        f"for server version {' or '.join(kw_list)}. Your server "
                         f"version is {self.server_version}. Contact your system "
                         "administrator to update the server version."
                     )

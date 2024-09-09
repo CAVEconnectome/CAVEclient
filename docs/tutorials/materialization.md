@@ -330,6 +330,20 @@ complete list of fields that can be queried, you can tab-autocomplete or
 in Jupyter or IPython glance at the docstring with
 `client.materialize.tables.nucleus_detection_v0?`.
 
+In addition to filtering by one or many values, you can also do spatial queries.
+To find only annotations within a particular bounding box, you need to specify the
+spatial point (e.g. `pt_position`). For each such spatial point, there will be an
+argument `{spatial_point_position}_bbox` (e.g. `pt_position_bbox`) that accepts a 2x3 list
+of coordinates specifying the upper and lower bounds for the query. For example, to
+find all nucleus centroids within a particular bounding box, it would be:
+
+```python
+bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+nuc_df = client.materialize.tables.nucleus_detection_v0(
+    pt_position_bbox=bounding_box
+).query()
+```
+
 If you need to specify the table programmatically, you can also use a
 dictionary-style approach to getting the table filtering function. For
 example, an equivalent version of the above line would be:

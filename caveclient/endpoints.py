@@ -276,9 +276,7 @@ l2cache_endpoints_v1 = {
     "l2cache_table_mapping": l2cache_v1 + "/table_mapping",
 }
 
-l2cache_api_versions = {
-    1: l2cache_endpoints_v1
-}
+l2cache_api_versions = {1: l2cache_endpoints_v1}
 
 # -------------------------------
 # ------ Neuroglancer endpoints
@@ -294,17 +292,18 @@ ngl_endpoints_common = {
 # ------ Skeleton endpoints
 # -------------------------------
 
-# Correct:         https://minnie.microns-daf.com/skeletoncache/api/v1/minnie65_phase3_v1/precomputed/skeleton/info
-# What I'm seeing: https://minniev1.microns-daf.com/            api/v1/minnie65_phase3_v1/precomputed/skeleton/info
-
 skeletonservice_common = {}
 
-skeleton_v1 = "{skeleton_server_address}/api/v1"
+skeleton_common = "{skeleton_server_address}/skeletoncache/api"
+skeleton_v1 = "{skeleton_server_address}/skeletoncache/api/v1"
 skeletonservice_endpoints_v1 = {
+    "get_version": skeleton_common + "/version",
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
-    "skeleton_by_rid": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{root_id}",
+    "get_skeleton_via_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{root_id}",
+    "get_skeleton_via_skvn_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
+    "get_skeleton_via_skvn_rid_fmt": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
 }
-skeletonservice_api_versions = {
-    1: skeletonservice_endpoints_v1
-}
-
+skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}

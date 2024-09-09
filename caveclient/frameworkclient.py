@@ -11,7 +11,7 @@ from .infoservice import InfoServiceClient, InfoServiceClientV2
 from .jsonservice import JSONService, JSONServiceV1
 from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
-from .skeletonservice import SkeletonClient, SkeletonClientV1
+from .skeletonservice import SkeletonClient
 
 DEFAULT_RETRIES = 3
 
@@ -508,7 +508,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._materialize
 
     @property
-    def skeleton(self) -> SkeletonClientV1:
+    def skeleton(self) -> SkeletonClient:
         """
         A client for the skeleton service. See [client.skeleton](../client_api/skeleton.md)
         for more information.
