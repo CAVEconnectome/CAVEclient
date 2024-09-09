@@ -1,20 +1,77 @@
+from typing import Collection, Optional, Union
+
 import requests
 from urllib3.util.retry import Retry
 
-SESSION_DEFAULTS = {
-    "max_retries": requests.adapters.DEFAULT_RETRIES,
-    "pool_block": requests.adapters.DEFAULT_POOLBLOCK,
-    "pool_maxsize": requests.adapters.DEFAULT_POOLSIZE,
-    "retry_backoff": 0.1,
-    "backoff_max": 120,
-    "status_forcelist": [502, 503, 504],
-}
+SESSION_DEFAULTS = {}
 
 
-def patch_session(
+def set_session_defaults(
+    max_retries: int = 3,
+    pool_block: bool = False,
+    pool_maxsize: int = 10,
+    retry_backoff: Union[float, int] = 0.1,
+    backoff_max: Union[float, int] = 120,
+    status_forcelist: Optional[Collection] = (502, 503, 504),
+) -> None:
+    """Set default values for the session configuration. Should be done prior to
+    initializing a client.
+
+    Parameters
+    ----------
+    max_retries :
+        The maximum number of retries each connection should attempt. Set to 0 to fail
+        on the first retry.
+    pool_block :
+        Whether the connection pool should block for connections.
+    pool_maxsize :
+        The maximum number of connections to save in the pool.
+    retry_backoff :
+        A backoff factor to apply between attempts after the second try (most errors
+        are resolved immediately by a second try without a delay). The query will sleep
+        for:
+            ```{backoff factor} * (2 ^ ({number of total retries} - 1))``` seconds.
+        For example, if the `backoff_factor` is 0.1, then will sleep for
+        [0.0s, 0.2s, 0.4s, 0.8s, …] between retries. No backoff will ever be longer than
+        `backoff_max`.
+    backoff_max :
+        The maximum backoff time.
+    status_forcelist :
+        A set of integer HTTP status codes that we should force a retry on.
+
+    See Also:
+    ---------
+
+    [urllib3.util.Retry][]
+
+    [requests.adapters.HTTPAdapter][]
+
+    """
+    SESSION_DEFAULTS["max_retries"] = max_retries
+    SESSION_DEFAULTS["pool_block"] = pool_block
+    SESSION_DEFAULTS["pool_maxsize"] = pool_maxsize
+    SESSION_DEFAULTS["retry_backoff"] = retry_backoff
+    SESSION_DEFAULTS["backoff_max"] = backoff_max
+    SESSION_DEFAULTS["status_forcelist"] = status_forcelist
+
+
+SESSION_DEFAULTS = set_session_defaults()
+
+
+def get_session_defaults() -> dict:
+    """Get the current default values for session configuration.
+
+    Returns
+    -------
+    :
+        Dictionary of current default values for session configuration.
+    """
+    return SESSION_DEFAULTS
+
+
+def _patch_session(
     session,
     max_retries=None,
-    retry_backoff=None,
     pool_block=None,
     pool_maxsize=None,
 ):
@@ -37,12 +94,10 @@ def patch_session(
         pool_block = SESSION_DEFAULTS["pool_block"]
     if pool_maxsize is None:
         pool_maxsize = SESSION_DEFAULTS["pool_maxsize"]
-    if retry_backoff is None:
-        retry_backoff = SESSION_DEFAULTS["retry_backoff"]
 
     retries = Retry(
         total=max_retries,
-        backoff_factor=retry_backoff,
+        backoff_factor=SESSION_DEFAULTS["backoff_factor"],
         status_forcelist=SESSION_DEFAULTS["status_forcelist"],
         allowed_methods=frozenset(["GET", "POST"]),
         backoff_max=SESSION_DEFAULTS["backoff_max"],

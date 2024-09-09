@@ -107,6 +107,7 @@ plugins:
             - https://networkx.org/documentation/stable/objects.inv
             - https://docs.scipy.org/doc/scipy/objects.inv
             - https://requests.readthedocs.io/en/latest/objects.inv
+            - https://urllib3.readthedocs.io/en/stable/objects.inv
           options:
             show_source: false
             docstring_style: numpy
