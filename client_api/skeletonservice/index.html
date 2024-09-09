@@ -8,13 +8,9 @@
       
       
       
-        <link rel="canonical" href="https://caveconnectome.github.io/CAVEclient/tutorials/framework/">
+        <link rel="canonical" href="https://caveconnectome.github.io/CAVEclient/client_api/skeletonservice/">
       
       
-        <link rel="prev" href="../">
-      
-      
-        <link rel="next" href="../authentication/">
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
@@ -22,7 +18,7 @@
     
     
       
-        <title>Introduction - CAVEclient</title>
+        <title>client.skeletonservice - CAVEclient</title>
       
     
     
@@ -74,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#caveclient-one-client-for-all-services" class="md-skip">
+        <a href="#caveclient.skeletonservice.SkeletonClient.server_version" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              client.skeletonservice
             
           </span>
         </div>
@@ -227,11 +223,9 @@
         
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="../" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../tutorials/" class="md-tabs__link">
         
   
     
@@ -248,7 +242,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../client_api/" class="md-tabs__link">
+      <a href="../" class="md-tabs__link">
         
   
     
@@ -424,353 +418,59 @@
       
   
   
-    
   
   
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
   
-    
-    
+  
+    <a href="../../tutorials/framework/" class="md-nav__link">
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-        
-        
-      
-      
-    
-    
-      
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
-        
-          
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
-              
   
   <span class="md-ellipsis">
     Tutorial
   </span>
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            Tutorial
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+        <span class="md-nav__icon md-icon"></span>
       
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Introduction
-  </span>
+    </a>
   
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    Introduction
-  </span>
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#caveclient-one-client-for-all-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      CAVEclient: one client for all services
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#global-and-local-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      Global and Local Services
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Global and Local Services">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#initializing-a-caveclient" class="md-nav__link">
-    <span class="md-ellipsis">
-      Initializing a CAVEclient
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-other-server-addresses" class="md-nav__link">
-    <span class="md-ellipsis">
-      Using Other Server Addresses
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#accessing-specific-clients" class="md-nav__link">
-    <span class="md-ellipsis">
-      Accessing specific clients
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../authentication/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Authentication
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../annotation/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Annotation
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../chunkedgraph/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Chunked Graph
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../l2cache/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Level 2 Cache
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../info/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Info Service
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../schemas/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    EM Annotation Schemas
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../state/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    JSON Neuroglancer State Service
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../materialization/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Materialization
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
       
     </li>
   
@@ -819,7 +519,7 @@
         
   
   
-    <a href="../../client_api/client/" class="md-nav__link">
+    <a href="../client/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -981,7 +681,7 @@
                   
 
   
-    <a href="https://github.com/CAVEconnectome/CAVEclient/edit/master/docs/tutorials/framework.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/CAVEconnectome/CAVEclient/edit/master/docs/client_api/skeletonservice.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -990,86 +690,285 @@
     
       
     
-    <a href="https://github.com/CAVEconnectome/CAVEclient/raw/master/docs/tutorials/framework.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/CAVEconnectome/CAVEclient/raw/master/docs/client_api/skeletonservice.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-  <h1>Introduction</h1>
+  <h1>client.skeletonservice</h1>
 
-<h3 id="caveclient-one-client-for-all-services">CAVEclient: one client for all services<a class="headerlink" href="#caveclient-one-client-for-all-services" title="Permanent link">&para;</a></h3>
-<p>The CAVE Framework consists of a number of different services, each with
-a specific set of tasks that it can perform through REST endpoints. The
-CAVEclient is designed to ease programmatic interaction with all of the
-various endpoints. In addition, most programmatic access requires the
-use of authentication tokens. In order to collect a given server,
-datastack name, and user token together into a coherent package that can
-be used on multiple endpoints, the CAVEclient builds appropriately
-configured clients for each of the specific services. Each of the
-individual services has their own specific documentation as well.</p>
-<h3 id="global-and-local-services">Global and Local Services<a class="headerlink" href="#global-and-local-services" title="Permanent link">&para;</a></h3>
-<p>There are two categories of data in CAVE: Global and local. Local
-services are associated with a single so-called <strong>datastack</strong>, which
-refers to a precise collection of imagery and segmentation data that
-function together. For example, EM imagery and a specific pychunkedgraph
-segmentation would be one datastack, while the same EM imagery but an
-initial static segmentation would be another. Datastacks are referred to
-by a short name, for instance <code>pinky100_public_flat_v185</code>.</p>
-<p>Global services are those that are potentially shared across multiple
-different specific datastacks. These include the info service, which can
-describe the properties of all available datastacks, the authentication
-service, and the state service that hosts neuroglancer states. Global
-services are associated with a particular URL (by default
-<code>http://globalv1.daf-apis.com</code>), but not a single datastack.</p>
-<h4 id="initializing-a-caveclient">Initializing a CAVEclient<a class="headerlink" href="#initializing-a-caveclient" title="Permanent link">&para;</a></h4>
-<p>Assuming that the services are on <code>http://globalv1.daf-apis.com</code> and
-authentication tokens are either not being used or set up with default
-values (see <a href="../authentication/">Authentication</a>), a simple
-CAVEclient that can only access global services can be initialized:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">caveclient</span> <span class="kn">import</span> <span class="n">CAVEclient</span>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The functionality described here will be accurate if the datastack you are using is using the most up-to-date version of the skeleton service. If something seems wrong with the documentation here, try checking the version of the skeleton service returned by your client:
+<div class="highlight"><pre><span></span><code><span class="nb">type</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">skeletonservice</span><span class="p">)</span>
+</code></pre></div>
+Extended documentation for all versions of the skeleton service client can be found
+<a href="../../extended_api/skeletonservice/">here</a>.</p>
+</div>
 
-<span class="n">client</span> <span class="o">=</span> <span class="n">CAVEclient</span><span class="p">()</span>
-</code></pre></div>
-<p>Just to confirm that this works, let's see if we can get the EM image
-source from the InfoService. If you get a list of names of datastacks,
-all is good. If you have not yet set up an authentication token or you
-get an authentication error, look at <a class="autorefs autorefs-internal" href="../authentication/#getting-a-new-token">Getting a new token</a> for
-information about how to set up your auth token.</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastacks</span><span class="p">()</span>
-</code></pre></div>
-<p>If you have a specific datastack you want to use, you can initialize
-your CAVEclient with it. This gives you access to the full range of
-client functions.</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">CAVEclient</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="s1">&#39;my_datastack&#39;</span><span class="p">)</span>
-</code></pre></div>
-<h4 id="using-other-server-addresses">Using Other Server Addresses<a class="headerlink" href="#using-other-server-addresses" title="Permanent link">&para;</a></h4>
-<p>If your data is hosted by a different global server, you specify its
-address when initializing the client.</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">CAVEclient</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="s1">&#39;my_datastack&#39;</span><span class="p">,</span> <span class="n">server_address</span><span class="o">=</span><span class="s1">&#39;http://global.myserver.com&#39;</span><span class="p">)</span>
-</code></pre></div>
-<p>By default, if you pass both a server address and a datastack, the
-client will store the mapping from datastack to server address in the
-same location as the default for authentication tokens. Once stored, the
-client will automatically use the correct server address for the
-datastack if none is provided. You can override storing the server
-address by passing <code>write_server_address=False</code>. Datastacks can be
-removed from the cache using</p>
-<p><a class="autorefs autorefs-internal" href="../../extended_api/datastack_lookup/#caveclient.datastack_lookup.reset_server_address_cache">caveclient.datastack_lookup.reset_server_address_cache(datastack_name)</a>.</p>
-<h3 id="accessing-specific-clients">Accessing specific clients<a class="headerlink" href="#accessing-specific-clients" title="Permanent link">&para;</a></h3>
-<p>Each client can be accessed as a property of the main client. See the
-documentation at left for the capabilities of each. Assuming your client
-is named <code>client</code>, the subclients for each service are:</p>
-<ul>
-<li>Authentication Service : <code>client.auth</code></li>
-<li>AnnotationEngine : <code>client.annotation</code></li>
-<li>PyChunkedGraph : <code>client.chunkedgraph</code></li>
-<li>InfoService : <code>client.info</code></li>
-<li>EM Annotation Schemas : <code>client.schemas</code></li>
-<li>JSON Neuroglancer State Service : <code>client.state</code></li>
-<li>Skeleton Service : <code>client.skeletonservice</code></li>
-</ul>
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.server_version" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">server_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.server_version" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The version of the service running on the remote server. Note that this
+refers to the software running on the server and has nothing to do with the
+version of the datastack itself.</p>
+    </div>
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.build_endpoint" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">build_endpoint</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">datastack_name</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="p">,</span> <span class="n">output_format</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.build_endpoint" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Building the URL in a separate function facilities testing</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.get_skeleton" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_skeleton</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.get_skeleton" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Gets basic skeleton information for a datastack</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>root_id</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The root id of the skeleton to retrieve</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>datastack_name</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the datastack to check</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>skeleton_version</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>output_format</code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/string.html#module-string">string</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The format to retrieve. Options are 'none', 'h5', 'swc', 'json', 'arrays', 'precomputed'</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;none&#39;</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>The return type will vary greatly depending on the output_format parameter. The options are:</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>- &#39;none&#39;: No return value (this can be used to generate a skeleton without retrieving it)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>- &#39;precomputed&#39;: A cloudvolume.Skeleton object</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>- &#39;json&#39;: A dictionary</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>- &#39;arrays&#39;: A dictionary (literally a subset of the json response)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>- &#39;swc&#39;: A pandas DataFrame</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>- &#39;h5&#39;: An h5py file object</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.raise_for_status" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">raise_for_status</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.raise_for_status" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 
@@ -1103,44 +1002,6 @@ is named <code>client</code>, the subclients for each service are:</p>
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Tutorial">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Tutorial
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../authentication/" class="md-footer__link md-footer__link--next" aria-label="Next: Authentication">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Authentication
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
