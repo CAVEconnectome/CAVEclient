@@ -3,6 +3,7 @@ import logging
 import os
 import urllib
 import webbrowser
+from typing import Optional
 
 import requests
 
@@ -44,6 +45,13 @@ def write_token(token, filepath, key, overwrite=True):
         json.dump(secrets, f)
 
 
+def server_token_filename(server_address):
+    server = urllib.parse.urlparse(server_address).netloc
+    server_file = server + "-cave-secret.json"
+    server_file_path = os.path.join(default_token_location, server_file)
+    return os.path.expanduser(server_file_path)
+
+
 class AuthClient(object):
     def __init__(
         self,
@@ -51,6 +59,7 @@ class AuthClient(object):
         token_key=None,
         token=None,
         server_address=default_global_server_address,
+        local_server=None,
     ):
         """Client to find and use auth tokens to access the dynamic annotation framework services.
 
@@ -71,11 +80,11 @@ class AuthClient(object):
         server_address : str, optional,
             URL to the auth server. By default, uses a default server address.
         """
+        self._server_address = server_address
+        self._local_server = local_server
+
         if token_file is None:
-            server = urllib.parse.urlparse(server_address).netloc
-            server_file = server + "-cave-secret.json"
-            self._server_file_path = os.path.join(default_token_location, server_file)
-            self._server_file_path = os.path.expanduser(self._server_file_path)
+            self._server_file_path = server_token_filename(self._server_address)
             if os.path.isfile(self._server_file_path):
                 token_file = self._server_file_path
             else:
@@ -102,7 +111,6 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                         break
         self._token = token
 
-        self._server_address = server_address
         self._default_endpoint_mapping = {"auth_server_address": self._server_address}
 
     @property
@@ -215,12 +223,12 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
 
     def save_token(
         self,
-        token=None,
-        token_key=default_token_key,
-        overwrite=False,
-        token_file=None,
-        switch_token=True,
-        write_to_server_file=True,
+        token: Optional[str] = None,
+        token_key: str = default_token_key,
+        overwrite: bool = False,
+        token_file: Optional[str] = None,
+        switch_token: bool = True,
+        write_to_server_file: bool = True,
     ):
         """Conveniently save a token in the correct format.
 
@@ -313,3 +321,38 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             return auth_header
         else:
             return {}
+
+    @property
+    def local_server(self):
+        return self._local_server
+
+    @local_server.setter
+    def local_server(self, new_val):
+        self._local_server = new_val
+        self._synchronize_local_server_file()
+
+    @property
+    def local_server_filepath(self):
+        if self.local_server:
+            return server_token_filename(self.local_server)
+        else:
+            return None
+
+    def _synchronize_local_server_file(self):
+        if self.local_server:
+            if os.path.exists(self.local_server_filepath):
+                local_token = self._load_token(
+                    self.local_server_filepath, self._token_key
+                )
+                if local_token != self.token:
+                    self.save_token(
+                        token=self.token,
+                        token_file=self.local_server_filepath,
+                        overwrite=True,
+                    )
+            else:
+                self.save_token(
+                    token=self.token,
+                    token_file=self.local_server_filepath,
+                    overwrite=True,
+                )
