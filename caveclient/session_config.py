@@ -14,8 +14,10 @@ def set_session_defaults(
     backoff_max: Union[float, int] = 120,
     status_forcelist: Optional[Collection] = (502, 503, 504),
 ) -> None:
-    """Set default values for the session configuration. Should be done prior to
-    initializing a client.
+    """Set global default values to configure how all clients will communicate with 
+    servers. Should be done prior to initializing a client.
+
+    Note that these values are only used when not set at the client level.
 
     Parameters
     ----------

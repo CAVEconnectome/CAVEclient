@@ -13,8 +13,6 @@ from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
 from .skeletonservice import SkeletonClient
 
-DEFAULT_RETRIES = 3
-
 
 class GlobalClientError(Exception):
     pass
@@ -29,7 +27,7 @@ class CAVEclient(object):
         auth_token_key=None,
         auth_token=None,
         global_only=False,
-        max_retries=DEFAULT_RETRIES,
+        max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         desired_resolution=None,
@@ -79,11 +77,15 @@ class CAVEclient(object):
             Direct entry of an auth token. If None, uses the file arguments to find the token.
             Optional, default is None.
         max_retries : int or None, optional
-            Sets the default number of retries on failed requests. Optional, by default 2.
+            Sets the default number of retries on failed requests.
+            If None, uses the value set in the session defaults.
         pool_maxsize : int or None, optional
-            Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
+            Sets the max number of threads in a requests pool, although this value will
+            be exceeded if pool_block is set to False. If None, uses the value set in
+            the session defaults.
         pool_block: bool or None, optional
-            If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
+            If True, prevents the number of threads in a requests pool from exceeding
+            the max size. If None, uses the value set in the session defaults.
         desired_resolution : Iterable[float]or None, optional
             If given, should be a list or array of the desired resolution you want queries returned in
             useful for materialization queries.
@@ -133,7 +135,7 @@ class CAVEclientGlobal(object):
         auth_token_file=None,
         auth_token_key=None,
         auth_token=None,
-        max_retries=DEFAULT_RETRIES,
+        max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         info_cache=None,
@@ -178,6 +180,13 @@ class CAVEclientGlobal(object):
             If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
+
+        See Also
+        --------
+
+        [set_session_defaults](../extended_api/session_config.md/#caveclient.session_config.set_session_defaults)
+
+        [get_session_defaults](../extended_api/session_config.md/#caveclient.session_config.get_session_defaults)
         """
         if server_address is None:
             server_address = default_global_server_address
@@ -320,7 +329,7 @@ class CAVEclientFull(CAVEclientGlobal):
         auth_token_file=default_token_file,
         auth_token_key="token",
         auth_token=None,
-        max_retries=DEFAULT_RETRIES,
+        max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         desired_resolution=None,
@@ -380,6 +389,13 @@ class CAVEclientFull(CAVEclientGlobal):
         version:
             The default materialization version of the datastack to use. If None, the
             latest version is used. Optional, defaults to None.
+
+        See Also
+        --------
+
+        [set_session_defaults](../extended_api/session_config.md/#caveclient.session_config.set_session_defaults)
+
+        [get_session_defaults](../extended_api/session_config.md/#caveclient.session_config.get_session_defaults)
         """
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
