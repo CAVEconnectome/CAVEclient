@@ -1684,7 +1684,7 @@ If None, defaults to the value for the datastack or the client.</p>
 
 
 <h3 id="caveclient.jsonservice.JSONServiceV1.upload_property_json" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">upload_property_json</span><span class="p">(</span><span class="n">property_json</span><span class="p">,</span> <span class="n">state_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">upload_property_json</span><span class="p">(</span><span class="n">property_json</span><span class="p">,</span> <span class="n">state_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_size</span><span class="o">=</span><span class="mi">2500000</span><span class="p">)</span></code>
 
 <a href="#caveclient.jsonservice.JSONServiceV1.upload_property_json" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -1735,16 +1735,18 @@ Using a state_id is an admin feature.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td><code>max_size</code></td>
             <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Timestamp for json state date. Requires state_id.</p>
+                <p>Maximum size in bytes for the data to upload. Default is 2.5MB. Set to None
+for no limit.</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                  <code>2500000</code>
             </td>
           </tr>
       </tbody>
