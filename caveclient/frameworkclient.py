@@ -9,7 +9,7 @@ from .emannotationschemas import SchemaClient, SchemaClientLegacy
 from .endpoints import default_global_server_address
 from .infoservice import InfoServiceClient, InfoServiceClientV2
 from .jsonservice import JSONService
-from .l2cache import L2CacheClient, L2CacheClientLegacy
+from .l2cache import L2CacheClient
 from .materializationengine import MaterializationClient, MaterializationClientType
 from .skeletonservice import SkeletonClient
 
@@ -571,7 +571,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._state
 
     @property
-    def l2cache(self) -> L2CacheClientLegacy:
+    def l2cache(self) -> L2CacheClient:
         """
         A client for the L2 cache service. See [client.l2cache](../client_api/l2cache.md)
         for more information.
