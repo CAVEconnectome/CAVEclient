@@ -41,7 +41,7 @@ class CAVEclient(object):
         To instantiate a client:
 
             from caveclient import CAVEclient
-            
+
             client = CAVEclient(datastack_name='my_datastack',
                                 server_address='www.myserver.com',
                                 auth_token_file='~/.mysecrets/secrets.json')
@@ -148,7 +148,7 @@ class CAVEclientGlobal(object):
         To instantiate a client:
 
             from caveclient import CAVEclient
-            
+
             client = CAVEclient(datastack_name='my_datastack',
                                 server_address='www.myserver.com',
                                 auth_token_file='~/.mysecrets/secrets.json')
