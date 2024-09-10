@@ -3,7 +3,7 @@ from typing import Optional
 
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
-from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
+from .chunkedgraph import ChunkedGraphClient
 from .datastack_lookup import handle_server_address
 from .emannotationschemas import SchemaClient, SchemaClientLegacy
 from .endpoints import default_global_server_address
@@ -476,7 +476,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._datastack_name
 
     @property
-    def chunkedgraph(self) -> ChunkedGraphClientV1:
+    def chunkedgraph(self) -> ChunkedGraphClient:
         """
         A client for the chunkedgraph service. See [client.chunkedgraph](../client_api/chunkedgraph.md)
         for more information.
