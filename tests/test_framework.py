@@ -140,7 +140,7 @@ class TestFrameworkClient:
             TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False
         )
         assert client.l2cache.session.adapters["https://"]._pool_maxsize == pool_maxsize
-        assert client.l2cache.session.adapters["https://"]._pool_block == True
+        assert client.l2cache.session.adapters["https://"]._pool_block
         assert (
             client.l2cache.session.adapters["https://"].max_retries.total == max_retries
         )
