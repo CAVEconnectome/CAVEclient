@@ -40,9 +40,11 @@ class CAVEclient(object):
         This client wraps all the other clients and keeps track of the things that need to be consistent across them.
         To instantiate a client:
 
+            from caveclient import CAVEclient
+            
             client = CAVEclient(datastack_name='my_datastack',
-                                    server_address='www.myserver.com',
-                                    auth_token_file='~/.mysecrets/secrets.json')
+                                server_address='www.myserver.com',
+                                auth_token_file='~/.mysecrets/secrets.json')
 
         Then:
 
@@ -145,9 +147,11 @@ class CAVEclientGlobal(object):
         This client wraps all the other clients and keeps track of the things that need to be consistent across them.
         To instantiate a client:
 
+            from caveclient import CAVEclient
+            
             client = CAVEclient(datastack_name='my_datastack',
-                                     server_address='www.myserver.com',
-                                     auth_token_file='~/.mysecrets/secrets.json')
+                                server_address='www.myserver.com',
+                                auth_token_file='~/.mysecrets/secrets.json')
 
         Then:
 
@@ -341,9 +345,11 @@ class CAVEclientFull(CAVEclientGlobal):
         This client wraps all the other clients and keeps track of the things that need to be consistent across them.
         To instantiate a client:
 
+            from caveclient import CAVEclient
+
             client = CAVEclient(datastack_name='my_datastack',
-                                     server_address='www.myserver.com',
-                                     auth_token_file='~/.mysecrets/secrets.json')
+                                server_address='www.myserver.com',
+                                auth_token_file='~/.mysecrets/secrets.json')
 
         Then
 

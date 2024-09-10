@@ -17,6 +17,7 @@ nav:
     - tutorials/schemas.md
     - tutorials/state.md
     - tutorials/materialization.md
+    - tutorials/advanced.md
   - Client API: # these match the client property names
     - client_api/index.md
     - client_api/client.md
@@ -28,6 +29,7 @@ nav:
     - client_api/materialize.md
     - client_api/schema.md
     - client_api/state.md
+    - client_api/config.md
   - Extended API: # these match the python file names
     - extended_api/index.md
     - extended_api/annotationengine.md
