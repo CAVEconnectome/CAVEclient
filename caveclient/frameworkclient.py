@@ -7,7 +7,7 @@ from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
 from .datastack_lookup import handle_server_address
 from .emannotationschemas import SchemaClient, SchemaClientLegacy
 from .endpoints import default_global_server_address
-from .infoservice import InfoServiceClient, InfoServiceClientV2
+from .infoservice import InfoServiceClient
 from .jsonservice import JSONService, JSONServiceV1
 from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
@@ -253,7 +253,7 @@ class CAVEclientGlobal(object):
         return self._auth
 
     @property
-    def info(self) -> InfoServiceClientV2:
+    def info(self) -> InfoServiceClient:
         """
         A client for the info service. See [client.info](../client_api/info.md) for more information.
         """
