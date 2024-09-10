@@ -447,6 +447,8 @@
       
         
       
+        
+      
     
     
       
@@ -490,6 +492,8 @@
   
     
     
+      
+        
       
         
       
@@ -1296,7 +1300,7 @@
 
 
 <h3 id="caveclient.frameworkclient.CAVEclient.__new__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__new__</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">global_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="n">DEFAULT_RETRIES</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">write_server_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__new__</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">global_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">write_server_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.frameworkclient.CAVEclient.__new__" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -1306,9 +1310,11 @@
         <p>A manager for all clients sharing common datastack and authentication information.</p>
 <p>This client wraps all the other clients and keeps track of the things that need to be consistent across them.
 To instantiate a client:</p>
-<div class="highlight"><pre><span></span><code>client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
-                        server_address=&#39;www.myserver.com&#39;,
-                        auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
+<div class="highlight"><pre><span></span><code>from caveclient import CAVEclient
+
+client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
+                    server_address=&#39;www.myserver.com&#39;,
+                    auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
 </code></pre></div>
 <p>Then:</p>
 <ul>
@@ -1418,11 +1424,12 @@ Optional, default is None.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Sets the default number of retries on failed requests. Optional, by default 2.</p>
+                <p>Sets the default number of retries on failed requests.
+If None, uses the value set in the session defaults.</p>
               </div>
             </td>
             <td>
-                  <code><span title="caveclient.frameworkclient.DEFAULT_RETRIES">DEFAULT_RETRIES</span></code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1432,7 +1439,9 @@ Optional, default is None.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.</p>
+                <p>Sets the max number of threads in a requests pool, although this value will
+be exceeded if pool_block is set to False. If None, uses the value set in
+the session defaults.</p>
               </div>
             </td>
             <td>
@@ -1445,7 +1454,8 @@ Optional, default is None.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.</p>
+                <p>If True, prevents the number of threads in a requests pool from exceeding
+the max size. If None, uses the value set in the session defaults.</p>
               </div>
             </td>
             <td>
@@ -1528,7 +1538,7 @@ latest version is used. Optional, defaults to None.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientFull" class="doc doc-heading">
-              <code class="highlight language-python"><span class="n">CAVEclientFull</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_file</span><span class="o">=</span><span class="n">default_token_file</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="n">DEFAULT_RETRIES</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">CAVEclientFull</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_file</span><span class="o">=</span><span class="n">default_token_file</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="s1">&#39;token&#39;</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.frameworkclient.CAVEclientFull" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1541,9 +1551,11 @@ latest version is used. Optional, defaults to None.</p>
         <p>A manager for all clients sharing common datastack and authentication information.</p>
 <p>This client wraps all the other clients and keeps track of the things that need to be consistent across them.
 To instantiate a client:</p>
-<div class="highlight"><pre><span></span><code>client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
-                         server_address=&#39;www.myserver.com&#39;,
-                         auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
+<div class="highlight"><pre><span></span><code>from caveclient import CAVEclient
+
+client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
+                    server_address=&#39;www.myserver.com&#39;,
+                    auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
 </code></pre></div>
 <p>Then</p>
 <ul>
@@ -1656,7 +1668,7 @@ Optional, default is None.</p>
               </div>
             </td>
             <td>
-                  <code><span title="caveclient.frameworkclient.DEFAULT_RETRIES">DEFAULT_RETRIES</span></code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1732,6 +1744,12 @@ latest version is used. Optional, defaults to None.</p>
       </tbody>
     </table>
 
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a href="../session_config/#caveclient.session_config.set_session_defaults">set_session_defaults</a></p>
+<p><a href="../session_config/#caveclient.session_config.get_session_defaults">get_session_defaults</a></p>
+</details>
 
 
 
@@ -2116,7 +2134,7 @@ which defaults to the existing state.</p>
 
 
 <h2 id="caveclient.frameworkclient.CAVEclientGlobal" class="doc doc-heading">
-              <code class="highlight language-python"><span class="n">CAVEclientGlobal</span><span class="p">(</span><span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="n">DEFAULT_RETRIES</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+              <code class="highlight language-python"><span class="n">CAVEclientGlobal</span><span class="p">(</span><span class="n">server_address</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auth_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_retries</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool_block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">info_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.frameworkclient.CAVEclientGlobal" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2129,9 +2147,11 @@ which defaults to the existing state.</p>
         <p>A manager for all clients sharing common datastack and authentication information.</p>
 <p>This client wraps all the other clients and keeps track of the things that need to be consistent across them.
 To instantiate a client:</p>
-<div class="highlight"><pre><span></span><code>client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
-                         server_address=&#39;www.myserver.com&#39;,
-                         auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
+<div class="highlight"><pre><span></span><code>from caveclient import CAVEclient
+
+client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
+                    server_address=&#39;www.myserver.com&#39;,
+                    auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
 </code></pre></div>
 <p>Then:</p>
 <ul>
@@ -2225,7 +2245,7 @@ Optional, default is None.</p>
               </div>
             </td>
             <td>
-                  <code><span title="caveclient.frameworkclient.DEFAULT_RETRIES">DEFAULT_RETRIES</span></code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -2271,6 +2291,12 @@ Optional, default is None.</p>
       </tbody>
     </table>
 
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a href="../session_config/#caveclient.session_config.set_session_defaults">set_session_defaults</a></p>
+<p><a href="../session_config/#caveclient.session_config.get_session_defaults">get_session_defaults</a></p>
+</details>
 
 
 

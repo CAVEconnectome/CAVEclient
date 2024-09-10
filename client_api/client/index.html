@@ -447,6 +447,8 @@
       
         
       
+        
+      
     
     
       
@@ -492,6 +494,8 @@
   
     
     
+      
+        
       
         
       
@@ -906,6 +910,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1085,9 +1110,11 @@
         <p>A manager for all clients sharing common datastack and authentication information.</p>
 <p>This client wraps all the other clients and keeps track of the things that need to be consistent across them.
 To instantiate a client:</p>
-<div class="highlight"><pre><span></span><code>client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
-                         server_address=&#39;www.myserver.com&#39;,
-                         auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
+<div class="highlight"><pre><span></span><code>from caveclient import CAVEclient
+
+client = CAVEclient(datastack_name=&#39;my_datastack&#39;,
+                    server_address=&#39;www.myserver.com&#39;,
+                    auth_token_file=&#39;~/.mysecrets/secrets.json&#39;)
 </code></pre></div>
 <p>Then</p>
 <ul>
@@ -1200,7 +1227,7 @@ Optional, default is None.</p>
               </div>
             </td>
             <td>
-                  <code><span title="caveclient.frameworkclient.DEFAULT_RETRIES">DEFAULT_RETRIES</span></code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1276,6 +1303,12 @@ latest version is used. Optional, defaults to None.</p>
       </tbody>
     </table>
 
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a href="../../extended_api/session_config/#caveclient.session_config.set_session_defaults">set_session_defaults</a></p>
+<p><a href="../../extended_api/session_config/#caveclient.session_config.get_session_defaults">get_session_defaults</a></p>
+</details>
 
 
 
