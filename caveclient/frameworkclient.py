@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from .annotationengine import AnnotationClient, AnnotationClientV2
+from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
 from .datastack_lookup import handle_server_address
@@ -497,7 +497,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._chunkedgraph
 
     @property
-    def annotation(self) -> AnnotationClientV2:
+    def annotation(self) -> AnnotationClient:
         """
         A client for the annotation service. See [client.annotation](../client_api/annotation.md)
         for more information.
