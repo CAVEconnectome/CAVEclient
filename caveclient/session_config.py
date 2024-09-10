@@ -41,6 +41,28 @@ def set_session_defaults(
     status_forcelist :
         A set of integer HTTP status codes that we should force a retry on.
 
+    Usage
+    -----
+
+        from caveclient import set_session_defaults
+
+        set_session_defaults(
+            max_retries=5, # would increase the default number of retries
+            retry_backoff=0.5, # would increase the default backoff factor between retries
+            backoff_max=240, # would increase the default maximum backoff time
+            status_forcelist=(502, 503, 504, 505), # would add 505 to the default list
+        )
+
+        set_session_defaults() # would revert all defaults to their original values
+
+    Notes
+    -----
+    Calling this function will set the default values for all clients created after the
+    call. 
+    
+    Calling this function with any arguments missing will reset that value to the 
+    default value.
+
     See Also:
     ---------
 
@@ -52,12 +74,11 @@ def set_session_defaults(
     SESSION_DEFAULTS["max_retries"] = max_retries
     SESSION_DEFAULTS["pool_block"] = pool_block
     SESSION_DEFAULTS["pool_maxsize"] = pool_maxsize
-    SESSION_DEFAULTS["retry_backoff"] = retry_backoff
+    SESSION_DEFAULTS["backoff_factor"] = retry_backoff
     SESSION_DEFAULTS["backoff_max"] = backoff_max
     SESSION_DEFAULTS["status_forcelist"] = status_forcelist
 
-
-SESSION_DEFAULTS = set_session_defaults()
+set_session_defaults()
 
 
 def get_session_defaults() -> dict:
