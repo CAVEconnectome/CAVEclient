@@ -10,7 +10,7 @@ def set_session_defaults(
     max_retries: int = 3,
     pool_block: bool = False,
     pool_maxsize: int = 10,
-    retry_backoff: Union[float, int] = 0.1,
+    backoff_factor: Union[float, int] = 0.1,
     backoff_max: Union[float, int] = 120,
     status_forcelist: Optional[Collection] = (502, 503, 504),
 ) -> None:
@@ -28,7 +28,7 @@ def set_session_defaults(
         Whether the connection pool should block for connections.
     pool_maxsize :
         The maximum number of connections to save in the pool.
-    retry_backoff :
+    backoff_factor :
         A backoff factor to apply between attempts after the second try (most errors
         are resolved immediately by a second try without a delay). The query will sleep
         for:
@@ -48,7 +48,7 @@ def set_session_defaults(
 
         set_session_defaults(
             max_retries=5, # would increase the default number of retries
-            retry_backoff=0.5, # would increase the default backoff factor between retries
+            backoff_factor=0.5, # would increase the default backoff factor between retries
             backoff_max=240, # would increase the default maximum backoff time
             status_forcelist=(502, 503, 504, 505), # would add 505 to the default list
         )
@@ -74,7 +74,7 @@ def set_session_defaults(
     SESSION_DEFAULTS["max_retries"] = max_retries
     SESSION_DEFAULTS["pool_block"] = pool_block
     SESSION_DEFAULTS["pool_maxsize"] = pool_maxsize
-    SESSION_DEFAULTS["backoff_factor"] = retry_backoff
+    SESSION_DEFAULTS["backoff_factor"] = backoff_factor
     SESSION_DEFAULTS["backoff_max"] = backoff_max
     SESSION_DEFAULTS["status_forcelist"] = status_forcelist
 
@@ -112,7 +112,7 @@ def _patch_session(
         Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
     """
     if max_retries is None:
-        retries = SESSION_DEFAULTS["max_retries"]
+        max_retries = SESSION_DEFAULTS["max_retries"]
     if pool_block is None:
         pool_block = SESSION_DEFAULTS["pool_block"]
     if pool_maxsize is None:
