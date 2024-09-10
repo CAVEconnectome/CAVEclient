@@ -5,7 +5,7 @@ from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
 from .datastack_lookup import handle_server_address
-from .emannotationschemas import SchemaClient, SchemaClientLegacy
+from .emannotationschemas import SchemaClient
 from .endpoints import default_global_server_address
 from .infoservice import InfoServiceClient, InfoServiceClientV2
 from .jsonservice import JSONService, JSONServiceV1
@@ -288,7 +288,7 @@ class CAVEclientGlobal(object):
         return self._state
 
     @property
-    def schema(self) -> SchemaClientLegacy:
+    def schema(self) -> SchemaClient:
         """
         A client for the EM Annotation Schemas service. See [client.schema](../client_api/schema.md)
         for more information.
