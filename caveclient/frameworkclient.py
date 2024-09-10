@@ -8,7 +8,7 @@ from .datastack_lookup import handle_server_address
 from .emannotationschemas import SchemaClient, SchemaClientLegacy
 from .endpoints import default_global_server_address
 from .infoservice import InfoServiceClient, InfoServiceClientV2
-from .jsonservice import JSONService, JSONServiceV1
+from .jsonservice import JSONService
 from .l2cache import L2CacheClient, L2CacheClientLegacy
 from .materializationengine import MaterializationClient, MaterializationClientType
 from .skeletonservice import SkeletonClient
@@ -271,7 +271,7 @@ class CAVEclientGlobal(object):
         return self._info
 
     @property
-    def state(self) -> JSONServiceV1:
+    def state(self) -> JSONService:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
@@ -553,7 +553,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._skeleton
 
     @property
-    def state(self) -> JSONServiceV1:
+    def state(self) -> JSONService:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
