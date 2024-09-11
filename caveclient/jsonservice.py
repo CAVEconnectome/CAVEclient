@@ -375,8 +375,3 @@ class JSONService(ClientBase):
             get_state_url = self._endpoints["get_state"].format_map(url_mapping)
             url = ngl_url + parameter_text + auth_text + get_state_url
         return url
-
-
-client_mapping = {
-    1: JSONService,
-}
