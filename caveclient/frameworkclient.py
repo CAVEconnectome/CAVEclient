@@ -10,7 +10,7 @@ from .endpoints import default_global_server_address
 from .infoservice import InfoServiceClient, InfoServiceClientV2
 from .jsonservice import JSONService, JSONServiceV1
 from .l2cache import L2CacheClient, L2CacheClientLegacy
-from .materializationengine import MaterializationClient, MaterializationClientType
+from .materializationengine import MaterializationClient
 from .skeletonservice import SkeletonClient
 
 
@@ -515,7 +515,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._annotation
 
     @property
-    def materialize(self) -> MaterializationClientType:
+    def materialize(self) -> MaterializationClient:
         """
         A client for the materialization service. See [client.materialize](../client_api/materialize.md)
         for more information.
