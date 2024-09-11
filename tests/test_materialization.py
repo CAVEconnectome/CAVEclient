@@ -631,19 +631,19 @@ class TestMatclient:
             return np.array([timestamp_dict[root_id] for root_id in root_ids])
 
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots",
+            "caveclient.chunkedgraph.ChunkedGraphClient.get_roots",
             my_get_roots,
         )
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids",
+            "caveclient.chunkedgraph.ChunkedGraphClient.get_past_ids",
             mocked_get_past_ids,
         )
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots",
+            "caveclient.chunkedgraph.ChunkedGraphClient.is_latest_roots",
             mock_is_latest_roots,
         )
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps",
+            "caveclient.chunkedgraph.ChunkedGraphClient.get_root_timestamps",
             mock_get_root_timestamps,
         )
         df = pd.read_pickle("tests/test_data/live_query_before.pkl")
