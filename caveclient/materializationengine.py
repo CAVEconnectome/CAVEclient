@@ -1693,32 +1693,25 @@ class MaterializationClient(ClientBase):
     @property
     def views(self) -> ViewManager:
         """The view manager for the materialization engine."""
-        if self.server_version < Version("3"):
-            if self._views is None:
-                if self.fc is not None and self.fc._materialize is not None:
-                    self._views = ViewManager(self.fc)
-                else:
-                    raise ValueError("No full CAVEclient specified")
-            return self._views
-        else:
-            if self._views is None:
-                if self.fc is not None and self.fc._materialize is not None:
-                    metadata = []
-                    with ThreadPoolExecutor(max_workers=2) as executor:
-                        metadata.append(
-                            executor.submit(
-                                self.get_views,
-                            )
+        if self.fc is not None and self.fc._materialize is not None:
+            if self.server_version < Version("3"):
+                views = ViewManager(self.fc)
+            else:
+                metadata = []
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    metadata.append(
+                        executor.submit(
+                            self.get_views,
                         )
-                        metadata.append(executor.submit(self.get_view_schemas))
-
-                    views = ViewManager(
-                        self.fc, metadata[0].result(), metadata[1].result()
                     )
-                    self._views = views
-                else:
-                    raise ValueError("No full CAVEclient specified")
-            return self._views
+                    metadata.append(executor.submit(self.get_view_schemas))
+
+                views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
+
+            self._views = views
+        else:
+            raise ValueError("No full CAVEclient specified")
+        return self._views
 
     @_check_version_compatibility(method_constraint=">=3.0.0")
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
