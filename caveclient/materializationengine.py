@@ -14,6 +14,7 @@ import pytz
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from IPython.display import HTML
+from packaging.version import Version
 from requests import HTTPError
 
 from .auth import AuthClient
@@ -1659,7 +1660,7 @@ class MaterializationClient(ClientBase):
     @property
     def tables(self) -> TableManager:
         """The table manager for the materialization engine."""
-        if self.server_version < "3.0.0":
+        if self.server_version < Version("3"):
             if self._tables is None:
                 if self.fc is not None and self.fc._materialize is not None:
                     self._tables = TableManager(self.fc)
@@ -1698,7 +1699,7 @@ class MaterializationClient(ClientBase):
     @property
     def views(self) -> ViewManager:
         """The view manager for the materialization engine."""
-        if self.server_version < "3.0.0":
+        if self.server_version < Version("3"):
             if self._views is None:
                 if self.fc is not None and self.fc._materialize is not None:
                     self._views = ViewManager(self.fc)
@@ -1896,7 +1897,7 @@ class MaterializationClient(ClientBase):
         >>>        "column_name": "regex_string"
         >>>     }
         """
-        if self.server_version < 3:
+        if self.server_version < Version("3"):
             logging.warning(
                 "Deprecation: this method is to facilitate beta testing of this feature, \
                 it will likely get removed in future versions. "
