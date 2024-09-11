@@ -154,9 +154,3 @@ class L2CacheClient(ClientBase):
             else:
                 raise e
         return table_name in table_mapping
-
-
-client_mapping = {
-    1: L2CacheClient,
-    "latest": L2CacheClient,
-}
