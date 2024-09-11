@@ -3,11 +3,11 @@ from typing import Optional
 
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
-from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
+from .chunkedgraph import ChunkedGraphClient
 from .datastack_lookup import handle_server_address
-from .emannotationschemas import SchemaClient, SchemaClientLegacy
+from .emannotationschemas import SchemaClient
 from .endpoints import default_global_server_address
-from .infoservice import InfoServiceClient, InfoServiceClientV2
+from .infoservice import InfoServiceClient
 from .jsonservice import JSONService
 from .l2cache import L2CacheClient
 from .materializationengine import MaterializationClient, MaterializationClientType
@@ -253,7 +253,7 @@ class CAVEclientGlobal(object):
         return self._auth
 
     @property
-    def info(self) -> InfoServiceClientV2:
+    def info(self) -> InfoServiceClient:
         """
         A client for the info service. See [client.info](../client_api/info.md) for more information.
         """
@@ -288,7 +288,7 @@ class CAVEclientGlobal(object):
         return self._state
 
     @property
-    def schema(self) -> SchemaClientLegacy:
+    def schema(self) -> SchemaClient:
         """
         A client for the EM Annotation Schemas service. See [client.schema](../client_api/schema.md)
         for more information.
@@ -476,7 +476,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._datastack_name
 
     @property
-    def chunkedgraph(self) -> ChunkedGraphClientV1:
+    def chunkedgraph(self) -> ChunkedGraphClient:
         """
         A client for the chunkedgraph service. See [client.chunkedgraph](../client_api/chunkedgraph.md)
         for more information.
