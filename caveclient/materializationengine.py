@@ -1660,16 +1660,11 @@ class MaterializationClient(ClientBase):
     @property
     def tables(self) -> TableManager:
         """The table manager for the materialization engine."""
-        if self.server_version < Version("3"):
-            if self._tables is None:
-                if self.fc is not None and self.fc._materialize is not None:
-                    self._tables = TableManager(self.fc)
+        if self._tables is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                if self.server_version < Version("3"):
+                    tables = TableManager(self.fc)
                 else:
-                    raise ValueError("No full CAVEclient specified")
-            return self._tables
-        else:
-            if self._tables is None:
-                if self.fc is not None and self.fc._materialize is not None:
                     metadata = []
                     with ThreadPoolExecutor(max_workers=2) as executor:
                         metadata.append(
@@ -1680,7 +1675,6 @@ class MaterializationClient(ClientBase):
                         metadata.append(
                             executor.submit(self.fc.schema.schema_definition_all)
                         )
-
                     if (
                         metadata[0].result() is not None
                         and metadata[1].result() is not None
@@ -1689,12 +1683,12 @@ class MaterializationClient(ClientBase):
                             self.fc, metadata[0].result(), metadata[1].result()
                         )
                     else:
-                        # TODO fix this for when the metadata is not available
-                        tables = None
-                    self._tables = tables
-                else:
-                    raise ValueError("No full CAVEclient specified")
-            return self._tables
+                        logger.warning("Warning: Metadata for tables not available.")
+                        tables = TableManager(self.fc)
+                self._tables = tables
+            else:
+                raise ValueError("No full CAVEclient specified")
+        return self._tables
 
     @property
     def views(self) -> ViewManager:
