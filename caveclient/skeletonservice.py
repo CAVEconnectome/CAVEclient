@@ -167,7 +167,7 @@ class SkeletonClient(ClientBase):
         if datastack_name is None:
             datastack_name = self._datastack_name
         assert datastack_name is not None
-        
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_id"] = root_id
@@ -253,8 +253,8 @@ class SkeletonClient(ClientBase):
             # I got the SWC column header from skeleton_plot.skel_io.py
             return pd.read_csv(
                 StringIO(response.content.decode()),
-                sep=' ',
-                names=["id", "type", "x", "y", "z", "radius", "parent"]
+                sep=" ",
+                names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
         if output_format == "h5":
             if not H5PY_AVAILABLE:
