@@ -27,17 +27,6 @@ except ImportError:
 
     H5PY_AVAILABLE = False
 
-try:
-    from cloudfiles import CloudFiles
-
-    CLOUDFILES_AVAILABLE = True
-except ImportError:
-    logging.warning(
-        "cloudfiles not installed. Some output formats will not be available."
-    )
-
-    CLOUDFILES_AVAILABLE = False
-
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
@@ -261,10 +250,6 @@ class SkeletonClient(ClientBase):
         if output_format == "arrays":
             return response.json()
         if output_format == "swc":
-            if not CLOUDFILES_AVAILABLE:
-                raise ImportError(
-                    "'swc' output format requires cloudvolume, which is not available."
-                )
             # I got the SWC column header from skeleton_plot.skel_io.py
             return pd.read_csv(
                 StringIO(response.content.decode()),
