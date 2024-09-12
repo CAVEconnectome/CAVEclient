@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Literal, Optional
 
 import pandas as pd
@@ -26,17 +26,6 @@ except ImportError:
     logging.warning("h5py not installed. Some output formats will not be available.")
 
     H5PY_AVAILABLE = False
-
-try:
-    from cloudfiles import CloudFiles
-
-    CLOUDFILES_AVAILABLE = True
-except ImportError:
-    logging.warning(
-        "cloudfiles not installed. Some output formats will not be available."
-    )
-
-    CLOUDFILES_AVAILABLE = False
 
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
@@ -261,38 +250,18 @@ class SkeletonClient(ClientBase):
         if output_format == "arrays":
             return response.json()
         if output_format == "swc":
-            if not CLOUDFILES_AVAILABLE:
-                raise ImportError(
-                    "'swc' output format requires cloudvolume, which is not available."
-                )
-            # Curiously, the response is quoted and contains a terminal endline. Sigh.
-            parts = response.text.strip()[1:-1].split("/")
-            dir_, filename = "/".join(parts[0:-1]), parts[-1]
-            cf = CloudFiles(dir_)
-            skeleton_bytes = cf.get(filename)
-            arr = [
-                [float(v) for v in row.split()]
-                for row in skeleton_bytes.decode().split("\n")
-            ]
             # I got the SWC column header from skeleton_plot.skel_io.py
-            df = pd.DataFrame(
-                arr, columns=["id", "type", "x", "y", "z", "radius", "parent"]
+            return pd.read_csv(
+                StringIO(response.content.decode()),
+                sep=" ",
+                names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
-            return df
         if output_format == "h5":
-            if not CLOUDFILES_AVAILABLE:
-                raise ImportError(
-                    "'h5' output format requires cloudvolume, which is not available."
-                )
             if not H5PY_AVAILABLE:
                 raise ImportError(
                     "'h5' output format requires h5py, which is not available."
                 )
-            parts = response.text.strip()[1:-1].split("/")
-            dir_, filename = "/".join(parts[0:-1]), parts[-1]
-            cf = CloudFiles(dir_)
-            skeleton_bytes = cf.get(filename)
-            skeleton_bytesio = BytesIO(skeleton_bytes)
+            skeleton_bytesio = BytesIO(response.content)
             return h5py.File(skeleton_bytesio, "r")
 
         raise ValueError(f"Unknown output format: {output_format}")
