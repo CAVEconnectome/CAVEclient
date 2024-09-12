@@ -4,7 +4,7 @@ import responses
 from pytest import raises as assert_raises
 from responses.matchers import query_param_matcher
 
-from caveclient import CAVEclient, endpoints
+from caveclient import CAVEclient, endpoints, set_session_defaults
 
 from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
 
@@ -116,3 +116,46 @@ class TestFrameworkClient:
         assert versioned_client.materialize.version == 1
 
         assert versioned_client.chunkedgraph.timestamp == correct_date
+
+    @responses.activate
+    def test_set_session_defaults(self):
+        responses.add(responses.GET, info_url, json=test_info, status=200)
+
+        pool_maxsize = 21
+        pool_block = True
+        max_retries = 5
+        backoff_factor = 0.5
+        backoff_max = 240
+        status_forcelist = (502, 503, 504, 505)
+
+        set_session_defaults(
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
+            max_retries=max_retries,
+            backoff_factor=backoff_factor,
+            backoff_max=backoff_max,
+            status_forcelist=status_forcelist,
+        )
+        client = CAVEclient(
+            TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False
+        )
+        assert client.l2cache.session.adapters["https://"]._pool_maxsize == pool_maxsize
+        assert client.l2cache.session.adapters["https://"]._pool_block
+        assert (
+            client.l2cache.session.adapters["https://"].max_retries.total == max_retries
+        )
+        assert (
+            client.l2cache.session.adapters["https://"].max_retries.backoff_factor
+            == 0.5
+        )
+        assert (
+            client.l2cache.session.adapters["https://"].max_retries.backoff_max == 240
+        )
+        assert client.l2cache.session.adapters[
+            "https://"
+        ].max_retries.status_forcelist == (
+            502,
+            503,
+            504,
+            505,
+        )

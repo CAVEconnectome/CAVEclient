@@ -13,7 +13,7 @@ import requests
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .session_config import patch_session
+from .session_config import _patch_session
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +193,7 @@ class ClientBase(object):
         self._default_url_mapping = {server_name: self._server_address}
         self.verify = verify
         self.session = requests.Session()
-        patch_session(
+        _patch_session(
             self.session,
             max_retries=max_retries,
             pool_block=pool_block,
