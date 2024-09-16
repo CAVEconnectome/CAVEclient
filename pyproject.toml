@@ -4,7 +4,6 @@ classifiers = []
 dependencies = [
     "attrs>=21.3.0",
     "cachetools>=4.2.1",
-    "ipython>=8.12.3",
     "jsonschema",
     "networkx",
     "numpy>1.21.6",
