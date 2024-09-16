@@ -45,4 +45,5 @@ jobs:
 
       - name: Test with pytest
         run: |
+          uv sync
           uv run pytest
