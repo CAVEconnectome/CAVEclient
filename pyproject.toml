@@ -1,0 +1,51 @@
+[project]
+authors = [{ name = "CAVE Developers", email = "test@cave.com" }]
+classifiers = []
+dependencies = [
+    "attrs>=21.3.0",
+    "cachetools>=4.2.1",
+    "jsonschema",
+    "networkx",
+    "numpy<2.0.0",
+    "pandas<3.0.0",
+    "pyarrow>=3",
+    "requests",
+    "urllib3>=2.0.2",
+]
+description = "A client for interacting with the Connectome Annotation Versioning Engine"
+license = "MIT"
+maintainers = [{ name = "CAVE Developers", email = "test@cave.com" }]
+name = "caveclient"
+readme = "README.md"
+version = "5.29.5"
+
+[project.urls]
+Documentation = "https://caveconnectome.github.io/CAVEclient/"
+Homepage = "https://caveconnectome.github.io/CAVEclient/"
+Issues = "https://github.com/CAVEconnectome/CAVEclient/issues"
+Repository = "https://github.com/CAVEconnectome/CAVEclient/"
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs",
+    "mkdocs-autorefs",
+    "mkdocs-git-authors-plugin",
+    "mkdocs-git-committers-plugin-2",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-include-markdown-plugin",
+    "mkdocs-jupyter",
+    "mkdocs-macros-plugin",
+    "mkdocs-material",
+    "mkdocs-material-extensions",
+    "mkdocs-section-index",
+    "mkdocstrings[crystal,python]",
+    "mknotebooks",
+    "pymdown-extensions",
+]
+segmentation = ["cloud-volume"]
+skeleton = ["cloud-volume", "h5py"]
+test = ["pytest", "pytest-cov", "pytest-env", "pytest-mock", "responses"]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]

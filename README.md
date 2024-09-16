@@ -17,8 +17,10 @@ A full description of the Connectome Annotation Versioning Engine can be found [
 ```bash
 pip install caveclient
 ```
+
 ## Python version support
-Currently we are officially supporting and testing against python 3.8, 3.9, 3.10,  3.11 and 3.12.
+
+Currently we are officially supporting and testing against python 3.8, 3.9, 3.10, 3.11 and 3.12.
 
 ## Documentation
 
