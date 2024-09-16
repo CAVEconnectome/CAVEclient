@@ -4,10 +4,9 @@ classifiers = []
 dependencies = [
     "attrs>=21.3.0",
     "cachetools>=4.2.1",
-    "ipython",
     "jsonschema",
     "networkx",
-    "numpy<2.0.0",
+    "numpy>1.21.6",
     "pandas<3.0.0",
     "pyarrow>=3",
     "requests",
@@ -18,7 +17,7 @@ license = "MIT"
 maintainers = [{ name = "CAVE Developers", email = "test@cave.com" }]
 name = "caveclient"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 version = "5.29.5"
 
 [project.urls]
