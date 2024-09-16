@@ -18,15 +18,6 @@ except ImportError:
 
     CLOUDVOLUME_AVAILABLE = False
 
-try:
-    import h5py
-
-    H5PY_AVAILABLE = True
-except ImportError:
-    logging.warning("h5py not installed. Some output formats will not be available.")
-
-    H5PY_AVAILABLE = False
-
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
@@ -226,7 +217,7 @@ class SkeletonClient(ClientBase):
         - 'json': A dictionary
         - 'arrays': A dictionary (literally a subset of the json response)
         - 'swc': A pandas DataFrame
-        - 'h5': An h5py file object
+        - 'h5': An BytesIO object containing bytes for an h5 file
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
@@ -257,11 +248,7 @@ class SkeletonClient(ClientBase):
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
         if output_format == "h5":
-            if not H5PY_AVAILABLE:
-                raise ImportError(
-                    "'h5' output format requires h5py, which is not available."
-                )
             skeleton_bytesio = BytesIO(response.content)
-            return h5py.File(skeleton_bytesio, "r")
+            return skeleton_bytesio
 
         raise ValueError(f"Unknown output format: {output_format}")
