@@ -1,4 +1,6 @@
-__version__ = "5.29.5"
+import importlib.metadata
+
+__version__ = importlib.metadata.version("CAVEclient")
 
 from .frameworkclient import CAVEclient
 from .session_config import get_session_defaults, set_session_defaults
