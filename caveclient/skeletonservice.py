@@ -218,7 +218,7 @@ class SkeletonClient(ClientBase):
         - 'json': A dictionary
         - 'arrays': A dictionary (literally a subset of the json response)
         - 'swc': A pandas DataFrame
-        - 'h5': An h5py file object
+        - 'h5': An BytesIO object containing bytes for an h5 file
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
