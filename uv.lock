@@ -251,6 +251,7 @@ source = { editable = "." }
 dependencies = [
     { name = "attrs" },
     { name = "cachetools" },
+    { name = "ipython" },
     { name = "jsonschema" },
     { name = "networkx" },
     { name = "numpy" },
@@ -299,6 +300,7 @@ requires-dist = [
     { name = "cloud-volume", marker = "extra == 'segmentation'" },
     { name = "cloud-volume", marker = "extra == 'skeleton'" },
     { name = "h5py", marker = "extra == 'skeleton'" },
+    { name = "ipython", specifier = ">=8.12.3" },
     { name = "jsonschema" },
     { name = "mkdocs", marker = "extra == 'docs'" },
     { name = "mkdocs-autorefs", marker = "extra == 'docs'" },
