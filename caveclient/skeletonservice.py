@@ -18,15 +18,6 @@ except ImportError:
 
     CLOUDVOLUME_AVAILABLE = False
 
-try:
-    import h5py
-
-    H5PY_AVAILABLE = True
-except ImportError:
-    logging.warning("h5py not installed. Some output formats will not be available.")
-
-    H5PY_AVAILABLE = False
-
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
@@ -246,6 +237,10 @@ class SkeletonClient(ClientBase):
                 raise ImportError(
                     "'precomputed' output format requires cloudvolume, which is not available."
                 )
+            vertex_attributes = []
+            if skeleton_version == 2:
+                vertex_attributes.append({"id": "radius", "data_type": "float32", "num_components": 1})
+                vertex_attributes.append({"id": "compartment", "data_type": "float32", "num_components": 1})
             return cloudvolume.Skeleton.from_precomputed(response.content)
         if output_format == "json":
             return response.json()
@@ -259,11 +254,7 @@ class SkeletonClient(ClientBase):
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
         if output_format == "h5":
-            if not H5PY_AVAILABLE:
-                raise ImportError(
-                    "'h5' output format requires h5py, which is not available."
-                )
             skeleton_bytesio = BytesIO(response.content)
-            return h5py.File(skeleton_bytesio, "r")
+            return skeleton_bytesio
 
         raise ValueError(f"Unknown output format: {output_format}")
