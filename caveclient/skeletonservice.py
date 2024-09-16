@@ -204,6 +204,7 @@ class SkeletonClient(ClientBase):
         output_format: Literal[
             "none", "h5", "swc", "json", "arrays", "precomputed"
         ] = "none",
+        log_warning: bool = True,
     ):
         """Gets basic skeleton information for a datastack
 
@@ -236,6 +237,7 @@ class SkeletonClient(ClientBase):
         )
 
         response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
 
         if output_format == "none":
             return
