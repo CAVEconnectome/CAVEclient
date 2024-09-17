@@ -6,6 +6,8 @@ from typing import Literal, Optional
 
 import pandas as pd
 from packaging.version import Version
+from cachetools import TTLCache, cached
+from .skeleton import Skeleton
 
 try:
     import cloudvolume
@@ -187,16 +189,15 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
+    @cached(TTLCache(maxsize=32, ttl=3600))
     def get_precomputed_skeleton_info(
         self,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = None,
     ):
         """get's the precomputed skeleton information
 
         Args:
             datastack_name (Optional[str], optional): _description_. Defaults to None.
-            skeleton_version (Optional[int], optional): _description_. Defaults to None.
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
@@ -206,9 +207,11 @@ class SkeletonClient(ClientBase):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        url = self._endpoints["skeleton_info"].format_map(self.endpoint_mapping)
+        url = self._endpoints["skeleton_info"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
+        self.raise_for_status(response)
+        return response.json()
 
     def get_skeleton(
         self,
@@ -260,21 +263,10 @@ class SkeletonClient(ClientBase):
         if output_format == "none":
             return
         if output_format == "precomputed":
-            if not CLOUDVOLUME_AVAILABLE:
-                raise ImportError(
-                    "'precomputed' output format requires cloudvolume, which is not available."
-                )
-            vertex_attributes = []
-            if skeleton_version == 2:
-                # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
-                vertex_attributes.append(
-                    {"id": "radius", "data_type": "float32", "num_components": 1}
-                )
-                vertex_attributes.append(
-                    {"id": "compartment", "data_type": "float32", "num_components": 1}
-                )
-            return cloudvolume.Skeleton.from_precomputed(
-                response.content, vertex_attributes=vertex_attributes
+            metadata = self.get_precomputed_skeleton_info(datastack_name)
+            vertex_attributes = metadata["vertex_attributes"]
+            return Skeleton.from_precomputed(
+                response.content, segid=root_id, vertex_attributes=vertex_attributes
             )
         if output_format == "json":
             return response.json()
