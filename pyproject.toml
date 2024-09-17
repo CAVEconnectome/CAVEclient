@@ -7,8 +7,6 @@ dependencies = [
     "ipython>6",
     "jsonschema",
     "networkx",
-    # "numpy>=1.26.0; python_version >= '3.9'",
-    # "numpy<1.26.0; python_version < '3.9'",
     "oldest-supported-numpy",
     "pandas<3.0.0",
     "pyarrow>=3",
@@ -30,6 +28,8 @@ Issues = "https://github.com/CAVEconnectome/CAVEclient/issues"
 Repository = "https://github.com/CAVEconnectome/CAVEclient/"
 
 [project.optional-dependencies]
+all = ['caveclient[docs,segmentation,test]']
+dev = ['caveclient[docs,test]']
 docs = [
     "mkdocs",
     "mkdocs-autorefs",
@@ -47,7 +47,6 @@ docs = [
     "pymdown-extensions",
 ]
 segmentation = ["cloud-volume"]
-skeleton = ["cloud-volume", "h5py"]
 test = ["pytest", "pytest-cov", "pytest-env", "pytest-mock", "responses"]
 
 [build-system]
