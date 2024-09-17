@@ -28,7 +28,8 @@ Issues = "https://github.com/CAVEconnectome/CAVEclient/issues"
 Repository = "https://github.com/CAVEconnectome/CAVEclient/"
 
 [project.optional-dependencies]
-all = ['caveclient[docs,segmentation,test]']
+all = ['caveclient[docs,cv,test]']
+cv = ["cloud-volume"]
 dev = ['caveclient[docs,test]']
 docs = [
     "mkdocs",
@@ -46,8 +47,13 @@ docs = [
     "mknotebooks",
     "pymdown-extensions",
 ]
-segmentation = ["cloud-volume"]
-test = ["pytest", "pytest-cov", "pytest-env", "pytest-mock", "responses"]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-env",
+    "pytest-mock",
+    "responses",
+]
 
 [build-system]
 build-backend = "hatchling.build"
