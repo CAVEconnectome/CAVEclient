@@ -227,6 +227,10 @@ class SkeletonClient(ClientBase):
             root_id, datastack_name, skeleton_version, output_format
         )
 
+        if skeleton_version is None:
+            # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
+            skeleton_version = 2
+
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
@@ -239,6 +243,7 @@ class SkeletonClient(ClientBase):
                 )
             vertex_attributes = []
             if skeleton_version == 2:
+                # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
                 vertex_attributes.append(
                     {"id": "radius", "data_type": "float32", "num_components": 1}
                 )
