@@ -14,6 +14,7 @@ import pytz
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from IPython.display import HTML
+from packaging.version import Version
 from requests import HTTPError
 
 from .auth import AuthClient
@@ -21,6 +22,7 @@ from .base import (
     BaseEncoder,
     ClientBase,
     _api_endpoints,
+    _check_version_compatibility,
     handle_response,
 )
 from .endpoints import materialization_api_versions, materialization_common
@@ -137,22 +139,20 @@ def string_format_timestamp(ts):
         return ts
 
 
-def MaterializationClient(
-    server_address,
-    datastack_name=None,
-    auth_client=None,
-    cg_client=None,
-    synapse_table=None,
-    api_version="latest",
-    version=None,
-    verify=True,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    desired_resolution=None,
-    over_client=None,
-) -> "MaterializationClientType":
-    """Factory for returning AnnotationClient
+def _tables_metadata_key(matclient, *args, **kwargs):
+    if "version" in kwargs:
+        version = kwargs["version"]
+    else:
+        version = matclient.version
+    if "datastack_name" in kwargs:
+        datastack_name = kwargs["datastack_name"]
+    else:
+        datastack_name = matclient.datastack_name
+    return hashkey(datastack_name, version)
+
+
+class MaterializationClient(ClientBase):
+    """Client for interacting with the materialization engine
 
     Parameters
     ----------
@@ -175,73 +175,45 @@ def MaterializationClient(
     desired_resolution : Iterable[float] or None, optional
         If given, should be a list or array of the desired resolution you want queries returned in
         useful for materialization queries.
-
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
     """
 
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        SERVER_KEY,
-        server_address,
-        materialization_common,
-        materialization_api_versions,
-        auth_header,
-        fallback_version=2,
-        verify=verify,
-    )
-
-    MatClient = client_mapping[api_version]
-    return MatClient(
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        SERVER_KEY,
-        datastack_name,
-        cg_client=cg_client,
-        synapse_table=synapse_table,
-        version=version,
-        verify=verify,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-        desired_resolution=desired_resolution,
-    )
-
-
-class MaterializationClientV2(ClientBase):
     def __init__(
         self,
         server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
-        datastack_name,
+        datastack_name=None,
+        auth_client=None,
         cg_client=None,
         synapse_table=None,
+        api_version="latest",
         version=None,
         verify=True,
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
-        over_client=None,
         desired_resolution=None,
+        over_client=None,
     ):
-        super(MaterializationClientV2, self).__init__(
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            materialization_common,
+            materialization_api_versions,
+            auth_header,
+            fallback_version=2,
+            verify=verify,
+        )
+
+        super(MaterializationClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
             verify=verify,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
@@ -306,26 +278,6 @@ class MaterializationClientV2(ClientBase):
             f"{self._server_address}/materialize/views/datastack/{self._datastack_name}"
         )
         return HTML(f'<a href="{url}" target="_blank">Materialization Engine</a>')
-
-    @property
-    def tables(self) -> TableManager:
-        """The table manager for the materialization engine."""
-        if self._tables is None:
-            if self.fc is not None and self.fc._materialize is not None:
-                self._tables = TableManager(self.fc)
-            else:
-                raise ValueError("No full CAVEclient specified")
-        return self._tables
-
-    @property
-    def views(self) -> ViewManager:
-        """The view manager for the materialization engine."""
-        if self._views is None:
-            if self.fc is not None and self.fc._materialize is not None:
-                self._views = ViewManager(self.fc)
-            else:
-                raise ValueError("No full CAVEclient specified")
-        return self._views
 
     def most_recent_version(self, datastack_name=None) -> int:
         """
@@ -1247,226 +1199,6 @@ class MaterializationClientV2(ClientBase):
         )
         return handle_response(response)
 
-    def live_live_query(
-        self,
-        table: str,
-        timestamp: datetime,
-        joins=None,
-        filter_in_dict=None,
-        filter_out_dict=None,
-        filter_equal_dict=None,
-        filter_spatial_dict=None,
-        select_columns=None,
-        offset: int = None,
-        limit: int = None,
-        datastack_name: str = None,
-        split_positions: bool = False,
-        metadata: bool = True,
-        suffixes: dict = None,
-        desired_resolution: Iterable = None,
-        allow_missing_lookups: bool = False,
-        random_sample: int = None,
-        log_warning: bool = True,
-    ):
-        """Beta method for querying cave annotation tables with rootIDs and annotations
-        at a particular timestamp.  Note: this method requires more explicit mapping of
-        filters and selection to table as its designed to test a more general endpoint
-        that should eventually support complex joins.
-
-        Parameters
-        ----------
-        table:
-            Principle table to query
-        timestamp:
-            Timestamp to query
-        joins: list of lists of str, optional
-            List of joins, where each join is a list of [table1,column1, table2, column2]
-        filter_in_dict: dict of dicts, optional
-            A dictionary with tables as keys, values are dicts with column keys and list
-            values to accept.
-        filter_out_dict: dict of dicts, optional
-            A dictionary with tables as keys, values are dicts with column keys and list
-            values to reject.
-        filter_equal_dict: dict of dicts, optional
-            A dictionary with tables as keys, values are dicts with column keys and values
-            to equate.
-        filter_spatial_dict: dict of dicts, optional
-            A dictionary with tables as keys, values are dicts with column keys and values
-            of 2x3 list of bounds.
-        select_columns: dict of lists of str, optional
-            A dictionary with tables as keys, values are lists of columns to select.
-        offset:
-            Value to offset query by.
-        limit:
-            Limit of query.
-        datastack_name:
-            Datastack to query. Defaults to set by client.
-        split_positions:
-            Whether to split positions into separate columns, True is faster.
-        metadata:
-            Whether to attach metadata to dataframe.
-        suffixes:
-            What suffixes to use on joins, keys are table_names, values are suffixes.
-        desired_resolution:
-            What resolution to convert position columns to.
-        allow_missing_lookups:
-            If there are annotations without supervoxels and root IDs yet, allow results.
-        random_sample:
-            If given, will do a table sample of the table to return that many annotations.
-        log_warning:
-            Whether to log warnings.
-
-        Returns
-        -------
-        :
-            Results of query
-
-        Examples
-        --------
-        >>> from caveclient import CAVEclient
-        >>> client = CAVEclient('minnie65_public_v117')
-        >>> live_live_query("table_name", datetime.datetime.now(datetime.timezone.utc),
-        >>>    joins=[[table_name, table_column, joined_table, joined_column],
-        >>>             [joined_table, joincol2, third_table, joincol_third]]
-        >>>    suffixes={
-        >>>        "table_name":"suffix1",
-        >>>        "joined_table":"suffix2",
-        >>>        "third_table":"suffix3"
-        >>>    },
-        >>>    select_columns= {
-        >>>        "table_name":[ "column","names"],
-        >>>        "joined_table":["joined_colum"]
-        >>>    },
-        >>>    filter_in_dict= {
-        >>>        "table_name":{
-        >>>            "column_name":[included,values]
-        >>>        }
-        >>>    },
-        >>>    filter_out_dict= {
-        >>>        "table_name":{
-        >>>            "column_name":[excluded,values]
-        >>>        }
-        >>>    },
-        >>>    filter_equal_dict"={
-        >>>        "table_name":{
-        >>>            "column_name":value
-        >>>        },
-        >>>    filter_spatial_dict"= {
-        >>>        "table_name": {
-        >>>        "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
-        >>>    }
-        >>>    filter_regex_dict"= {
-        >>>        "table_name": {
-        >>>        "column_name": "regex_string"
-        >>>     }
-        """
-
-        logging.warning(
-            "Deprecation: this method is to facilitate beta testing of this feature, \
-            it will likely get removed in future versions. "
-        )
-        timestamp = convert_timestamp(timestamp)
-        return_df = True
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
-        endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["datastack_name"] = datastack_name
-        data = {}
-        query_args = {}
-        query_args["return_pyarrow"] = True
-        query_args["arrow_format"] = True
-        query_args["merge_reference"] = False
-        query_args["allow_missing_lookups"] = allow_missing_lookups
-        if random_sample:
-            query_args["random_sample"] = random_sample
-        data["table"] = table
-        data["timestamp"] = timestamp
-        url = self._endpoints["live_live_query"].format_map(endpoint_mapping)
-        if joins is not None:
-            data["join_tables"] = joins
-        if filter_in_dict is not None:
-            data["filter_in_dict"] = filter_in_dict
-        if filter_out_dict is not None:
-            data["filter_notin_dict"] = filter_out_dict
-        if filter_equal_dict is not None:
-            data["filter_equal_dict"] = filter_equal_dict
-        if filter_spatial_dict is not None:
-            data["filter_spatial_dict"] = filter_spatial_dict
-        if select_columns is not None:
-            data["select_columns"] = select_columns
-        if offset is not None:
-            data["offset"] = offset
-        if limit is not None:
-            assert limit > 0
-            data["limit"] = limit
-        if suffixes is not None:
-            data["suffixes"] = suffixes
-        encoding = DEFAULT_COMPRESSION
-
-        response = self.session.post(
-            url,
-            data=json.dumps(data, cls=BaseEncoder),
-            headers={
-                "Content-Type": "application/json",
-                "Accept-Encoding": encoding,
-            },
-            params=query_args,
-            stream=~return_df,
-            verify=self.verify,
-        )
-        self.raise_for_status(response, log_warning=log_warning)
-
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
-
-        with MyTimeIt("deserialize"):
-            with warnings.catch_warnings():
-                warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = deserialize_query_response(response)
-                if desired_resolution is not None:
-                    if len(desired_resolution) != 3:
-                        raise ValueError(
-                            "desired resolution needs to be of length 3, for xyz"
-                        )
-                    vox_res = self.get_table_metadata(
-                        table_name=table,
-                        datastack_name=datastack_name,
-                        log_warning=False,
-                    )["voxel_resolution"]
-                    df = convert_position_columns(df, vox_res, desired_resolution)
-            if not split_positions:
-                concatenate_position_columns(df, inplace=True)
-
-        if metadata:
-            try:
-                attrs = self._assemble_attributes(
-                    table,
-                    join_query=False,
-                    filters={
-                        "inclusive": filter_in_dict,
-                        "exclusive": filter_out_dict,
-                        "equal": filter_equal_dict,
-                        "spatial": filter_spatial_dict,
-                    },
-                    select_columns=select_columns,
-                    offset=offset,
-                    limit=limit,
-                    live_query=timestamp is not None,
-                    timestamp=string_format_timestamp(timestamp),
-                    materialization_version=None,
-                    desired_resolution=desired_resolution,
-                )
-                df.attrs.update(attrs)
-            except HTTPError as e:
-                raise Exception(
-                    e.message
-                    + " Metadata could not be loaded, try with metadata=False if not needed"
-                )
-        return df
-
     def live_query(
         self,
         table: str,
@@ -1925,49 +1657,34 @@ class MaterializationClientV2(ClientBase):
         attrs.update(kwargs)
         return json.loads(json.dumps(attrs, cls=BaseEncoder))
 
-
-def _tables_metadata_key(matclient, *args, **kwargs):
-    if "version" in kwargs:
-        version = kwargs["version"]
-    else:
-        version = matclient.version
-    if "datastack_name" in kwargs:
-        datastack_name = kwargs["datastack_name"]
-    else:
-        datastack_name = matclient.datastack_name
-    return hashkey(datastack_name, version)
-
-
-class MaterializationClientV3(MaterializationClientV2):
-    def __init__(self, *args, **kwargs):
-        super(MaterializationClientV3, self).__init__(*args, **kwargs)
-
     @property
     def tables(self) -> TableManager:
         """The table manager for the materialization engine."""
         if self._tables is None:
             if self.fc is not None and self.fc._materialize is not None:
-                metadata = []
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    metadata.append(
-                        executor.submit(
-                            self.get_tables_metadata,
-                        )
-                    )
-                    metadata.append(
-                        executor.submit(self.fc.schema.schema_definition_all)
-                    )
-
-                if (
-                    metadata[0].result() is not None
-                    and metadata[1].result() is not None
-                ):
-                    tables = TableManager(
-                        self.fc, metadata[0].result(), metadata[1].result()
-                    )
+                if self.server_version < Version("3"):
+                    tables = TableManager(self.fc)
                 else:
-                    # TODO fix this for when the metadata is not available
-                    tables = None
+                    metadata = []
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        metadata.append(
+                            executor.submit(
+                                self.get_tables_metadata,
+                            )
+                        )
+                        metadata.append(
+                            executor.submit(self.fc.schema.schema_definition_all)
+                        )
+                    if (
+                        metadata[0].result() is not None
+                        and metadata[1].result() is not None
+                    ):
+                        tables = TableManager(
+                            self.fc, metadata[0].result(), metadata[1].result()
+                        )
+                    else:
+                        logger.warning("Warning: Metadata for tables not available.")
+                        tables = TableManager(self.fc)
                 self._tables = tables
             else:
                 raise ValueError("No full CAVEclient specified")
@@ -1976,8 +1693,10 @@ class MaterializationClientV3(MaterializationClientV2):
     @property
     def views(self) -> ViewManager:
         """The view manager for the materialization engine."""
-        if self._views is None:
-            if self.fc is not None and self.fc._materialize is not None:
+        if self.fc is not None and self.fc._materialize is not None:
+            if self.server_version < Version("3"):
+                views = ViewManager(self.fc)
+            else:
                 metadata = []
                 with ThreadPoolExecutor(max_workers=2) as executor:
                     metadata.append(
@@ -1988,11 +1707,13 @@ class MaterializationClientV3(MaterializationClientV2):
                     metadata.append(executor.submit(self.get_view_schemas))
 
                 views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
-                self._views = views
-            else:
-                raise ValueError("No full CAVEclient specified")
+
+            self._views = views
+        else:
+            raise ValueError("No full CAVEclient specified")
         return self._views
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
     def get_tables_metadata(
         self,
@@ -2036,6 +1757,12 @@ class MaterializationClientV3(MaterializationClientV2):
             metadata_d["voxel_resolution"] = [vx, vy, vz]
         return all_metadata
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_regex_dict": ">=3.0.0",
+            "allow_invalid_root_ids": ">=3.0.0",
+        }
+    )
     def live_live_query(
         self,
         table: str,
@@ -2157,10 +1884,9 @@ class MaterializationClientV3(MaterializationClientV2):
         >>>        "column_name": "regex_string"
         >>>     }
         """
-
         logging.warning(
             "Deprecation: this method is to facilitate beta testing of this feature, \
-it will likely get removed in future versions. "
+            it will likely get removed in future versions. "
         )
         timestamp = convert_timestamp(timestamp)
         return_df = True
@@ -2205,8 +1931,9 @@ it will likely get removed in future versions. "
             data["suffixes"] = suffixes
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
-        if desired_resolution is not None:
-            data["desired_resolution"] = desired_resolution
+        if self.server_version >= Version("3"):
+            if desired_resolution is not None:
+                data["desired_resolution"] = desired_resolution
         encoding = DEFAULT_COMPRESSION
 
         response = self.session.post(
@@ -2228,14 +1955,16 @@ it will likely get removed in future versions. "
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
-                    if not response.headers.get("dataframe_resolution", None):
+                    if self.server_version < Version("3") or not response.headers.get(
+                        "dataframe_resolution", None
+                    ):
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
                             )
                         vox_res = self.get_table_metadata(
-                            table,
-                            datastack_name,
+                            table_name=table,
+                            datastack_name=datastack_name,
                             log_warning=False,
                         )["voxel_resolution"]
                         df = convert_position_columns(df, vox_res, desired_resolution)
@@ -2244,26 +1973,31 @@ it will likely get removed in future versions. "
                 concatenate_position_columns(df, inplace=True)
 
         if metadata:
+            filters = {
+                "inclusive": filter_in_dict,
+                "exclusive": filter_out_dict,
+                "equal": filter_equal_dict,
+                "spatial": filter_spatial_dict,
+            }
+            if self.server_version < Version("3"):
+                _desired_resolution = desired_resolution
+            else:
+                _desired_resolution = response.headers.get(
+                    "dataframe_resolution", desired_resolution
+                )
+                filters["regex"] = filter_regex_dict
             try:
                 attrs = self._assemble_attributes(
                     table,
                     join_query=False,
-                    filters={
-                        "inclusive": filter_in_dict,
-                        "exclusive": filter_out_dict,
-                        "equal": filter_equal_dict,
-                        "spatial": filter_spatial_dict,
-                        "regex": filter_regex_dict,
-                    },
+                    filters=filters,
                     select_columns=select_columns,
                     offset=offset,
                     limit=limit,
                     live_query=timestamp is not None,
                     timestamp=string_format_timestamp(timestamp),
                     materialization_version=None,
-                    desired_resolution=response.headers.get(
-                        "dataframe_resolution", desired_resolution
-                    ),
+                    desired_resolution=_desired_resolution,
                 )
                 df.attrs.update(attrs)
             except HTTPError as e:
@@ -2273,6 +2007,7 @@ it will likely get removed in future versions. "
                 )
         return df
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     def get_views(self, version: Optional[int] = None, datastack_name: str = None):
         """
         Get all available views for a version
@@ -2302,6 +2037,7 @@ it will likely get removed in future versions. "
         self.raise_for_status(response)
         return response.json()
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     def get_view_metadata(
         self,
         view_name: str,
@@ -2341,6 +2077,7 @@ it will likely get removed in future versions. "
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     def get_view_schema(
         self,
         view_name: str,
@@ -2380,6 +2117,7 @@ it will likely get removed in future versions. "
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     def get_view_schemas(
         self,
         materialization_version: Optional[int] = None,
@@ -2414,6 +2152,7 @@ it will likely get removed in future versions. "
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     def query_view(
         self,
         view_name: str,
@@ -2570,6 +2309,7 @@ it will likely get removed in future versions. "
         else:
             return response.json()
 
+    @_check_version_compatibility(method_constraint=">=3.0.0")
     def get_unique_string_values(
         self, table: str, datastack_name: Optional[str] = None
     ):
@@ -2598,17 +2338,3 @@ it will likely get removed in future versions. "
         response = self.session.get(url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
-
-
-# included for historical reasons, there was a typo in the class name
-MaterializatonClientV2 = MaterializationClientV2
-
-MaterializatonClientV3 = MaterializationClientV3
-
-client_mapping = {
-    2: MaterializationClientV2,
-    3: MaterializationClientV3,
-    "latest": MaterializationClientV3,
-}
-
-MaterializationClientType = Union[MaterializationClientV2, MaterializationClientV3]
