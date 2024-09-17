@@ -45,5 +45,5 @@ jobs:
 
       - name: Test with pytest
         run: |
-          uv sync --extra test
-          uv run pytest
+          uv pip install ".[test]"
+          pytest
