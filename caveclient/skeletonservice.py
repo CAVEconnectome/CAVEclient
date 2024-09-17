@@ -187,6 +187,29 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
+    def get_precomputed_skeleton_info(
+        self,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = None,
+    ):
+        """get's the precomputed skeleton information
+
+        Args:
+            datastack_name (Optional[str], optional): _description_. Defaults to None.
+            skeleton_version (Optional[int], optional): _description_. Defaults to None.
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        url = self._endpoints["skeleton_info"].format_map(self.endpoint_mapping)
+
+        response = self.session.get(url)
+
     def get_skeleton(
         self,
         root_id: int,
