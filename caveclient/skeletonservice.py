@@ -239,9 +239,15 @@ class SkeletonClient(ClientBase):
                 )
             vertex_attributes = []
             if skeleton_version == 2:
-                vertex_attributes.append({"id": "radius", "data_type": "float32", "num_components": 1})
-                vertex_attributes.append({"id": "compartment", "data_type": "float32", "num_components": 1})
-            return cloudvolume.Skeleton.from_precomputed(response.content, vertex_attributes=vertex_attributes)
+                vertex_attributes.append(
+                    {"id": "radius", "data_type": "float32", "num_components": 1}
+                )
+                vertex_attributes.append(
+                    {"id": "compartment", "data_type": "float32", "num_components": 1}
+                )
+            return cloudvolume.Skeleton.from_precomputed(
+                response.content, vertex_attributes=vertex_attributes
+            )
         if output_format == "json":
             return response.json()
         if output_format == "arrays":
