@@ -299,7 +299,8 @@ skeleton_v1 = "{skeleton_server_address}/skeletoncache/api/v1"
 skeletonservice_endpoints_v1 = {
     "get_version": skeleton_common + "/version",
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
-    "skeleton_info_versioned": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info/{skvn}",
+    "skeleton_info_versioned": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/info/{skvn}",
     "get_skeleton_via_rid": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{root_id}",
     "get_skeleton_via_skvn_rid": skeleton_v1
