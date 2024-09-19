@@ -195,6 +195,7 @@ class SkeletonClient(ClientBase):
         output_format: Literal[
             "none", "h5", "swc", "json", "arrays", "precomputed"
         ] = "none",
+        log_warning: bool = True,
     ):
         """Gets basic skeleton information for a datastack
 
@@ -226,7 +227,12 @@ class SkeletonClient(ClientBase):
             root_id, datastack_name, skeleton_version, output_format
         )
 
+        if skeleton_version is None:
+            # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
+            skeleton_version = 2
+
         response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
 
         if output_format == "none":
             return
@@ -235,7 +241,18 @@ class SkeletonClient(ClientBase):
                 raise ImportError(
                     "'precomputed' output format requires cloudvolume, which is not available."
                 )
-            return cloudvolume.Skeleton.from_precomputed(response.content)
+            vertex_attributes = []
+            if skeleton_version == 2:
+                # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
+                vertex_attributes.append(
+                    {"id": "radius", "data_type": "float32", "num_components": 1}
+                )
+                vertex_attributes.append(
+                    {"id": "compartment", "data_type": "float32", "num_components": 1}
+                )
+            return cloudvolume.Skeleton.from_precomputed(
+                response.content, vertex_attributes=vertex_attributes
+            )
         if output_format == "json":
             return response.json()
         if output_format == "arrays":
