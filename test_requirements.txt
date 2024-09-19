@@ -1,5 +1,0 @@
-pytest
-pytest-cov
-pytest-env
-responses
-pytest-mock
