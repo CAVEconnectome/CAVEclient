@@ -5,8 +5,8 @@ from io import BytesIO, StringIO
 from typing import Literal, Optional
 
 import pandas as pd
-from packaging.version import Version
 from cachetools import TTLCache, cached
+from packaging.version import Version
 
 try:
     import cloudvolume
