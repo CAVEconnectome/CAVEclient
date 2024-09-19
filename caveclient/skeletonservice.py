@@ -263,7 +263,9 @@ class SkeletonClient(ClientBase):
                 raise ImportError(
                     "'precomputed' output format requires cloudvolume, which is not available."
                 )
-            metadata = self.get_precomputed_skeleton_info(skeleton_version, datastack_name)
+            metadata = self.get_precomputed_skeleton_info(
+                skeleton_version, datastack_name
+            )
             vertex_attributes = metadata["vertex_attributes"]
             return cloudvolume.Skeleton.from_precomputed(
                 response.content, vertex_attributes=vertex_attributes
