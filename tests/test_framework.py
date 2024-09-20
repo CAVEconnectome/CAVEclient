@@ -125,7 +125,6 @@ class TestFrameworkClient:
         pool_block = True
         max_retries = 5
         backoff_factor = 0.5
-        backoff_max = 240
         status_forcelist = (502, 503, 504, 505)
 
         set_session_defaults(
@@ -133,7 +132,6 @@ class TestFrameworkClient:
             pool_block=pool_block,
             max_retries=max_retries,
             backoff_factor=backoff_factor,
-            backoff_max=backoff_max,
             status_forcelist=status_forcelist,
         )
         client = CAVEclient(
@@ -147,9 +145,6 @@ class TestFrameworkClient:
         assert (
             client.l2cache.session.adapters["https://"].max_retries.backoff_factor
             == 0.5
-        )
-        assert (
-            client.l2cache.session.adapters["https://"].max_retries.backoff_max == 240
         )
         assert client.l2cache.session.adapters[
             "https://"
