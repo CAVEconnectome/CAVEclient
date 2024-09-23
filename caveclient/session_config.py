@@ -1,9 +1,17 @@
+import logging
 from typing import Collection, Optional, Union
 
 import requests
+from packaging.version import Version
+from urllib3 import __version__ as urllib3_version
 from urllib3.util.retry import Retry
 
 SESSION_DEFAULTS = {}
+
+if Version(urllib3_version) < Version("2.0.0"):
+    HAS_URLLIB3_V2 = False
+else:
+    HAS_URLLIB3_V2 = True
 
 
 def set_session_defaults(
@@ -78,6 +86,17 @@ def set_session_defaults(
     SESSION_DEFAULTS["backoff_max"] = backoff_max
     SESSION_DEFAULTS["status_forcelist"] = status_forcelist
 
+    if not HAS_URLLIB3_V2 and backoff_max != 120:
+        logging.warning(
+            (
+                "`backoff_max` is only supported in urllib3 v2.0.0 and above "
+                "and will be ignored. "
+                "Please upgrade urllib3 to take advantage of this feature. "
+                "Note that this upgrade may conflict with other packages that depend on "
+                "urllib3, including `cloud-volume`."
+            )
+        )
+
 
 set_session_defaults()
 
@@ -119,14 +138,23 @@ def _patch_session(
     if pool_maxsize is None:
         pool_maxsize = SESSION_DEFAULTS["pool_maxsize"]
 
-    retries = Retry(
-        total=max_retries,
-        backoff_factor=SESSION_DEFAULTS["backoff_factor"],
-        status_forcelist=SESSION_DEFAULTS["status_forcelist"],
-        allowed_methods=frozenset(["GET", "POST"]),
-        backoff_max=SESSION_DEFAULTS["backoff_max"],
-        raise_on_status=False,
-    )
+    if HAS_URLLIB3_V2:
+        retries = Retry(
+            total=max_retries,
+            backoff_factor=SESSION_DEFAULTS["backoff_factor"],
+            status_forcelist=SESSION_DEFAULTS["status_forcelist"],
+            allowed_methods=frozenset(["GET", "POST"]),
+            raise_on_status=False,
+        )
+    else:
+        retries = Retry(
+            total=max_retries,
+            backoff_factor=SESSION_DEFAULTS["backoff_factor"],
+            status_forcelist=SESSION_DEFAULTS["status_forcelist"],
+            allowed_methods=frozenset(["GET", "POST"]),
+            backoff_max=SESSION_DEFAULTS["backoff_max"],
+            raise_on_status=False,
+        )
 
     http = requests.adapters.HTTPAdapter(
         pool_maxsize=pool_maxsize,
