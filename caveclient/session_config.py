@@ -144,6 +144,7 @@ def _patch_session(
             backoff_factor=SESSION_DEFAULTS["backoff_factor"],
             status_forcelist=SESSION_DEFAULTS["status_forcelist"],
             allowed_methods=frozenset(["GET", "POST"]),
+            backoff_max=SESSION_DEFAULTS["backoff_max"],
             raise_on_status=False,
         )
     else:
@@ -152,7 +153,6 @@ def _patch_session(
             backoff_factor=SESSION_DEFAULTS["backoff_factor"],
             status_forcelist=SESSION_DEFAULTS["status_forcelist"],
             allowed_methods=frozenset(["GET", "POST"]),
-            backoff_max=SESSION_DEFAULTS["backoff_max"],
             raise_on_status=False,
         )
 
