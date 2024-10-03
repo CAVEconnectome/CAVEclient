@@ -15,10 +15,6 @@ try:
 
     CLOUDVOLUME_AVAILABLE = True
 except ImportError:
-    logging.warning(
-        "cloudvolume not installed. Some output formats will not be available."
-    )
-
     CLOUDVOLUME_AVAILABLE = False
 
 from .auth import AuthClient
@@ -26,11 +22,6 @@ from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
 SERVER_KEY = "skeleton_server_address"
-
-
-"""
-Usage
-"""
 
 
 class NoL2CacheException(Exception):
