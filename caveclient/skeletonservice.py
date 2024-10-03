@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import gzip
+import json
+import logging
 from io import BytesIO, StringIO
 from typing import Literal, Optional
 
@@ -12,6 +15,10 @@ try:
 
     CLOUDVOLUME_AVAILABLE = True
 except ImportError:
+    logging.warning(
+        "cloudvolume not installed. Some output formats will not be available."
+    )
+
     CLOUDVOLUME_AVAILABLE = False
 
 from .auth import AuthClient
@@ -136,6 +143,64 @@ class SkeletonClient(ClientBase):
         url = parse(self.build_endpoint(rid, ds, 1, "json"))
         assert url == f"{ds}{innards}1/{rid}/json"
 
+    @staticmethod
+    def compressStringToBytes(inputString):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        REF: https://stackoverflow.com/questions/15525837/which-is-the-best-way-to-compress-json-to-store-in-a-memory-based-store-like-red
+        read the given string, encode it in utf-8, compress the data and return it as a byte array.
+        """
+        bio = BytesIO()
+        bio.write(inputString.encode("utf-8"))
+        bio.seek(0)
+        stream = BytesIO()
+        compressor = gzip.GzipFile(fileobj=stream, mode="w")
+        while True:  # until EOF
+            chunk = bio.read(8192)
+            if not chunk:  # EOF?
+                compressor.close()
+                return stream.getvalue()
+            compressor.write(chunk)
+
+    @staticmethod
+    def compressDictToBytes(inputDict, remove_spaces=True):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        """
+        inputDictStr = json.dumps(inputDict)
+        if remove_spaces:
+            inputDictStr = inputDictStr.replace(" ", "")
+        inputDictStrBytes = SkeletonClient.compressStringToBytes(inputDictStr)
+        return inputDictStrBytes
+
+    @staticmethod
+    def decompressBytesToString(inputBytes):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        REF: https://stackoverflow.com/questions/15525837/which-is-the-best-way-to-compress-json-to-store-in-a-memory-based-store-like-red
+        decompress the given byte array (which must be valid compressed gzip data) and return the decoded text (utf-8).
+        """
+        bio = BytesIO()
+        stream = BytesIO(inputBytes)
+        decompressor = gzip.GzipFile(fileobj=stream, mode="r")
+        while True:  # until EOF
+            chunk = decompressor.read(8192)
+            if not chunk:
+                decompressor.close()
+                bio.seek(0)
+                return bio.read().decode("utf-8")
+            bio.write(chunk)
+        return None
+
+    @staticmethod
+    def decompressBytesToDict(inputBytes):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        """
+        inputBytesStr = SkeletonClient.decompressBytesToString(inputBytes)
+        inputBytesStrDict = json.loads(inputBytesStr)
+        return inputBytesStrDict
+
     def build_endpoint(
         self,
         root_id: int,
@@ -209,7 +274,14 @@ class SkeletonClient(ClientBase):
         datastack_name: Optional[str] = None,
         skeleton_version: Optional[int] = 0,
         output_format: Literal[
-            "none", "h5", "swc", "json", "arrays", "precomputed"
+            "none",
+            "h5",
+            "swc",
+            "json",
+            "jsoncompressed",
+            "arrays",
+            "arrayscompressed",
+            "precomputed",
         ] = "none",
         log_warning: bool = True,
     ):
@@ -232,7 +304,9 @@ class SkeletonClient(ClientBase):
         - 'none': No return value (this can be used to generate a skeleton without retrieving it)
         - 'precomputed': A cloudvolume.Skeleton object
         - 'json': A dictionary
+        - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
         - 'arrays': A dictionary (literally a subset of the json response)
+        - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
         - 'swc': A pandas DataFrame
         - 'h5': An BytesIO object containing bytes for an h5 file
         """
@@ -262,15 +336,30 @@ class SkeletonClient(ClientBase):
             )
         if output_format == "json":
             return response.json()
+        if output_format == "jsoncompressed":
+            return SkeletonClient.decompressBytesToDict(response.content)
         if output_format == "arrays":
             return response.json()
+        if output_format == "arrayscompressed":
+            return SkeletonClient.decompressBytesToDict(response.content)
         if output_format == "swc":
             # I got the SWC column header from skeleton_plot.skel_io.py
-            return pd.read_csv(
+            df = pd.read_csv(
                 StringIO(response.content.decode()),
                 sep=" ",
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
+
+            # Reduce 'id' and 'parent' columns from int64 to int16, and 'type' column from int64 to int8
+            df = df.apply(pd.to_numeric, downcast="integer")
+            # Convert 'type' column from int8 to uint8
+            df["type"] = df["type"].astype("uint8")
+
+            # Reduce float columns from float64 to float32. This sacrifies precision and therefore is perhaps undesirable.
+            # I have it left here, commented out, for demonstration purposes, should it be deemed desirable in the future.
+            # df = df.apply(pd.to_numeric, downcast='float')
+
+            return df
         if output_format == "h5":
             skeleton_bytesio = BytesIO(response.content)
             return skeleton_bytesio
