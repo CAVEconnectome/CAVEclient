@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import logging
 import gzip
-from io import BytesIO, StringIO
 import json
+import logging
+from io import BytesIO, StringIO
 from typing import Literal, Optional
 
 import pandas as pd
