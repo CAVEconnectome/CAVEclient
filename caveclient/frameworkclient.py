@@ -1,16 +1,16 @@
 from datetime import datetime
 from typing import Optional
 
-from .annotationengine import AnnotationClient, AnnotationClientV2
+from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
-from .chunkedgraph import ChunkedGraphClient, ChunkedGraphClientV1
+from .chunkedgraph import ChunkedGraphClient
 from .datastack_lookup import handle_server_address
-from .emannotationschemas import SchemaClient, SchemaClientLegacy
+from .emannotationschemas import SchemaClient
 from .endpoints import default_global_server_address
-from .infoservice import InfoServiceClient, InfoServiceClientV2
-from .jsonservice import JSONService, JSONServiceV1
-from .l2cache import L2CacheClient, L2CacheClientLegacy
-from .materializationengine import MaterializationClient, MaterializationClientType
+from .infoservice import InfoServiceClient
+from .jsonservice import JSONService
+from .l2cache import L2CacheClient
+from .materializationengine import MaterializationClient
 from .skeletonservice import SkeletonClient
 
 
@@ -253,7 +253,7 @@ class CAVEclientGlobal(object):
         return self._auth
 
     @property
-    def info(self) -> InfoServiceClientV2:
+    def info(self) -> InfoServiceClient:
         """
         A client for the info service. See [client.info](../client_api/info.md) for more information.
         """
@@ -271,7 +271,7 @@ class CAVEclientGlobal(object):
         return self._info
 
     @property
-    def state(self) -> JSONServiceV1:
+    def state(self) -> JSONService:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
@@ -288,7 +288,7 @@ class CAVEclientGlobal(object):
         return self._state
 
     @property
-    def schema(self) -> SchemaClientLegacy:
+    def schema(self) -> SchemaClient:
         """
         A client for the EM Annotation Schemas service. See [client.schema](../client_api/schema.md)
         for more information.
@@ -476,7 +476,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._datastack_name
 
     @property
-    def chunkedgraph(self) -> ChunkedGraphClientV1:
+    def chunkedgraph(self) -> ChunkedGraphClient:
         """
         A client for the chunkedgraph service. See [client.chunkedgraph](../client_api/chunkedgraph.md)
         for more information.
@@ -497,7 +497,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._chunkedgraph
 
     @property
-    def annotation(self) -> AnnotationClientV2:
+    def annotation(self) -> AnnotationClient:
         """
         A client for the annotation service. See [client.annotation](../client_api/annotation.md)
         for more information.
@@ -515,7 +515,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._annotation
 
     @property
-    def materialize(self) -> MaterializationClientType:
+    def materialize(self) -> MaterializationClient:
         """
         A client for the materialization service. See [client.materialize](../client_api/materialize.md)
         for more information.
@@ -553,7 +553,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._skeleton
 
     @property
-    def state(self) -> JSONServiceV1:
+    def state(self) -> JSONService:
         """
         A client for the neuroglancer state service. See [client.state](../client_api/state.md)
         for more information.
@@ -571,7 +571,7 @@ class CAVEclientFull(CAVEclientGlobal):
         return self._state
 
     @property
-    def l2cache(self) -> L2CacheClientLegacy:
+    def l2cache(self) -> L2CacheClient:
         """
         A client for the L2 cache service. See [client.l2cache](../client_api/l2cache.md)
         for more information.

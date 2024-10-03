@@ -11,69 +11,40 @@ from .endpoints import (
     l2cache_endpoints_common,
 )
 
-server_key = "l2cache_server_address"
+SERVER_KEY = "l2cache_server_address"
 
 
-def L2CacheClient(
-    server_address=None,
-    table_name=None,
-    auth_client=None,
-    api_version="latest",
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-    verify=True,
-) -> "L2CacheClientLegacy":
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        server_key,
-        server_address,
-        l2cache_endpoints_common,
-        l2cache_api_versions,
-        auth_header,
-    )
-    L2client = client_mapping[api_version]
-    return L2client(
-        server_address=server_address,
-        auth_header=auth_header,
-        api_version=api_version,
-        endpoints=endpoints,
-        server_name=server_key,
-        table_name=table_name,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-        verify=verify,
-    )
-
-
-class L2CacheClientLegacy(ClientBase):
+class L2CacheClient(ClientBase):
     def __init__(
         self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
+        server_address=None,
         table_name=None,
+        auth_client=None,
+        api_version="latest",
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
         verify=True,
     ):
-        super(L2CacheClientLegacy, self).__init__(
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            l2cache_endpoints_common,
+            l2cache_api_versions,
+            auth_header,
+        )
+        super(L2CacheClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
@@ -183,9 +154,3 @@ class L2CacheClientLegacy(ClientBase):
             else:
                 raise e
         return table_name in table_mapping
-
-
-client_mapping = {
-    1: L2CacheClientLegacy,
-    "latest": L2CacheClientLegacy,
-}

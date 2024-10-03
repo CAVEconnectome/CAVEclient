@@ -20,7 +20,7 @@ from .endpoints import (
     ngl_endpoints_common,
 )
 
-server_key = "json_server_address"
+SERVER_KEY = "json_server_address"
 
 
 def neuroglancer_json_encoder(obj):
@@ -39,17 +39,8 @@ def neuroglancer_json_encoder(obj):
     raise TypeError
 
 
-def JSONService(
-    server_address=None,
-    auth_client=None,
-    api_version="latest",
-    ngl_url=None,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-) -> "JSONServiceV1":
-    """Client factory to interface with the JSON state service.
+class JSONService(ClientBase):
+    """Client to interface with the JSON state service.
 
     Parameters
     ----------
@@ -66,58 +57,41 @@ def JSONService(
     ngl_url : str or None, optional
         Default neuroglancer deployment URL. Only used for V1 and later.
     """
-    if server_address is None:
-        server_address = default_global_server_address
 
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        server_key,
-        server_address,
-        jsonservice_common,
-        jsonservice_api_versions,
-        auth_header,
-    )
-
-    JSONClient = client_mapping[api_version]
-    return JSONClient(
-        server_address=server_address,
-        auth_header=auth_header,
-        api_version=api_version,
-        endpoints=endpoints,
-        server_name=server_key,
-        ngl_url=ngl_url,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-    )
-
-
-class JSONServiceV1(ClientBase):
     def __init__(
         self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
-        ngl_url,
+        server_address=None,
+        auth_client=None,
+        api_version="latest",
+        ngl_url=None,
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
     ):
-        super(JSONServiceV1, self).__init__(
+        if server_address is None:
+            server_address = default_global_server_address
+
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            jsonservice_common,
+            jsonservice_api_versions,
+            auth_header,
+        )
+
+        super(JSONService, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
@@ -401,8 +375,3 @@ class JSONServiceV1(ClientBase):
             get_state_url = self._endpoints["get_state"].format_map(url_mapping)
             url = ngl_url + parameter_text + auth_text + get_state_url
         return url
-
-
-client_mapping = {
-    1: JSONServiceV1,
-}

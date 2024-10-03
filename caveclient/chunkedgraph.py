@@ -108,77 +108,45 @@ def root_id_int_list_check(
     return root_id
 
 
-def ChunkedGraphClient(
-    server_address=None,
-    table_name=None,
-    auth_client=None,
-    api_version="latest",
-    timestamp=None,
-    verify=True,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-) -> "ChunkedGraphClientV1":
-    if server_address is None:
-        server_address = default_global_server_address
-
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        SERVER_KEY,
-        server_address,
-        chunkedgraph_endpoints_common,
-        chunkedgraph_api_versions,
-        auth_header,
-        verify=verify,
-    )
-
-    ChunkedClient = client_mapping[api_version]
-    return ChunkedClient(
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        SERVER_KEY,
-        timestamp=timestamp,
-        table_name=table_name,
-        verify=verify,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-    )
-
-
-class ChunkedGraphClientV1(ClientBase):
+class ChunkedGraphClient(ClientBase):
     """ChunkedGraph Client for the v1 API"""
 
     def __init__(
         self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_key=SERVER_KEY,
-        timestamp=None,
+        server_address=None,
         table_name=None,
+        auth_client=None,
+        api_version="latest",
+        timestamp=None,
         verify=True,
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
     ):
-        super(ChunkedGraphClientV1, self).__init__(
+        if server_address is None:
+            server_address = default_global_server_address
+
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            chunkedgraph_endpoints_common,
+            chunkedgraph_api_versions,
+            auth_header,
+            verify=verify,
+        )
+        super(ChunkedGraphClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_key,
+            SERVER_KEY,
             verify=verify,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
@@ -1502,9 +1470,3 @@ class ChunkedGraphClientV1(ClientBase):
             3-long list of x/y/z voxel dimensions in nm
         """
         return self.segmentation_info["scales"][0].get("resolution")
-
-
-client_mapping = {
-    1: ChunkedGraphClientV1,
-    "latest": ChunkedGraphClientV1,
-}
