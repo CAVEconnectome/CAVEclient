@@ -309,9 +309,9 @@ class SkeletonClient(ClientBase):
         - 'none': No return value (this can be used to generate a skeleton without retrieving it)
         - 'precomputed': A cloudvolume.Skeleton object
         - 'json': A dictionary
-        - 'jsoncompressed': A dictionary using compression for transmission (generally faster)
+        - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
         - 'arrays': A dictionary (literally a subset of the json response)
-        - 'arrayscompressed': A dictionary using compression for transmission (generally faster)
+        - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
         - 'swc': A pandas DataFrame
         - 'h5': An BytesIO object containing bytes for an h5 file
         """
