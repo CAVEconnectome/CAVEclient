@@ -841,12 +841,13 @@ class MaterializationClientV2(ClientBase):
         if get_counts:
             query_args["count"] = True
 
-        headers = {"Content-Type": "application/json", "Accept-Encoding": encoding}
-
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers=headers,
+            headers={
+                "Content-Type": "application/json",
+                "Accept-Encoding": encoding
+            },
             params=query_args,
             stream=~return_df,
         )
@@ -1033,7 +1034,10 @@ class MaterializationClientV2(ClientBase):
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
+            headers={
+                "Content-Type": "application/json",
+                "Accept-Encoding": encoding
+            },
             params=query_args,
             stream=~return_df,
         )
@@ -2739,7 +2743,10 @@ it will likely get removed in future versions. "
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
+            headers={
+                "Content-Type": "application/json",
+                "Accept-Encoding": encoding
+            },
             params=query_args,
             stream=~return_df,
         )
