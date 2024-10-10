@@ -116,10 +116,11 @@ df=client.materialize.query_table('my_table', limit=10)
 
 For most applications, you will want to filter the query in some way.
 
-We offer three kinds of filters you can apply: `filter_equal_dict`, `filter_in_dict`
-and `filter_out_dict`. For query_table each is specified as a dictionary
-where the keys are column names, and the values are a list of values (or
-single value in the case of filter_equal).
+We offer seven kinds of filters you can apply: `filter_in_dict`
+`filter_out_dict`, `filter_equal_dict`, `filter_greater_dict`, `filter_less_dict`,
+`filter_greater_equal_dict`, and `filter_less_equal_dict`. For query_table each is
+specified as a dictionary where the keys are column names, and the values are a
+list of values (or single value in the case of filter_equal).
 
 So for example to query a synapse table for all synapses onto a neuron
 in flywire you would use
