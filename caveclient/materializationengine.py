@@ -827,8 +827,12 @@ class MaterializationClientV2(ClientBase):
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
             {table: filter_greater_dict} if filter_greater_dict is not None else None,
             {table: filter_less_dict} if filter_less_dict is not None else None,
-            {table: filter_greater_equal_dict} if filter_greater_equal_dict is not None else None,
-            {table: filter_less_equal_dict} if filter_less_equal_dict is not None else None,
+            {table: filter_greater_equal_dict}
+            if filter_greater_equal_dict is not None
+            else None,
+            {table: filter_less_equal_dict}
+            if filter_less_equal_dict is not None
+            else None,
             {table: filter_spatial_dict} if filter_spatial_dict is not None else None,
             {table: filter_regex_dict} if filter_regex_dict is not None else None,
             return_df,
@@ -844,10 +848,7 @@ class MaterializationClientV2(ClientBase):
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={
-                "Content-Type": "application/json",
-                "Accept-Encoding": encoding
-            },
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
         )
@@ -1034,10 +1035,7 @@ class MaterializationClientV2(ClientBase):
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={
-                "Content-Type": "application/json",
-                "Accept-Encoding": encoding
-            },
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
         )
@@ -1730,13 +1728,27 @@ class MaterializationClientV2(ClientBase):
         # most recent materialization
         with MyTimeIt("map_filters"):
             past_filters, future_map = self.map_filters(
-                [filter_in_dict, filter_out_dict, filter_equal_dict,
-                 filter_greater_dict, filter_less_dict, filter_greater_equal_dict, filter_less_equal_dict],
+                [
+                    filter_in_dict,
+                    filter_out_dict,
+                    filter_equal_dict,
+                    filter_greater_dict,
+                    filter_less_dict,
+                    filter_greater_equal_dict,
+                    filter_less_equal_dict,
+                ],
                 timestamp,
                 timestamp_start,
             )
-            past_filter_in_dict, past_filter_out_dict, past_equal_dict, \
-                past_greater_dict, past_less_dict, past_greater_equal_dict, past_less_equal_dict = past_filters
+            (
+                past_filter_in_dict,
+                past_filter_out_dict,
+                past_equal_dict,
+                past_greater_dict,
+                past_less_dict,
+                past_greater_equal_dict,
+                past_less_equal_dict,
+            ) = past_filters
             if past_equal_dict is not None:
                 # when doing a filter equal in the past
                 # we translate it to a filter_in, as 1 ID might
@@ -1771,8 +1783,12 @@ class MaterializationClientV2(ClientBase):
                 {table: past_equal_dict} if past_equal_dict is not None else None,
                 {table: past_greater_dict} if past_greater_dict is not None else None,
                 {table: past_less_dict} if past_less_dict is not None else None,
-                {table: past_greater_equal_dict} if past_greater_equal_dict is not None else None,
-                {table: past_less_equal_dict} if past_less_equal_dict is not None else None,
+                {table: past_greater_equal_dict}
+                if past_greater_equal_dict is not None
+                else None,
+                {table: past_less_equal_dict}
+                if past_less_equal_dict is not None
+                else None,
                 {table: filter_spatial_dict}
                 if filter_spatial_dict is not None
                 else None,
@@ -2722,10 +2738,16 @@ it will likely get removed in future versions. "
             {view_name: filter_in_dict} if filter_in_dict is not None else None,
             {view_name: filter_out_dict} if filter_out_dict is not None else None,
             {view_name: filter_equal_dict} if filter_equal_dict is not None else None,
-            {view_name: filter_greater_dict} if filter_greater_dict is not None else None,
+            {view_name: filter_greater_dict}
+            if filter_greater_dict is not None
+            else None,
             {view_name: filter_less_dict} if filter_less_dict is not None else None,
-            {view_name: filter_greater_equal_dict} if filter_greater_equal_dict is not None else None,
-            {view_name: filter_less_equal_dict} if filter_less_equal_dict is not None else None,
+            {view_name: filter_greater_equal_dict}
+            if filter_greater_equal_dict is not None
+            else None,
+            {view_name: filter_less_equal_dict}
+            if filter_less_equal_dict is not None
+            else None,
             {view_name: filter_spatial_dict}
             if filter_spatial_dict is not None
             else None,
@@ -2743,10 +2765,7 @@ it will likely get removed in future versions. "
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers={
-                "Content-Type": "application/json",
-                "Accept-Encoding": encoding
-            },
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
         )
