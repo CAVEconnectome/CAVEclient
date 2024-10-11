@@ -677,9 +677,14 @@ class MaterializationClientV2(ClientBase):
             suffix_map = None
         return tables, suffix_map
 
-    @_check_version_compatibility(kwarg_use_constraints={
-        "filter_greater_dict": ">=4.34.0", "filter_less_dict": ">=4.34.0",
-        "filter_greater_equal_dict": ">=4.34.0", "filter_less_equal_dict": ">=4.34.0"})
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def query_table(
         self,
         table: str,
@@ -908,9 +913,14 @@ class MaterializationClientV2(ClientBase):
         else:
             return response.json()
 
-    @_check_version_compatibility(kwarg_use_constraints={
-        "filter_greater_dict": ">=4.34.0", "filter_less_dict": ">=4.34.0",
-        "filter_greater_equal_dict": ">=4.34.0", "filter_less_equal_dict": ">=4.34.0"})
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def join_query(
         self,
         tables,
@@ -1316,9 +1326,14 @@ class MaterializationClientV2(ClientBase):
         )
         return handle_response(response)
 
-    @_check_version_compatibility(kwarg_use_constraints={
-        "filter_greater_dict": ">=4.34.0", "filter_less_dict": ">=4.34.0",
-        "filter_greater_equal_dict": ">=4.34.0", "filter_less_equal_dict": ">=4.34.0"})
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def live_live_query(
         self,
         table: str,
@@ -1583,9 +1598,14 @@ class MaterializationClientV2(ClientBase):
                 )
         return df
 
-    @_check_version_compatibility(kwarg_use_constraints={
-        "filter_greater_dict": ">=4.34.0", "filter_less_dict": ">=4.34.0",
-        "filter_greater_equal_dict": ">=4.34.0", "filter_less_equal_dict": ">=4.34.0"})
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def live_query(
         self,
         table: str,
@@ -2219,9 +2239,14 @@ class MaterializationClientV3(MaterializationClientV2):
             metadata_d["voxel_resolution"] = [vx, vy, vz]
         return all_metadata
 
-    @_check_version_compatibility(kwarg_use_constraints={
-        "filter_greater_dict": ">=4.34.0", "filter_less_dict": ">=4.34.0",
-        "filter_greater_equal_dict": ">=4.34.0", "filter_less_equal_dict": ">=4.34.0"})
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def live_live_query(
         self,
         table: str,
@@ -2644,9 +2669,14 @@ it will likely get removed in future versions. "
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
-    @_check_version_compatibility(kwarg_use_constraints={
-        "filter_greater_dict": ">=4.34.0", "filter_less_dict": ">=4.34.0",
-        "filter_greater_equal_dict": ">=4.34.0", "filter_less_equal_dict": ">=4.34.0"})
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def query_view(
         self,
         view_name: str,
