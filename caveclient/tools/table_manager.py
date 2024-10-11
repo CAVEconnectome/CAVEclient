@@ -76,14 +76,39 @@ def get_all_view_metadata(client):
     return views, view_schema
 
 
+def _parse_inequality(x, ineq):
+    if isinstance(x, dict):
+        return ineq in x
+    else:
+        return False
+
+def is_equal_like(x):
+    return not is_list_like(x)
+
+
 def is_list_like(x):
-    if isinstance(x, str):
+    if isinstance(x, str) or isinstance(x, dict):
         return False
     if hasattr(x, "__len__"):
         return True
     else:
         return False
 
+
+def is_isin_like(x):
+    return is_list_like(x):
+
+def is_lessthan(x):
+    return _parse_inequality(x, "<")
+
+def is_greaterthan(x):
+    return _parse_inequality(x, ">")
+
+def is_lessthan_equal(x):
+    return _parse_inequality(x, "<=")
+
+def is_greaterthan_equal(x):
+    return _parse_inequality(x, ">=")
 
 def update_spatial_dict(spatial_dict):
     new_dict = {}
@@ -393,7 +418,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 tn: filter_empty(
                     attrs.asdict(
                         self,
-                        filter=lambda a, v: not is_list_like(v)
+                        filter=lambda a, v: is_equal_like(v)
                         and v is not None
                         and a.metadata.get("is_bbox", False) == False  # noqa E712
                         and a.metadata.get("is_meta", False) == False  # noqa E712
@@ -408,7 +433,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 tn: filter_empty(
                     attrs.asdict(
                         self,
-                        filter=lambda a, v: is_list_like(v)
+                        filter=lambda a, v: is_isin_like(v)
                         and v is not None
                         and a.metadata.get("is_bbox", False) == False  # noqa E712
                         and a.metadata.get("is_meta", False) == False  # noqa E712
@@ -418,6 +443,75 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 for tn in tables
             }
             filter_in_dict = rename_fields(filter_in_dict, self)
+
+            filter_lt_dict = {
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: is_lessthan(v)
+                        and v is not None
+                        and a.metadata.get('is_bbox', False) == False
+                        and a.metadata.get('is_meta', False) == False
+                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("table") == tn,
+                        value_serializer=lambda _, _, v: v.get("<"),
+                    )
+                )
+                for tn in tables
+            }
+            filter_lt_dict = rename_fields(filter_lt_dict, self)
+
+            filter_gt_dict = {
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: is_greaterthan(v)
+                        and v is not None
+                        and a.metadata.get('is_bbox', False) == False
+                        and a.metadata.get('is_meta', False) == False
+                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("table") == tn,
+                        value_serializer=lambda _, _, v: v.get(">"),
+                    )
+                )
+                for tn in tables
+            }
+            filter_gt_dict = rename_fields(filter_gt_dict, self)
+
+
+            filter_geq_dict = {
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: is_greaterthan_equal(v)
+                        and v is not None
+                        and a.metadata.get('is_bbox', False) == False
+                        and a.metadata.get('is_meta', False) == False
+                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("table") == tn,
+                        value_serializer=lambda _, _, v: v.get(">="),
+                    )
+                )
+                for tn in tables
+            }
+            filter_geq_dict = rename_fields(filter_geq_dict, self)
+
+            filter_leq_dict = {
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: is_lessthan_equal(v)
+                        and v is not None
+                        and a.metadata.get('is_bbox', False) == False
+                        and a.metadata.get('is_meta', False) == False
+                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("table") == tn,
+                        value_serializer=lambda _, _, v: v.get("<="),
+                    )
+                )
+                for tn in tables
+            }
+            filter_leq_dict = rename_fields(filter_geq_dict, self)
 
             spatial_dict = {
                 tn: update_spatial_dict(
@@ -441,6 +535,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 "filter_spatial_dict": replace_empty_with_none(
                     filter_empty(spatial_dict)
                 ),
+                "filter_greater_dict": replace_empty_with_none(filter_empty(filter_gt_dict)),
+                "filter_less_dict": replace_empty_with_none(filter_empty(filter_lt_dict)),
+                "filter_greater_equal_dict": replace_empty_with_none(filter_empty(filter_geq_dict)),
+                "filter_less_equal_dict": replace_empty_with_none(filter_empty(filter_leq_dict)),
             }
             if len(tables) == 2:
                 self.filter_kwargs_mat = self.filter_kwargs_live
@@ -453,6 +551,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         "filter_equal_dict",
                         "filter_in_dict",
                         "filter_spatial_dict",
+                        "filter_greater_dict",
+                        "filter_less_dict",
+                        "filter_greater_equal_dict",
+                        "filter_less_equal_dict",
                     ]
                     if self.filter_kwargs_live[k] is not None
                 }
