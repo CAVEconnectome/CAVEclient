@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1293,6 +1293,316 @@ Extended documentation for all versions of the chunkedgraph client can be found
 
 
 
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.raise_for_status" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots">get_roots</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the root ID for a list of supervoxels.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id">get_root_id</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the root ID for a specified supervoxel.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_merge_log" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_merge_log">get_merge_log</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the merge log (splits and merges) for an object.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_change_log" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_change_log">get_change_log</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the change log (splits and merges) for an object.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_user_operations" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_user_operations">get_user_operations</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get operation details for a user ID. Currently, this is only available to</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_tabular_change_log" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_tabular_change_log">get_tabular_change_log</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get a detailed changelog for neurons.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves">get_leaves</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get all supervoxels for a root ID.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.do_merge" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.do_merge">do_merge</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Perform a merge on the chunked graph.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.undo_operation" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.undo_operation">undo_operation</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Undo an operation.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.execute_split" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.execute_split">execute_split</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Execute a multicut split based on points or supervoxels.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.preview_split" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.preview_split">preview_split</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get supervoxel connected components from a preview multicut split.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_children" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_children">get_children</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the children of a node in the chunked graph hierarchy.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_contact_sites" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_contact_sites">get_contact_sites</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get contacts for a root ID.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.find_path" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.find_path">find_path</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Find a path between two locations on a root ID using the level 2 chunked</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_subgraph" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_subgraph">get_subgraph</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get subgraph of root id within a bounding box.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph">level2_chunk_graph</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.remesh_level2_chunks" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.remesh_level2_chunks">remesh_level2_chunks</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Submit specific level 2 chunks to be remeshed in case of a problem.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_operation_details" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_operation_details">get_operation_details</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the details of a list of operations.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph">get_lineage_graph</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Returns the lineage graph for a root ID, optionally cut off in the past or</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_latest_roots" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_latest_roots">get_latest_roots</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Returns root IDs that are related to the given <code>root_id</code> at a given</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_original_roots" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_original_roots">get_original_roots</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Returns root IDs that are the latest successors of a given root ID.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots">is_latest_roots</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Check whether these root IDs are still a root at this timestamp.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.suggest_latest_roots" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.suggest_latest_roots">suggest_latest_roots</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Suggest latest roots for a given root id, based on overlap of component</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.is_valid_nodes" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.is_valid_nodes">is_valid_nodes</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Check whether nodes are valid for given timestamp range.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps">get_root_timestamps</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Retrieves timestamps when roots where created.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids">get_past_ids</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>For a set of root IDs, get the list of IDs at a past or future time point</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_delta_roots" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_delta_roots">get_delta_roots</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the list of roots that have changed between <code>timetamp_past</code> and</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.get_oldest_timestamp" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.get_oldest_timestamp">get_oldest_timestamp</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the oldest timestamp in the database.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.server_version" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.timestamp" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.timestamp">timestamp</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The default timestamp for queries which expect a timestamp. If None, uses the</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.segmentation_info">segmentation_info</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Complete segmentation metadata</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClientV1.base_resolution" href="#caveclient.chunkedgraph.ChunkedGraphClientV1.base_resolution">base_resolution</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>MIP 0 resolution for voxels assumed by the ChunkedGraph</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1461,7 +1771,9 @@ current time.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>supervoxel_ids</code></td>
+            <td>
+                <code>supervoxel_ids</code>
+            </td>
             <td>
                   <code>list or np.array of int</code>
             </td>
@@ -1475,7 +1787,9 @@ current time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -1491,7 +1805,9 @@ defaults to the current time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>stop_layer</code></td>
+            <td>
+                <code>stop_layer</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
             </td>
@@ -1560,7 +1876,9 @@ defaults to the current time.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>supervoxel_id</code></td>
+            <td>
+                <code>supervoxel_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1574,7 +1892,9 @@ defaults to the current time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -1645,7 +1965,9 @@ defaults to the current time.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1714,7 +2036,9 @@ defaults to the current time.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1728,7 +2052,9 @@ defaults to the current time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filtered</code></td>
+            <td>
+                <code>filtered</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1825,7 +2151,9 @@ admins.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>user_id</code></td>
+            <td>
+                <code>user_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1839,7 +2167,9 @@ admins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_start</code></td>
+            <td>
+                <code>timestamp_start</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -1853,7 +2183,9 @@ admins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>include_undo</code></td>
+            <td>
+                <code>include_undo</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1867,7 +2199,9 @@ admins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_end</code></td>
+            <td>
+                <code>timestamp_end</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -1950,7 +2284,9 @@ admins.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_ids</code></td>
+            <td>
+                <code>root_ids</code>
+            </td>
             <td>
                   <code>list of int</code>
             </td>
@@ -1964,7 +2300,9 @@ admins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filtered</code></td>
+            <td>
+                <code>filtered</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2074,7 +2412,9 @@ will only be one in this list.</li>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2088,7 +2428,9 @@ will only be one in this list.</li>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bounds</code></td>
+            <td>
+                <code>bounds</code>
+            </td>
             <td>
             </td>
             <td>
@@ -2102,7 +2444,9 @@ will only be one in this list.</li>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>stop_layer</code></td>
+            <td>
+                <code>stop_layer</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2172,7 +2516,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>supervoxels</code></td>
+            <td>
+                <code>supervoxels</code>
+            </td>
             <td>
                   <code>iterable</code>
             </td>
@@ -2186,7 +2532,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>coords</code></td>
+            <td>
+                <code>coords</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
             </td>
@@ -2200,7 +2548,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>resolution</code></td>
+            <td>
+                <code>resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#tuple">tuple</a></code>
             </td>
@@ -2246,7 +2596,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>operation_id</code></td>
+            <td>
+                <code>operation_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2315,7 +2667,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>source_points</code></td>
+            <td>
+                <code>source_points</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -2329,7 +2683,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>sink_points</code></td>
+            <td>
+                <code>sink_points</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -2343,7 +2699,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2357,7 +2715,9 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>source_supervoxels</code></td>
+            <td>
+                <code>source_supervoxels</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
             </td>
@@ -2373,7 +2733,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>sink_supervoxels</code></td>
+            <td>
+                <code>sink_supervoxels</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
             </td>
@@ -2454,7 +2816,9 @@ By default None.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>source_points</code></td>
+            <td>
+                <code>source_points</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -2468,7 +2832,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>sink_points</code></td>
+            <td>
+                <code>sink_points</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -2482,7 +2848,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2496,7 +2864,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>source_supervoxels</code></td>
+            <td>
+                <code>source_supervoxels</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
             </td>
@@ -2512,7 +2882,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>sink_supervoxels</code></td>
+            <td>
+                <code>sink_supervoxels</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/array.html#module-array">array</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or None)</code>
             </td>
@@ -2528,7 +2900,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>return_additional_ccs</code></td>
+            <td>
+                <code>return_additional_ccs</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2630,7 +3004,9 @@ Only returned if <code>return_additional_ccs</code> is True.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>node_id</code></td>
+            <td>
+                <code>node_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2699,7 +3075,9 @@ Only returned if <code>return_additional_ccs</code> is True.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2713,7 +3091,9 @@ Only returned if <code>return_additional_ccs</code> is True.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bounds</code></td>
+            <td>
+                <code>bounds</code>
+            </td>
             <td>
             </td>
             <td>
@@ -2728,7 +3108,9 @@ Running this query without bounds is too slow.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>calc_partners</code></td>
+            <td>
+                <code>calc_partners</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2798,7 +3180,9 @@ graph.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2812,7 +3196,9 @@ graph.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>src_pt</code></td>
+            <td>
+                <code>src_pt</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
             </td>
@@ -2826,7 +3212,9 @@ graph.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>dst_pt</code></td>
+            <td>
+                <code>dst_pt</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
             </td>
@@ -2840,7 +3228,9 @@ graph.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>precision_mode</code></td>
+            <td>
+                <code>precision_mode</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2929,7 +3319,9 @@ graph.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2943,7 +3335,9 @@ graph.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bounds</code></td>
+            <td>
+                <code>bounds</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
             </td>
@@ -3032,7 +3426,9 @@ graph.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3046,7 +3442,9 @@ graph.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bounds</code></td>
+            <td>
+                <code>bounds</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="numpy.array" href="https://numpy.org/doc/stable/reference/generated/numpy.array.html#numpy.array">array</a></code>
             </td>
@@ -3122,7 +3520,9 @@ and each edge is a list of two node IDs (source and target).</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>chunk_ids</code></td>
+            <td>
+                <code>chunk_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -3168,7 +3568,9 @@ and each edge is a list of two node IDs (source and target).</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>operation_ids</code></td>
+            <td>
+                <code>operation_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -3277,7 +3679,9 @@ tracing the history of the object in terms of merges and splits.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3291,7 +3695,9 @@ tracing the history of the object in terms of merges and splits.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_past</code></td>
+            <td>
+                <code>timestamp_past</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -3305,7 +3711,9 @@ tracing the history of the object in terms of merges and splits.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_future</code></td>
+            <td>
+                <code>timestamp_future</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -3320,7 +3728,9 @@ tracing the history of the object in terms of merges and splits.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>as_nx_graph</code></td>
+            <td>
+                <code>as_nx_graph</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3333,7 +3743,9 @@ tracing the history of the object in terms of merges and splits.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>exclude_links_to_future</code></td>
+            <td>
+                <code>exclude_links_to_future</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3348,7 +3760,9 @@ before timestamp and one node after timestamp is kept.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>exclude_links_to_past</code></td>
+            <td>
+                <code>exclude_links_to_past</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3457,7 +3871,9 @@ timestamp. Can be used to find the "latest" root IDs associated with an object.<
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3471,7 +3887,9 @@ timestamp. Can be used to find the "latest" root IDs associated with an object.<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -3486,7 +3904,9 @@ for this client, which defaults to the current time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_future</code></td>
+            <td>
+                <code>timestamp_future</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -3557,7 +3977,9 @@ root). By default, None.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3571,7 +3993,9 @@ root). By default, None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_past</code></td>
+            <td>
+                <code>timestamp_past</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -3640,7 +4064,9 @@ root). By default, None.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_ids</code></td>
+            <td>
+                <code>root_ids</code>
+            </td>
             <td>
                   <code>array-like of int</code>
             </td>
@@ -3654,7 +4080,9 @@ root). By default, None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -3728,7 +4156,9 @@ scale of chunks. Higher layers are coarser.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3742,7 +4172,9 @@ scale of chunks. Higher layers are coarser.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/datetime.html#module-datetime">datetime</a></code>
             </td>
@@ -3759,7 +4191,9 @@ current time. Note that this has to be a timestamp after the creation of the
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>stop_layer</code></td>
+            <td>
+                <code>stop_layer</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3777,7 +4211,9 @@ in extremely fine grained scenarios.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>return_all</code></td>
+            <td>
+                <code>return_all</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3792,7 +4228,9 @@ default False. If False, only the top is returned.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>return_fraction_overlap</code></td>
+            <td>
+                <code>return_fraction_overlap</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3842,7 +4280,9 @@ does not take into account whether a root ID has since been edited.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>node_ids</code></td>
+            <td>
+                <code>node_ids</code>
+            </td>
             <td>
                   <code>array-like of int</code>
             </td>
@@ -3856,7 +4296,9 @@ does not take into account whether a root ID has since been edited.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>start_timestamp</code></td>
+            <td>
+                <code>start_timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -3871,7 +4313,9 @@ Defaults to None (assumes now).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>end_timestamp</code></td>
+            <td>
+                <code>end_timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -3942,7 +4386,9 @@ the current time.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_ids</code></td>
+            <td>
+                <code>root_ids</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3955,7 +4401,9 @@ the current time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>latest</code></td>
+            <td>
+                <code>latest</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3973,7 +4421,9 @@ if you don't specify a timestamp parameter.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -4048,7 +4498,9 @@ that could contain parts of the same object.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_ids</code></td>
+            <td>
+                <code>root_ids</code>
+            </td>
             <td>
                   <code>Iterable of int</code>
             </td>
@@ -4062,7 +4514,9 @@ that could contain parts of the same object.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_past</code></td>
+            <td>
+                <code>timestamp_past</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -4076,7 +4530,9 @@ that could contain parts of the same object.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_future</code></td>
+            <td>
+                <code>timestamp_future</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a> or None</code>
             </td>
@@ -4149,7 +4605,9 @@ root IDs at <code>timestamp_past</code>/<code>timestamp_future</code>.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>timestamp_past</code></td>
+            <td>
+                <code>timestamp_past</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -4163,7 +4621,9 @@ root IDs at <code>timestamp_past</code>/<code>timestamp_future</code>.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_future</code></td>
+            <td>
+                <code>timestamp_future</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>

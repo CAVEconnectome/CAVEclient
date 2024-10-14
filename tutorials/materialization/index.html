@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1124,10 +1124,11 @@ won't be a reproducible set)</p>
 <div class="highlight"><pre><span></span><code><span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="s1">&#39;my_table&#39;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </code></pre></div>
 <p>For most applications, you will want to filter the query in some way.</p>
-<p>We offer three kinds of filters you can apply: <code>filter_equal_dict</code>, <code>filter_in_dict</code>
-and <code>filter_out_dict</code>. For query_table each is specified as a dictionary
-where the keys are column names, and the values are a list of values (or
-single value in the case of filter_equal).</p>
+<p>We offer seven kinds of filters you can apply: <code>filter_in_dict</code>
+<code>filter_out_dict</code>, <code>filter_equal_dict</code>, <code>filter_greater_dict</code>, <code>filter_less_dict</code>,
+<code>filter_greater_equal_dict</code>, and <code>filter_less_equal_dict</code>. For query_table each is
+specified as a dictionary where the keys are column names, and the values are a
+list of values (or single value in the case of filter_equal).</p>
 <p>So for example to query a synapse table for all synapses onto a neuron
 in flywire you would use</p>
 <div class="highlight"><pre><span></span><code><span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()[</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">]</span>

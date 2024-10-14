@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1264,6 +1264,301 @@ Extended documentation for all versions of the annotation client can be found
 
 
 
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_table_metadata" href="#caveclient.materializationengine.MaterializationClientV3.get_table_metadata">get_table_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get metadata about a table</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_tables" href="#caveclient.materializationengine.MaterializationClientV3.get_tables">get_tables</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets a list of table names for a datastack</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_tables_metadata" href="#caveclient.materializationengine.MaterializationClientV3.get_tables_metadata">get_tables_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get metadata about tables</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_timestamp" href="#caveclient.materializationengine.MaterializationClientV3.get_timestamp">get_timestamp</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get datetime.datetime timestamp for a materialization version.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_unique_string_values" href="#caveclient.materializationengine.MaterializationClientV3.get_unique_string_values">get_unique_string_values</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get unique string values for a table</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_version_metadata" href="#caveclient.materializationengine.MaterializationClientV3.get_version_metadata">get_version_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get metadata about a version</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_versions" href="#caveclient.materializationengine.MaterializationClientV3.get_versions">get_versions</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the versions available</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_versions_metadata" href="#caveclient.materializationengine.MaterializationClientV3.get_versions_metadata">get_versions_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the metadata for all the versions that are presently available and valid</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_view_metadata" href="#caveclient.materializationengine.MaterializationClientV3.get_view_metadata">get_view_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get metadata for a view</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_view_schema" href="#caveclient.materializationengine.MaterializationClientV3.get_view_schema">get_view_schema</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get schema for a view</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_view_schemas" href="#caveclient.materializationengine.MaterializationClientV3.get_view_schemas">get_view_schemas</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get schema for a view</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.get_views" href="#caveclient.materializationengine.MaterializationClientV3.get_views">get_views</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get all available views for a version</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.ingest_annotation_table" href="#caveclient.materializationengine.MaterializationClientV3.ingest_annotation_table">ingest_annotation_table</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Trigger supervoxel lookup and root ID lookup of new annotations in a table.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.join_query" href="#caveclient.materializationengine.MaterializationClientV3.join_query">join_query</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generic query on materialization tables</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.live_live_query" href="#caveclient.materializationengine.MaterializationClientV3.live_live_query">live_live_query</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Beta method for querying cave annotation tables with root IDs and annotations</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.live_query" href="#caveclient.materializationengine.MaterializationClientV3.live_query">live_query</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generic query on materialization tables</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.lookup_supervoxel_ids" href="#caveclient.materializationengine.MaterializationClientV3.lookup_supervoxel_ids">lookup_supervoxel_ids</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Trigger supervoxel lookups of new annotations in a table.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.map_filters" href="#caveclient.materializationengine.MaterializationClientV3.map_filters">map_filters</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Translate a list of filter dictionaries from a point in the</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.most_recent_version" href="#caveclient.materializationengine.MaterializationClientV3.most_recent_version">most_recent_version</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the most recent version of materialization for this datastack name</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.query_table" href="#caveclient.materializationengine.MaterializationClientV3.query_table">query_table</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generic query on materialization tables</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.query_view" href="#caveclient.materializationengine.MaterializationClientV3.query_view">query_view</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generic query on a view</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.raise_for_status" href="#caveclient.materializationengine.MaterializationClientV3.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.synapse_query" href="#caveclient.materializationengine.MaterializationClientV3.synapse_query">synapse_query</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convenience method for querying synapses.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.cg_client" href="#caveclient.materializationengine.MaterializationClientV3.cg_client">cg_client</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The chunked graph client.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.datastack_name" href="#caveclient.materializationengine.MaterializationClientV3.datastack_name">datastack_name</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the datastack.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.homepage" href="#caveclient.materializationengine.MaterializationClientV3.homepage">homepage</a></code></td>
+            <td>
+                  <code><span title="IPython.display.HTML">HTML</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The homepage for the materialization engine.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.server_version" href="#caveclient.materializationengine.MaterializationClientV3.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.tables" href="#caveclient.materializationengine.MaterializationClientV3.tables">tables</a></code></td>
+            <td>
+                  <code><span title="caveclient.tools.table_manager.TableManager">TableManager</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The table manager for the materialization engine.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.version" href="#caveclient.materializationengine.MaterializationClientV3.version">version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the materialization. Can be used to set up the</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.materializationengine.MaterializationClientV3.views" href="#caveclient.materializationengine.MaterializationClientV3.views">views</a></code></td>
+            <td>
+                  <code><span title="caveclient.tools.table_manager.ViewManager">ViewManager</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The view manager for the materialization engine.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1454,7 +1749,9 @@ the version must be set at the CAVEclient level.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1468,7 +1765,9 @@ the version must be set at the CAVEclient level.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1482,7 +1781,9 @@ the version must be set at the CAVEclient level.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>version</code></td>
+            <td>
+                <code>version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1497,7 +1798,9 @@ the version must be set at the CAVEclient level.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1566,7 +1869,9 @@ the version must be set at the CAVEclient level.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1582,7 +1887,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>version</code></td>
+            <td>
+                <code>version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
             </td>
@@ -1652,7 +1959,9 @@ Will be set correctly if you are using the framework_client</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1666,7 +1975,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>version</code></td>
+            <td>
+                <code>version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -1681,7 +1992,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1750,7 +2063,9 @@ Will be set correctly if you are using the framework_client</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>version</code></td>
+            <td>
+                <code>version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
             </td>
@@ -1765,7 +2080,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1834,7 +2151,9 @@ Will be set correctly if you are using the framework_client</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table</code></td>
+            <td>
+                <code>table</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1848,7 +2167,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
             </td>
@@ -1917,7 +2238,9 @@ Will be set correctly if you are using the framework_client</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>version</code></td>
+            <td>
+                <code>version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or None</code>
             </td>
@@ -1932,7 +2255,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2001,7 +2326,9 @@ Will be set correctly if you are using the framework_client</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2016,7 +2343,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>expired</code></td>
+            <td>
+                <code>expired</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2085,7 +2414,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2099,7 +2430,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>expired</code></td>
+            <td>
+                <code>expired</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2168,7 +2501,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>view_name</code></td>
+            <td>
+                <code>view_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2182,7 +2517,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -2197,7 +2534,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2266,7 +2605,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>view_name</code></td>
+            <td>
+                <code>view_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2280,7 +2621,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -2295,7 +2638,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2364,7 +2709,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -2378,7 +2725,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2447,7 +2796,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>version</code></td>
+            <td>
+                <code>version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -2462,7 +2813,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2531,7 +2884,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2545,7 +2900,9 @@ If None, uses the one specified in the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2592,7 +2949,7 @@ If None, uses the one specified in the client.</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.join_query" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">join_query</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">join_query</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.join_query" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2614,7 +2971,9 @@ If None, uses the one specified in the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>tables</code></td>
+            <td>
+                <code>tables</code>
+            </td>
             <td>
                   <code>list of lists with length 2 or &#39;str&#39;</code>
             </td>
@@ -2629,7 +2988,9 @@ columns used for the join.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_in_dict</code></td>
+            <td>
+                <code>filter_in_dict</code>
+            </td>
             <td>
                   <code>dict of dicts</code>
             </td>
@@ -2644,7 +3005,9 @@ inner layer: keys are column names, values are allowed entries, by default None<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_out_dict</code></td>
+            <td>
+                <code>filter_out_dict</code>
+            </td>
             <td>
                   <code>dict of dicts</code>
             </td>
@@ -2659,7 +3022,9 @@ inner layer: keys are column names, values are not allowed entries, by default N
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_equal_dict</code></td>
+            <td>
+                <code>filter_equal_dict</code>
+            </td>
             <td>
                   <code>dict of dicts</code>
             </td>
@@ -2674,7 +3039,77 @@ inner layer: keys are column names, values are specified entry, by default None<
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_spatial_dict</code></td>
+            <td>
+                <code>filter_greater_dict</code>
+            </td>
+            <td>
+                  <code>dict of dicts</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>outer layer: keys are table names
+inner layer: keys are column names, values are exclusive upper-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_dict</code>
+            </td>
+            <td>
+                  <code>dict of dicts</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>outer layer: keys are table names
+inner layer: keys are column names, values are exclusive lower-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_greater_equal_dict</code>
+            </td>
+            <td>
+                  <code>dict of dicts</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>outer layer: keys are table names
+inner layer: keys are column names, values are inclusive upper-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_equal_dict</code>
+            </td>
+            <td>
+                  <code>dict of dicts</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>outer layer: keys are table names
+inner layer: keys are column names, values are inclusive lower-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_spatial_dict</code>
+            </td>
             <td>
                   <code>dict of dicts</code>
             </td>
@@ -2690,7 +3125,9 @@ expressed in units of the voxel_resolution of this dataset. Defaults to None.</p
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_regex_dict</code></td>
+            <td>
+                <code>filter_regex_dict</code>
+            </td>
             <td>
                   <code>dict of dicts</code>
             </td>
@@ -2705,7 +3142,9 @@ values are regex strings. Defaults to None</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>select_columns</code></td>
+            <td>
+                <code>select_columns</code>
+            </td>
             <td>
                   <code>dict of lists of str</code>
             </td>
@@ -2722,7 +3161,9 @@ which is deprecated.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2736,7 +3177,9 @@ which is deprecated.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2750,7 +3193,9 @@ which is deprecated.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>suffixes</code></td>
+            <td>
+                <code>suffixes</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -2764,7 +3209,9 @@ which is deprecated.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2778,7 +3225,9 @@ which is deprecated.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>return_df</code></td>
+            <td>
+                <code>return_df</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2793,7 +3242,9 @@ as json (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>split_positions</code></td>
+            <td>
+                <code>split_positions</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2808,7 +3259,9 @@ data is returned as one column with [x,y,z] array (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2823,7 +3276,9 @@ data is returned as one column with [x,y,z] array (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
+            <td>
+                <code>metadata</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2838,7 +3293,9 @@ table and query metadata in the df.attr dictionary.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>desired_resolution</code></td>
+            <td>
+                <code>desired_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></code>
             </td>
@@ -2853,7 +3310,9 @@ defaults.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>random_sample</code></td>
+            <td>
+                <code>random_sample</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2867,7 +3326,9 @@ defaults.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2914,7 +3375,7 @@ defaults.</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.live_live_query" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">live_live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">joins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_missing_lookups</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_invalid_root_ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">live_live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">joins</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_missing_lookups</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_invalid_root_ids</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.live_live_query" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2939,7 +3400,9 @@ that should eventually support complex joins.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table</code></td>
+            <td>
+                <code>table</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2953,7 +3416,9 @@ that should eventually support complex joins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -2967,7 +3432,9 @@ that should eventually support complex joins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>joins</code></td>
+            <td>
+                <code>joins</code>
+            </td>
             <td>
             </td>
             <td>
@@ -2980,7 +3447,9 @@ that should eventually support complex joins.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_in_dict</code></td>
+            <td>
+                <code>filter_in_dict</code>
+            </td>
             <td>
             </td>
             <td>
@@ -2994,7 +3463,9 @@ values to accept.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_out_dict</code></td>
+            <td>
+                <code>filter_out_dict</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3008,7 +3479,9 @@ values to reject.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_equal_dict</code></td>
+            <td>
+                <code>filter_equal_dict</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3022,7 +3495,73 @@ to equate.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_spatial_dict</code></td>
+            <td>
+                <code>filter_greater_dict</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary with tables as keys, values are dicts with column keys and values
+as exclusive upper-bound.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_dict</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary with tables as keys, values are dicts with column keys and values
+as exclusive lower-bound.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_greater_equal_dict</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary with tables as keys, values are dicts with column keys and values
+as inclusive upper-bound.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_equal_dict</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A dictionary with tables as keys, values are dicts with column keys and values
+as inclusive lower-bound.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_spatial_dict</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3036,7 +3575,9 @@ of 2x3 list of bounds.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_regex_dict</code></td>
+            <td>
+                <code>filter_regex_dict</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3050,7 +3591,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>select_columns</code></td>
+            <td>
+                <code>select_columns</code>
+            </td>
             <td>
             </td>
             <td>
@@ -3063,7 +3606,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3077,7 +3622,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3091,7 +3638,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -3105,7 +3654,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>split_positions</code></td>
+            <td>
+                <code>split_positions</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3119,7 +3670,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
+            <td>
+                <code>metadata</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3133,7 +3686,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>suffixes</code></td>
+            <td>
+                <code>suffixes</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3147,7 +3702,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>desired_resolution</code></td>
+            <td>
+                <code>desired_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></code>
             </td>
@@ -3161,7 +3718,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>allow_missing_lookups</code></td>
+            <td>
+                <code>allow_missing_lookups</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3175,7 +3734,9 @@ of regex strings.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>allow_invalid_root_ids</code></td>
+            <td>
+                <code>allow_invalid_root_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3190,7 +3751,9 @@ an error.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>random_sample</code></td>
+            <td>
+                <code>random_sample</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3204,7 +3767,9 @@ an error.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3272,6 +3837,22 @@ an error.</p>
 <span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;table_name&quot;</span><span class="p">:{</span>
 <span class="gp">&gt;&gt;&gt; </span>           <span class="s2">&quot;column_name&quot;</span><span class="p">:</span><span class="n">value</span>
 <span class="gp">&gt;&gt;&gt; </span>       <span class="p">},</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">filter_greater_dict</span><span class="s2">&quot;={</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;table_name&quot;</span><span class="p">:{</span>
+<span class="gp">&gt;&gt;&gt; </span>           <span class="s2">&quot;column_name&quot;</span><span class="p">:</span><span class="n">value</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="p">},</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">filter_less_dict</span><span class="s2">&quot;={</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;table_name&quot;</span><span class="p">:{</span>
+<span class="gp">&gt;&gt;&gt; </span>           <span class="s2">&quot;column_name&quot;</span><span class="p">:</span><span class="n">value</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="p">},</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">filter_greater_equal_dict</span><span class="s2">&quot;={</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;table_name&quot;</span><span class="p">:{</span>
+<span class="gp">&gt;&gt;&gt; </span>           <span class="s2">&quot;column_name&quot;</span><span class="p">:</span><span class="n">value</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="p">},</span>
+<span class="gp">&gt;&gt;&gt; </span>   <span class="n">filter_less_equal_dict</span><span class="s2">&quot;={</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;table_name&quot;</span><span class="p">:{</span>
+<span class="gp">&gt;&gt;&gt; </span>           <span class="s2">&quot;column_name&quot;</span><span class="p">:</span><span class="n">value</span>
+<span class="gp">&gt;&gt;&gt; </span>       <span class="p">},</span>
 <span class="gp">&gt;&gt;&gt; </span>   <span class="n">filter_spatial_dict</span><span class="s2">&quot;= {</span>
 <span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;table_name&quot;</span><span class="p">:</span> <span class="p">{</span>
 <span class="gp">&gt;&gt;&gt; </span>       <span class="s2">&quot;column_name&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">min_z</span><span class="p">],</span> <span class="p">[</span><span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span> <span class="n">max_z</span><span class="p">]]</span>
@@ -3290,7 +3871,7 @@ an error.</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.live_query" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">post_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">live_query</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">post_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.live_query" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -3312,7 +3893,9 @@ an error.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table</code></td>
+            <td>
+                <code>table</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -3326,7 +3909,9 @@ an error.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><span title="datetime.datetime.datetime">datetime</span></code>
             </td>
@@ -3341,7 +3926,9 @@ datetime.datetime.now(datetime.timezone.utc) for present time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_in_dict</code></td>
+            <td>
+                <code>filter_in_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3355,7 +3942,9 @@ datetime.datetime.now(datetime.timezone.utc) for present time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_out_dict</code></td>
+            <td>
+                <code>filter_out_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3369,7 +3958,9 @@ datetime.datetime.now(datetime.timezone.utc) for present time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_equal_dict</code></td>
+            <td>
+                <code>filter_equal_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3383,7 +3974,73 @@ datetime.datetime.now(datetime.timezone.utc) for present time.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_spatial_dict</code></td>
+            <td>
+                <code>filter_greater_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are exclusive upper-bounds.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are exclusive lower-bounds.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_greater_equal_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are inclusive upper-bounds.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_equal_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are inclusive lower-bounds.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_spatial_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3399,7 +4056,9 @@ voxel_resolution of this dataset. Bounding box is
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_regex_dict</code></td>
+            <td>
+                <code>filter_regex_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3413,7 +4072,9 @@ voxel_resolution of this dataset. Bounding box is
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>select_columns</code></td>
+            <td>
+                <code>select_columns</code>
+            </td>
             <td>
                   <code>list of str</code>
             </td>
@@ -3427,7 +4088,9 @@ voxel_resolution of this dataset. Bounding box is
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3441,7 +4104,9 @@ voxel_resolution of this dataset. Bounding box is
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3455,7 +4120,9 @@ voxel_resolution of this dataset. Bounding box is
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -3469,7 +4136,9 @@ voxel_resolution of this dataset. Bounding box is
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>split_positions</code></td>
+            <td>
+                <code>split_positions</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3484,7 +4153,9 @@ returned as one column with [x,y,z] array (slower).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>post_filter</code></td>
+            <td>
+                <code>post_filter</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3503,7 +4174,9 @@ False, but will be filtered down if this is True.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
+            <td>
+                <code>metadata</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3518,7 +4191,9 @@ and query metadata in the df.attr dictionary.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>merge_reference</code></td>
+            <td>
+                <code>merge_reference</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3534,7 +4209,9 @@ return the rows of that table.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>desired_resolution</code></td>
+            <td>
+                <code>desired_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></code>
             </td>
@@ -3550,7 +4227,9 @@ the table and should be in the resolution specified in the table metadata.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>random_sample</code></td>
+            <td>
+                <code>random_sample</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -3564,7 +4243,9 @@ the table and should be in the resolution specified in the table metadata.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -3633,7 +4314,9 @@ the table and should be in the resolution specified in the table metadata.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -3647,7 +4330,9 @@ the table and should be in the resolution specified in the table metadata.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>annotation_ids</code></td>
+            <td>
+                <code>annotation_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -3662,7 +4347,9 @@ lookup of entire table.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -3732,7 +4419,9 @@ future to a point in the past</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>filters</code></td>
+            <td>
+                <code>filters</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>]</code>
             </td>
@@ -3746,7 +4435,9 @@ future to a point in the past</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><span title="datetime.datetime.datetime">datetime</span></code>
             </td>
@@ -3760,7 +4451,9 @@ future to a point in the past</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp_past</code></td>
+            <td>
+                <code>timestamp_past</code>
+            </td>
             <td>
                   <code><span title="datetime.datetime.datetime">datetime</span></code>
             </td>
@@ -3839,7 +4532,9 @@ future to a point in the past</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -3888,7 +4583,7 @@ Will be set correctly if you are using the framework_client</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.query_table" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">query_table</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">query_table</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.query_table" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -3910,7 +4605,9 @@ Will be set correctly if you are using the framework_client</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table</code></td>
+            <td>
+                <code>table</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -3924,7 +4621,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_in_dict</code></td>
+            <td>
+                <code>filter_in_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3938,7 +4637,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_out_dict</code></td>
+            <td>
+                <code>filter_out_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3952,7 +4653,9 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_equal_dict</code></td>
+            <td>
+                <code>filter_equal_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3966,7 +4669,73 @@ Will be set correctly if you are using the framework_client</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_spatial_dict</code></td>
+            <td>
+                <code>filter_greater_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are exclusive upper-bound value, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are exclusive lower-bound value, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_greater_equal_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are inclusive upper-bound value, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_equal_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are inclusive lower-bound value, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_spatial_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3981,7 +4750,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_regex_dict</code></td>
+            <td>
+                <code>filter_regex_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -3995,7 +4766,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>select_columns</code></td>
+            <td>
+                <code>select_columns</code>
+            </td>
             <td>
                   <code>list of str</code>
             </td>
@@ -4009,7 +4782,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4023,7 +4798,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4038,7 +4815,9 @@ see get_server_config), by default None</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -4053,7 +4832,9 @@ specified in client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>return_df</code></td>
+            <td>
+                <code>return_df</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4068,7 +4849,9 @@ returned as json (slower).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>split_positions</code></td>
+            <td>
+                <code>split_positions</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4083,7 +4866,9 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4098,7 +4883,9 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><span title="datetime.datetime.datetime">datetime</span></code>
             </td>
@@ -4113,7 +4900,9 @@ Error if also passing a materialization version</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
+            <td>
+                <code>metadata</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4129,7 +4918,9 @@ df.attr dictionary.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>merge_reference</code></td>
+            <td>
+                <code>merge_reference</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4145,7 +4936,9 @@ join on the reference table to return the rows of that</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>desired_resolution</code></td>
+            <td>
+                <code>desired_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>]</code>
             </td>
@@ -4162,7 +4955,9 @@ specified in the table metadata</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>get_counts</code></td>
+            <td>
+                <code>get_counts</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4176,7 +4971,9 @@ specified in the table metadata</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>random_sample</code></td>
+            <td>
+                <code>random_sample</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4191,7 +4988,9 @@ annotations</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>log_warning</code></td>
+            <td>
+                <code>log_warning</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4238,7 +5037,7 @@ annotations</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClientV3.query_view" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">query_view</span><span class="p">(</span><span class="n">view_name</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">query_view</span><span class="p">(</span><span class="n">view_name</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClientV3.query_view" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -4260,7 +5059,9 @@ annotations</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>view_name</code></td>
+            <td>
+                <code>view_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -4274,7 +5075,9 @@ annotations</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_in_dict</code></td>
+            <td>
+                <code>filter_in_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -4288,7 +5091,9 @@ annotations</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_out_dict</code></td>
+            <td>
+                <code>filter_out_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -4302,7 +5107,9 @@ annotations</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_equal_dict</code></td>
+            <td>
+                <code>filter_equal_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -4316,7 +5123,73 @@ annotations</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_spatial_dict</code></td>
+            <td>
+                <code>filter_greater_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are exclusive upper-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are exclusive lower-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_greater_equal_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are inclusive upper-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_less_equal_dict</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keys are column names, values are inclusive lower-bound, by default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filter_spatial_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -4331,7 +5204,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filter_regex_dict</code></td>
+            <td>
+                <code>filter_regex_dict</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -4345,7 +5220,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>select_columns</code></td>
+            <td>
+                <code>select_columns</code>
+            </td>
             <td>
                   <code>list of str</code>
             </td>
@@ -4359,7 +5236,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4373,7 +5252,9 @@ voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4388,7 +5269,9 @@ see get_server_config), by default None</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -4403,7 +5286,9 @@ specified in client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>return_df</code></td>
+            <td>
+                <code>return_df</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4418,7 +5303,9 @@ returned as json (slower).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>split_positions</code></td>
+            <td>
+                <code>split_positions</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4433,7 +5320,9 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4448,7 +5337,9 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
+            <td>
+                <code>metadata</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4464,7 +5355,9 @@ df.attr dictionary.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>merge_reference</code></td>
+            <td>
+                <code>merge_reference</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4480,7 +5373,9 @@ join on the reference table to return the rows of that</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>desired_resolution</code></td>
+            <td>
+                <code>desired_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>]</code>
             </td>
@@ -4497,7 +5392,9 @@ specified in the table metadata</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>get_counts</code></td>
+            <td>
+                <code>get_counts</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4511,7 +5408,9 @@ specified in the table metadata</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>random_sample</code></td>
+            <td>
+                <code>random_sample</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4608,7 +5507,9 @@ your dataset administrator if you want access to the entire table.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>pre_ids</code></td>
+            <td>
+                <code>pre_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>, <a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>, <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>]</code>
             </td>
@@ -4622,7 +5523,9 @@ your dataset administrator if you want access to the entire table.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>post_ids</code></td>
+            <td>
+                <code>post_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>, <a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>, <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>]</code>
             </td>
@@ -4636,7 +5539,9 @@ your dataset administrator if you want access to the entire table.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bounding_box</code></td>
+            <td>
+                <code>bounding_box</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>, <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>]]</code>
             </td>
@@ -4651,7 +5556,9 @@ synapse locations. Expressed in units of the voxel_resolution of this dataset.</
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bounding_box_column</code></td>
+            <td>
+                <code>bounding_box_column</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -4665,7 +5572,9 @@ synapse locations. Expressed in units of the voxel_resolution of this dataset.</
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
             </td>
@@ -4680,7 +5589,9 @@ with materialization_version.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>remove_autapses</code></td>
+            <td>
+                <code>remove_autapses</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4694,7 +5605,9 @@ with materialization_version.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>include_zeros</code></td>
+            <td>
+                <code>include_zeros</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4708,7 +5621,9 @@ with materialization_version.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4722,7 +5637,9 @@ with materialization_version.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -4736,7 +5653,9 @@ with materialization_version.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>split_positions</code></td>
+            <td>
+                <code>split_positions</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -4750,7 +5669,9 @@ with materialization_version.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>desired_resolution</code></td>
+            <td>
+                <code>desired_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>]</code>
             </td>
@@ -4765,7 +5686,9 @@ useful for materialization queries.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>materialization_version</code></td>
+            <td>
+                <code>materialization_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -4780,7 +5703,9 @@ useful for materialization queries.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>metadata</code></td>
+            <td>
+                <code>metadata</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>

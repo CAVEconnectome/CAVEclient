@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1075,6 +1075,65 @@
 
 
 
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.base.ClientBase" href="#caveclient.base.ClientBase">ClientBase</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Functions:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.base.handle_response" href="#caveclient.base.handle_response">handle_response</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Deal with potential errors in endpoint response and return json for default case</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.base.parametrized" href="#caveclient.base.parametrized">parametrized</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>This decorator allows you to easily create decorators that take arguments</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1098,6 +1157,61 @@
             <p class="doc doc-class-bases">
               Bases: <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#object">object</a></code></p>
 
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.base.ClientBase.raise_for_status" href="#caveclient.base.ClientBase.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.base.ClientBase.server_version" href="#caveclient.base.ClientBase.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 

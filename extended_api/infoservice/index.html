@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1174,6 +1174,36 @@
 
 
 
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2" href="#caveclient.infoservice.InfoServiceClientV2">InfoServiceClientV2</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1197,6 +1227,165 @@
             <p class="doc doc-class-bases">
               Bases: <code><span title="caveclient.base.ClientBaseWithDatastack">ClientBaseWithDatastack</span></code></p>
 
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.annotation_endpoint" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.annotation_endpoint">annotation_endpoint</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>AnnotationEngine endpoint for a dataset.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.get_aligned_volume_info" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.get_aligned_volume_info">get_aligned_volume_info</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets the info record for a aligned_volume</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.get_datastack_info" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.get_datastack_info">get_datastack_info</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets the info record for a datastack</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.get_datastacks" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.get_datastacks">get_datastacks</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Query which datastacks are available at the info service</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.get_datastacks_by_aligned_volume" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.get_datastacks_by_aligned_volume">get_datastacks_by_aligned_volume</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Lookup what datastacks are associated with this aligned volume</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.image_cloudvolume" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.image_cloudvolume">image_cloudvolume</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generate a cloudvolume instance based on the image source, using authentication if needed and</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.image_source" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.image_source">image_source</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Cloud path to the imagery for the dataset</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.raise_for_status" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.refresh_stored_data" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.refresh_stored_data">refresh_stored_data</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Reload the stored info values from the server.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.segmentation_cloudvolume" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.segmentation_cloudvolume">segmentation_cloudvolume</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generate a cloudvolume instance based on the segmentation source, using authentication if needed and</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.segmentation_source" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.segmentation_source">segmentation_source</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Cloud path to the chunkgraph-backed Graphene segmentation for a dataset</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.synapse_segmentation_source" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.synapse_segmentation_source">synapse_segmentation_source</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Cloud path to the synapse segmentation for a dataset</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.viewer_resolution" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.viewer_resolution">viewer_resolution</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the viewer resolution metadata for this datastack</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.viewer_site" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.viewer_site">viewer_site</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the base Neuroglancer URL for the dataset</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClientV2.server_version" href="../../client_api/info/#caveclient.infoservice.InfoServiceClientV2.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -1260,7 +1449,9 @@ version of the datastack itself.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1274,7 +1465,9 @@ version of the datastack itself.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1343,7 +1536,9 @@ version of the datastack itself.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1357,7 +1552,9 @@ version of the datastack itself.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1426,7 +1623,9 @@ version of the datastack itself.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1440,7 +1639,9 @@ version of the datastack itself.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1593,7 +1794,9 @@ can be overridden.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1607,7 +1810,9 @@ can be overridden.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1621,7 +1826,9 @@ can be overridden.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>format_for</code></td>
+            <td>
+                <code>format_for</code>
+            </td>
             <td>
                   <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
             </td>
@@ -1752,7 +1959,9 @@ can be overridden.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1766,7 +1975,9 @@ can be overridden.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1780,7 +1991,9 @@ can be overridden.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>format_for</code></td>
+            <td>
+                <code>format_for</code>
+            </td>
             <td>
                   <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
             </td>
@@ -1852,7 +2065,9 @@ If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuro
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1866,7 +2081,9 @@ If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuro
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1880,7 +2097,9 @@ If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuro
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>format_for</code></td>
+            <td>
+                <code>format_for</code>
+            </td>
             <td>
                   <code>&#39;raw&#39;, &#39;cloudvolume&#39;, or &#39;neuroglancer&#39;</code>
             </td>
@@ -1952,7 +2171,9 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
             </td>
             <td>
@@ -1965,7 +2186,9 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
             </td>
             <td>
@@ -2033,7 +2256,9 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2047,7 +2272,9 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>use_stored</code></td>
+            <td>
+                <code>use_stored</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>

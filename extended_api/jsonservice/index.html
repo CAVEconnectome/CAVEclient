@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1147,6 +1147,65 @@
 
 
 
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1" href="#caveclient.jsonservice.JSONServiceV1">JSONServiceV1</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Functions:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONService" href="#caveclient.jsonservice.JSONService">JSONService</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Client factory to interface with the JSON state service.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.neuroglancer_json_encoder" href="#caveclient.jsonservice.neuroglancer_json_encoder">neuroglancer_json_encoder</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>JSON encoder for neuroglancer states.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1170,6 +1229,127 @@
             <p class="doc doc-class-bases">
               Bases: <code><a class="autorefs autorefs-internal" title="caveclient.base.ClientBase" href="../base/#caveclient.base.ClientBase">ClientBase</a></code></p>
 
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.build_neuroglancer_url" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.build_neuroglancer_url">build_neuroglancer_url</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.get_neuroglancer_info" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.get_neuroglancer_info">get_neuroglancer_info</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the info field from a Neuroglancer deployment</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.get_property_json" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.get_property_json">get_property_json</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Download a Neuroglancer JSON state</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.get_state_json" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.get_state_json">get_state_json</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Download a Neuroglancer JSON state</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.raise_for_status" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.save_state_json_local" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.save_state_json_local">save_state_json_local</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Save a Neuroglancer JSON state to a JSON file locally.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.upload_property_json" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.upload_property_json">upload_property_json</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Upload a Neuroglancer JSON state</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.upload_state_json" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.upload_state_json">upload_state_json</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Upload a Neuroglancer JSON state</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.server_version" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.jsonservice.JSONServiceV1.state_service_endpoint" href="../../client_api/state/#caveclient.jsonservice.JSONServiceV1.state_service_endpoint">state_service_endpoint</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Endpoint URL for posting JSON state</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -1256,7 +1436,9 @@ If no ngl_url is specified in either the function or the client, a fallback neur
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>state_id</code></td>
+            <td>
+                <code>state_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1270,7 +1452,9 @@ If no ngl_url is specified in either the function or the client, a fallback neur
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>ngl_url</code></td>
+            <td>
+                <code>ngl_url</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1285,7 +1469,9 @@ As a fallback, a default deployment is used.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>target_site</code></td>
+            <td>
+                <code>target_site</code>
+            </td>
             <td>
                   <code>seunglab or cave - explorer or mainline or None</code>
             </td>
@@ -1301,7 +1487,9 @@ Default is None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>static_url</code></td>
+            <td>
+                <code>static_url</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1315,7 +1503,9 @@ Default is None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>format_properties</code></td>
+            <td>
+                <code>format_properties</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1384,7 +1574,9 @@ Default is None.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>ngl_url</code></td>
+            <td>
+                <code>ngl_url</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>(optional)</code>
             </td>
@@ -1454,7 +1646,9 @@ If None, defaults to the value for the datastack or the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>state_id</code></td>
+            <td>
+                <code>state_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1523,7 +1717,9 @@ If None, defaults to the value for the datastack or the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>state_id</code></td>
+            <td>
+                <code>state_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1613,7 +1809,9 @@ If None, defaults to the value for the datastack or the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>json_state</code></td>
+            <td>
+                <code>json_state</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -1627,7 +1825,9 @@ If None, defaults to the value for the datastack or the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>filename</code></td>
+            <td>
+                <code>filename</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1641,7 +1841,9 @@ If None, defaults to the value for the datastack or the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>overwrite</code></td>
+            <td>
+                <code>overwrite</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1710,7 +1912,9 @@ If None, defaults to the value for the datastack or the client.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>propery_json</code></td>
+            <td>
+                <code>propery_json</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -1724,7 +1928,9 @@ If None, defaults to the value for the datastack or the client.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>state_id</code></td>
+            <td>
+                <code>state_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1739,7 +1945,9 @@ Using a state_id is an admin feature.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>max_size</code></td>
+            <td>
+                <code>max_size</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
@@ -1809,7 +2017,9 @@ for no limit.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>json_state</code></td>
+            <td>
+                <code>json_state</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
@@ -1823,7 +2033,9 @@ for no limit.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>state_id</code></td>
+            <td>
+                <code>state_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1838,7 +2050,9 @@ Using a state_id is an admin feature.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>timestamp</code></td>
+            <td>
+                <code>timestamp</code>
+            </td>
             <td>
             </td>
             <td>
@@ -1915,7 +2129,9 @@ Using a state_id is an admin feature.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>server_address</code></td>
+            <td>
+                <code>server_address</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1931,7 +2147,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>auth_client</code></td>
+            <td>
+                <code>auth_client</code>
+            </td>
             <td>
                   <code>An Auth client</code>
             </td>
@@ -1945,7 +2163,9 @@ By default None.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>api_version</code></td>
+            <td>
+                <code>api_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or latest</code>
             </td>
@@ -1961,7 +2181,9 @@ it defaults to the latest version for which there is a client. By default 'lates
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>ngl_url</code></td>
+            <td>
+                <code>ngl_url</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>

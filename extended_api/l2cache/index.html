@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1093,6 +1093,36 @@
 
 
 
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy" href="#caveclient.l2cache.L2CacheClientLegacy">L2CacheClientLegacy</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1116,6 +1146,93 @@
             <p class="doc doc-class-bases">
               Bases: <code><a class="autorefs autorefs-internal" title="caveclient.base.ClientBase" href="../base/#caveclient.base.ClientBase">ClientBase</a></code></p>
 
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy.cache_metadata" href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.cache_metadata">cache_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Retrieves the meta data for the cache</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy.get_l2data" href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.get_l2data">get_l2data</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets the attributed statistics data for L2 ids.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy.has_cache" href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.has_cache">has_cache</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Checks if the l2 cache is available for the dataset</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy.raise_for_status" href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy.table_mapping" href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.table_mapping">table_mapping</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Retrieves table mappings for l2 cache.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClientLegacy.server_version" href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -1219,7 +1336,9 @@ version of the datastack itself.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>l2_ids</code></td>
+            <td>
+                <code>l2_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or <span title="np.ndarray">ndarray</span></code>
             </td>
@@ -1233,7 +1352,9 @@ version of the datastack itself.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>attributes</code></td>
+            <td>
+                <code>attributes</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
@@ -1303,7 +1424,9 @@ Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>

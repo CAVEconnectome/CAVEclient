@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1147,6 +1147,181 @@ Extended documentation for all versions of the annotation client can be found
 
 
 
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.create_table" href="#caveclient.annotationengine.AnnotationClientV2.create_table">create_table</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Creates a new data table based on an existing schema</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.delete_annotation" href="#caveclient.annotationengine.AnnotationClientV2.delete_annotation">delete_annotation</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Delete one or more annotations in a table. Annotations that are</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.delete_table" href="#caveclient.annotationengine.AnnotationClientV2.delete_table">delete_table</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Marks a table for deletion requires super admin privileges</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.get_annotation" href="#caveclient.annotationengine.AnnotationClientV2.get_annotation">get_annotation</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Retrieve an annotation or annotations by id(s) and table name.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.get_annotation_count" href="#caveclient.annotationengine.AnnotationClientV2.get_annotation_count">get_annotation_count</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get number of annotations in a table</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.get_table_metadata" href="#caveclient.annotationengine.AnnotationClientV2.get_table_metadata">get_table_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get metadata about a table</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.get_tables" href="#caveclient.annotationengine.AnnotationClientV2.get_tables">get_tables</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets a list of table names for a aligned_volume_name</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.post_annotation" href="#caveclient.annotationengine.AnnotationClientV2.post_annotation">post_annotation</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Post one or more new annotations to a table in the AnnotationEngine.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.post_annotation_df" href="#caveclient.annotationengine.AnnotationClientV2.post_annotation_df">post_annotation_df</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Post one or more new annotations to a table in the AnnotationEngine.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.process_position_columns" href="#caveclient.annotationengine.AnnotationClientV2.process_position_columns">process_position_columns</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Process a dataframe into a list of dictionaries</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.raise_for_status" href="#caveclient.annotationengine.AnnotationClientV2.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.stage_annotations" href="#caveclient.annotationengine.AnnotationClientV2.stage_annotations">stage_annotations</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get a StagedAnnotations object to help produce correctly formatted annotations for a given table or schema.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.update_annotation" href="#caveclient.annotationengine.AnnotationClientV2.update_annotation">update_annotation</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Update one or more new annotations to a table in the AnnotationEngine.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.update_annotation_df" href="#caveclient.annotationengine.AnnotationClientV2.update_annotation_df">update_annotation_df</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Update one or more annotations to a table in the AnnotationEngine using a</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.update_metadata" href="#caveclient.annotationengine.AnnotationClientV2.update_metadata">update_metadata</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Update the metadata on an existing table</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.upload_staged_annotations" href="#caveclient.annotationengine.AnnotationClientV2.upload_staged_annotations">upload_staged_annotations</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Upload annotations directly from an Annotation Guide object.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClientV2.server_version" href="#caveclient.annotationengine.AnnotationClientV2.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1206,7 +1381,9 @@ version of the datastack itself.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1220,7 +1397,9 @@ version of the datastack itself.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>schema_name</code></td>
+            <td>
+                <code>schema_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1234,7 +1413,9 @@ version of the datastack itself.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>description</code></td>
+            <td>
+                <code>description</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1255,7 +1436,9 @@ on 81 PyC cells with complete AISs
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>voxel_resolution</code></td>
+            <td>
+                <code>voxel_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>]</code>
             </td>
@@ -1270,7 +1453,9 @@ on 81 PyC cells with complete AISs
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>reference_table</code></td>
+            <td>
+                <code>reference_table</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1287,7 +1472,9 @@ those annotations are in.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>track_target_id_updates</code></td>
+            <td>
+                <code>track_target_id_updates</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1302,7 +1489,9 @@ if target annotation table row is updated.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>flat_segmentation_source</code></td>
+            <td>
+                <code>flat_segmentation_source</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1317,7 +1506,9 @@ i.e. precomputed:\gs:\mybucket      his_tables_annotation</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>user_id</code></td>
+            <td>
+                <code>user_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1333,7 +1524,9 @@ Otherwise, the table will be created with your userID in the user_id column.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1347,7 +1540,9 @@ Otherwise, the table will be created with your userID in the user_id column.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>write_permission</code></td>
+            <td>
+                <code>write_permission</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1365,7 +1560,9 @@ by marking rows as deleted, so all data is always recoverable</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>read_permission</code></td>
+            <td>
+                <code>read_permission</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1382,7 +1579,9 @@ PUBLIC: anyone with permissions to read this datastack can read this data (DEFAU
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>notice_text</code></td>
+            <td>
+                <code>notice_text</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1462,7 +1661,9 @@ deleted are recorded as 'non-valid' but are not physically removed from the tabl
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1476,7 +1677,9 @@ deleted are recorded as 'non-valid' but are not physically removed from the tabl
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>annotation_ids</code></td>
+            <td>
+                <code>annotation_ids</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>)</code>
             </td>
@@ -1491,7 +1694,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1560,7 +1765,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1574,7 +1781,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1643,7 +1852,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1657,7 +1868,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>annotation_ids</code></td>
+            <td>
+                <code>annotation_ids</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or iterable</code>
             </td>
@@ -1671,7 +1884,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1740,7 +1955,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1754,7 +1971,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1823,7 +2042,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1837,7 +2058,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1906,7 +2129,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1980,7 +2205,9 @@ and 'delete_annotation' methods.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1994,7 +2221,9 @@ and 'delete_annotation' methods.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>data</code></td>
+            <td>
+                <code>data</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>)</code>
             </td>
@@ -2008,7 +2237,9 @@ and 'delete_annotation' methods.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2080,7 +2311,9 @@ and 'delete_annotation' methods.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2094,7 +2327,9 @@ and 'delete_annotation' methods.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>df</code></td>
+            <td>
+                <code>df</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
             </td>
@@ -2109,7 +2344,9 @@ position columns need to be called out in position_columns argument.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>position_columns</code></td>
+            <td>
+                <code>position_columns</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>], <a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]]]</code>
             </td>
@@ -2129,7 +2366,9 @@ which needed to go into a schema with a position column called 'pt')</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2202,7 +2441,9 @@ which needed to go into a schema with a position column called 'pt')</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>df</code></td>
+            <td>
+                <code>df</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
             </td>
@@ -2216,7 +2457,9 @@ which needed to go into a schema with a position column called 'pt')</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>position_columns</code></td>
+            <td>
+                <code>position_columns</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>], <a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]]]</code>
             </td>
@@ -2307,7 +2550,9 @@ StagedAnnotation objects can be uploaded directly with <code>upload_staged_annot
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2321,7 +2566,9 @@ StagedAnnotation objects can be uploaded directly with <code>upload_staged_annot
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>schema_name</code></td>
+            <td>
+                <code>schema_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2335,7 +2582,9 @@ StagedAnnotation objects can be uploaded directly with <code>upload_staged_annot
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>update</code></td>
+            <td>
+                <code>update</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2349,7 +2598,9 @@ StagedAnnotation objects can be uploaded directly with <code>upload_staged_annot
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>id_field</code></td>
+            <td>
+                <code>id_field</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -2363,7 +2614,9 @@ StagedAnnotation objects can be uploaded directly with <code>upload_staged_annot
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>table_resolution</code></td>
+            <td>
+                <code>table_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> - like or None</code>
             </td>
@@ -2378,7 +2631,9 @@ If annotation_resolution is also set, this allows points to be scaled correctly 
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>annotation_resolution</code></td>
+            <td>
+                <code>annotation_resolution</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> - like</code>
             </td>
@@ -2433,7 +2688,9 @@ autoincrement from the current max id in the table.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2447,7 +2704,9 @@ autoincrement from the current max id in the table.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>data</code></td>
+            <td>
+                <code>data</code>
+            </td>
             <td>
                   <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a>)</code>
             </td>
@@ -2462,7 +2721,9 @@ each dict must contain an "id" field which is the ID of the annotation to update
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2539,7 +2800,9 @@ autoincrement from the current max id in the table.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2553,7 +2816,9 @@ autoincrement from the current max id in the table.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>df</code></td>
+            <td>
+                <code>df</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
             </td>
@@ -2568,7 +2833,9 @@ position columns need to be called out in position_columns argument.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>position_columns</code></td>
+            <td>
+                <code>position_columns</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>] or <a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>] or None</code>
             </td>
@@ -2588,7 +2855,9 @@ which needed to go into a schema with a position column called 'pt')</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2657,7 +2926,9 @@ which needed to go into a schema with a position column called 'pt')</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_name</code></td>
+            <td>
+                <code>table_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2671,7 +2942,9 @@ which needed to go into a schema with a position column called 'pt')</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>description</code></td>
+            <td>
+                <code>description</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2685,7 +2958,9 @@ which needed to go into a schema with a position column called 'pt')</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>flat_segmentation_source</code></td>
+            <td>
+                <code>flat_segmentation_source</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2699,7 +2974,9 @@ which needed to go into a schema with a position column called 'pt')</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>read_permission</code></td>
+            <td>
+                <code>read_permission</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2717,7 +2994,9 @@ Defaults to None (will not update).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>write_permission</code></td>
+            <td>
+                <code>write_permission</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2736,7 +3015,9 @@ Defaults to None (will not update).</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>user_id</code></td>
+            <td>
+                <code>user_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -2752,7 +3033,9 @@ Defaults to None. (will not update)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>notice_text</code></td>
+            <td>
+                <code>notice_text</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -2768,7 +3051,9 @@ Defaults to None. (will not update)</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -2815,7 +3100,9 @@ This method uses the options specified in the object, including table name and i
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>staged_annos</code></td>
+            <td>
+                <code>staged_annos</code>
+            </td>
             <td>
                   <code><span title="guide.AnnotationGuide">AnnotationGuide</span></code>
             </td>
@@ -2829,7 +3116,9 @@ This method uses the options specified in the object, including table name and i
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>aligned_volume_name</code></td>
+            <td>
+                <code>aligned_volume_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>

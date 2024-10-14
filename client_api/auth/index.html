@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -1065,6 +1065,118 @@
 
 
 
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.get_group_users" href="#caveclient.auth.AuthClient.get_group_users">get_group_users</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get users in a group</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.get_new_token" href="#caveclient.auth.AuthClient.get_new_token">get_new_token</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Currently, returns instructions for getting a new token based on the current settings and saving it to the local environment. New OAuth tokens are currently not able to be retrieved programmatically.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.get_token" href="#caveclient.auth.AuthClient.get_token">get_token</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Load a token with a given key the specified token file</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.get_tokens" href="#caveclient.auth.AuthClient.get_tokens">get_tokens</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the tokens setup for this users</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.get_user_information" href="#caveclient.auth.AuthClient.get_user_information">get_user_information</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get user data.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.save_token" href="#caveclient.auth.AuthClient.save_token">save_token</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Conveniently save a token in the correct format.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.setup_token" href="#caveclient.auth.AuthClient.setup_token">setup_token</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Currently, returns instructions for getting your auth token based on the current settings and saving it to the local environment.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.request_header" href="#caveclient.auth.AuthClient.request_header">request_header</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Formatted request header with the specified token</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.auth.AuthClient.token" href="#caveclient.auth.AuthClient.token">token</a></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Secret token used to authenticate yourself to the Connectome Annotation Versioning Engine services.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1144,7 +1256,9 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>group_id</code></td>
+            <td>
+                <code>group_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -1213,7 +1327,9 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>open</code></td>
+            <td>
+                <code>open</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1259,7 +1375,9 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>token_key</code></td>
+            <td>
+                <code>token_key</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> or None</code>
             </td>
@@ -1348,7 +1466,9 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>user_ids</code></td>
+            <td>
+                <code>user_ids</code>
+            </td>
             <td>
                   <code>list of int</code>
             </td>
@@ -1399,7 +1519,9 @@ If you would like to specify more information about the json file where the toke
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>token</code></td>
+            <td>
+                <code>token</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1413,7 +1535,9 @@ If you would like to specify more information about the json file where the toke
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>token_key</code></td>
+            <td>
+                <code>token_key</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1427,7 +1551,9 @@ If you would like to specify more information about the json file where the toke
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>overwrite</code></td>
+            <td>
+                <code>overwrite</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1441,7 +1567,9 @@ If you would like to specify more information about the json file where the toke
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>token_file</code></td>
+            <td>
+                <code>token_file</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -1455,7 +1583,9 @@ If you would like to specify more information about the json file where the toke
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>switch_token</code></td>
+            <td>
+                <code>switch_token</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1469,7 +1599,9 @@ If you would like to specify more information about the json file where the toke
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>write_to_server_file</code></td>
+            <td>
+                <code>write_to_server_file</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1517,7 +1649,9 @@ New OAuth tokens are currently not able to be retrieved programmatically.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>make_new</code></td>
+            <td>
+                <code>make_new</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
@@ -1532,7 +1666,9 @@ retrieve an existing token.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>open</code></td>
+            <td>
+                <code>open</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>

@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -724,6 +724,117 @@ Extended documentation for all versions of the skeleton service client can be fo
 
 
 
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.build_endpoint" href="#caveclient.skeletonservice.SkeletonClient.build_endpoint">build_endpoint</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Building the URL in a separate function facilities testing</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.compressDictToBytes" href="#caveclient.skeletonservice.SkeletonClient.compressDictToBytes">compressDictToBytes</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.compressStringToBytes" href="#caveclient.skeletonservice.SkeletonClient.compressStringToBytes">compressStringToBytes</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.decompressBytesToDict" href="#caveclient.skeletonservice.SkeletonClient.decompressBytesToDict">decompressBytesToDict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.decompressBytesToString" href="#caveclient.skeletonservice.SkeletonClient.decompressBytesToString">decompressBytesToString</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.get_precomputed_skeleton_info" href="#caveclient.skeletonservice.SkeletonClient.get_precomputed_skeleton_info">get_precomputed_skeleton_info</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>get's the precomputed skeleton information</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.get_skeleton" href="#caveclient.skeletonservice.SkeletonClient.get_skeleton">get_skeleton</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets basic skeleton information for a datastack</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.raise_for_status" href="#caveclient.skeletonservice.SkeletonClient.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.server_version" href="#caveclient.skeletonservice.SkeletonClient.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -907,7 +1018,9 @@ Args:
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>root_id</code></td>
+            <td>
+                <code>root_id</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -921,7 +1034,9 @@ Args:
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>datastack_name</code></td>
+            <td>
+                <code>datastack_name</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
             </td>
@@ -935,7 +1050,9 @@ Args:
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>skeleton_version</code></td>
+            <td>
+                <code>skeleton_version</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
@@ -949,7 +1066,9 @@ Args:
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>output_format</code></td>
+            <td>
+                <code>output_format</code>
+            </td>
             <td>
                   <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/string.html#module-string">string</a></code>
             </td>
