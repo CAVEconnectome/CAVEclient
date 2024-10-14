@@ -83,10 +83,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -230,16 +226,19 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="../" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
   
     
   
   Tutorial
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -247,33 +246,28 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../client_api/" class="md-tabs__link">
-        
-  
     
-  
-  Client API
-
-      </a>
-    </li>
-  
-
+    
       
-        
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../extended_api/" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/client/" class="md-tabs__link">
+          
   
     
   
-  Extended API
+  API reference
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
+  
+
+    
   
 
       
@@ -432,6 +426,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -494,6 +492,8 @@
             Tutorial
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -788,22 +788,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
     
     
       
@@ -820,11 +804,14 @@
         
   
   
-    <a href="../../client_api/client/" class="md-nav__link">
+    
+  
+  
+    <a href="../../api/client/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
-    Client API
+    API reference
   </span>
   
 
@@ -834,72 +821,6 @@
     </a>
   
 
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
-  
-  
-    <a href="../../extended_api/annotationengine/" class="md-nav__link">
-      
-  
-  <span class="md-ellipsis">
-    Extended API
-  </span>
-  
-
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
   
 
       
@@ -1024,7 +945,7 @@ ChunkedGraph client is at <code>client.chunkedgraph</code>.</p>
 important for programmatic work. In order to look up the root id for a
 location in space, one needs to use the supervoxel segmentation to get
 the associated supervoxel id. The ChunkedGraph client makes this easy
-using the <a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_id">client.chunkedgraph.get_root_id()</a>
+using the <a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_root_id">client.chunkedgraph.get_root_id()</a>
 method.</p>
 <div class="highlight"><pre><span></span><code><span class="n">sv_id</span> <span class="o">=</span> <span class="mi">104200755619042523</span>
 <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">get_root_id</span><span class="p">(</span><span class="n">supervoxel_id</span><span class="o">=</span><span class="n">sv_id</span><span class="p">)</span>
@@ -1045,14 +966,14 @@ different than it is now.</p>
 </code></pre></div>
 <p>If you are doing this across lots of supervoxels (or any nodes) then you
 can do it more efficiently in one request with
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots">client.chunkedgraph.get_roots()</a></p>
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_roots">client.chunkedgraph.get_roots()</a></p>
 <div class="highlight"><pre><span></span><code><span class="n">node_ids</span> <span class="o">=</span> <span class="p">[</span><span class="mi">104200755619042523</span><span class="p">,</span> <span class="mi">104200755619042524</span><span class="p">,</span><span class="mi">104200755619042525</span><span class="p">]</span>
 <span class="n">root_ids</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">get_roots</span><span class="p">(</span><span class="n">node_ids</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="getting-supervoxels-for-a-root-id">Getting supervoxels for a root id<a class="headerlink" href="#getting-supervoxels-for-a-root-id" title="Permanent link">&para;</a></h3>
 <p>A root id is associated with a particular agglomeration of supervoxels,
 which can be found with the
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves">client.chunkedgraph.get_leaves()</a> method.
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_leaves">client.chunkedgraph.get_leaves()</a> method.
 A new root id is generated for every new change in the chunkedgraph, so time stamps do not apply.</p>
 <div class="highlight"><pre><span></span><code><span class="n">root_id</span> <span class="o">=</span> <span class="mi">648518346349541252</span>
 <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">get_leaves</span><span class="p">(</span><span class="n">root_id</span><span class="p">)</span>
@@ -1064,11 +985,11 @@ the stop_layer option</p>
 </code></pre></div>
 <p>This will get all the level 2 IDs for this root, which correspond to the
 lowest chunk of the hierarchy. An analogous option exists for
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots">client.chunkedgraph.get_roots()</a>.
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_roots">client.chunkedgraph.get_roots()</a>.
 This is useful to help find nodes to query within the <code>l2cache</code>, amongst other things.</p>
 <h3 id="other-functions">Other functions<a class="headerlink" href="#other-functions" title="Permanent link">&para;</a></h3>
 <p>There are a variety of other interesting functions to explore in
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1">client.chunkedgraph</a>.</p>
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient">client.chunkedgraph</a>.</p>
 
 
 
@@ -1176,7 +1097,7 @@ This is useful to help find nodes to query within the <code>l2cache</code>, amon
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.integrate", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>

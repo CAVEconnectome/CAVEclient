@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#5250" class="md-skip">
+        <a href="#600-october-14-2024" class="md-skip">
           Skip to content
         </a>
       
@@ -80,10 +80,6 @@
     <div data-md-component="announce">
       
     </div>
-    
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
     
     
       
@@ -226,16 +222,19 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../tutorials/" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
   
     
   
   Tutorial
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -243,33 +242,28 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../client_api/" class="md-tabs__link">
-        
-  
     
-  
-  Client API
-
-      </a>
-    </li>
-  
-
+    
       
-        
   
   
   
-    <li class="md-tabs__item">
-      <a href="../extended_api/" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/client/" class="md-tabs__link">
+          
   
     
   
-  Extended API
+  API reference
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
+  
+
+    
   
 
       
@@ -428,6 +422,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -463,7 +461,7 @@
         
   
   
-    <a href="../tutorials/framework/" class="md-nav__link">
+    <a href="../tutorials/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -495,22 +493,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
     
     
       
@@ -527,11 +509,14 @@
         
   
   
-    <a href="../client_api/client/" class="md-nav__link">
+    
+  
+  
+    <a href="../api/client/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
-    Client API
+    API reference
   </span>
   
 
@@ -541,72 +526,6 @@
     </a>
   
 
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
-  
-  
-    <a href="../extended_api/annotationengine/" class="md-nav__link">
-      
-  
-  <span class="md-ellipsis">
-    Extended API
-  </span>
-  
-
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
   
 
       
@@ -701,6 +620,15 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#600-october-14-2024" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.0.0 (October 14, 2024)
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#5250" class="md-nav__link">
@@ -1013,6 +941,10 @@
 
   <h1>Changelog</h1>
 
+<h3 id="600-october-14-2024">6.0.0 (October 14, 2024)<a class="headerlink" href="#600-october-14-2024" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Refactored CAVEclient internals away from a factory syntax. Most users should not notice a difference, but code that relied on specific subclient type logic may be affected.</li>
+</ul>
 <h3 id="5250">5.25.0<a class="headerlink" href="#5250" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Added ability to suppress table warnings in client.materialize.query_table and similar methods by setting <code>log_warnings=False</code></li>
@@ -1021,8 +953,8 @@
 <ul>
 <li>Added generalized support for detecting server versions to provide timely exceptions to users</li>
 <li>Used new support to check that chunkegraph has updated version before using spatial bounds kwarg
-on client.chunkedgraph.level2_chunk_graph</li>
-<li>Added support for postign and getting segment properties files to client.state </li>
+  on client.chunkedgraph.level2_chunk_graph</li>
+<li>Added support for postign and getting segment properties files to client.state</li>
 </ul>
 <h3 id="5180">5.18.0<a class="headerlink" href="#5180" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1051,7 +983,7 @@ on client.chunkedgraph.level2_chunk_graph</li>
 </ul>
 <h3 id="5160">5.16.0<a class="headerlink" href="#5160" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Added bounding box query to client.chunkedgraph.level2_chunk_graph </li>
+<li>Added bounding box query to client.chunkedgraph.level2_chunk_graph</li>
 <li>Fix default materialization version client when server not advertising correctly</li>
 </ul>
 <h3 id="5151-jan-18-2024">5.15.1 (Jan 18, 2024)<a class="headerlink" href="#5151-jan-18-2024" title="Permanent link">&para;</a></h3>
@@ -1062,7 +994,7 @@ on client.chunkedgraph.level2_chunk_graph</li>
 <ul>
 <li>Improved documentation with types</li>
 <li>Improved testing on more python versions</li>
-<li>Bugfixes for pyton 3.12 compatability </li>
+<li>Bugfixes for pyton 3.12 compatability</li>
 </ul>
 <h3 id="5140-november-24-2023">5.14.0 (November 24, 2023)<a class="headerlink" href="#5140-november-24-2023" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1088,7 +1020,7 @@ on client.chunkedgraph.level2_chunk_graph</li>
 <ul>
 <li>Fixed pyarrow support for live_live query</li>
 </ul>
-<h3 id="5101-august-142023">5.10.1  (August 14,2023)<a class="headerlink" href="#5101-august-142023" title="Permanent link">&para;</a></h3>
+<h3 id="5101-august-142023">5.10.1 (August 14,2023)<a class="headerlink" href="#5101-august-142023" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Changed random_sample argument to be an integer number of annotations rather than a floating fraction of table</li>
 <li>Added option to live_query</li>
@@ -1128,12 +1060,12 @@ on client.chunkedgraph.level2_chunk_graph</li>
 </ul>
 <h3 id="520">5.2.0<a class="headerlink" href="#520" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Added local caching of datastack names &gt; server_address to simplify initialization of clients 
-with servers other than global.daf-apis.com.</li>
+<li>Added local caching of datastack names &gt; server_address to simplify initialization of clients
+  with servers other than global.daf-apis.com.</li>
 </ul>
 <p>Cache is saved on a local file ~/.cloudvolume/secrets/cave_datastack_to_server_map.json</p>
 <p>Cache will populate the first time caveclient.CAVEclient('my_datastack', server_address="https://my_server.com")
-is called.  Subsequent calls can then just be caveclient.CAVEclient('my_datastack').</p>
+is called. Subsequent calls can then just be caveclient.CAVEclient('my_datastack').</p>
 <h3 id="510">5.1.0<a class="headerlink" href="#510" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Added get_oldest_timestamp call to chunkedgraph</li>
@@ -1260,7 +1192,7 @@ so you can use the new MaterializationEngine 3.0 API and client.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.integrate", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../assets/javascripts/bundle.525ec568.min.js"></script>

@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://caveconnectome.github.io/CAVEclient/tutorials/advanced/">
+        <link rel="canonical" href="https://caveconnectome.github.io/CAVEclient/api/schema/">
       
       
-        <link rel="prev" href="../materialization/">
+        <link rel="prev" href="../materialize/">
       
       
-        <link rel="next" href="../../api/client/">
+        <link rel="next" href="../skeleton/">
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Advanced Usage - CAVEclient</title>
+        <title>client.schema - CAVEclient</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#changing-session-configurations" class="md-skip">
+        <a href="#caveclient.emannotationschemas.SchemaClient.server_version" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Advanced Usage
+              client.schema
             
           </span>
         </div>
@@ -223,13 +223,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../tutorials/" class="md-tabs__link">
           
   
     
@@ -245,17 +243,21 @@
         
   
   
+    
+  
   
     
     
       
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../api/client/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../client/" class="md-tabs__link">
           
   
     
@@ -418,8 +420,6 @@
       
   
   
-    
-  
   
   
     
@@ -444,6 +444,56 @@
         
       
         
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../tutorials/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Tutorial
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
       
         
       
@@ -464,57 +514,90 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
-              
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
   
   <span class="md-ellipsis">
-    Tutorial
+    API reference
   </span>
   
 
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            API reference
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
               
-            
-              
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../framework/" class="md-nav__link">
+  
+    
+    
+      
         
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
   
   <span class="md-ellipsis">
-    Introduction
+    Client API
   </span>
   
 
-      </a>
-    </li>
-  
-
-              
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            Client API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -523,11 +606,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../authentication/" class="md-nav__link">
+      <a href="../client/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Authentication
+    caveclient.CAVEclient
   </span>
   
 
@@ -548,7 +631,28 @@
         
   
   <span class="md-ellipsis">
-    Annotation
+    client.annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    client.auth
   </span>
   
 
@@ -569,28 +673,7 @@
         
   
   <span class="md-ellipsis">
-    Chunked Graph
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../l2cache/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Level 2 Cache
+    client.chunkedgraph
   </span>
   
 
@@ -611,7 +694,7 @@
         
   
   <span class="md-ellipsis">
-    Info Service
+    client.info
   </span>
   
 
@@ -628,11 +711,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../schemas/" class="md-nav__link">
+      <a href="../l2cache/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    EM Annotation Schemas
+    client.l2cache
   </span>
   
 
@@ -649,32 +732,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../state/" class="md-nav__link">
+      <a href="../materialize/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    JSON Neuroglancer State Service
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../materialization/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Materialization
+    client.materialize
   </span>
   
 
@@ -702,7 +764,7 @@
           
   
   <span class="md-ellipsis">
-    Advanced Usage
+    client.schema
   </span>
   
 
@@ -713,7 +775,7 @@
         
   
   <span class="md-ellipsis">
-    Advanced Usage
+    client.schema
   </span>
   
 
@@ -733,9 +795,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#changing-session-configurations" class="md-nav__link">
+  <a href="#caveclient.emannotationschemas.SchemaClient.server_version" class="md-nav__link">
     <span class="md-ellipsis">
-      Changing session configurations
+      server_version
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.emannotationschemas.SchemaClient.get_schemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_schemas
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.emannotationschemas.SchemaClient.schema_definition" class="md-nav__link">
+    <span class="md-ellipsis">
+      schema_definition
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.emannotationschemas.SchemaClient.schema_definition_all" class="md-nav__link">
+    <span class="md-ellipsis">
+      schema_definition_all
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.emannotationschemas.SchemaClient.schema_definition_multi" class="md-nav__link">
+    <span class="md-ellipsis">
+      schema_definition_multi
     </span>
   </a>
   
@@ -750,15 +848,58 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../skeleton/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    client.skeleton
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../state/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    client.state
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
@@ -786,14 +927,11 @@
         
   
   
-    
-  
-  
-    <a href="../../api/client/" class="md-nav__link">
+    <a href="../config/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
-    API reference
+    General functions
   </span>
   
 
@@ -803,8 +941,14 @@
     </a>
   
 
+      
+    </li>
   
 
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -885,7 +1029,7 @@
                   
 
   
-    <a href="https://github.com/CAVEconnectome/CAVEclient/edit/master/docs/tutorials/advanced.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/CAVEconnectome/CAVEclient/edit/master/docs/api/schema.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -894,35 +1038,367 @@
     
       
     
-    <a href="https://github.com/CAVEconnectome/CAVEclient/raw/master/docs/tutorials/advanced.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/CAVEconnectome/CAVEclient/raw/master/docs/api/schema.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-  <h1>Advanced Usage</h1>
+  <h1>client.schema</h1>
 
-<h3 id="changing-session-configurations">Changing session configurations<a class="headerlink" href="#changing-session-configurations" title="Permanent link">&para;</a></h3>
-<p>It is possible to change details of how a client talks to the various servers it needs
-to interface with. For instance, the <code>CAVEclient</code> will attempt to retry
-specific failed requests to the server, but will only try a specific number of times,
-and will only wait specific amounts of time between retries. These values can be changed
-via the <code>set_session_defaults</code> method. For instance, to change the number of retries to
-5, and to increase the delay between subsequent retries, you could do:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">caveclient</span> <span class="kn">import</span> <span class="n">set_session_defaults</span>
+<div class="doc doc-object doc-class">
 
-<span class="n">set_session_defaults</span><span class="p">(</span><span class="n">max_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">backoff_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-</code></pre></div>
-<p>Note that this needs to happen before initializing the client for this to work
-properly. Some of these parameters are also adjustable at the client level.</p>
-<p>To view the current session defaults, you can use the <code>get_session_defaults</code> method:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">caveclient</span> <span class="kn">import</span> <span class="n">get_session_defaults</span>
 
-<span class="n">client</span><span class="o">.</span><span class="n">get_session_defaults</span><span class="p">()</span>
-</code></pre></div>
-<p>More information on the available parameters can be found in the
-<a href="../../api/config/">API documentation</a>.</p>
+
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.emannotationschemas.SchemaClient.get_schemas" href="#caveclient.emannotationschemas.SchemaClient.get_schemas">get_schemas</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the available schema types</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.emannotationschemas.SchemaClient.schema_definition" href="#caveclient.emannotationschemas.SchemaClient.schema_definition">schema_definition</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the definition of a specified schema_type</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.emannotationschemas.SchemaClient.schema_definition_all" href="#caveclient.emannotationschemas.SchemaClient.schema_definition_all">schema_definition_all</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the definition of all schema_types</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.emannotationschemas.SchemaClient.schema_definition_multi" href="#caveclient.emannotationschemas.SchemaClient.schema_definition_multi">schema_definition_multi</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the definition of multiple schema_types</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="caveclient.emannotationschemas.SchemaClient.server_version" href="#caveclient.emannotationschemas.SchemaClient.server_version">server_version</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="packaging.version.Version">Version</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The version of the service running on the remote server. Note that this</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="caveclient.emannotationschemas.SchemaClient.server_version" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">server_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Version</span><span class="p">]</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#caveclient.emannotationschemas.SchemaClient.server_version" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The version of the service running on the remote server. Note that this
+refers to the software running on the server and has nothing to do with the
+version of the datastack itself.</p>
+    </div>
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.emannotationschemas.SchemaClient.get_schemas" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_schemas</span><span class="p">()</span></code>
+
+<a href="#caveclient.emannotationschemas.SchemaClient.get_schemas" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the available schema types</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of schema types available on the Schema service.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.emannotationschemas.SchemaClient.schema_definition" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">schema_definition</span><span class="p">(</span><span class="n">schema_type</span><span class="p">)</span></code>
+
+<a href="#caveclient.emannotationschemas.SchemaClient.schema_definition" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the definition of a specified schema_type</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_type</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of a schema_type</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/json.html#module-json">json</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Schema definition</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.emannotationschemas.SchemaClient.schema_definition_all" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">schema_definition_all</span><span class="p">()</span></code>
+
+<a href="#caveclient.emannotationschemas.SchemaClient.schema_definition_all" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the definition of all schema_types</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary of schema definitions. Keys are schema names, values are definitions.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.emannotationschemas.SchemaClient.schema_definition_multi" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">schema_definition_multi</span><span class="p">(</span><span class="n">schema_types</span><span class="p">)</span></code>
+
+<a href="#caveclient.emannotationschemas.SchemaClient.schema_definition_multi" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the definition of multiple schema_types</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>schema_types</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of schema names</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary of schema definitions. Keys are schema names, values are definitions.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
 
 
 
@@ -961,7 +1437,7 @@ properly. Some of these parameters are also adjustable at the client level.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../materialization/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Materialization">
+          <a href="../materialize/" class="md-footer__link md-footer__link--prev" aria-label="Previous: client.materialize">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -971,20 +1447,20 @@ properly. Some of these parameters are also adjustable at the client level.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Materialization
+                client.materialize
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../api/client/" class="md-footer__link md-footer__link--next" aria-label="Next: caveclient.CAVEclient">
+          <a href="../skeleton/" class="md-footer__link md-footer__link--next" aria-label="Next: client.skeleton">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                caveclient.CAVEclient
+                client.skeleton
               </div>
             </div>
             <div class="md-footer__button md-icon">

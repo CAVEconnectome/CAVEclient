@@ -21,107 +21,55 @@
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/annotation/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/annotation/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/auth/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/auth/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/chunkedgraph/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/chunkedgraph/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/client/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/client/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/config/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/config/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/info/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/datastack_lookup/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/l2cache/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/info/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/materialize/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/l2cache/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/schema/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/materialize/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/skeletonservice/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/schema/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/client_api/state/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/skeleton/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/annotationengine/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/auth/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/base/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/chunkedgraph/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/datastack_lookup/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/emannotationschemas/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/framework/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/infoservice/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/jsonservice/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/l2cache/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/materializationengine/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/session_config/</loc>
-         <lastmod>2024-10-14</lastmod>
-    </url>
-    <url>
-         <loc>https://caveconnectome.github.io/CAVEclient/extended_api/skeletonservice/</loc>
+         <loc>https://caveconnectome.github.io/CAVEclient/api/state/</loc>
          <lastmod>2024-10-14</lastmod>
     </url>
     <url>

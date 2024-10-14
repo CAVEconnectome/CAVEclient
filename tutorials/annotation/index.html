@@ -83,10 +83,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -230,16 +226,19 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="../" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
   
     
   
   Tutorial
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -247,33 +246,28 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../client_api/" class="md-tabs__link">
-        
-  
     
-  
-  Client API
-
-      </a>
-    </li>
-  
-
+    
       
-        
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../extended_api/" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/client/" class="md-tabs__link">
+          
   
     
   
-  Extended API
+  API reference
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
+  
+
+    
   
 
       
@@ -432,6 +426,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -494,6 +492,8 @@
             Tutorial
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -797,22 +797,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
     
     
       
@@ -829,11 +813,14 @@
         
   
   
-    <a href="../../client_api/client/" class="md-nav__link">
+    
+  
+  
+    <a href="../../api/client/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
-    Client API
+    API reference
   </span>
   
 
@@ -843,72 +830,6 @@
     </a>
   
 
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
-  
-  
-    <a href="../../extended_api/annotationengine/" class="md-nav__link">
-      
-  
-  <span class="md-ellipsis">
-    Extended API
-  </span>
-  
-
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
   
 
       
@@ -1017,7 +938,7 @@ do not include any root ids. An annotation client is accessed with
 <code>client.annotation</code>.</p>
 <h3 id="getting-existing-tables">Getting existing tables<a class="headerlink" href="#getting-existing-tables" title="Permanent link">&para;</a></h3>
 <p>A list of the existing tables for the datastack can be found with
-<a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.get_tables">get_tables()</a>.</p>
+<a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.get_tables">get_tables()</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="n">all_tables</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="n">get_tables</span><span class="p">()</span>
 <span class="n">all_tables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </code></pre></div>
@@ -1033,7 +954,7 @@ do not include any root ids. An annotation client is accessed with
 </ul>
 <h3 id="downloading-annotations">Downloading annotations<a class="headerlink" href="#downloading-annotations" title="Permanent link">&para;</a></h3>
 <p>You can download the JSON representation of a data point through the
-<a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.get_annotation">get_annotation()</a>
+<a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.get_annotation">get_annotation()</a>
 method. This can be useful if you need to look up
 information on unmaterialized data, or to see what a properly templated
 annotation looks like.</p>
@@ -1043,7 +964,7 @@ annotation looks like.</p>
 </code></pre></div>
 <h3 id="create-a-new-table">Create a new table<a class="headerlink" href="#create-a-new-table" title="Permanent link">&para;</a></h3>
 <p>One can create a new table with a specified schema with the
-<a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.create_table">create_table()</a>
+<a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.create_table">create_table()</a>
 method:</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s1">&#39;test_table&#39;</span><span class="p">,</span>
                                <span class="n">schema_name</span><span class="o">=</span><span class="s1">&#39;microns_func_coreg&#39;</span><span class="p">,</span>
@@ -1056,7 +977,7 @@ correspond to voxels of that size. If you are uploading points from a
 neuroglancer session, you want this to match the units of that
 neuroglancer view.</p>
 <p>Note there are some optional metadata parameters to
-<a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.create_table">create_table()</a></p>
+<a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.create_table">create_table()</a></p>
 <ul>
 <li><code>notice_text</code> : This is text that will show up to users who access
   this data as a warning. This could be used to warn users that the
@@ -1080,7 +1001,7 @@ neuroglancer view.</p>
 </ul>
 <p>If you change your mind about what you want for metadata, some but not
 all fields can be updated with
-<a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.update_metadata">update_metadata()</a>. This includes the
+<a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.update_metadata">update_metadata()</a>. This includes the
 description, the notice_text, and the permissions, but not the name, schema or voxel
 resolution.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># to update description</span>
@@ -1132,7 +1053,7 @@ but then its up to you to assure that the IDs don't collide with other
 IDs. If you leave them blank then the service will assign the IDs for
 you.</p>
 <p>There is a similar method for updating
-<a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.update_annotation_df">update_annotation_df()</a></p>
+<a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.update_annotation_df">update_annotation_df()</a></p>
 <h3 id="staged-annotations">Staged Annotations<a class="headerlink" href="#staged-annotations" title="Permanent link">&para;</a></h3>
 <p>Staged annotations help ensure that the annotations you post follow the
 appropriate schema, both by providing guides to the field names and
@@ -1144,7 +1065,7 @@ group, and finally upload to the annotation table.</p>
 or a schema name. Here, we'll assume that there's already a table
 called "my_table" that is running a "cell_type_local" schema. If we
 want to add new annotations to the table, we simply use the table name
-with <a href="../../client_api/annotation/#caveclient.annotationengine.AnnotationClientV2.stage_annotations">stage_annotations()</a>.</p>
+with <a href="../../api/annotation/#caveclient.annotationengine.AnnotationClient.stage_annotations">stage_annotations()</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="n">stage</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="n">stage_annotations</span><span class="p">(</span><span class="s2">&quot;my_table&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>This <code>stage</code> object retrieves the schema for the table and hosts a local
@@ -1308,7 +1229,7 @@ resolution that the table expects.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.integrate", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>

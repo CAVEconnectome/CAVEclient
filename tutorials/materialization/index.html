@@ -83,10 +83,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -230,16 +226,19 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="../" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
   
     
   
   Tutorial
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -247,33 +246,28 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../client_api/" class="md-tabs__link">
-        
-  
     
-  
-  Client API
-
-      </a>
-    </li>
-  
-
+    
       
-        
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../extended_api/" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/client/" class="md-tabs__link">
+          
   
     
   
-  Extended API
+  API reference
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
+  
+
+    
   
 
       
@@ -432,6 +426,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -494,6 +492,8 @@
             Tutorial
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -833,22 +833,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
     
     
       
@@ -865,11 +849,14 @@
         
   
   
-    <a href="../../client_api/client/" class="md-nav__link">
+    
+  
+  
+    <a href="../../api/client/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
-    Client API
+    API reference
   </span>
   
 
@@ -879,72 +866,6 @@
     </a>
   
 
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
-  
-  
-    <a href="../../extended_api/annotationengine/" class="md-nav__link">
-      
-  
-  <span class="md-ellipsis">
-    Extended API
-  </span>
-  
-
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
   
 
       
@@ -1048,7 +969,7 @@
 <p>The Materialization client allows one to interact with the materialized
 annotation tables, that were posted to the annotation service
 (<a href="../annotation/">the annotations tutorial</a>).</p>
-<p>To see the entire class visit the <a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3">API doc</a>.</p>
+<p>To see the entire class visit the <a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient">API doc</a>.</p>
 <p>The service regularly looks up all annotations and the segids underneath
 all the boundspatialpoints. You can then query these tables to find out
 the IDs that underlie the annotations, or the annotations that now
@@ -1069,15 +990,15 @@ desirable depending on your use case. If your code involves using
 specific IDs then you should be using a specific version that is tied to
 a timepoint where those IDs are valid.</p>
 <p>To see what versions are available, use the
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_versions">client.materialize.get_versions()</a> function.</p>
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.get_versions">client.materialize.get_versions()</a> function.</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span>
 </code></pre></div>
 <p>Each version has a timestamp it was run on as well as a date when it
 will expire. You can query all this metadata for a specific version
 using
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_version_metadata">client.materialize.get_version_metadata()</a> or
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.get_version_metadata">client.materialize.get_version_metadata()</a> or
 all versions using
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_versions_metadata">client.materialize.get_versions_metadata()</a>.</p>
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.get_versions_metadata">client.materialize.get_versions_metadata()</a>.</p>
 <p>To change the default version, alter the <code>.version</code> property of the
 client. This will change the version for all subsequent calls which expect one, unless
 you specify a different version in the method call. Note that this also sets the
@@ -1091,13 +1012,12 @@ expect a timestamp.</p>
 <p>Or, you can specify the version when making a particular method call.</p>
 <h3 id="browsing-versions">Browsing versions<a class="headerlink" href="#browsing-versions" title="Permanent link">&para;</a></h3>
 <p>To see what tables are available in a version you can use
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_tables">client.materialize.get_tables()</a>.</p>
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.get_tables">client.materialize.get_tables()</a>.</p>
 <p>If you want to read about the description of what that table is, use the
 annotationengine client
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_table_metadata">client.materialize.get_table_metadata()</a>.</p>
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.get_table_metadata">client.materialize.get_table_metadata()</a>.</p>
 <p>If you want to read more about the schema for the annotation table use
-the schema service
-<a class="autorefs autorefs-internal" href="../../client_api/schema/#caveclient.emannotationschemas.SchemaClientLegacy.schema_definition">caveclient.emannotationschemas.SchemaClientLegacy.schema_definition()</a>.</p>
+the schema service <a href="../../api/schema/#caveclient.emannotationschemas.SchemaClient.schema_definition">client.schema.schema_definition()</a>.</p>
 <p>Note, the materialization service has a human readable webpage that
 links to the other services that might be more convenient for you to
 browse, to get a link there in ipython display
@@ -1111,7 +1031,7 @@ you should use in the metadata for the datastack.
 </code></pre></div>
 <h3 id="querying-tables">Querying tables<a class="headerlink" href="#querying-tables" title="Permanent link">&para;</a></h3>
 <p>To query a small table, you can just download the whole thing using
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.query_table">client.materialize.query_table()</a> which will return a
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.query_table">client.materialize.query_table()</a> which will return a
 dataframe of the table.</p>
 <p>Note however, some tables, such as the synapse table might be very large
 200-300 million rows and the service will only return the first 200,000
@@ -1144,9 +1064,7 @@ Also, it is convenient to return the with positions as a column of
 <code>np.array([x,y,z])</code> coordinates for many purposes. However, sometimes
 you might prefer to have them split out as separate x, y, z
 columns. To enable this option use <code>split_columns=True</code>.
-split_columns=True is faster, as combining them is an extra step. You
-can recombine split-out position columns using
-<a class="autorefs autorefs-internal" href="../../extended_api/materializationengine/#caveclient.materializationengine.concatenate_position_columns">caveclient.materializationengine.concatenate_position_columns()</a></p>
+split_columns=True is faster, as combining them is an extra step.</p>
 <div class="highlight"><pre><span></span><code><span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">()[</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">]</span>
 <span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
                                   <span class="n">filter_equal_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;post_pt_root_id&#39;</span><span class="p">:</span> <span class="n">MYID</span><span class="p">},</span>
@@ -1177,7 +1095,7 @@ based upon being within a 3d bounding box.</p>
 <p>This is done by adding a filter_spatial_dict argument to query_table.
 The units of the bounding box should be in the units of the
 voxel_resolution of the table (which can be obtained from
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.get_table_metadata">client.materialize.get_table_metadata()</a>).</p>
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.get_table_metadata">client.materialize.get_table_metadata()</a>).</p>
 <div class="highlight"><pre><span></span><code><span class="n">bounding_box</span> <span class="o">=</span> <span class="p">[[</span><span class="n">min_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">min_z</span><span class="p">],</span> <span class="p">[</span><span class="n">max_x</span><span class="p">,</span> <span class="n">max_y</span><span class="p">,</span> <span class="n">max_z</span><span class="p">]]</span>
 <span class="n">synapse_table</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get_datastack_info</span><span class="p">(</span><span class="s1">&#39;synapse_table&#39;</span><span class="p">)</span>
 <span class="n">df</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="n">synapse_table</span><span class="p">,</span>
@@ -1187,7 +1105,7 @@ voxel_resolution of the table (which can be obtained from
 <h3 id="synapse-query">Synapse Query<a class="headerlink" href="#synapse-query" title="Permanent link">&para;</a></h3>
 <p>For synapses in particular, we have a simplified method for querying
 them with a reduced syntax.
-<a href="../../client_api/materialize/#caveclient.materializationengine.MaterializationClientV3.synapse_query">client.materialize.synapse_query()</a> lets you specify pre
+<a href="../../api/materialize/#caveclient.materializationengine.MaterializationClient.synapse_query">client.materialize.synapse_query()</a> lets you specify pre
 and post synaptic partners as keyword arguments and bounding boxes. The defaults make reasonable assumptions
 about what you want to query, namely that the synapse_table is the table
 that the info service advertises, and that if you specify a bounding
@@ -1208,7 +1126,7 @@ the tables with an ID that is not valid during the time of the
 materialization you will get empty results.</p>
 <p>To check if root_ids are valid at your materialization's timestamp, you
 can use
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots">client.chunkedgraph.is_latest_roots()</a></p>
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.is_latest_roots">client.chunkedgraph.is_latest_roots()</a></p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="n">mat_time</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">get_timestamp</span><span class="p">()</span>
 <span class="n">is_latest</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="o">.</span><span class="n">is_latest_roots</span><span class="p">([</span><span class="n">MYID</span><span class="p">],</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">mat_time</span><span class="p">)</span>
@@ -1217,7 +1135,7 @@ can use
 <p>If you need to lookup what happened to that ID, you can use the
 chunkedgraph lineage tree, to look into the future or the past,
 depending on your application you can use
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_lineage_graph">client.chunkedgraph.get_lineage_graph()</a>.</p>
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_lineage_graph">client.chunkedgraph.get_lineage_graph()</a>.</p>
 <p>Again, the ideal situation is that you have an annotation in the
 database which refers to your objects of interest, and querying that
 table by the id column will return the object in the most recent
@@ -1225,7 +1143,7 @@ materialization.</p>
 <p>However, sometimes you might be browsing and proofreadding the data and
 get an ID that is more recent that the most recent version available.
 For convenience, you can use
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.live_query">client.materialize.live_query()</a>.</p>
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.live_query">client.materialize.live_query()</a>.</p>
 <p>to automatically update the results of your query to a time in the
 future, such as now. For example, to pass now, use
 <code>datetime.datetime.now(datetime.timezone.utc)</code>. Note all
@@ -1458,7 +1376,7 @@ function is available.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.integrate", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>

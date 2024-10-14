@@ -83,10 +83,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -230,16 +226,19 @@
     
   
   
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="../" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
   
     
   
   Tutorial
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -247,33 +246,28 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../client_api/" class="md-tabs__link">
-        
-  
     
-  
-  Client API
-
-      </a>
-    </li>
-  
-
+    
       
-        
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../extended_api/" class="md-tabs__link">
-        
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/client/" class="md-tabs__link">
+          
   
     
   
-  Extended API
+  API reference
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
+  
+
+    
   
 
       
@@ -432,6 +426,10 @@
     
       
         
+          
+        
+      
+        
       
         
       
@@ -494,6 +492,8 @@
             Tutorial
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -839,22 +839,6 @@
       
         
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
     
     
       
@@ -871,11 +855,14 @@
         
   
   
-    <a href="../../client_api/client/" class="md-nav__link">
+    
+  
+  
+    <a href="../../api/client/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
-    Client API
+    API reference
   </span>
   
 
@@ -885,72 +872,6 @@
     </a>
   
 
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
-  
-  
-    <a href="../../extended_api/annotationengine/" class="md-nav__link">
-      
-  
-  <span class="md-ellipsis">
-    Extended API
-  </span>
-  
-
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
   
 
       
@@ -1062,9 +983,9 @@ can be found <a href="https://github.com/CAVEconnectome/PCGL2Cache">here</a>.</p
 <h3 id="finding-level-2-nodes">Finding Level 2 Nodes<a class="headerlink" href="#finding-level-2-nodes" title="Permanent link">&para;</a></h3>
 <p>The chunkedgraph can be used to find the level2 nodes of a rootID using
 a <code>stop_layer=2</code> keyword argument on the
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_leaves">client.chunkedgraph.get_leaves()</a>.
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_leaves">client.chunkedgraph.get_leaves()</a>.
 Conversely the level 2 node of a supervoxel can be found using the same keyword argument of
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots">client.chunkedgraph.get_roots()</a>.
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.get_roots">client.chunkedgraph.get_roots()</a>.
 Note if you don't specify a timestamp it will give you the level2 node that is
 presently associated with the object.</p>
 <h3 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h3>
@@ -1090,7 +1011,7 @@ presently associated with the object.</p>
   voxels border that side of the chunk. Meant to
   help understand significant the borders with
   other chunks are. Ordering is the [[x_bottom,
-  y_bottom, z_bottom],[x_top, y_top, z_top]]
+y_bottom, z_bottom],[x_top, y_top, z_top]]
   where {xyz}_bottom refers to the face which
   has the smallest values for that dimension, and
   {xyz}_top refers to the face which has the
@@ -1109,7 +1030,7 @@ presently associated with the object.</p>
 </ul>
 <h3 id="retrieving-level-2-statistics">Retrieving Level 2 Statistics<a class="headerlink" href="#retrieving-level-2-statistics" title="Permanent link">&para;</a></h3>
 <p>Level 2 stats about nodes can be retreived using the
-<a href="../../client_api/l2cache/#caveclient.l2cache.L2CacheClientLegacy.get_l2data">client.l2cache.get_l2data()</a> method. It simply takes a list of level 2 nodes you want to
+<a href="../../api/l2cache/#caveclient.l2cache.L2CacheClient.get_l2data">client.l2cache.get_l2data()</a> method. It simply takes a list of level 2 nodes you want to
 retrieve. Optionally you can specify only the attributes that you are
 interested in retrieving which will speed up the request.</p>
 <h3 id="missing-data">Missing Data<a class="headerlink" href="#missing-data" title="Permanent link">&para;</a></h3>
@@ -1149,7 +1070,7 @@ labelling of its topology.</p>
 represent what level 2 nodes that object is locally connected to. This
 forms a graph between the level 2 nodes of the object that can be
 retrieved using the chunkedgraph function
-<a href="../../client_api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClientV1.level2_chunk_graph">client.chunkedgraph</a>. This graph represents a topological representation of the
+<a href="../../api/chunkedgraph/#caveclient.chunkedgraph.ChunkedGraphClient.level2_chunk_graph">client.chunkedgraph</a>. This graph represents a topological representation of the
 neuron at the resolution of individual chunks, and is guaranteed to be
 fully connected, unlike a voxel or mesh representation of the neuron
 which can have gaps where there are defects in the segmentation volume
@@ -1279,7 +1200,7 @@ within that region of space.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.follow", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.instant", "navigation.footer", "navigation.prune", "navigation.tabs", "navigation.tabs.sticky", "content.action.edit", "content.action.view", "toc.integrate", "toc.follow", "navigation.top", "search.suggest", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
