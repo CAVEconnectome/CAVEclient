@@ -17,11 +17,8 @@ To learn how to install `caveclient`, visit [Installation](./installation.md).
 
 To see hands-on examples of using `caveclient` in a notebook, visit the [Tutorials](./tutorials/index.md).
 
-To see API reference documentation for interacting with a `caveclient.CAVEclient` object (most common),
-visit the [Client API](./client_api/index.md).
-
-To see API reference documentation for interacting with the individual services,
-visit the [Extended API](./extended_api/index.md).
+To see API reference documentation for interacting with a `caveclient.CAVEclient` object,
+visit the [Client API](./api/index.md).
 
 To see a glossary of terms used in the documentation, visit the [Glossary (work in progress)](./glossary.md).
 
@@ -30,4 +27,3 @@ Feedback on the documentation is welcome! Please [open an issue](https://github.
 use the "Edit this page" button at the top right of any page to suggest changes.
 
 To read a full description of the Connectome Annotation Versioning Engine, including a description of the various services please [read this paper](https://www.biorxiv.org/content/10.1101/2023.07.26.550598v1).
-

@@ -16,9 +16,9 @@ can be found [here](https://github.com/CAVEconnectome/PCGL2Cache).
 
 The chunkedgraph can be used to find the level2 nodes of a rootID using
 a `stop_layer=2` keyword argument on the
-[client.chunkedgraph.get_leaves()]({{ client_api_paths.chunkedgraph }}.get_leaves).
+[client.chunkedgraph.get_leaves()]({{ api_paths.chunkedgraph }}.get_leaves).
 Conversely the level 2 node of a supervoxel can be found using the same keyword argument of
-[client.chunkedgraph.get_roots()]({{ client_api_paths.chunkedgraph }}.get_roots).
+[client.chunkedgraph.get_roots()]({{ api_paths.chunkedgraph }}.get_roots).
 Note if you don't specify a timestamp it will give you the level2 node that is
 presently associated with the object.
 
@@ -46,10 +46,10 @@ The statistics that are available are:
   voxels border that side of the chunk. Meant to
   help understand significant the borders with
   other chunks are. Ordering is the [[x_bottom,
-  y_bottom, z_bottom],[x_top, y_top, z_top]]
-  where {xyz}_bottom refers to the face which
+y_bottom, z_bottom],[x_top, y_top, z_top]]
+  where {xyz}\_bottom refers to the face which
   has the smallest values for that dimension, and
-  {xyz}_top refers to the face which has the
+  {xyz}\_top refers to the face which has the
   largest.
 - **pca** A 3x3 matrix representing the principal
   components of the xyz point cloud of voxels for
@@ -66,7 +66,7 @@ The statistics that are available are:
 ## Retrieving Level 2 Statistics
 
 Level 2 stats about nodes can be retreived using the
-[client.l2cache.get_l2data()]({{ client_api_paths.l2cache }}.get_l2data) method. It simply takes a list of level 2 nodes you want to
+[client.l2cache.get_l2data()]({{ api_paths.l2cache }}.get_l2data) method. It simply takes a list of level 2 nodes you want to
 retrieve. Optionally you can specify only the attributes that you are
 interested in retrieving which will speed up the request.
 
@@ -116,7 +116,7 @@ Level 2 nodes have "cross chunk" edges within the chunkedgraph which
 represent what level 2 nodes that object is locally connected to. This
 forms a graph between the level 2 nodes of the object that can be
 retrieved using the chunkedgraph function
-[client.chunkedgraph]({{ client_api_paths.chunkedgraph }}.level2_chunk_graph). This graph represents a topological representation of the
+[client.chunkedgraph]({{ api_paths.chunkedgraph }}.level2_chunk_graph). This graph represents a topological representation of the
 neuron at the resolution of individual chunks, and is guaranteed to be
 fully connected, unlike a voxel or mesh representation of the neuron
 which can have gaps where there are defects in the segmentation volume
