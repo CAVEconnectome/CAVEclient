@@ -1,5 +1,0 @@
----
-title: jsonservice
----
-
-::: caveclient.jsonservice

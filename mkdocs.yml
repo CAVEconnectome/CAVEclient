@@ -18,32 +18,22 @@ nav:
     - tutorials/state.md
     - tutorials/materialization.md
     - tutorials/advanced.md
-  - Client API: # these match the client property names
-    - client_api/index.md
-    - client_api/client.md
-    - client_api/annotation.md
-    - client_api/auth.md
-    - client_api/chunkedgraph.md
-    - client_api/info.md
-    - client_api/l2cache.md
-    - client_api/materialize.md
-    - client_api/schema.md
-    - client_api/state.md
-    - client_api/config.md
-  - Extended API: # these match the python file names
-    - extended_api/index.md
-    - extended_api/annotationengine.md
-    - extended_api/auth.md
-    - extended_api/base.md
-    - extended_api/chunkedgraph.md
-    - extended_api/datastack_lookup.md
-    - extended_api/emannotationschemas.md
-    - extended_api/framework.md
-    - extended_api/infoservice.md
-    - extended_api/jsonservice.md
-    - extended_api/l2cache.md
-    - extended_api/materializationengine.md
-    - extended_api/session_config.md
+  - API reference: # these match the client property names
+    # - api/index.md
+    - Client API:
+      - api/client.md
+      - api/annotation.md
+      - api/auth.md
+      - api/chunkedgraph.md
+      - api/info.md
+      - api/l2cache.md
+      - api/materialize.md
+      - api/schema.md
+      - api/skeleton.md
+      - api/state.md
+    - General functions: 
+      - api/config.md
+      - api/datastack_lookup.md
   - Glossary: glossary.md
   - Contributing: contributing.md
   - Changelog: changelog.md
@@ -69,8 +59,8 @@ theme:
     - navigation.tabs.sticky
     - content.action.edit
     - content.action.view
-    - toc.follow
     - toc.integrate # whether to include the toc in the main nav bar to the left
+    - toc.follow
     - navigation.top
     - search.suggest
     - search.highlight
@@ -136,9 +126,11 @@ plugins:
             unwrap_annotated: false # https://mkdocstrings.github.io/python/usage/configuration/signatures/#unwrap_annotated
             heading_level: 2
             inherited_members: true
+            # members: none
+            filters: ["!^_[^_]", "!.*(raise_for_status).*"]
   - macros
   - autorefs
-  - section-index
+  # - section-index
   # - git-authors: # this one is more email-based
   #     show_contribution: true
   #     authorship_threshold_percent: 5
@@ -155,19 +147,21 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/CAVEconnectome/CAVEclient
       name: Github
-  version:
-    provider: mike
+  # version:
+  #   provider: mike
   names: 
     repo_title: CAVEclient
     package: caveclient
     main_branch: master
-  client_api_paths:
-    annotation: ../client_api/annotation.md#caveclient.annotationengine.AnnotationClientV2
-    auth: ../client_api/auth.md#caveclient.auth.AuthClient
-    chunkedgraph: ../client_api/chunkedgraph.md#caveclient.chunkedgraph.ChunkedGraphClientV1
-    materialize: ../client_api/materialize.md#caveclient.materializationengine.MaterializationClientV3
-    l2cache: ../client_api/l2cache.md#caveclient.l2cache.L2CacheClientLegacy
-    state: ../client_api/state.md#caveclient.state.JSONServiceV1
+  api_paths:
+    annotation: ../api/annotation.md#caveclient.annotationengine.AnnotationClient
+    auth: ../api/auth.md#caveclient.auth.AuthClient
+    chunkedgraph: ../api/chunkedgraph.md#caveclient.chunkedgraph.ChunkedGraphClient
+    materialize: ../api/materialize.md#caveclient.materializationengine.MaterializationClient
+    l2cache: ../api/l2cache.md#caveclient.l2cache.L2CacheClient
+    state: ../api/state.md#caveclient.jsonservice.JSONService
+    schema: ../api/schema.md#caveclient.emannotationschemas.SchemaClient
+    skeleton: ../api/client.md#caveclient.skeletonservice.SkeletonClient
 
 watch:
   - caveclient/

@@ -1,5 +1,0 @@
----
-title: skeletonservice
----
-
-::: caveclient.skeletonservice
