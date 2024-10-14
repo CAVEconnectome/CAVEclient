@@ -6,7 +6,7 @@ The Materialization client allows one to interact with the materialized
 annotation tables, that were posted to the annotation service
 ([the annotations tutorial](./annotation.md)).
 
-To see the entire class visit the [API doc]({{ client_api_paths.materialize }}).
+To see the entire class visit the [API doc]({{ api_paths.materialize }}).
 
 The service regularly looks up all annotations and the segids underneath
 all the boundspatialpoints. You can then query these tables to find out
@@ -34,7 +34,7 @@ specific IDs then you should be using a specific version that is tied to
 a timepoint where those IDs are valid.
 
 To see what versions are available, use the
-[client.materialize.get_versions()]({{ client_api_paths.materialize }}.get_versions) function.
+[client.materialize.get_versions()]({{ api_paths.materialize }}.get_versions) function.
 
 ```python
 client.materialize.get_versions()
@@ -43,9 +43,9 @@ client.materialize.get_versions()
 Each version has a timestamp it was run on as well as a date when it
 will expire. You can query all this metadata for a specific version
 using
-[client.materialize.get_version_metadata()]({{ client_api_paths.materialize }}.get_version_metadata) or
+[client.materialize.get_version_metadata()]({{ api_paths.materialize }}.get_version_metadata) or
 all versions using
-[client.materialize.get_versions_metadata()]({{ client_api_paths.materialize }}.get_versions_metadata).
+[client.materialize.get_versions_metadata()]({{ api_paths.materialize }}.get_versions_metadata).
 
 To change the default version, alter the `.version` property of the
 client. This will change the version for all subsequent calls which expect one, unless
@@ -68,15 +68,14 @@ Or, you can specify the version when making a particular method call.
 ## Browsing versions
 
 To see what tables are available in a version you can use
-[client.materialize.get_tables()]({{ client_api_paths.materialize }}.get_tables).
+[client.materialize.get_tables()]({{ api_paths.materialize }}.get_tables).
 
 If you want to read about the description of what that table is, use the
 annotationengine client
-[client.materialize.get_table_metadata()]({{ client_api_paths.materialize }}.get_table_metadata).
+[client.materialize.get_table_metadata()]({{ api_paths.materialize }}.get_table_metadata).
 
 If you want to read more about the schema for the annotation table use
-the schema service
-[caveclient.emannotationschemas.SchemaClientLegacy.schema_definition()][caveclient.emannotationschemas.SchemaClientLegacy.schema_definition].
+the schema service [client.schema.schema_definition()]({{ api_paths.schema }}.schema_definition).
 
 Note, the materialization service has a human readable webpage that
 links to the other services that might be more convenient for you to
@@ -97,7 +96,7 @@ nannotations=client.materialize.get_annotation_count('my_table')
 ## Querying tables
 
 To query a small table, you can just download the whole thing using
-[client.materialize.query_table()]({{ client_api_paths.materialize }}.query_table) which will return a
+[client.materialize.query_table()]({{ api_paths.materialize }}.query_table) which will return a
 dataframe of the table.
 
 Note however, some tables, such as the synapse table might be very large
@@ -141,9 +140,7 @@ Also, it is convenient to return the with positions as a column of
 `np.array([x,y,z])` coordinates for many purposes. However, sometimes
 you might prefer to have them split out as separate x, y, z
 columns. To enable this option use `split_columns=True`.
-split_columns=True is faster, as combining them is an extra step. You
-can recombine split-out position columns using
-[caveclient.materializationengine.concatenate_position_columns()][caveclient.materializationengine.concatenate_position_columns]
+split_columns=True is faster, as combining them is an extra step.
 
 ```python
 synapse_table = client.info.get_datastack_info()['synapse_table']
@@ -184,7 +181,7 @@ based upon being within a 3d bounding box.
 This is done by adding a filter_spatial_dict argument to query_table.
 The units of the bounding box should be in the units of the
 voxel_resolution of the table (which can be obtained from
-[client.materialize.get_table_metadata()]({{ client_api_paths.materialize }}.get_table_metadata)).
+[client.materialize.get_table_metadata()]({{ api_paths.materialize }}.get_table_metadata)).
 
 ```python
 bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
@@ -198,7 +195,7 @@ df=client.materialize.query_table(synapse_table,
 
 For synapses in particular, we have a simplified method for querying
 them with a reduced syntax.
-[client.materialize.synapse_query()]({{ client_api_paths.materialize }}.synapse_query) lets you specify pre
+[client.materialize.synapse_query()]({{ api_paths.materialize }}.synapse_query) lets you specify pre
 and post synaptic partners as keyword arguments and bounding boxes. The defaults make reasonable assumptions
 about what you want to query, namely that the synapse_table is the table
 that the info service advertises, and that if you specify a bounding
@@ -225,7 +222,7 @@ materialization you will get empty results.
 
 To check if root_ids are valid at your materialization's timestamp, you
 can use
-[client.chunkedgraph.is_latest_roots()]({{ client_api_paths.chunkedgraph }}.is_latest_roots)
+[client.chunkedgraph.is_latest_roots()]({{ api_paths.chunkedgraph }}.is_latest_roots)
 
 ```python
 import numpy as np
@@ -237,7 +234,7 @@ assert(np.all(is_latest))
 If you need to lookup what happened to that ID, you can use the
 chunkedgraph lineage tree, to look into the future or the past,
 depending on your application you can use
-[client.chunkedgraph.get_lineage_graph()]({{ client_api_paths.chunkedgraph }}.get_lineage_graph).
+[client.chunkedgraph.get_lineage_graph()]({{ api_paths.chunkedgraph }}.get_lineage_graph).
 
 Again, the ideal situation is that you have an annotation in the
 database which refers to your objects of interest, and querying that
@@ -247,7 +244,7 @@ materialization.
 However, sometimes you might be browsing and proofreadding the data and
 get an ID that is more recent that the most recent version available.
 For convenience, you can use
-[client.materialize.live_query()]({{ client_api_paths.chunkedgraph }}.live_query).
+[client.materialize.live_query()]({{ api_paths.chunkedgraph }}.live_query).
 
 to automatically update the results of your query to a time in the
 future, such as now. For example, to pass now, use
