@@ -152,30 +152,7 @@ def _tables_metadata_key(matclient, *args, **kwargs):
 
 
 class MaterializationClient(ClientBase):
-    """Client for interacting with the materialization engine
-
-    Parameters
-    ----------
-    server_address : str
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    datastack_name : str
-        Name of the datastack.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    cg_client: caveclient.chunkedgraph.ChunkedGraphClient
-        chunkedgraph client for live materializations
-    synapse_table: str
-        default synapse table for queries
-    version : default version to query
-        if None will default to latest version
-    desired_resolution : Iterable[float] or None, optional
-        If given, should be a list or array of the desired resolution you want queries returned in
-        useful for materialization queries.
-    """
+    """Client for interacting with the materialization engine."""
 
     def __init__(
         self,
@@ -193,6 +170,29 @@ class MaterializationClient(ClientBase):
         desired_resolution=None,
         over_client=None,
     ):
+        """
+        Parameters
+        ----------
+        server_address : str
+            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+        datastack_name : str
+            Name of the datastack.
+        auth_client : AuthClient or None, optional
+            Authentication client to use to connect to server. If None, do not use authentication.
+        api_version : str or int (default: latest)
+            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
+            2: new api version, (i.e. minniev1.microns-daf.com)
+            'latest': default to the most recent (current 2)
+        cg_client: caveclient.chunkedgraph.ChunkedGraphClient
+            chunkedgraph client for live materializations
+        synapse_table: str
+            default synapse table for queries
+        version : default version to query
+            if None will default to latest version
+        desired_resolution : Iterable[float] or None, optional
+            If given, should be a list or array of the desired resolution you want queries returned in
+            useful for materialization queries.
+        """
         if auth_client is None:
             auth_client = AuthClient()
 
