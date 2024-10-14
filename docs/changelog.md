@@ -2,7 +2,7 @@
 title: Changelog
 ---
 
-## 6.0.0
+## 6.0.0 (October 14, 2024)
 
 - Refactored CAVEclient internals away from a factory syntax. Most users should not notice a difference, but code that relied on specific subclient type logic may be affected.
 
