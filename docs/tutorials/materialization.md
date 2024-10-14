@@ -75,8 +75,7 @@ annotationengine client
 [client.materialize.get_table_metadata()]({{ api_paths.materialize }}.get_table_metadata).
 
 If you want to read more about the schema for the annotation table use
-the schema service
-[caveclient.emannotationschemas.SchemaClientLegacy.schema_definition()][caveclient.emannotationschemas.SchemaClientLegacy.schema_definition].
+the schema service [client.schema.schema_definition()]({{ api_paths.schema }}.schema_definition).
 
 Note, the materialization service has a human readable webpage that
 links to the other services that might be more convenient for you to
@@ -141,9 +140,7 @@ Also, it is convenient to return the with positions as a column of
 `np.array([x,y,z])` coordinates for many purposes. However, sometimes
 you might prefer to have them split out as separate x, y, z
 columns. To enable this option use `split_columns=True`.
-split_columns=True is faster, as combining them is an extra step. You
-can recombine split-out position columns using
-[caveclient.materializationengine.concatenate_position_columns()][caveclient.materializationengine.concatenate_position_columns]
+split_columns=True is faster, as combining them is an extra step.
 
 ```python
 synapse_table = client.info.get_datastack_info()['synapse_table']

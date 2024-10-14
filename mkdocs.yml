@@ -147,8 +147,8 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/CAVEconnectome/CAVEclient
       name: Github
-  version:
-    provider: mike
+  # version:
+  #   provider: mike
   names: 
     repo_title: CAVEclient
     package: caveclient
@@ -159,9 +159,9 @@ extra:
     chunkedgraph: ../api/chunkedgraph.md#caveclient.chunkedgraph.ChunkedGraphClient
     materialize: ../api/materialize.md#caveclient.materializationengine.MaterializationClient
     l2cache: ../api/l2cache.md#caveclient.l2cache.L2CacheClient
-    state: ../api/state.md#caveclient.state.JSONService
-    schema: ../api/schema.md#caveclient.schemaengine.SchemaClient
-    skeleton: ../api/client.md#caveclient.skeleton.SkeletonClient
+    state: ../api/state.md#caveclient.jsonservice.JSONService
+    schema: ../api/schema.md#caveclient.emannotationschemas.SchemaClient
+    skeleton: ../api/client.md#caveclient.skeletonservice.SkeletonClient
 
 watch:
   - caveclient/
