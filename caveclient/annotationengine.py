@@ -12,103 +12,47 @@ from .tools import stage
 SERVER_KEY = "ae_server_address"
 
 
-def AnnotationClient(
-    server_address,
-    dataset_name=None,
-    aligned_volume_name=None,
-    auth_client=None,
-    api_version="latest",
-    verify=True,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-) -> "AnnotationClientV2":
-    """Factory for returning AnnotationClient
+class AnnotationClient(ClientBase):
+    """
+    Client for interacting with the annotation engine.
 
     Parameters
     ----------
     server_address : str
         server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    dataset_name : str
-        Name of the datastack.
+    aligned_volume_name : str
+        Name of the aligned volume to use.
     auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use authentication.
+        Authentication client to use to connect to server. If None, do not use
+        authentication.
     api_version : str or int (default: latest)
         What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
         2: new api version, (i.e. minniev1.microns-daf.com)
         'latest': default to the most recent (current 2)
     verify : str (default : True)
-        whether to verify https
+        Whether to verify https
     max_retries : Int or None, optional
-        Set the number of retries per request, by default None. If None, defaults to requests package default.
+        Set the number of retries per request, by default None. If None, defaults to
+        requests package default.
     pool_block : Bool or None, optional
-        If True, restricts pool of threads to max size, by default None. If None, defaults to requests package default.
+        If True, restricts pool of threads to max size, by default None. If None,
+        defaults to requests package default.
     pool_maxsize : Int or None, optional
-        Sets the max number of threads in the pool, by default None. If None, defaults to requests package default.
+        Sets the max number of threads in the pool, by default None. If None, defaults
+        to requests package default.
     over_client:
-        client to overwrite configuration with
-
-    Returns
-    -------
-    ClientBaseWithDatastack
-        List of datastack names for available datastacks on the annotation engine
+        Client to overwrite configuration with.
+    schema_client:
+        Client to use to get schema information. If None, uses the `over_client`'s
+        schema client.
     """
 
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        SERVER_KEY,
-        server_address,
-        annotation_common,
-        annotation_api_versions,
-        auth_header,
-        verify=verify,
-    )
-
-    AnnoClient = client_mapping[api_version]
-    if api_version > 1:
-        return AnnoClient(
-            server_address,
-            auth_header,
-            api_version,
-            endpoints,
-            SERVER_KEY,
-            aligned_volume_name,
-            verify=verify,
-            max_retries=max_retries,
-            pool_maxsize=pool_maxsize,
-            pool_block=pool_block,
-            over_client=over_client,
-        )
-    else:
-        return AnnoClient(
-            server_address,
-            auth_header,
-            api_version,
-            endpoints,
-            SERVER_KEY,
-            dataset_name,
-            verify=verify,
-            max_retries=max_retries,
-            pool_maxsize=pool_maxsize,
-            pool_block=pool_block,
-            over_client=over_client,
-        )
-
-
-class AnnotationClientV2(ClientBase):
     def __init__(
         self,
         server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
-        aligned_volume_name,
+        aligned_volume_name=None,
+        auth_client=None,
+        api_version="latest",
         verify=True,
         max_retries=None,
         pool_maxsize=None,
@@ -116,12 +60,26 @@ class AnnotationClientV2(ClientBase):
         over_client=None,
         schema_client=None,
     ):
-        super(AnnotationClientV2, self).__init__(
+        if auth_client is None:
+            auth_client = AuthClient()
+        auth_header = auth_client.request_header
+
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            annotation_common,
+            annotation_api_versions,
+            auth_header,
+            verify=verify,
+        )
+
+        super(AnnotationClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
             verify=verify,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
@@ -857,9 +815,3 @@ class AnnotationClientV2(ClientBase):
                 staged_annos.annotation_list,
                 aligned_volume_name=aligned_volume_name,
             )
-
-
-client_mapping = {
-    2: AnnotationClientV2,
-    "latest": AnnotationClientV2,
-}

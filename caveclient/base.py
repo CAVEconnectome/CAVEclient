@@ -251,7 +251,10 @@ class ClientBase(object):
         """The version of the service running on the remote server. Note that this
         refers to the software running on the server and has nothing to do with the
         version of the datastack itself."""
-        return self._server_version
+        if self._server_version is None and self._api_version is not None:
+            return Version(str(self._api_version))
+        else:
+            return self._server_version
 
     @staticmethod
     def raise_for_status(r, log_warning=True):

@@ -10,63 +10,38 @@ from .endpoints import schema_api_versions, schema_endpoints_common
 
 logger = logging.getLogger(__name__)
 
-server_key = "emas_server_address"
+SERVER_KEY = "emas_server_address"
 
 
-def SchemaClient(
-    server_address=None,
-    auth_client=None,
-    api_version="latest",
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-) -> "SchemaClientLegacy":
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        server_key,
-        server_address,
-        schema_endpoints_common,
-        schema_api_versions,
-        auth_header,
-    )
-    SchemaClient = client_mapping[api_version]
-    return SchemaClient(
-        server_address=server_address,
-        auth_header=auth_header,
-        api_version=api_version,
-        endpoints=endpoints,
-        server_name=server_key,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-    )
-
-
-class SchemaClientLegacy(ClientBase):
+class SchemaClient(ClientBase):
     def __init__(
         self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
+        server_address=None,
+        auth_client=None,
+        api_version="latest",
         max_retries=None,
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
     ):
-        super(SchemaClientLegacy, self).__init__(
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            schema_endpoints_common,
+            schema_api_versions,
+            auth_header,
+        )
+        super(SchemaClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
             max_retries=max_retries,
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
@@ -148,10 +123,3 @@ class SchemaClientLegacy(ClientBase):
                 'Client requested an schema service endpoint (see "schema_definition_all") not yet available on your deployment. Please talk to your admin about updating your deployment'
             )
             return None
-
-
-client_mapping = {
-    1: SchemaClientLegacy,
-    2: SchemaClientLegacy,
-    "latest": SchemaClientLegacy,
-}
