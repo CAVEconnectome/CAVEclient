@@ -109,7 +109,7 @@ def root_id_int_list_check(
 
 
 class ChunkedGraphClient(ClientBase):
-    """ChunkedGraph Client for the v1 API"""
+    """Client for interacting with the chunkedgraph."""
 
     def __init__(
         self,

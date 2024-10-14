@@ -13,39 +13,7 @@ SERVER_KEY = "ae_server_address"
 
 
 class AnnotationClient(ClientBase):
-    """
-    Client for interacting with the annotation engine.
-
-    Parameters
-    ----------
-    server_address : str
-        server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
-    aligned_volume_name : str
-        Name of the aligned volume to use.
-    auth_client : AuthClient or None, optional
-        Authentication client to use to connect to server. If None, do not use
-        authentication.
-    api_version : str or int (default: latest)
-        What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
-        2: new api version, (i.e. minniev1.microns-daf.com)
-        'latest': default to the most recent (current 2)
-    verify : str (default : True)
-        Whether to verify https
-    max_retries : Int or None, optional
-        Set the number of retries per request, by default None. If None, defaults to
-        requests package default.
-    pool_block : Bool or None, optional
-        If True, restricts pool of threads to max size, by default None. If None,
-        defaults to requests package default.
-    pool_maxsize : Int or None, optional
-        Sets the max number of threads in the pool, by default None. If None, defaults
-        to requests package default.
-    over_client:
-        Client to overwrite configuration with.
-    schema_client:
-        Client to use to get schema information. If None, uses the `over_client`'s
-        schema client.
-    """
+    """Client for interacting with the annotation engine."""
 
     def __init__(
         self,
@@ -60,6 +28,37 @@ class AnnotationClient(ClientBase):
         over_client=None,
         schema_client=None,
     ):
+        """
+        Parameters
+        ----------
+        server_address : str
+            server_address to use to connect to (i.e. https://minniev1.microns-daf.com)
+        aligned_volume_name : str
+            Name of the aligned volume to use.
+        auth_client : AuthClient or None, optional
+            Authentication client to use to connect to server. If None, do not use
+            authentication.
+        api_version : str or int (default: latest)
+            What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
+            2: new api version, (i.e. minniev1.microns-daf.com)
+            'latest': default to the most recent (current 2)
+        verify : str (default : True)
+            Whether to verify https
+        max_retries : Int or None, optional
+            Set the number of retries per request, by default None. If None, defaults to
+            requests package default.
+        pool_block : Bool or None, optional
+            If True, restricts pool of threads to max size, by default None. If None,
+            defaults to requests package default.
+        pool_maxsize : Int or None, optional
+            Sets the max number of threads in the pool, by default None. If None, defaults
+            to requests package default.
+        over_client:
+            Client to overwrite configuration with.
+        schema_client:
+            Client to use to get schema information. If None, uses the `over_client`'s
+            schema client.
+        """
         if auth_client is None:
             auth_client = AuthClient()
         auth_header = auth_client.request_header

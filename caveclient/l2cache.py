@@ -15,6 +15,8 @@ SERVER_KEY = "l2cache_server_address"
 
 
 class L2CacheClient(ClientBase):
+    """Client for interacting with the level2 cache service."""
+
     def __init__(
         self,
         server_address=None,
