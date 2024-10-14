@@ -768,6 +768,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.annotationengine.AnnotationClient.raise_for_status" class="md-nav__link">
+    <span class="md-ellipsis">
+      raise_for_status
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.annotationengine.AnnotationClient.stage_annotations" class="md-nav__link">
     <span class="md-ellipsis">
       stage_annotations
@@ -1157,186 +1166,6 @@
         <p>Client for interacting with the annotation engine.</p>
 
 
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>server_address</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>server_address to use to connect to (i.e. https://minniev1.microns-daf.com)</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>aligned_volume_name</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Name of the aligned volume to use.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>auth_client</code>
-            </td>
-            <td>
-                  <code><span title="caveclient.auth.AuthClient">AuthClient</span> or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Authentication client to use to connect to server. If None, do not use
-authentication.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>api_version</code>
-            </td>
-            <td>
-                  <code>str or int (default: latest)</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>What version of the api to use, 0: Legacy client (i.e www.dynamicannotationframework.com)
-2: new api version, (i.e. minniev1.microns-daf.com)
-'latest': default to the most recent (current 2)</p>
-              </div>
-            </td>
-            <td>
-                  <code>&#39;latest&#39;</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>verify</code>
-            </td>
-            <td>
-                  <code>str (default : True)</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Whether to verify https</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>max_retries</code>
-            </td>
-            <td>
-                  <code>Int or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Set the number of retries per request, by default None. If None, defaults to
-requests package default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>pool_block</code>
-            </td>
-            <td>
-                  <code>Bool or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, restricts pool of threads to max size, by default None. If None,
-defaults to requests package default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>pool_maxsize</code>
-            </td>
-            <td>
-                  <code>Int or None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Sets the max number of threads in the pool, by default None. If None, defaults
-to requests package default.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>over_client</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Client to overwrite configuration with.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>schema_client</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Client to use to get schema information. If None, uses the <code>over_client</code>'s
-schema client.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
 
 
 
@@ -1430,6 +1259,14 @@ schema client.</p>
               <td>
                 <div class="doc-md-description">
                   <p>Process a dataframe into a list of dictionaries</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.annotationengine.AnnotationClient.raise_for_status" href="#caveclient.annotationengine.AnnotationClient.raise_for_status">raise_for_status</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
                 </div>
               </td>
             </tr>
@@ -2681,6 +2518,27 @@ which needed to go into a schema with a position column called 'pt')</p>
           </tr>
       </tbody>
     </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.annotationengine.AnnotationClient.raise_for_status" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">raise_for_status</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+<a href="#caveclient.annotationengine.AnnotationClient.raise_for_status" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Raises <a class="autorefs autorefs-external" href="https://requests.readthedocs.io/en/latest/api/#requests.HTTPError">requests.HTTPError</a>, if one occurred.</p>
 
     </div>
 
