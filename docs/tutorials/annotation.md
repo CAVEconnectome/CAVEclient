@@ -12,7 +12,7 @@ do not include any root ids. An annotation client is accessed with
 ## Getting existing tables
 
 A list of the existing tables for the datastack can be found with
-[get_tables()]({{ client_api_paths.annotation }}.get_tables).
+[get_tables()]({{ api_paths.annotation }}.get_tables).
 
 ```python
 all_tables = client.annotation.get_tables()
@@ -32,7 +32,7 @@ Each table has three main properties that can be useful to know:
 ## Downloading annotations
 
 You can download the JSON representation of a data point through the
-[get_annotation()]({{ client_api_paths.annotation }}.get_annotation)
+[get_annotation()]({{ api_paths.annotation }}.get_annotation)
 method. This can be useful if you need to look up
 information on unmaterialized data, or to see what a properly templated
 annotation looks like.
@@ -46,7 +46,7 @@ client.annotation.get_annotation(annotation_ids=annotation_id, table_name=table_
 ## Create a new table
 
 One can create a new table with a specified schema with the
-[create_table()]({{ client_api_paths.annotation }}.create_table)
+[create_table()]({{ api_paths.annotation }}.create_table)
 method:
 
 ```python
@@ -63,7 +63,7 @@ neuroglancer session, you want this to match the units of that
 neuroglancer view.
 
 Note there are some optional metadata parameters to
-[create_table()]({{ client_api_paths.annotation }}.create_table)
+[create_table()]({{ api_paths.annotation }}.create_table)
 
 - `notice_text` : This is text that will show up to users who access
   this data as a warning. This could be used to warn users that the
@@ -87,7 +87,7 @@ Note there are some optional metadata parameters to
 
 If you change your mind about what you want for metadata, some but not
 all fields can be updated with
-[update_metadata()]({{ client_api_paths.annotation }}.update_metadata). This includes the
+[update_metadata()]({{ api_paths.annotation }}.update_metadata). This includes the
 description, the notice_text, and the permissions, but not the name, schema or voxel
 resolution.
 
@@ -149,7 +149,7 @@ IDs. If you leave them blank then the service will assign the IDs for
 you.
 
 There is a similar method for updating
-[update_annotation_df()]({{ client_api_paths.annotation }}.update_annotation_df)
+[update_annotation_df()]({{ api_paths.annotation }}.update_annotation_df)
 
 ## Staged Annotations
 
@@ -164,7 +164,7 @@ To get a StagedAnnotation object, you can start with either a table name
 or a schema name. Here, we'll assume that there's already a table
 called "my_table" that is running a "cell_type_local" schema. If we
 want to add new annotations to the table, we simply use the table name
-with [stage_annotations()]({{ client_api_paths.annotation }}.stage_annotations).
+with [stage_annotations()]({{ api_paths.annotation }}.stage_annotations).
 
 ```python
 stage = client.annotation.stage_annotations("my_table")

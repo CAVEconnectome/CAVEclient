@@ -7,7 +7,7 @@ with HTML services associated with the CAVE (Connectome Annotation
 Versioning Engine).
 
 For a larger introduction to CAVE and its services,
-see the main github organization site https://github.com/CAVEconnectome
+see the main GitHub organization site: [https://github.com/CAVEconnectome]()
 
 ## Installation
 
@@ -25,4 +25,3 @@ not <https://globalv1.daf-apis.com/> for each client when initializing
 it. Similarly, the clients can query the info service for metadata to
 simplify the interaction with a datastack, but you have to specify a
 datastack name.
-
