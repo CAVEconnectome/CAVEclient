@@ -21,6 +21,7 @@ from .base import (
     BaseEncoder,
     ClientBase,
     _api_endpoints,
+    _check_version_compatibility,
     handle_response,
 )
 from .endpoints import materialization_api_versions, materialization_common
@@ -560,6 +561,10 @@ class MaterializationClientV2(ClientBase):
         filter_in_dict,
         filter_out_dict,
         filter_equal_dict,
+        filter_greater_dict,
+        filter_less_dict,
+        filter_greater_equal_dict,
+        filter_less_equal_dict,
         filter_spatial_dict,
         filter_regex_dict,
         return_pyarrow,
@@ -597,6 +602,14 @@ class MaterializationClientV2(ClientBase):
             data["filter_notin_dict"] = filter_out_dict
         if filter_equal_dict is not None:
             data["filter_equal_dict"] = filter_equal_dict
+        if filter_greater_dict is not None:
+            data["filter_greater_dict"] = filter_greater_dict
+        if filter_less_dict is not None:
+            data["filter_less_dict"] = filter_less_dict
+        if filter_greater_equal_dict is not None:
+            data["filter_greater_equal_dict"] = filter_greater_equal_dict
+        if filter_less_equal_dict is not None:
+            data["filter_less_equal_dict"] = filter_less_equal_dict
         if filter_spatial_dict is not None:
             data["filter_spatial_dict"] = filter_spatial_dict
         if filter_regex_dict is not None:
@@ -664,12 +677,24 @@ class MaterializationClientV2(ClientBase):
             suffix_map = None
         return tables, suffix_map
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def query_table(
         self,
         table: str,
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
+        filter_greater_dict=None,
+        filter_less_dict=None,
+        filter_greater_equal_dict=None,
+        filter_less_equal_dict=None,
         filter_spatial_dict=None,
         filter_regex_dict=None,
         select_columns=None,
@@ -699,6 +724,14 @@ class MaterializationClientV2(ClientBase):
             Keys are column names, values are not allowed entries, by default None
         filter_equal_dict : dict, optional
             Keys are column names, values are specified entry, by default None
+        filter_greater_dict : dict, optional
+            Keys are column names, values are exclusive upper-bound value, by default None
+        filter_less_dict : dict, optional
+            Keys are column names, values are exclusive lower-bound value, by default None
+        filter_greater_equal_dict : dict, optional
+            Keys are column names, values are inclusive upper-bound value, by default None
+        filter_less_equal_dict : dict, optional
+            Keys are column names, values are inclusive lower-bound value, by default None
         filter_spatial_dict : dict, optional
             Keys are column names, values are bounding boxes expressed in units of the
             voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, max_y, max_z]], by default None
@@ -765,6 +798,10 @@ class MaterializationClientV2(ClientBase):
                     filter_in_dict=filter_in_dict,
                     filter_out_dict=filter_out_dict,
                     filter_equal_dict=filter_equal_dict,
+                    filter_greater_dict=filter_greater_dict,
+                    filter_less_dict=filter_less_dict,
+                    filter_greater_equal_dict=filter_greater_equal_dict,
+                    filter_less_equal_dict=filter_less_equal_dict,
                     filter_spatial_dict=filter_spatial_dict,
                     filter_regex_dict=filter_regex_dict,
                     select_columns=select_columns,
@@ -797,6 +834,14 @@ class MaterializationClientV2(ClientBase):
             {table: filter_in_dict} if filter_in_dict is not None else None,
             {table: filter_out_dict} if filter_out_dict is not None else None,
             {table: filter_equal_dict} if filter_equal_dict is not None else None,
+            {table: filter_greater_dict} if filter_greater_dict is not None else None,
+            {table: filter_less_dict} if filter_less_dict is not None else None,
+            {table: filter_greater_equal_dict}
+            if filter_greater_equal_dict is not None
+            else None,
+            {table: filter_less_equal_dict}
+            if filter_less_equal_dict is not None
+            else None,
             {table: filter_spatial_dict} if filter_spatial_dict is not None else None,
             {table: filter_regex_dict} if filter_regex_dict is not None else None,
             return_df,
@@ -809,12 +854,10 @@ class MaterializationClientV2(ClientBase):
         if get_counts:
             query_args["count"] = True
 
-        headers = {"Content-Type": "application/json", "Accept-Encoding": encoding}
-
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
-            headers=headers,
+            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
             stream=~return_df,
         )
@@ -844,6 +887,10 @@ class MaterializationClientV2(ClientBase):
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
+                        "greater": filter_greater_dict,
+                        "less": filter_less_dict,
+                        "greater_equal": filter_greater_equal_dict,
+                        "less_equal": filter_less_equal_dict,
                         "spatial": filter_spatial_dict,
                         "regex": filter_regex_dict,
                     },
@@ -866,12 +913,24 @@ class MaterializationClientV2(ClientBase):
         else:
             return response.json()
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def join_query(
         self,
         tables,
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
+        filter_greater_dict=None,
+        filter_less_dict=None,
+        filter_greater_equal_dict=None,
+        filter_less_equal_dict=None,
         filter_spatial_dict=None,
         filter_regex_dict=None,
         select_columns=None,
@@ -903,6 +962,18 @@ class MaterializationClientV2(ClientBase):
         filter_equal_dict : dict of dicts, optional
             outer layer: keys are table names
             inner layer: keys are column names, values are specified entry, by default None
+        filter_greater_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are exclusive upper-bound, by default None
+        filter_less_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are exclusive lower-bound, by default None
+        filter_greater_equal_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are inclusive upper-bound, by default None
+        filter_less_equal_dict : dict of dicts, optional
+            outer layer: keys are table names
+            inner layer: keys are column names, values are inclusive lower-bound, by default None
         filter_spatial_dict : dict of dicts, optional
             outer layer: keys are table names, inner layer: keys are column names.
             Values are bounding boxes as [[min_x, min_y,min_z],[max_x, max_y, max_z]],
@@ -964,6 +1035,10 @@ class MaterializationClientV2(ClientBase):
             filter_in_dict,
             filter_out_dict,
             filter_equal_dict,
+            filter_greater_dict,
+            filter_less_dict,
+            filter_greater_equal_dict,
+            filter_less_equal_dict,
             filter_spatial_dict,
             filter_regex_dict,
             return_df,
@@ -999,6 +1074,10 @@ class MaterializationClientV2(ClientBase):
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
+                        "greater": filter_greater_dict,
+                        "less": filter_less_dict,
+                        "greater_equal": filter_greater_equal_dict,
+                        "less_equal": filter_less_equal_dict,
                         "spatial": filter_spatial_dict,
                         "regex": filter_regex_dict,
                     },
@@ -1247,6 +1326,14 @@ class MaterializationClientV2(ClientBase):
         )
         return handle_response(response)
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def live_live_query(
         self,
         table: str,
@@ -1255,6 +1342,10 @@ class MaterializationClientV2(ClientBase):
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
+        filter_greater_dict=None,
+        filter_less_dict=None,
+        filter_greater_equal_dict=None,
+        filter_less_equal_dict=None,
         filter_spatial_dict=None,
         select_columns=None,
         offset: int = None,
@@ -1290,6 +1381,18 @@ class MaterializationClientV2(ClientBase):
         filter_equal_dict: dict of dicts, optional
             A dictionary with tables as keys, values are dicts with column keys and values
             to equate.
+        filter_greater_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as exclusive upper-bound.
+        filter_less_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as exclusive lower-bound.
+        filter_greater_equal_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as inclusive upper-bound.
+        filter_less_equal_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as inclusive lower-bound.
         filter_spatial_dict: dict of dicts, optional
             A dictionary with tables as keys, values are dicts with column keys and values
             of 2x3 list of bounds.
@@ -1351,6 +1454,22 @@ class MaterializationClientV2(ClientBase):
         >>>        "table_name":{
         >>>            "column_name":value
         >>>        },
+        >>>    filter_greater_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_less_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_greater_equal_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_less_equal_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
         >>>    filter_spatial_dict"= {
         >>>        "table_name": {
         >>>        "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
@@ -1392,6 +1511,14 @@ class MaterializationClientV2(ClientBase):
             data["filter_notin_dict"] = filter_out_dict
         if filter_equal_dict is not None:
             data["filter_equal_dict"] = filter_equal_dict
+        if filter_greater_dict is not None:
+            data["filter_greater_dict"] = filter_greater_dict
+        if filter_less_dict is not None:
+            data["filter_less_dict"] = filter_less_dict
+        if filter_greater_equal_dict is not None:
+            data["filter_greater_equal_dict"] = filter_greater_equal_dict
+        if filter_less_equal_dict is not None:
+            data["filter_less_equal_dict"] = filter_less_equal_dict
         if filter_spatial_dict is not None:
             data["filter_spatial_dict"] = filter_spatial_dict
         if select_columns is not None:
@@ -1449,6 +1576,10 @@ class MaterializationClientV2(ClientBase):
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
+                        "greater": filter_greater_dict,
+                        "less": filter_less_dict,
+                        "greater_equal": filter_greater_equal_dict,
+                        "less_equal": filter_less_equal_dict,
                         "spatial": filter_spatial_dict,
                     },
                     select_columns=select_columns,
@@ -1467,6 +1598,14 @@ class MaterializationClientV2(ClientBase):
                 )
         return df
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def live_query(
         self,
         table: str,
@@ -1474,6 +1613,10 @@ class MaterializationClientV2(ClientBase):
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
+        filter_greater_dict=None,
+        filter_less_dict=None,
+        filter_greater_equal_dict=None,
+        filter_less_equal_dict=None,
         filter_spatial_dict=None,
         filter_regex_dict=None,
         select_columns=None,
@@ -1503,6 +1646,14 @@ class MaterializationClientV2(ClientBase):
             Keys are column names, values are not allowed entries.
         filter_equal_dict : dict, optional
             Keys are column names, values are specified entry.
+        filter_greater_dict : dict, optional
+            Keys are column names, values are exclusive upper-bounds.
+        filter_less_dict : dict, optional
+            Keys are column names, values are exclusive lower-bounds.
+        filter_greater_equal_dict : dict, optional
+            Keys are column names, values are inclusive upper-bounds.
+        filter_less_equal_dict : dict, optional
+            Keys are column names, values are inclusive lower-bounds.
         filter_spatial_dict : dict, optional
             Keys are column names, values are bounding boxes expressed in units of the
             voxel_resolution of this dataset. Bounding box is
@@ -1575,6 +1726,10 @@ class MaterializationClientV2(ClientBase):
                             filter_in_dict=filter_in_dict,
                             filter_out_dict=filter_out_dict,
                             filter_equal_dict=filter_equal_dict,
+                            filter_greater_dict=filter_greater_dict,
+                            filter_less_dict=filter_less_dict,
+                            filter_greater_equal_dict=filter_greater_equal_dict,
+                            filter_less_equal_dict=filter_less_equal_dict,
                             filter_spatial_dict=filter_spatial_dict,
                             filter_regex_dict=filter_regex_dict,
                             select_columns=select_columns,
@@ -1602,15 +1757,31 @@ class MaterializationClientV2(ClientBase):
                     )
                 )
 
-        # first we want to translate all these filters into the IDss at the
+        # first we want to translate all these filters into the IDs at the
         # most recent materialization
         with MyTimeIt("map_filters"):
             past_filters, future_map = self.map_filters(
-                [filter_in_dict, filter_out_dict, filter_equal_dict],
+                [
+                    filter_in_dict,
+                    filter_out_dict,
+                    filter_equal_dict,
+                    filter_greater_dict,
+                    filter_less_dict,
+                    filter_greater_equal_dict,
+                    filter_less_equal_dict,
+                ],
                 timestamp,
                 timestamp_start,
             )
-            past_filter_in_dict, past_filter_out_dict, past_equal_dict = past_filters
+            (
+                past_filter_in_dict,
+                past_filter_out_dict,
+                past_equal_dict,
+                past_greater_dict,
+                past_less_dict,
+                past_greater_equal_dict,
+                past_less_equal_dict,
+            ) = past_filters
             if past_equal_dict is not None:
                 # when doing a filter equal in the past
                 # we translate it to a filter_in, as 1 ID might
@@ -1624,6 +1795,7 @@ class MaterializationClientV2(ClientBase):
                         past_filter_in_dict[col] = past_equal_dict.pop(col)
                 if len(past_equal_dict) == 0:
                     past_equal_dict = None
+                # TODO: What is the implication of the filter_equal behavior above w.r.t. the inequality filters?
 
         tables, suffix_map = self._resolve_merge_reference(
             merge_reference, table, datastack_name, materialization_version
@@ -1642,6 +1814,14 @@ class MaterializationClientV2(ClientBase):
                 if past_filter_out_dict is not None
                 else None,
                 {table: past_equal_dict} if past_equal_dict is not None else None,
+                {table: past_greater_dict} if past_greater_dict is not None else None,
+                {table: past_less_dict} if past_less_dict is not None else None,
+                {table: past_greater_equal_dict}
+                if past_greater_equal_dict is not None
+                else None,
+                {table: past_less_equal_dict}
+                if past_less_equal_dict is not None
+                else None,
                 {table: filter_spatial_dict}
                 if filter_spatial_dict is not None
                 else None,
@@ -1709,6 +1889,18 @@ class MaterializationClientV2(ClientBase):
                 if filter_equal_dict is not None:
                     for col, val in filter_equal_dict.items():
                         df = df[df[col] == val]
+                if filter_greater_dict is not None:
+                    for col, val in filter_greater_dict.items():
+                        df = df[df[col] > val]
+                if filter_less_dict is not None:
+                    for col, val in filter_less_dict.items():
+                        df = df[df[col] < val]
+                if filter_greater_equal_dict is not None:
+                    for col, val in filter_greater_equal_dict.items():
+                        df = df[df[col] >= val]
+                if filter_less_equal_dict is not None:
+                    for col, val in filter_less_equal_dict.items():
+                        df = df[df[col] <= val]
         if metadata:
             attrs = self._assemble_attributes(
                 table,
@@ -1717,6 +1909,10 @@ class MaterializationClientV2(ClientBase):
                     "inclusive": filter_in_dict,
                     "exclusive": filter_out_dict,
                     "equal": filter_equal_dict,
+                    "greater": filter_greater_dict,
+                    "less": filter_less_dict,
+                    "greater_equal": filter_greater_equal_dict,
+                    "less_equal": filter_less_equal_dict,
                     "spatial": filter_spatial_dict,
                     "regex": filter_regex_dict,
                 },
@@ -1801,8 +1997,11 @@ class MaterializationClientV2(ClientBase):
         """
         filter_in_dict = {}
         filter_equal_dict = {}
+        filter_greater_dict = {}
+        filter_less_dict = {}
+        filter_greater_equal_dict = {}
+        filter_less_equal_dict = {}
         filter_out_dict = None
-        filter_equal_dict = {}
         filter_spatial_dict = None
         if synapse_table is None:
             if self.synapse_table is None:
@@ -1833,6 +2032,10 @@ class MaterializationClientV2(ClientBase):
             filter_in_dict=filter_in_dict,
             filter_out_dict=filter_out_dict,
             filter_equal_dict=filter_equal_dict,
+            filter_greater_dict=filter_greater_dict,
+            filter_less_dict=filter_less_dict,
+            filter_greater_equal_dict=filter_greater_equal_dict,
+            filter_less_equal_dict=filter_less_equal_dict,
             filter_spatial_dict=filter_spatial_dict,
             offset=offset,
             limit=limit,
@@ -2036,6 +2239,14 @@ class MaterializationClientV3(MaterializationClientV2):
             metadata_d["voxel_resolution"] = [vx, vy, vz]
         return all_metadata
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def live_live_query(
         self,
         table: str,
@@ -2044,6 +2255,10 @@ class MaterializationClientV3(MaterializationClientV2):
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
+        filter_greater_dict=None,
+        filter_less_dict=None,
+        filter_greater_equal_dict=None,
+        filter_less_equal_dict=None,
         filter_spatial_dict=None,
         filter_regex_dict=None,
         select_columns=None,
@@ -2081,6 +2296,18 @@ class MaterializationClientV3(MaterializationClientV2):
         filter_equal_dict: dict of dicts, optional
             A dictionary with tables as keys, values are dicts with column keys and values
             to equate.
+        filter_greater_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as exclusive upper-bound.
+        filter_less_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as exclusive lower-bound.
+        filter_greater_equal_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as inclusive upper-bound.
+        filter_less_equal_dict: dict of dicts, optional
+            A dictionary with tables as keys, values are dicts with column keys and values
+            as inclusive lower-bound.
         filter_spatial_dict: dict of dicts, optional
             A dictionary with tables as keys, values are dicts with column keys and values
             of 2x3 list of bounds.
@@ -2148,6 +2375,22 @@ class MaterializationClientV3(MaterializationClientV2):
         >>>        "table_name":{
         >>>            "column_name":value
         >>>        },
+        >>>    filter_greater_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_less_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_greater_equal_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
+        >>>    filter_less_equal_dict"={
+        >>>        "table_name":{
+        >>>            "column_name":value
+        >>>        },
         >>>    filter_spatial_dict"= {
         >>>        "table_name": {
         >>>        "column_name": [[min_x, min_y, min_z], [max_x, max_y, max_z]]
@@ -2190,6 +2433,14 @@ it will likely get removed in future versions. "
             data["filter_notin_dict"] = filter_out_dict
         if filter_equal_dict is not None:
             data["filter_equal_dict"] = filter_equal_dict
+        if filter_greater_dict is not None:
+            data["filter_greater_dict"] = filter_greater_dict
+        if filter_less_dict is not None:
+            data["filter_less_dict"] = filter_less_dict
+        if filter_greater_equal_dict is not None:
+            data["filter_greater_equal_dict"] = filter_greater_equal_dict
+        if filter_less_equal_dict is not None:
+            data["filter_less_equal_dict"] = filter_less_equal_dict
         if filter_spatial_dict is not None:
             data["filter_spatial_dict"] = filter_spatial_dict
         if filter_regex_dict is not None:
@@ -2252,6 +2503,10 @@ it will likely get removed in future versions. "
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
+                        "greater": filter_greater_dict,
+                        "less": filter_less_dict,
+                        "greater_equal": filter_greater_equal_dict,
+                        "less_equal": filter_less_equal_dict,
                         "spatial": filter_spatial_dict,
                         "regex": filter_regex_dict,
                     },
@@ -2414,12 +2669,24 @@ it will likely get removed in future versions. "
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "filter_greater_dict": ">=4.34.0",
+            "filter_less_dict": ">=4.34.0",
+            "filter_greater_equal_dict": ">=4.34.0",
+            "filter_less_equal_dict": ">=4.34.0",
+        }
+    )
     def query_view(
         self,
         view_name: str,
         filter_in_dict=None,
         filter_out_dict=None,
         filter_equal_dict=None,
+        filter_greater_dict=None,
+        filter_less_dict=None,
+        filter_greater_equal_dict=None,
+        filter_less_equal_dict=None,
         filter_spatial_dict=None,
         filter_regex_dict=None,
         select_columns=None,
@@ -2447,6 +2714,14 @@ it will likely get removed in future versions. "
             Keys are column names, values are not allowed entries, by default None
         filter_equal_dict : dict, optional
             Keys are column names, values are specified entry, by default None
+        filter_greater_dict : dict, optional
+            Keys are column names, values are exclusive upper-bound, by default None
+        filter_less_dict : dict, optional
+            Keys are column names, values are exclusive lower-bound, by default None
+        filter_greater_equal_dict : dict, optional
+            Keys are column names, values are inclusive upper-bound, by default None
+        filter_less_equal_dict : dict, optional
+            Keys are column names, values are inclusive lower-bound, by default None
         filter_spatial_dict : dict, optional
             Keys are column names, values are bounding boxes expressed in units of the
             voxel_resolution of this dataset. Bounding box is [[min_x, min_y,min_z],[max_x, max_y, max_z]], by default None
@@ -2512,6 +2787,16 @@ it will likely get removed in future versions. "
             {view_name: filter_in_dict} if filter_in_dict is not None else None,
             {view_name: filter_out_dict} if filter_out_dict is not None else None,
             {view_name: filter_equal_dict} if filter_equal_dict is not None else None,
+            {view_name: filter_greater_dict}
+            if filter_greater_dict is not None
+            else None,
+            {view_name: filter_less_dict} if filter_less_dict is not None else None,
+            {view_name: filter_greater_equal_dict}
+            if filter_greater_equal_dict is not None
+            else None,
+            {view_name: filter_less_equal_dict}
+            if filter_less_equal_dict is not None
+            else None,
             {view_name: filter_spatial_dict}
             if filter_spatial_dict is not None
             else None,
@@ -2548,6 +2833,10 @@ it will likely get removed in future versions. "
                         "inclusive": filter_in_dict,
                         "exclusive": filter_out_dict,
                         "equal": filter_equal_dict,
+                        "greater": filter_greater_dict,
+                        "less": filter_less_dict,
+                        "greater_equal": filter_greater_equal_dict,
+                        "less_equal": filter_less_equal_dict,
                         "spatial": filter_spatial_dict,
                         "regex": filter_regex_dict,
                     },
