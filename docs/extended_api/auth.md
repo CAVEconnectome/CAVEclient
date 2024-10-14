@@ -1,5 +1,0 @@
----
-title: auth
----
-
-::: caveclient.auth

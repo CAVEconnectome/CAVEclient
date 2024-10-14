@@ -1,5 +1,0 @@
----
-title: framework
----
-
-::: caveclient.frameworkclient

@@ -296,19 +296,22 @@ class SkeletonClient(ClientBase):
         skeleton_version : int
             The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.
         output_format : string
-            The format to retrieve. Options are 'none', 'h5', 'swc', 'json', 'arrays', 'precomputed'
+            The format to retrieve. Options are:
+
+            - 'none': No return value (this can be used to generate a skeleton without retrieving it)
+            - 'precomputed': A cloudvolume.Skeleton object
+            - 'json': A dictionary
+            - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
+            - 'arrays': A dictionary (literally a subset of the json response)
+            - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
+            - 'swc': A pandas DataFrame
+            - 'h5': An BytesIO object containing bytes for an h5 file
 
         Returns
         -------
-        The return type will vary greatly depending on the output_format parameter. The options are:
-        - 'none': No return value (this can be used to generate a skeleton without retrieving it)
-        - 'precomputed': A cloudvolume.Skeleton object
-        - 'json': A dictionary
-        - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
-        - 'arrays': A dictionary (literally a subset of the json response)
-        - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
-        - 'swc': A pandas DataFrame
-        - 'h5': An BytesIO object containing bytes for an h5 file
+        : 
+            Skeleton of the requested type. See `output_format` for details.
+            
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")

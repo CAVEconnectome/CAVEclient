@@ -29,4 +29,4 @@ client.get_session_defaults()
 ```
 
 More information on the available parameters can be found in the
-[API documentation](../client_api/config.md).
+[API documentation](../api/config.md).
