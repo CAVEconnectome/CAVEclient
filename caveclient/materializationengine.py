@@ -1676,10 +1676,6 @@ class MaterializationClient(ClientBase):
         """
         filter_in_dict = {}
         filter_equal_dict = {}
-        filter_greater_dict = {}
-        filter_less_dict = {}
-        filter_greater_equal_dict = {}
-        filter_less_equal_dict = {}
         filter_out_dict = None
         filter_spatial_dict = None
         if synapse_table is None:
@@ -1711,10 +1707,6 @@ class MaterializationClient(ClientBase):
             filter_in_dict=filter_in_dict,
             filter_out_dict=filter_out_dict,
             filter_equal_dict=filter_equal_dict,
-            filter_greater_dict=filter_greater_dict,
-            filter_less_dict=filter_less_dict,
-            filter_greater_equal_dict=filter_greater_equal_dict,
-            filter_less_equal_dict=filter_less_equal_dict,
             filter_spatial_dict=filter_spatial_dict,
             offset=offset,
             limit=limit,
