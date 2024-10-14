@@ -309,9 +309,9 @@ class SkeletonClient(ClientBase):
 
         Returns
         -------
-        : 
+        :
             Skeleton of the requested type. See `output_format` for details.
-            
+
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
