@@ -40,23 +40,7 @@ def neuroglancer_json_encoder(obj):
 
 
 class JSONService(ClientBase):
-    """Client to interface with the JSON state service.
-
-    Parameters
-    ----------
-    server_address : str, optional
-        URL to the JSON state server.
-        If None, set to the default global server address.
-        By default None.
-    auth_client : An Auth client, optional
-        An auth client with a token for the same global server, by default None
-    api_version : int or 'latest', optional
-        Which endpoint API version to use or 'latest'. By default, 'latest' tries to ask
-        the server for which versions are available, if such functionality exists, or if not
-        it defaults to the latest version for which there is a client. By default 'latest'
-    ngl_url : str or None, optional
-        Default neuroglancer deployment URL. Only used for V1 and later.
-    """
+    """Client to interface with the JSON state service."""
 
     def __init__(
         self,
@@ -69,6 +53,22 @@ class JSONService(ClientBase):
         pool_block=None,
         over_client=None,
     ):
+        """
+        Parameters
+        ----------
+        server_address : str, optional
+            URL to the JSON state server.
+            If None, set to the default global server address.
+            By default None.
+        auth_client : An Auth client, optional
+            An auth client with a token for the same global server, by default None
+        api_version : int or 'latest', optional
+            Which endpoint API version to use or 'latest'. By default, 'latest' tries to ask
+            the server for which versions are available, if such functionality exists, or if not
+            it defaults to the latest version for which there is a client. By default 'latest'
+        ngl_url : str or None, optional
+            Default neuroglancer deployment URL. Only used for V1 and later.
+        """
         if server_address is None:
             server_address = default_global_server_address
 
