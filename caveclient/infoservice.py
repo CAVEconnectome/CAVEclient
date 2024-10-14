@@ -23,6 +23,7 @@ SERVER_KEY = "i_server_address"
 
 class InfoServiceClient(ClientBaseWithDatastack):
     """Client for interacting with the info service."""
+
     def __init__(
         self,
         server_address=None,

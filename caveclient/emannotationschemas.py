@@ -15,6 +15,7 @@ SERVER_KEY = "emas_server_address"
 
 class SchemaClient(ClientBase):
     """Client for interacting with the schema service."""
+
     def __init__(
         self,
         server_address=None,

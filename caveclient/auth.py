@@ -54,6 +54,7 @@ def server_token_filename(server_address):
 
 class AuthClient(object):
     """Client to find and use auth tokens to access the  other services."""
+
     def __init__(
         self,
         token_file=None,

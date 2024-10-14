@@ -39,6 +39,7 @@ class NoL2CacheException(Exception):
 
 class SkeletonClient(ClientBase):
     """Client for interacting with the skeleton service."""
+
     def __init__(
         self,
         server_address: str,
