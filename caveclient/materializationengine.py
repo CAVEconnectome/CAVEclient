@@ -1804,7 +1804,7 @@ class MaterializationClient(ClientBase):
         """The table manager for the materialization engine."""
         if self._tables is None:
             if self.fc is not None and self.fc._materialize is not None:
-                if self.server_version < Version("3"):
+                if Version(str(self.api_version)) < Version("3"):
                     tables = TableManager(self.fc)
                 else:
                     metadata = []
@@ -1836,7 +1836,7 @@ class MaterializationClient(ClientBase):
     def views(self) -> ViewManager:
         """The view manager for the materialization engine."""
         if self.fc is not None and self.fc._materialize is not None:
-            if self.server_version < Version("3"):
+            if Version(str(self.api_version)) < Version("3"):
                 views = ViewManager(self.fc)
             else:
                 metadata = []
@@ -1855,7 +1855,7 @@ class MaterializationClient(ClientBase):
             raise ValueError("No full CAVEclient specified")
         return self._views
 
-    @_check_version_compatibility(method_constraint=">=3.0.0")
+    @_check_version_compatibility(method_api_constraint=">=3.0.0")
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
     def get_tables_metadata(
         self,
@@ -1901,13 +1901,15 @@ class MaterializationClient(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "filter_regex_dict": ">=3.0.0",
-            "allow_invalid_root_ids": ">=3.0.0",
             "filter_greater_dict": ">=4.34.0",
             "filter_less_dict": ">=4.34.0",
             "filter_greater_equal_dict": ">=4.34.0",
             "filter_less_equal_dict": ">=4.34.0",
-        }
+        },
+        kwarg_use_api_constraints={
+            "filter_regex_dict": ">=3.0.0",
+            "allow_invalid_root_ids": ">=3.0.0",
+        },
     )
     def live_live_query(
         self,
@@ -2117,7 +2119,7 @@ class MaterializationClient(ClientBase):
             data["suffixes"] = suffixes
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
-        if self.server_version >= Version("3"):
+        if Version(str(self.api_version)) >= Version("3"):
             if desired_resolution is not None:
                 data["desired_resolution"] = desired_resolution
         encoding = DEFAULT_COMPRESSION
@@ -2141,9 +2143,9 @@ class MaterializationClient(ClientBase):
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
-                    if self.server_version < Version("3") or not response.headers.get(
-                        "dataframe_resolution", None
-                    ):
+                    if Version(str(self.api_version)) < Version(
+                        "3"
+                    ) or not response.headers.get("dataframe_resolution", None):
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -2169,7 +2171,7 @@ class MaterializationClient(ClientBase):
                 "less_equal": filter_less_equal_dict,
                 "spatial": filter_spatial_dict,
             }
-            if self.server_version < Version("3"):
+            if Version(str(self.api_version)) < Version("3"):
                 _desired_resolution = desired_resolution
             else:
                 _desired_resolution = response.headers.get(
@@ -2197,7 +2199,7 @@ class MaterializationClient(ClientBase):
                 )
         return df
 
-    @_check_version_compatibility(method_constraint=">=3.0.0")
+    @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_views(self, version: Optional[int] = None, datastack_name: str = None):
         """
         Get all available views for a version
@@ -2227,7 +2229,7 @@ class MaterializationClient(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    @_check_version_compatibility(method_constraint=">=3.0.0")
+    @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_metadata(
         self,
         view_name: str,
@@ -2267,7 +2269,7 @@ class MaterializationClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
-    @_check_version_compatibility(method_constraint=">=3.0.0")
+    @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_schema(
         self,
         view_name: str,
@@ -2307,7 +2309,7 @@ class MaterializationClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
         return response.json()
 
-    @_check_version_compatibility(method_constraint=">=3.0.0")
+    @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_schemas(
         self,
         materialization_version: Optional[int] = None,
@@ -2343,7 +2345,7 @@ class MaterializationClient(ClientBase):
         return response.json()
 
     @_check_version_compatibility(
-        method_constraint=">=3.0.0",
+        method_api_constraint=">=3.0.0",
         kwarg_use_constraints={
             "filter_greater_dict": ">=4.34.0",
             "filter_less_dict": ">=4.34.0",
@@ -2533,7 +2535,7 @@ class MaterializationClient(ClientBase):
         else:
             return response.json()
 
-    @_check_version_compatibility(method_constraint=">=3.0.0")
+    @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_unique_string_values(
         self, table: str, datastack_name: Optional[str] = None
     ):

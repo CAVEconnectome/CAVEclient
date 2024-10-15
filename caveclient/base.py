@@ -391,7 +391,11 @@ def _version_fails_constraint(
 
 @parametrized
 def _check_version_compatibility(
-    method: Callable, method_constraint: str = None, kwarg_use_constraints: dict = None
+    method: Callable,
+    method_constraint: str = None,
+    kwarg_use_constraints: dict = None,
+    method_api_constraint: str = None,
+    kwarg_use_api_constraints: dict = None,
 ) -> Callable:
     """
     This decorator is used to check the compatibility of features in the client and
@@ -466,6 +470,49 @@ def _check_version_compatibility(
                         f"for server version {' or '.join(kw_list)}. Your server "
                         f"version is {self.server_version}. Contact your system "
                         "administrator to update the server version."
+                    )
+                    raise ServerIncompatibilityError(msg)
+
+        if method_api_constraint is not None:
+            if _version_fails_constraint(
+                Version(str(self.api_version)), method_api_constraint
+            ):
+                if isinstance(method_api_constraint, str):
+                    ms_list = [method_api_constraint]
+                else:
+                    ms_list = method_api_constraint
+                msg = (
+                    f"Use of method `{method.__name__}` is only permitted "
+                    f"for API version {' or '.join(ms_list)}. Your API "
+                    f"version is {self.api_version}. Contact your system "
+                    "administrator to update the API version."
+                )
+
+                raise ServerIncompatibilityError(msg)
+
+        if kwarg_use_api_constraints is not None:
+            # this protects against someone passing in a positional argument for the
+            # kwarg we are guarding
+            check_kwargs = kwargs.copy()
+            # add in any positional arguments that are not self to the checking
+            check_kwargs.update(zip(method.__code__.co_varnames[1:], args[1:]))
+
+            for kwarg, kwarg_constraint in kwarg_use_api_constraints.items():
+                if check_kwargs.get(kwarg, None) is None:
+                    continue
+                elif _version_fails_constraint(
+                    Version(str(self.api_version)), kwarg_constraint
+                ):
+                    if isinstance(kwarg_constraint, str):
+                        kw_list = [kwarg_constraint]
+                    else:
+                        kw_list = kwarg_constraint
+                    msg = (
+                        f"Use of keyword argument `{kwarg}` in `{method.__name__}` "
+                        "is only permitted "
+                        f"for API version {' or '.join(kw_list)}. Your API "
+                        f"version is {self.api_version}. Contact your system "
+                        "administrator to update the API version."
                     )
                     raise ServerIncompatibilityError(msg)
 
