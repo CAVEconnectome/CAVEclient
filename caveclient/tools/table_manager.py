@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 # json schema column types that can act as potential columns for looking at tables
 ALLOW_COLUMN_TYPES = ["integer", "boolean", "string", "float"]
+NUMERIC_COLUMN_TYPES = ["integer", "float"]
 SPATIAL_POINT_TYPES = ["SpatialPoint"]
 
 # Helper functions for turning schema field names ot column names
@@ -343,7 +344,7 @@ def table_metadata(table_name, client, meta=None):
 
 
 def make_class_vals(
-    pts, val_cols, unbd_pts, table_map, rename_map, table_list, raw_points=False
+    pts, val_cols, unbd_pts, table_map, rename_map, table_list, numeric_vals, raw_points=False
 ):
     class_vals = {
         "_reference_table": attrs.field(
@@ -368,6 +369,7 @@ def make_class_vals(
             metadata={
                 "table": table_map[val],
                 "original_name": rename_map.get(val, val),
+                "is_numeric": val in numeric_vals,
             },
         )
     for pt in pts + unbd_pts:
@@ -764,9 +766,13 @@ def make_query_filter_view(view_name, meta, schema, client):
         desc,
         live_compatible,
     ) = get_view_info(view_name, meta, schema)
+
+    numeric_vals = [k for k, v in schema.items() if v['type'] in NUMERIC_COLUMN_TYPES]
+
     class_vals = make_class_vals(
-        pts, val_cols, all_unbd_pts, table_map, rename_map, table_list
+        pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, numeric_vals
     )
+
     ViewQueryFilter = attrs.make_class(
         view_name,
         class_vals,
