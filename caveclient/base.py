@@ -475,7 +475,7 @@ def _check_version_compatibility(
 
         if method_api_constraint is not None:
             if _version_fails_constraint(
-                Version(self.api_version), method_api_constraint
+                Version(str(self.api_version)), method_api_constraint
             ):
                 if isinstance(method_api_constraint, str):
                     ms_list = [method_api_constraint]
@@ -501,7 +501,7 @@ def _check_version_compatibility(
                 if check_kwargs.get(kwarg, None) is None:
                     continue
                 elif _version_fails_constraint(
-                    Version(self.api_version), kwarg_constraint
+                    Version(str(self.api_version)), kwarg_constraint
                 ):
                     if isinstance(kwarg_constraint, str):
                         kw_list = [kwarg_constraint]
