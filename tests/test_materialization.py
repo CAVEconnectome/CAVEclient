@@ -320,13 +320,14 @@ class TestMatclient:
     @responses.activate
     def test_matclient_v3_tableinterface(self, myclient, mocker):
         myclient = copy.deepcopy(myclient)
+        myclient._materialize = None
         endpoint_mapping = self.default_mapping
         endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
 
-        # mat_version_url = materialization_common['get_version'].format_map(
-        #     endpoint_mapping
-        # )
-        # responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
+        mat_version_url = materialization_common["get_version"].format_map(
+            endpoint_mapping
+        )
+        responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
 
         api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
             endpoint_mapping
@@ -338,6 +339,7 @@ class TestMatclient:
             json=[3],
             status=200,
         )
+        myclient.materialize  # done here to trigger version check
 
         versionurl = materialization_endpoints_v3["versions"].format_map(
             endpoint_mapping
