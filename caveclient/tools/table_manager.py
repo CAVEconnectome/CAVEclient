@@ -83,6 +83,7 @@ def _parse_inequality(x, ineq):
     else:
         return False
 
+
 def is_equal_like(x):
     return not is_list_like(x)
 
@@ -97,19 +98,24 @@ def is_list_like(x):
 
 
 def is_isin_like(x):
-    return is_list_like(x):
+    return is_list_like(x)
+
 
 def is_lessthan(x):
     return _parse_inequality(x, "<")
 
+
 def is_greaterthan(x):
     return _parse_inequality(x, ">")
+
 
 def is_lessthan_equal(x):
     return _parse_inequality(x, "<=")
 
+
 def is_greaterthan_equal(x):
     return _parse_inequality(x, ">=")
+
 
 def update_spatial_dict(spatial_dict):
     new_dict = {}
@@ -344,7 +350,14 @@ def table_metadata(table_name, client, meta=None):
 
 
 def make_class_vals(
-    pts, val_cols, unbd_pts, table_map, rename_map, table_list, numeric_vals, raw_points=False
+    pts,
+    val_cols,
+    unbd_pts,
+    table_map,
+    rename_map,
+    table_list,
+    numeric_vals,
+    raw_points=False,
 ):
     class_vals = {
         "_reference_table": attrs.field(
@@ -422,8 +435,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: is_equal_like(v)
                         and v is not None
-                        and a.metadata.get("is_bbox", False) == False  # noqa E712
-                        and a.metadata.get("is_meta", False) == False  # noqa E712
+                        and a.metadata.get("is_bbox", False) is False  # noqa E712
+                        and a.metadata.get("is_meta", False) is False  # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -437,8 +450,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: is_isin_like(v)
                         and v is not None
-                        and a.metadata.get("is_bbox", False) == False  # noqa E712
-                        and a.metadata.get("is_meta", False) == False  # noqa E712
+                        and a.metadata.get("is_bbox", False) is False  # noqa E712
+                        and a.metadata.get("is_meta", False) is False  # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -452,11 +465,11 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: is_lessthan(v)
                         and v is not None
-                        and a.metadata.get('is_bbox', False) == False
-                        and a.metadata.get('is_meta', False) == False
-                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("is_bbox", False) is False
+                        and a.metadata.get("is_meta", False) is False
+                        and a.metadata.get("is_numeric", False) is True
                         and a.metadata.get("table") == tn,
-                        value_serializer=lambda _, _, v: v.get("<"),
+                        value_serializer=lambda _, __, v: v.get("<"),
                     )
                 )
                 for tn in tables
@@ -469,17 +482,16 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: is_greaterthan(v)
                         and v is not None
-                        and a.metadata.get('is_bbox', False) == False
-                        and a.metadata.get('is_meta', False) == False
-                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("is_bbox", False) is False
+                        and a.metadata.get("is_meta", False) is False
+                        and a.metadata.get("is_numeric", False) is True
                         and a.metadata.get("table") == tn,
-                        value_serializer=lambda _, _, v: v.get(">"),
+                        value_serializer=lambda _, __, v: v.get(">"),
                     )
                 )
                 for tn in tables
             }
             filter_gt_dict = rename_fields(filter_gt_dict, self)
-
 
             filter_geq_dict = {
                 tn: filter_empty(
@@ -487,11 +499,11 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: is_greaterthan_equal(v)
                         and v is not None
-                        and a.metadata.get('is_bbox', False) == False
-                        and a.metadata.get('is_meta', False) == False
-                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("is_bbox", False) is False
+                        and a.metadata.get("is_meta", False) is False
+                        and a.metadata.get("is_numeric", False) is True
                         and a.metadata.get("table") == tn,
-                        value_serializer=lambda _, _, v: v.get(">="),
+                        value_serializer=lambda _, __, v: v.get(">="),
                     )
                 )
                 for tn in tables
@@ -504,11 +516,11 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: is_lessthan_equal(v)
                         and v is not None
-                        and a.metadata.get('is_bbox', False) == False
-                        and a.metadata.get('is_meta', False) == False
-                        and a.metadata.get('is_numeric', False) == True
+                        and a.metadata.get("is_bbox", False) is False
+                        and a.metadata.get("is_meta", False) is False
+                        and a.metadata.get("is_numeric", False) is True
                         and a.metadata.get("table") == tn,
-                        value_serializer=lambda _, _, v: v.get("<="),
+                        value_serializer=lambda _, __, v: v.get("<="),
                     )
                 )
                 for tn in tables
@@ -521,7 +533,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         self,
                         filter=lambda a, v: a.metadata.get("is_bbox", False)
                         and v is not None
-                        and a.metadata.get("is_meta", False) == False  # noqa E712
+                        and a.metadata.get("is_meta", False) is False  # noqa E712
                         and a.metadata.get("table") == tn,
                     )
                 )
@@ -537,10 +549,18 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 "filter_spatial_dict": replace_empty_with_none(
                     filter_empty(spatial_dict)
                 ),
-                "filter_greater_dict": replace_empty_with_none(filter_empty(filter_gt_dict)),
-                "filter_less_dict": replace_empty_with_none(filter_empty(filter_lt_dict)),
-                "filter_greater_equal_dict": replace_empty_with_none(filter_empty(filter_geq_dict)),
-                "filter_less_equal_dict": replace_empty_with_none(filter_empty(filter_leq_dict)),
+                "filter_greater_dict": replace_empty_with_none(
+                    filter_empty(filter_gt_dict)
+                ),
+                "filter_less_dict": replace_empty_with_none(
+                    filter_empty(filter_lt_dict)
+                ),
+                "filter_greater_equal_dict": replace_empty_with_none(
+                    filter_empty(filter_geq_dict)
+                ),
+                "filter_less_equal_dict": replace_empty_with_none(
+                    filter_empty(filter_leq_dict)
+                ),
             }
             if len(tables) == 2:
                 self.filter_kwargs_mat = self.filter_kwargs_live
@@ -767,7 +787,7 @@ def make_query_filter_view(view_name, meta, schema, client):
         live_compatible,
     ) = get_view_info(view_name, meta, schema)
 
-    numeric_vals = [k for k, v in schema.items() if v['type'] in NUMERIC_COLUMN_TYPES]
+    numeric_vals = [k for k, v in schema.items() if v["type"] in NUMERIC_COLUMN_TYPES]
 
     class_vals = make_class_vals(
         pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, numeric_vals
