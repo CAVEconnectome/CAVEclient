@@ -52,12 +52,12 @@ class TestFrameworkClient:
         ].format_map(endpoint_mapping)
         responses.add(responses.GET, url=api_versions_url, json=[0, 1], status=200)
 
-        cg_version_url = endpoints.chunkedgraph_endpoints_common["get_version"].format_map(
-            endpoint_mapping
-        )
+        cg_version_url = endpoints.chunkedgraph_endpoints_common[
+            "get_version"
+        ].format_map(endpoint_mapping)
         responses.add(responses.GET, cg_version_url, json="2.15.0", status=200)
 
-        mat_version_url = endpoints.materialization_common['get_version'].format_map(
+        mat_version_url = endpoints.materialization_common["get_version"].format_map(
             endpoint_mapping
         )
         responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
