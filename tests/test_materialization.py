@@ -323,6 +323,11 @@ class TestMatclient:
         endpoint_mapping = self.default_mapping
         endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
 
+        # mat_version_url = materialization_common['get_version'].format_map(
+        #     endpoint_mapping
+        # )
+        # responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
+
         api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
             endpoint_mapping
         )
@@ -379,7 +384,7 @@ class TestMatclient:
         responses.add(
             responses.GET, url=get_views_schema_url, json=self.views_schema, status=200
         )
-
+        print(len(myclient.materialize.tables))
         assert len(myclient.materialize.tables) == 2
         qry = myclient.materialize.tables.allen_column_mtypes_v2(
             pt_root_id=[123, 456], target_id=271700
@@ -800,8 +805,10 @@ class TestMatclient:
         new_xyz = np.vstack(df.ctr_pt_position.values)
         assert np.all(new_xyz == orig_xyz * [4, 4, 40])
 
-        myclient._materialize = None
-        myclient.desired_resolution = [1, 1, 1]
+        # NOTE: this messed up the mock on the version endpoint
+        # myclient._materialize = None
+        # myclient.desired_resolution = [1, 1, 1]
+        myclient._materialize.desired_resolution = [1, 1, 1]
         df = myclient.materialize.query_table(
             test_info["synapse_table"],
             filter_in_dict={"pre_pt_root_id": [500]},
