@@ -46,8 +46,11 @@ def myclient():
     # narrowly scoped to this function
     version_url = f"{TEST_LOCAL_SERVER}/segmentation/api/version"
     responses.add(responses.GET, version_url, json="2.15.0", status=200)
-
     client.chunkedgraph  # this will trigger the version check
+
+    mat_version_url = f"{TEST_LOCAL_SERVER}/materialize/version"
+    responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
+    client.materialize
 
     return client
 

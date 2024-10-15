@@ -630,10 +630,10 @@ class MaterializationClient(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "filter_greater_dict": ">=4.34.0",
-            "filter_less_dict": ">=4.34.0",
-            "filter_greater_equal_dict": ">=4.34.0",
-            "filter_less_equal_dict": ">=4.34.0",
+            "filter_greater_dict": ">=4.34.3",
+            "filter_less_dict": ">=4.34.3",
+            "filter_greater_equal_dict": ">=4.34.3",
+            "filter_less_equal_dict": ">=4.34.3",
         }
     )
     def query_table(
@@ -866,10 +866,10 @@ class MaterializationClient(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "filter_greater_dict": ">=4.34.0",
-            "filter_less_dict": ">=4.34.0",
-            "filter_greater_equal_dict": ">=4.34.0",
-            "filter_less_equal_dict": ">=4.34.0",
+            "filter_greater_dict": ">=4.34.3",
+            "filter_less_dict": ">=4.34.3",
+            "filter_greater_equal_dict": ">=4.34.3",
+            "filter_less_equal_dict": ">=4.34.3",
         }
     )
     def join_query(
@@ -1279,10 +1279,10 @@ class MaterializationClient(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "filter_greater_dict": ">=4.34.0",
-            "filter_less_dict": ">=4.34.0",
-            "filter_greater_equal_dict": ">=4.34.0",
-            "filter_less_equal_dict": ">=4.34.0",
+            "filter_greater_dict": ">=4.34.3",
+            "filter_less_dict": ">=4.34.3",
+            "filter_greater_equal_dict": ">=4.34.3",
+            "filter_less_equal_dict": ">=4.34.3",
         }
     )
     def live_query(
@@ -1901,10 +1901,10 @@ class MaterializationClient(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "filter_greater_dict": ">=4.34.0",
-            "filter_less_dict": ">=4.34.0",
-            "filter_greater_equal_dict": ">=4.34.0",
-            "filter_less_equal_dict": ">=4.34.0",
+            "filter_greater_dict": ">=4.34.3",
+            "filter_less_dict": ">=4.34.3",
+            "filter_greater_equal_dict": ">=4.34.3",
+            "filter_less_equal_dict": ">=4.34.3",
         },
         kwarg_use_api_constraints={
             "filter_regex_dict": ">=3.0.0",
@@ -2347,10 +2347,10 @@ class MaterializationClient(ClientBase):
     @_check_version_compatibility(
         method_api_constraint=">=3.0.0",
         kwarg_use_constraints={
-            "filter_greater_dict": ">=4.34.0",
-            "filter_less_dict": ">=4.34.0",
-            "filter_greater_equal_dict": ">=4.34.0",
-            "filter_less_equal_dict": ">=4.34.0",
+            "filter_greater_dict": ">=4.34.3",
+            "filter_less_dict": ">=4.34.3",
+            "filter_greater_equal_dict": ">=4.34.3",
+            "filter_less_equal_dict": ">=4.34.3",
         },
     )
     def query_view(
