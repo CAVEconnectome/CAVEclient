@@ -1804,7 +1804,7 @@ class MaterializationClient(ClientBase):
         """The table manager for the materialization engine."""
         if self._tables is None:
             if self.fc is not None and self.fc._materialize is not None:
-                if self.api_version < Version("3"):
+                if Version(str(self.api_version)) < Version("3"):
                     tables = TableManager(self.fc)
                 else:
                     metadata = []
@@ -1836,7 +1836,7 @@ class MaterializationClient(ClientBase):
     def views(self) -> ViewManager:
         """The view manager for the materialization engine."""
         if self.fc is not None and self.fc._materialize is not None:
-            if self.api_version < Version("3"):
+            if Version(str(self.api_version)) < Version("3"):
                 views = ViewManager(self.fc)
             else:
                 metadata = []
@@ -2119,7 +2119,7 @@ class MaterializationClient(ClientBase):
             data["suffixes"] = suffixes
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
-        if self.api_version >= Version("3"):
+        if Version(str(self.api_version)) >= Version("3"):
             if desired_resolution is not None:
                 data["desired_resolution"] = desired_resolution
         encoding = DEFAULT_COMPRESSION
@@ -2143,9 +2143,9 @@ class MaterializationClient(ClientBase):
                 warnings.simplefilter(action="ignore", category=DeprecationWarning)
                 df = deserialize_query_response(response)
                 if desired_resolution is not None:
-                    if self.api_version < Version("3") or not response.headers.get(
-                        "dataframe_resolution", None
-                    ):
+                    if Version(str(self.api_version)) < Version(
+                        "3"
+                    ) or not response.headers.get("dataframe_resolution", None):
                         if len(desired_resolution) != 3:
                             raise ValueError(
                                 "desired resolution needs to be of length 3, for xyz"
@@ -2171,7 +2171,7 @@ class MaterializationClient(ClientBase):
                 "less_equal": filter_less_equal_dict,
                 "spatial": filter_spatial_dict,
             }
-            if self.api_version < Version("3"):
+            if Version(str(self.api_version)) < Version("3"):
                 _desired_resolution = desired_resolution
             else:
                 _desired_resolution = response.headers.get(
