@@ -370,6 +370,26 @@ nuc_df = client.materialize.tables.nucleus_detection_v0(
 )
 ```
 
+Inequalities can also be used in filtering numeric columns.
+Here, you can pass a dictionary instead of a list of values, with the keys being
+inequality operators (">", ">=", "<", and "<=") and the values being the comparison.
+For example, to query for all nuclei with a volume greater than 1000:
+
+```python
+client.materialize.tables.nucleus_detection_v0(
+    volume={">": 1000}
+).query()
+```
+
+You can also use multiple inequalities in the same dictionary to filter within a range.
+For example, to query for all nuclei with a volume between 500 and 750:
+
+```python
+client.materialize.tables.nucleus_detection_v0(
+    volume={">": 500, "<": 750}
+).query()
+```
+
 If you want to do a live query instead of a materialized query, the
 filtering remains identical but we use the `live_query` function
 instead. The one required argument for `live_query` is the timestamp.
