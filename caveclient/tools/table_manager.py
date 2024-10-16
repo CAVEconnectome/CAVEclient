@@ -4,6 +4,7 @@ import warnings
 
 import attrs
 from cachetools import TTLCache, cached, keys
+from itertools import chain
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,10 @@ NUMERIC_COLUMN_TYPES = ["integer", "float"]
 SPATIAL_POINT_TYPES = ["SpatialPoint"]
 
 # Helper functions for turning schema field names ot column names
+
+
+class InvalidInequalityException(Exception):
+    pass
 
 
 def bound_pt_position(pt):
@@ -89,7 +94,7 @@ def is_equal_like(x):
 
 
 def is_list_like(x):
-    if isinstance(x, str) or isinstance(x, dict):
+    if isinstance(x, str):
         return False
     if hasattr(x, "__len__"):
         return True
@@ -98,7 +103,7 @@ def is_list_like(x):
 
 
 def is_isin_like(x):
-    return is_list_like(x)
+    return is_list_like(x) and not isinstance(x, dict)
 
 
 def is_lessthan(x):
@@ -176,7 +181,10 @@ def get_col_info(
     add_fields=["id"],
     omit_fields=[],
     schema_definition=None,
+    numeric_types=NUMERIC_COLUMN_TYPES,
 ):
+    nonnumeric_types = [t for t in allow_types if t not in numeric_types]
+    numeric_types = [t for t in allow_types if t in numeric_types]
     if schema_definition is None:
         schema = client.schema.schema_definition(schema_name)
     else:
@@ -188,6 +196,7 @@ def get_col_info(
     add_cols = []
     pt_names = []
     unbnd_pt_names = []
+    numeric_cols = []
     for k, v in schema["definitions"][sn]["properties"].items():
         if v.get("$ref", "") == sp_name:
             pt_names.append(k)
@@ -198,9 +207,11 @@ def get_col_info(
             if k in omit_fields:
                 continue
             # Field type is format if exists, type otherwise
-            if v.get("format", v.get("type")) in allow_types:
+            if v.get("format", v.get("type")) in nonnumeric_types:
                 add_cols.append(k)
-    return pt_names, add_fields + add_cols, unbnd_pt_names
+            if v.get("format", v.get("type")) in numeric_types:
+                numeric_cols.append(k)
+    return pt_names, add_fields + add_cols, numeric_cols, unbnd_pt_names
 
 
 _table_cache = TTLCache(maxsize=128, ttl=86_400)
@@ -292,18 +303,19 @@ def get_table_info(
         schema = meta["schema"]
         ref_pts = []
         ref_cols = []
+        ref_numeric = []
         ref_unbd_pts = []
         name_base = tn
         name_ref = None
     else:
         schema = table_metadata(ref_table, client).get("schema")
-        ref_pts, ref_cols, ref_unbd_pts = get_col_info(
+        ref_pts, ref_cols, ref_numeric, ref_unbd_pts = get_col_info(
             meta["schema"], client, allow_types=allow_types, omit_fields=["target_id"]
         )
         name_base = ref_table
         name_ref = tn
 
-    base_pts, base_cols, base_unbd_pts = get_col_info(
+    base_pts, base_cols, base_numeric, base_unbd_pts = get_col_info(
         schema, client, allow_types=allow_types
     )
 
@@ -311,13 +323,24 @@ def get_table_info(
         name_base, base_pts, name_ref, ref_pts, suffixes
     )
     all_vals, val_map, rename_map_val = combine_names(
-        name_base, base_cols, name_ref, ref_cols, suffixes
+        name_base, base_cols + base_numeric, name_ref, ref_cols + ref_numeric, suffixes
     )
+
+    numeric_vals = []
+    for k in all_vals:
+        if val_map[k] == name_base:
+            if k in base_numeric:
+                numeric_vals.append(k)
+        elif val_map[k] == name_ref:
+            if k in ref_numeric:
+                numeric_vals.append(k)
+
     all_unbd_pts, unbd_pt_map, rename_map_unbd_pt = combine_names(
         name_base, base_unbd_pts, name_ref, ref_unbd_pts, suffixes
     )
     rename_map = {**rename_map_pt, **rename_map_val, **rename_map_unbd_pt}
     column_map = {"id": name_base, **pt_map, **val_map, **unbd_pt_map}
+
     return (
         all_pts,
         all_vals,
@@ -326,6 +349,7 @@ def get_table_info(
         rename_map,
         [name_base, name_ref],
         meta.get("description"),
+        numeric_vals,
     )
 
 
@@ -525,7 +549,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 )
                 for tn in tables
             }
-            filter_leq_dict = rename_fields(filter_geq_dict, self)
+            filter_leq_dict = rename_fields(filter_leq_dict, self)
 
             spatial_dict = {
                 tn: update_spatial_dict(
@@ -540,6 +564,32 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 for tn in tables
             }
             spatial_dict = rename_fields(spatial_dict, self)
+
+            invalid_inequality_queries = {
+                tn: filter_empty(
+                    attrs.asdict(
+                        self,
+                        filter=lambda a, v: (
+                            is_greaterthan(v)
+                            or is_greaterthan_equal(v)
+                            or is_lessthan(v)
+                            or is_lessthan_equal(v)
+                        )
+                        and a.metadata.get("table") == tn
+                        and a.metadata.get("is_numeric", False) is False,
+                    )
+                )
+                for tn in tables
+            }
+
+            if sum([len(v) for k, v in invalid_inequality_queries.items()]) > 0:
+                bad_fields = [
+                    list(v.keys())
+                    for k, v in invalid_inequality_queries.items()
+                    if len(v) > 0
+                ]
+                msg = f"Cannot use inequality for non-numeric fields: {list(chain.from_iterable(bad_fields))}"
+                raise InvalidInequalityException(msg)
 
             self.filter_kwargs_live = {
                 "filter_equal_dict": replace_empty_with_none(
@@ -764,9 +814,11 @@ def make_query_filter(table_name, meta, client):
         rename_map,
         table_list,
         desc,
+        numeric_vals,
     ) = get_table_info(table_name, meta, client)
+
     class_vals = make_class_vals(
-        pts, val_cols, all_unbd_pts, table_map, rename_map, table_list
+        pts, val_cols, all_unbd_pts, table_map, rename_map, table_list, numeric_vals
     )
     QueryFilter = attrs.make_class(
         table_name, class_vals, bases=(make_kwargs_mixin(client),)
