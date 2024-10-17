@@ -1218,6 +1218,15 @@ find all nucleus centroids within a particular bounding box, it would be:</p>
     <span class="n">pt_position_bbox</span><span class="o">=</span><span class="n">bounding_box</span>
 <span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
 </code></pre></div>
+<p>If you are not using any filters, you can omit the parenthesis and use the <code>query</code>
+or <code>live_query</code> function directly. The first example could be rewritten as:</p>
+<div class="highlight"><pre><span></span><code><span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+</code></pre></div>
+<p>If you want to list all available fields, you can use the <code>.fields</code> attribute.
+Similarly, you can get all numeric fields with the <code>.numeric_fields</code> attribute
+and all spatial fields (allowing bounding box queries) with <code>.spatial_fields</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="o">.</span><span class="n">spatial_fields</span>
+</code></pre></div>
 <p>If you need to specify the table programmatically, you can also use a
 dictionary-style approach to getting the table filtering function. For
 example, an equivalent version of the above line would be:</p>
@@ -1239,6 +1248,20 @@ query, it would look like:</p>
     <span class="n">split_positions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">desired_resolution</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
 <span class="p">)</span>
+</code></pre></div>
+<p>Inequalities can also be used in filtering numeric columns.
+Here, you can pass a dictionary instead of a list of values, with the keys being
+inequality operators ("&gt;", "&gt;=", "&lt;", and "&lt;=") and the values being the comparison.
+For example, to query for all nuclei with a volume greater than 1000:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">(</span>
+    <span class="n">volume</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;&gt;&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+</code></pre></div>
+<p>You can also use multiple inequalities in the same dictionary to filter within a range.
+For example, to query for all nuclei with a volume between 500 and 750:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="p">(</span>
+    <span class="n">volume</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;&gt;&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span> <span class="mi">750</span><span class="p">}</span>
+<span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
 </code></pre></div>
 <p>If you want to do a live query instead of a materialized query, the
 filtering remains identical but we use the <code>live_query</code> function
