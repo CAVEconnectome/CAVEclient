@@ -824,6 +824,24 @@ def make_query_filter(table_name, meta, client):
         table_name, class_vals, bases=(make_kwargs_mixin(client),)
     )
     QueryFilter.__doc__ = desc
+    setattr(QueryFilter, "query", QueryFilter().query)
+    setattr(QueryFilter, "live_query", QueryFilter().live_query)
+
+    fields = [
+        x.name
+        for x in attrs.fields(QueryFilter)
+        if not x.metadata.get("is_meta", False)
+    ]
+    setattr(QueryFilter, "fields", fields)
+    numeric_fields = [
+        x.name for x in attrs.fields(QueryFilter) if x.metadata.get("is_numeric", False)
+    ]
+    setattr(QueryFilter, "numeric_fields", numeric_fields)
+    spatial_fields = [
+        x.name for x in attrs.fields(QueryFilter) if x.metadata.get("is_bbox", False)
+    ]
+    setattr(QueryFilter, "spatial_fields", spatial_fields)
+
     return QueryFilter
 
 
@@ -853,6 +871,28 @@ def make_query_filter_view(view_name, meta, schema, client):
         ),
     )
     ViewQueryFilter.__doc__ = desc
+
+    setattr(ViewQueryFilter, "query", ViewQueryFilter().query)
+
+    fields = [
+        x.name
+        for x in attrs.fields(ViewQueryFilter)
+        if not x.metadata.get("is_meta", False)
+    ]
+    setattr(ViewQueryFilter, "fields", fields)
+    numeric_fields = [
+        x.name
+        for x in attrs.fields(ViewQueryFilter)
+        if x.metadata.get("is_numeric", False)
+    ]
+    setattr(ViewQueryFilter, "numeric_fields", numeric_fields)
+    spatial_fields = [
+        x.name
+        for x in attrs.fields(ViewQueryFilter)
+        if x.metadata.get("is_bbox", False)
+    ]
+    setattr(ViewQueryFilter, "spatial_fields", spatial_fields)
+
     return ViewQueryFilter
 
 
