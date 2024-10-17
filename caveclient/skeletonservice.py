@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import gzip
 import json
-import logging
 from io import BytesIO, StringIO
 from typing import Literal, Optional
 
@@ -15,10 +14,6 @@ try:
 
     CLOUDVOLUME_AVAILABLE = True
 except ImportError:
-    logging.warning(
-        "cloudvolume not installed. Some output formats will not be available."
-    )
-
     CLOUDVOLUME_AVAILABLE = False
 
 from .auth import AuthClient
