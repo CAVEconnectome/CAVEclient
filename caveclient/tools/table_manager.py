@@ -1,10 +1,10 @@
 import logging
 import re
 import warnings
+from itertools import chain
 
 import attrs
 from cachetools import TTLCache, cached, keys
-from itertools import chain
 
 logger = logging.getLogger(__name__)
 
