@@ -354,6 +354,8 @@ Similarly, you can get all numeric fields with the `.numeric_fields` attribute
 and all spatial fields (allowing bounding box queries) with `.spatial_fields`.
 
 ```python
+nuc_df = client.materialize.tables.nucleus_detection_v0.spatial_fields
+```
 
 If you need to specify the table programmatically, you can also use a
 dictionary-style approach to getting the table filtering function. For
