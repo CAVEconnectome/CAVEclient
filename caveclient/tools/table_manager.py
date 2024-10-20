@@ -733,7 +733,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         metadata=metadata,
                         desired_resolution=desired_resolution,
                         allow_missing_lookups=False,
-                        **self.filter_kwargs_live,
+                        **self.filter_kwargs_mat,
                     )
 
             def live_query(
