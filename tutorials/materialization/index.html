@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.41">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -1218,9 +1218,11 @@ find all nucleus centroids within a particular bounding box, it would be:</p>
     <span class="n">pt_position_bbox</span><span class="o">=</span><span class="n">bounding_box</span>
 <span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
 </code></pre></div>
-<p>If you are not using any filters, you can omit the parenthesis and use the <code>query</code>
-or <code>live_query</code> function directly. The first example could be rewritten as:</p>
-<div class="highlight"><pre><span></span><code><span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+<p>If you are not using any filters, you can omit the parenthesis and use the <code>get_all</code>
+or <code>get_all_live</code> functions directly, which act similarly to the <code>query</code> and <code>live_query</code> functions
+respectively.
+The first example could be rewritten as:</p>
+<div class="highlight"><pre><span></span><code><span class="n">nuc_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">materialize</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">nucleus_detection_v0</span><span class="o">.</span><span class="n">get_all</span><span class="p">()</span>
 </code></pre></div>
 <p>If you want to list all available fields, you can use the <code>.fields</code> attribute.
 Similarly, you can get all numeric fields with the <code>.numeric_fields</code> attribute
