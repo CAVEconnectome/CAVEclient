@@ -342,11 +342,13 @@ nuc_df = client.materialize.tables.nucleus_detection_v0(
 ).query()
 ```
 
-If you are not using any filters, you can omit the parenthesis and use the `query`
-or `live_query` function directly. The first example could be rewritten as:
+If you are not using any filters, you can omit the parenthesis and use the `get_all`
+or `get_all_live` functions directly, which act similarly to the `query` and `live_query` functions
+respectively.
+The first example could be rewritten as:
 
 ```python
-nuc_df = client.materialize.tables.nucleus_detection_v0.query()
+nuc_df = client.materialize.tables.nucleus_detection_v0.get_all()
 ```
 
 If you want to list all available fields, you can use the `.fields` attribute.
