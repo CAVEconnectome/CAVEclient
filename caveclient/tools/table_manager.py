@@ -1,11 +1,12 @@
+import datetime
 import logging
 import re
 import warnings
 from itertools import chain
-import datetime
+from typing import Optional
+
 import attrs
 from cachetools import TTLCache, cached, keys
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
