@@ -400,6 +400,37 @@ class TestMatclient:
         vqry = myclient.materialize.views.single_neurons(pt_root_id=[123, 456])
         assert 123 in vqry.filter_kwargs_mat.get("filter_in_dict").get("pt_root_id")
 
+        qry_url = materialization_endpoints_v3["join_query"].format_map(
+            endpoint_mapping
+        )
+        query_d = {
+            "return_pyarrow": True,
+            "arrow_format": True,
+            "split_positions": True,
+        }
+        query_string = urlencode(query_d)
+        qry_url = qry_url + "?" + query_string
+        correct_query_data = {
+            "filter_in_dict": {"nucleus_detection_v0": {"pt_root_id": [123, 456]}},
+            "filter_equal_dict": {"allen_column_mtypes_v2": {"target_id": 271700}},
+            "suffix_map": {
+                "allen_column_mtypes_v2": "_ref",
+                "nucleus_detection_v0": "",
+            },
+            "tables": [
+                ["allen_column_mtypes_v2", "target_id"],
+                ["nucleus_detection_v0", "id"],
+            ],
+        }
+        responses.add(
+            responses.POST,
+            qry_url,
+            body=serialize_dataframe(pd.DataFrame()),
+            content_type="data.arrow",
+            match=[json_params_matcher(correct_query_data)],
+        )
+        qry.query(metadata=False)
+
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping

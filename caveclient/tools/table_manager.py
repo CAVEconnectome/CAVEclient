@@ -1,7 +1,9 @@
+import datetime
 import logging
 import re
 import warnings
 from itertools import chain
+from typing import Optional
 
 import attrs
 from cachetools import TTLCache, cached, keys
@@ -653,16 +655,44 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
         class TableQueryKwargs(BaseQueryKwargs):
             def query(
                 self,
-                select_columns=None,
-                offset=None,
-                limit=None,
-                split_positions=False,
-                materialization_version=None,
-                timestamp=None,
-                metadata=True,
-                desired_resolution=None,
-                get_counts=False,
+                select_columns: Optional[list] = None,
+                offset: Optional[int] = None,
+                limit: Optional[int] = None,
+                split_positions: bool = False,
+                materialization_version: Optional[int] = None,
+                timestamp: Optional[datetime.datetime] = None,
+                metadata: bool = True,
+                desired_resolution: Optional[list] = None,
+                get_counts: bool = False,
             ):
+                """Set data return options for the specified query
+
+                Parameters
+                ----------
+                select_columns : list, optional
+                    List of columns to be returned, by default None
+                offset : int, optional
+                    Sets how many rows to skip before starting to return results, by default None
+                limit : int, optional
+                    Sets the total number of results returned, by default None
+                split_positions : bool, optional
+                    If True, leaves position data in separate columns by componnet, by default False
+                materialization_version : int, optional
+                    Specifies a non-default materialization version, by default None
+                timestamp : datetime.datetime, optional
+                    Sets the timestamp to look up root ids at, by default None
+                metadata : bool, optional
+                    Whether to return table and query metadata under the `.attrs` property, by default True
+                desired_resolution : list, optional
+                    A three element vector setting the return resolution of position information, by default None
+                get_counts : bool, optional
+                    If True, only return the number of rows that match the query, by default False
+
+                Returns
+                -------
+                pd.DataFrame
+                    Query data
+                """
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.query_table(
@@ -704,18 +734,45 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         metadata=metadata,
                         desired_resolution=desired_resolution,
                         allow_missing_lookups=False,
+                        **self.filter_kwargs_mat,
                     )
 
             def live_query(
                 self,
-                timestamp,
-                offset=None,
-                limit=None,
-                split_positions=False,
-                metadata=True,
-                desired_resolution=None,
-                allow_missing_lookups=False,
+                timestamp: datetime.datetime,
+                offset: Optional[int] = None,
+                limit: Optional[int] = None,
+                split_positions: bool = False,
+                metadata: bool = True,
+                desired_resolution: Optional[list] = None,
+                allow_missing_lookups: bool = False,
             ):
+                """Set data return options for the specified live query
+
+                Parameters
+                ----------
+                timestamp :
+                offset : int, optional
+                    Sets how many rows to skip before starting to return results, by default None
+                limit : int, optional
+                    Sets the total number of results returned, by default None
+                split_positions : bool, optional
+                    If True, leaves position data in separate columns by componnet, by default False
+                metadata : bool, optional
+                    Whether to return table and query metadata under the `.attrs` property, by default True
+                desired_resolution : list, optional
+                    A three element vector setting the return resolution of position information, by default None
+                allow_missing_lookups: bool, optional
+                    If True, will return values even if the database is still ingesting new information, by default False.
+                    IMPORTANT: If set to True, the database could return different answers to the same query at the same timestamp.
+                    Do not set to True if writing code you intended to give consistent answers every time.
+
+                Returns
+                -------
+                pd.DataFrame
+                    Query data
+                """
+
                 logger.warning(
                     "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
                 )
@@ -754,14 +811,14 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
         class ViewQueryKwargs(BaseQueryKwargs):
             def query(
                 self,
-                select_columns=None,
-                offset=None,
-                limit=None,
-                split_positions=False,
-                materialization_version=None,
-                metadata=True,
-                desired_resolution=None,
-                get_counts=False,
+                select_columns: Optional[list] = None,
+                offset: Optional[int] = None,
+                limit: Optional[int] = None,
+                split_positions: bool = False,
+                materialization_version: Optional[int] = None,
+                metadata: bool = True,
+                desired_resolution: Optional[list] = None,
+                get_counts: bool = False,
             ):
                 """Query views through the table interface
 
@@ -824,8 +881,8 @@ def make_query_filter(table_name, meta, client):
         table_name, class_vals, bases=(make_kwargs_mixin(client),)
     )
     QueryFilter.__doc__ = desc
-    setattr(QueryFilter, "query", QueryFilter().query)
-    setattr(QueryFilter, "live_query", QueryFilter().live_query)
+    setattr(QueryFilter, "get_all", QueryFilter().query)
+    setattr(QueryFilter, "get_all_live", QueryFilter().live_query)
 
     fields = [
         x.name
@@ -872,7 +929,7 @@ def make_query_filter_view(view_name, meta, schema, client):
     )
     ViewQueryFilter.__doc__ = desc
 
-    setattr(ViewQueryFilter, "query", ViewQueryFilter().query)
+    setattr(ViewQueryFilter, "get_all", ViewQueryFilter().query)
 
     fields = [
         x.name
