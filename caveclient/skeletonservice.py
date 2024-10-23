@@ -38,6 +38,8 @@ class NoL2CacheException(Exception):
 
 
 class SkeletonClient(ClientBase):
+    """Client for interacting with the skeleton service."""
+
     def __init__(
         self,
         server_address: str,
@@ -277,6 +279,7 @@ class SkeletonClient(ClientBase):
             "none",
             "h5",
             "swc",
+            "swccompressed",
             "json",
             "jsoncompressed",
             "arrays",
@@ -284,6 +287,7 @@ class SkeletonClient(ClientBase):
             "precomputed",
         ] = "none",
         log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
     ):
         """Gets basic skeleton information for a datastack
 
@@ -296,19 +300,23 @@ class SkeletonClient(ClientBase):
         skeleton_version : int
             The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.
         output_format : string
-            The format to retrieve. Options are 'none', 'h5', 'swc', 'json', 'arrays', 'precomputed'
+            The format to retrieve. Options are:
+
+            - 'none': No return value (this can be used to generate a skeleton without retrieving it)
+            - 'precomputed': A cloudvolume.Skeleton object
+            - 'json': A dictionary
+            - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
+            - 'arrays': A dictionary (literally a subset of the json response)
+            - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
+            - 'swc': A pandas DataFrame
+            - 'swccompressed': A pandas DataFrame using compression for transmission (generally faster than 'swc')
+            - 'h5': An BytesIO object containing bytes for an h5 file
 
         Returns
         -------
-        The return type will vary greatly depending on the output_format parameter. The options are:
-        - 'none': No return value (this can be used to generate a skeleton without retrieving it)
-        - 'precomputed': A cloudvolume.Skeleton object
-        - 'json': A dictionary
-        - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
-        - 'arrays': A dictionary (literally a subset of the json response)
-        - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
-        - 'swc': A pandas DataFrame
-        - 'h5': An BytesIO object containing bytes for an h5 file
+        :
+            Skeleton of the requested type. See `output_format` for details.
+
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
@@ -319,6 +327,9 @@ class SkeletonClient(ClientBase):
 
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
+
+        if verbose_level >= 1:
+            print(f"get_skeleton() response contains content of size {len(response.content)} bytes")
 
         if output_format == "none":
             return
@@ -342,10 +353,14 @@ class SkeletonClient(ClientBase):
             return response.json()
         if output_format == "arrayscompressed":
             return SkeletonClient.decompressBytesToDict(response.content)
-        if output_format == "swc":
+        if output_format == "swc" or output_format == "swccompressed":
+            file_content = response.content.decode() \
+                if output_format == "swc" \
+                else SkeletonClient.decompressBytesToString(response.content)
+
             # I got the SWC column header from skeleton_plot.skel_io.py
             df = pd.read_csv(
-                StringIO(response.content.decode()),
+                StringIO(file_content),
                 sep=" ",
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
