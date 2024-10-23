@@ -14,7 +14,9 @@ try:
 
     CLOUDVOLUME_AVAILABLE = True
 except ImportError:
-    logging.warning("cloudvolume not available. 'precomputed' output format will not work.")
+    logging.warning(
+        "cloudvolume not available. 'precomputed' output format will not work."
+    )
 
     CLOUDVOLUME_AVAILABLE = False
 
@@ -325,7 +327,9 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
-            print(f"get_skeleton() response contains content of size {len(response.content)} bytes")
+            print(
+                f"get_skeleton() response contains content of size {len(response.content)} bytes"
+            )
 
         if output_format == "none":
             return
@@ -350,9 +354,11 @@ class SkeletonClient(ClientBase):
         if output_format == "arrayscompressed":
             return SkeletonClient.decompressBytesToDict(response.content)
         if output_format == "swc" or output_format == "swccompressed":
-            file_content = response.content.decode() \
-                if output_format == "swc" \
+            file_content = (
+                response.content.decode()
+                if output_format == "swc"
                 else SkeletonClient.decompressBytesToString(response.content)
+            )
 
             # I got the SWC column header from skeleton_plot.skel_io.py
             df = pd.read_csv(
