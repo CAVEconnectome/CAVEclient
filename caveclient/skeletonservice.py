@@ -277,6 +277,7 @@ class SkeletonClient(ClientBase):
             "none",
             "h5",
             "swc",
+            "swccompressed",
             "json",
             "jsoncompressed",
             "arrays",
@@ -284,6 +285,7 @@ class SkeletonClient(ClientBase):
             "precomputed",
         ] = "none",
         log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
     ):
         """Gets basic skeleton information for a datastack
 
@@ -320,6 +322,9 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
+        if verbose_level >= 1:
+            print(f"get_skeleton() response contains content of size {len(response.content)} bytes")
+
         if output_format == "none":
             return
         if output_format == "precomputed":
@@ -342,10 +347,14 @@ class SkeletonClient(ClientBase):
             return response.json()
         if output_format == "arrayscompressed":
             return SkeletonClient.decompressBytesToDict(response.content)
-        if output_format == "swc":
+        if output_format == "swc" or output_format == "swccompressed":
+            file_content = response.content.decode() \
+                if output_format == "swc" \
+                else SkeletonClient.decompressBytesToString(response.content)
+
             # I got the SWC column header from skeleton_plot.skel_io.py
             df = pd.read_csv(
-                StringIO(response.content.decode()),
+                StringIO(file_content),
                 sep=" ",
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
