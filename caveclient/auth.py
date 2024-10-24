@@ -34,18 +34,21 @@ def write_token(token, filepath, key, overwrite=True, ignore_readonly=False):
     else:
         secrets = {}
 
-    secrets[key] = token
-
-    secret_dir = os.path.dirname(filepath)
-    if not os.path.exists(secret_dir):
-        full_dir = os.path.expanduser(secret_dir)
-        os.makedirs(full_dir)
-
-    if not os.access(secret_dir, os.W_OK) and ignore_readonly:
+    if secrets.get(key) == token:
         return
     else:
-        with open(filepath, "w") as f:
-            json.dump(secrets, f)
+        secrets[key] = token
+
+        secret_dir = os.path.dirname(filepath)
+        if not os.path.exists(secret_dir):
+            full_dir = os.path.expanduser(secret_dir)
+            os.makedirs(full_dir)
+
+        if not os.access(secret_dir, os.W_OK) and ignore_readonly:
+            return
+        else:
+            with open(filepath, "w") as f:
+                json.dump(secrets, f)
 
 
 def server_token_filename(server_address):
