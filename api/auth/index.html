@@ -1523,7 +1523,7 @@
 
 
 <h2 id="caveclient.auth.AuthClient.save_token" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">save_token</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token_key</span><span class="o">=</span><span class="n">default_token_key</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">switch_token</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">write_to_server_file</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">save_token</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token_key</span><span class="o">=</span><span class="n">default_token_key</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">token_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">switch_token</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">write_to_server_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#caveclient.auth.AuthClient.save_token" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1640,6 +1640,22 @@ If you would like to specify more information about the json file where the toke
               <div class="doc-md-description">
                 <p>If True, will write token to a server specific file to support this machine
 interacting with multiple auth servers.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>ignore_readonly</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, will only attempt to save a token if the directory is writeable.</p>
               </div>
             </td>
             <td>
