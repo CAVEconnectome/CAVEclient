@@ -41,7 +41,7 @@ def write_token(token, filepath, key, overwrite=True, ignore_readonly=False):
         full_dir = os.path.expanduser(secret_dir)
         os.makedirs(full_dir)
 
-    if not os.access(full_dir, os.W_OK) and ignore_readonly:
+    if not os.access(secret_dir, os.W_OK) and ignore_readonly:
         return
     else:
         with open(filepath, "w") as f:
