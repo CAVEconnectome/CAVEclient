@@ -24,7 +24,7 @@ deprecated_token_files = [
 ]
 
 
-def write_token(token, filepath, key, overwrite=True):
+def write_token(token, filepath, key, overwrite=True, ignore_readonly=False):
     if os.path.exists(filepath):
         with open(filepath, "r") as f:
             secrets = json.load(f)
@@ -41,8 +41,11 @@ def write_token(token, filepath, key, overwrite=True):
         full_dir = os.path.expanduser(secret_dir)
         os.makedirs(full_dir)
 
-    with open(filepath, "w") as f:
-        json.dump(secrets, f)
+    if not os.access(full_dir, os.W_OK) and ignore_readonly:
+        return
+    else:
+        with open(filepath, "w") as f:
+            json.dump(secrets, f)
 
 
 def server_token_filename(server_address):
@@ -231,6 +234,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         token_file: Optional[str] = None,
         switch_token: bool = True,
         write_to_server_file: bool = True,
+        ignore_readonly: bool = True,
     ):
         """Conveniently save a token in the correct format.
 
@@ -258,6 +262,8 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         write_to_server_file: bool, optional
             If True, will write token to a server specific file to support this machine
             interacting with multiple auth servers.
+        ignore_readonly: bool, optional
+            If True, will only attempt to save a token if the directory is writeable.
         """
         if token is None:
             token = self.token
@@ -270,8 +276,20 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         if save_token_file is None:
             raise ValueError("No token file is set")
         if write_to_server_file:
-            write_token(token, self._server_file_path, token_key, overwrite=overwrite)
-        write_token(token, save_token_file, token_key, overwrite=overwrite)
+            write_token(
+                token,
+                self._server_file_path,
+                token_key,
+                overwrite=overwrite,
+                ignore_readonly=ignore_readonly,
+            )
+        write_token(
+            token,
+            save_token_file,
+            token_key,
+            overwrite=overwrite,
+            ignore_readonly=ignore_readonly,
+        )
 
         if switch_token:
             self._token = token
@@ -351,10 +369,12 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
                         token=self.token,
                         token_file=self.local_server_filepath,
                         overwrite=True,
+                        ignore_readonly=True,
                     )
             else:
                 self.save_token(
                     token=self.token,
                     token_file=self.local_server_filepath,
                     overwrite=True,
+                    ignore_readonly=True,
                 )
