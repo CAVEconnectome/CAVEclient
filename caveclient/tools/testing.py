@@ -1,10 +1,7 @@
-from caveclient import endpoints, CAVEclient
 import os
-import numpy as np
-import pandas as pd
+from caveclient import CAVEclient, endpoints
 
 try:
-    import pytest
     import responses
 
     imports_worked = True
@@ -24,7 +21,7 @@ default_info = {
         "description": "This is a test only dataset.",
     },
     "synapse_table": "test_synapse_table",
-    "description": "This is the first test datastack. ",
+    "description": "This is the first test datastack.",
     "local_server": TEST_LOCAL_SERVER,
     "segmentation_source": f"graphene://https://{TEST_LOCAL_SERVER}/segmentation/table/test_v1",
     "soma_table": "test_soma",
