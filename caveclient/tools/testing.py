@@ -511,7 +511,6 @@ def CAVEclientMock(
             server_address=global_server,
             write_server_cache=False,
             auth_token="just_a_test",
-            write_local_auth=False,
             global_only=global_only,
             version=set_version,
         )
