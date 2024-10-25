@@ -120,6 +120,34 @@ def get_server_information(
     }
 
 
+def get_api_versions(
+    chunkedgraph_api_versions: list = CHUNKEDGRAPH_API_VERSIONS,
+    materialization_api_versions: list = MATERIALIZATION_API_VERSIONS,
+    schema_api_versions: list = SCHEMA_API_VERSIONS,
+):
+    """Get the API versions for the services used in testing.
+
+    Parameters
+    ----------
+    chunkedgraph_api_versions : list, optional
+        List of chunkedgraph API versions that the chunkedgraph client thinks exists, by default CHUNKEDGRAPH_API_VERSIONS.
+    materialization_api_versions : list, optional
+        List of materialization API versions that the materialization client thinks exists, by default MATERIALIZATION_API_VERSIONS.
+    schema_api_versions : list, optional
+        List of schema API versions that the schema client thinks exists, by default SCHEMA_API_VERSIONS.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys: "chunkedgraph_api_versions", "materialization_api_versions", "schema_api_versions".
+    """
+    return {
+        "chunkedgraph_api_versions": chunkedgraph_api_versions,
+        "materialization_api_versions": materialization_api_versions,
+        "schema_api_versions": schema_api_versions,
+    }
+
+
 def default_info(
     local_server: str = TEST_LOCAL_SERVER,
 ) -> dict:
@@ -252,32 +280,38 @@ def CAVEclientMock(
     chunkedgraph : bool, optional
         If True, configures the client to initialize a chunkedgraph subclient, by default False
     chunkedgraph_server_version : str, optional
-        Sets the value of the chunkedgraph server version as a three-element semenatic version (e.g "2.3.4"),
+        Sets the value of the chunkedgraph server version as a three-element semanatic version (e.g "2.3.4"),
         by default the value in DEFAULT_CHUNKEDGRAPH_SERVER_VERSION.
+    chunkedgraph_api_versions : list, optional
+        List of chunkedgraph API versions that the chunkedgraph client thinks exists, by default None.
+        If None, returns the value in CHUNKEDGRAPH_API_VERSIONS.
     materialization : bool, optional
         If True, configures the client to initalize a materialization subclient, by default False
         Note that materialization being set to True will also configure the chunkedgraph client.
     materialization_server_version : str, optional
-        Sets the value of the materialization server version as a three-element semenatic version (e.g "2.3.4"),
+        Sets the value of the materialization server version as a three-element semanatic version (e.g "2.3.4"),
         by default the value in DEFAULT_MATERIALIZATION_SERVER_VERSON.
     available_materialization_versions : list, optional
         List of materialization database versions that the materialization client thinks exists, by default None.
         If None, returns the value in DEFAULT_MATERIALIZATION_VERSONS.
+    materialization_api_versions : list, optional
+        List of materialization API versions that the materialization client thinks exists, by default None.
+        If None, returns the value in MATERIALIZATION_API_VERSIONS.
     set_version: int, optional
         If set, will set the version of the materialization server to the value of set_version, by default None.
-        To work, this version must be in the list of available materialization veriosns.
+        To work, this version must be in the list of available materialization versions.
     set_version_metadata: dict, optional
         If set, will set the version metadata of the materialization server to the value of set_version_metadata.
         Default value is in DEFAULT_MATERIALIZATION_VERSION_METADATA.
     json_service : bool, optional
         If True, configures the client to initalize a materialization subclient, by default False
     json_service_server_version : _type_, optional
-        Sets the value of the json state server version as a three-element semenatic version (e.g "2.3.4"),
+        Sets the value of the json state server version as a three-element semanatic version (e.g "2.3.4"),
         by default the value in DEFAULT_JSON_SERVICE_SERVER_VERSION.
     skeleton_service : bool, optional
         If True, configures the client to initalize a skeleton service subclient, by default False
     skeleton_service_server_version : _type_, optional
-        Sets the value of the skeleton service version as a three-element semenatic version (e.g "2.3.4"),
+        Sets the value of the skeleton service version as a three-element semanatic version (e.g "2.3.4"),
         by default the value in DEFAULT_SKELETON_SERVICE_SERVER_VERSION.
     l2cache : bool, optional
         If True, configures the client to initialize an l2cache subclient, by default False
@@ -394,9 +428,6 @@ def CAVEclientMock(
                 json=chunkedgraph_api_versions,
                 status=200,
             )
-            pcg_endpoints = endpoints.chunkedgraph_api_versions[
-                max(chunkedgraph_api_versions)
-            ]
         if materialization:
             mat_api_url = api_version_url(
                 local_server,
