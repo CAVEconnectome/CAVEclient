@@ -19,7 +19,7 @@ from caveclient.endpoints import (
     schema_endpoints_v2,
 )
 
-from .conftest import test_info, datastack_dict
+from .conftest import datastack_dict, test_info
 
 
 def test_info_d(myclient):

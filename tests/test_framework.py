@@ -7,12 +7,12 @@ from responses.matchers import query_param_matcher
 from caveclient import CAVEclient, endpoints, set_session_defaults
 
 from .conftest import (
-    test_info,
     datastack_dict,
-    server_versions,
     global_client,
-    version_specified_client,
     mat_apiv2_specified_client,
+    server_versions,
+    test_info,
+    version_specified_client,
 )
 
 default_mapping = {
