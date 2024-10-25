@@ -8,6 +8,7 @@ from .. import endpoints
 
 try:
     import responses
+    from responses.matchers import query_param_matcher
 
     imports_worked = True
 except ImportError:
@@ -23,6 +24,35 @@ TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
 TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
 TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
 DEFAULT_MATERIALIZATION_VERSONS = [1, 2]
+
+DEFAULT_MATERIALIZATION_VERSION_METADATA = {
+    "time_stamp": "2024-06-05T10:10:01.203215",
+    "expires_on": "2080-06-05T10:10:01.203215",
+}
+
+
+def get_materialiation_info(
+    materialization_versions: list = DEFAULT_MATERIALIZATION_VERSONS,
+    version_metadata: dict = DEFAULT_MATERIALIZATION_VERSION_METADATA,
+):
+    """Get the materialization versions and version metadata for the materialization service.
+
+    Parameters
+    ----------
+    materialization_versions : list, optional
+        List of materialization database versions that the materialization client thinks exists, by default DEFAULT_MATERIALIZATION_VERSONS.
+    version_metadata : dict, optional
+        Version metadata for the materialization service, by default DEFAULT_MATERIALIZATION_VERSION_METADATA.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys: "materialization_versions", "version_metadata".
+    """
+    return {
+        "materialization_versions": materialization_versions,
+        "version_metadata": version_metadata,
+    }
 
 
 def get_server_versions(
@@ -51,10 +81,10 @@ def get_server_versions(
         Values are Version objects from packaging.versions.
     """
     return {
-        "chunkedgraph_version": Version(chunkedgraph_version),
-        "materialization_version": Version(materialization_version),
-        "skeleton_service_version": Version(skeleton_service_version),
-        "json_service_version": Version(json_service_version),
+        "chunkedgraph_server_version": Version(chunkedgraph_version),
+        "materialization_server_version": Version(materialization_version),
+        "skeleton_service_server_version": Version(skeleton_service_version),
+        "json_service_server_version": Version(json_service_version),
     }
 
 
@@ -175,6 +205,8 @@ def CAVEclientMock(
     materialization: bool = False,
     materialization_server_version: str = DEFAULT_MATERIALIZATION_SERVER_VERSON,
     available_materialization_versions: Optional[list] = None,
+    set_version: Optional[int] = None,
+    set_version_metadata: Optional[dict] = None,
     json_service: bool = False,
     json_service_server_version: str = DEFAULT_JSON_SERVICE_SERVER_VERSION,
     skeleton_service: bool = False,
@@ -214,6 +246,12 @@ def CAVEclientMock(
     available_materialization_versions : list, optional
         List of materialization database versions that the materialization client thinks exists, by default None.
         If None, returns the value in DEFAULT_MATERIALIZATION_VERSONS.
+    set_version: int, optional
+        If set, will set the version of the materialization server to the value of set_version, by default None.
+        To work, this version must be in the list of available materialization veriosns.
+    set_version_metadata: dict, optional
+        If set, will set the version metadata of the materialization server to the value of set_version_metadata.
+        Default value is in DEFAULT_MATERIALIZATION_VERSION_METADATA.
     json_service : bool, optional
         If True, configures the client to initalize a materialization subclient, by default False
     json_service_server_version : _type_, optional
@@ -291,6 +329,7 @@ def CAVEclientMock(
         materialization = False
         skeleton_service = False
         l2cache = False
+        set_version = None
     else:
         if datastack_name is None:
             datastack_name = TEST_DATASTACK
@@ -300,20 +339,14 @@ def CAVEclientMock(
             info_file = default_info(local_server)
         if available_materialization_versions is None:
             available_materialization_versions = DEFAULT_MATERIALIZATION_VERSONS
+        if set_version_metadata is None:
+            set_version_metadata = DEFAULT_MATERIALIZATION_VERSION_METADATA
 
     @responses.activate()
     def mockedCAVEclient():
         url = info_url(datastack_name, global_server)
         responses.add(responses.GET, url=url, json=info_file, status=200)
-        client = CAVEclient(
-            datastack_name=datastack_name,
-            server_address=global_server,
-            write_server_cache=False,
-            auth_token="just_a_test",
-            write_local_auth=False,
-            global_only=global_only,
-        )
-        client.info
+
         if chunkedgraph or l2cache or materialization:
             pcg_version_url = version_url(
                 local_server,
@@ -323,10 +356,9 @@ def CAVEclientMock(
             responses.add(
                 responses.GET,
                 pcg_version_url,
-                json=chunkedgraph_server_version,
+                json=str(chunkedgraph_server_version),
                 status=200,
             )
-            client.chunkedgraph
         if materialization:
             mat_version_url = version_url(
                 local_server,
@@ -336,7 +368,7 @@ def CAVEclientMock(
             responses.add(
                 responses.GET,
                 mat_version_url,
-                json=materialization_server_version,
+                json=str(materialization_server_version),
                 status=200,
             )
 
@@ -352,7 +384,35 @@ def CAVEclientMock(
                 json=available_materialization_versions,
                 status=200,
             )
-            client.materialize
+
+            if set_version is not None:
+                mat_available_endpoint = endpoints.materialization_endpoints_v2[
+                    "versions"
+                ]
+                mat_mapping = {
+                    "me_server_address": local_server,
+                    "datastack_name": datastack_name,
+                }
+                mat_version_list_url = mat_available_endpoint.format_map(mat_mapping)
+
+                responses.add(
+                    responses.GET,
+                    url=mat_version_list_url,
+                    json=available_materialization_versions,
+                    status=200,
+                    match=[query_param_matcher({"expired": True})],
+                )
+
+                mat_mapping["version"] = set_version
+                version_metadata_url = endpoints.materialization_endpoints_v2[
+                    "version_metadata"
+                ].format_map(mat_mapping)
+                responses.add(
+                    responses.GET,
+                    version_metadata_url,
+                    json=set_version_metadata,
+                    status=200,
+                )
         if json_service:
             js_version_url = version_url(
                 global_server,
@@ -362,10 +422,9 @@ def CAVEclientMock(
             responses.add(
                 responses.GET,
                 js_version_url,
-                json=json_service_server_version,
+                json=str(json_service_server_version),
                 status=200,
             )
-            client.state
         if skeleton_service:
             ss_version_url = version_url(
                 local_server,
@@ -375,9 +434,27 @@ def CAVEclientMock(
             responses.add(
                 responses.GET,
                 ss_version_url,
-                json=skeleton_service_server_version,
+                json=str(skeleton_service_server_version),
                 status=200,
             )
+
+        client = CAVEclient(
+            datastack_name=datastack_name,
+            server_address=global_server,
+            write_server_cache=False,
+            auth_token="just_a_test",
+            write_local_auth=False,
+            global_only=global_only,
+            version=set_version,
+        )
+        client.info
+        if chunkedgraph or l2cache or materialization:
+            client.chunkedgraph
+        if materialization:
+            client.materialize
+        if json_service:
+            client.state
+        if skeleton_service:
             client.skeleton
         if l2cache:
             table_mapping_endpoint = endpoints.l2cache_endpoints_v1[
@@ -403,6 +480,7 @@ def CAVEclientMock(
                     status=200,
                 )
 
+            client.l2cache
         return client
 
     return mockedCAVEclient()

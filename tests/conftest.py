@@ -8,14 +8,23 @@ from caveclient.tools.testing import (
 )
 
 
+# These are convenience functions to get a mix of specified and default values
 datastack_dict = get_server_information()
 server_versions = get_server_versions()
+
 test_info = default_info(datastack_dict["local_server"])
 
 
 @pytest.fixture()
 def myclient():
-    return CAVEclientMock(chunkedgraph=True, materialization=True, **datastack_dict)
+    return CAVEclientMock(
+        chunkedgraph=True,
+        materialization=True,
+        json_service=True,
+        skeleton_service=True,
+        l2cache=True,
+        **datastack_dict,
+    )
 
 
 @pytest.fixture()
@@ -31,4 +40,18 @@ def global_client():
         global_server=datastack_dict["global_server"],
         global_only=True,
         json_service=True,
+    )
+
+
+@pytest.fixture()
+def versioned_client():
+    return CAVEclientMock(
+        chunkedgraph=True,
+        materialization=True,
+        json_service=True,
+        skeleton_service=True,
+        l2cache=True,
+        available_materialization_versions=[1, 2, 3],
+        set_version=3,
+        **server_versions,
     )

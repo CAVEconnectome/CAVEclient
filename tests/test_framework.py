@@ -11,6 +11,7 @@ from .conftest import (
     datastack_dict,
     server_versions,
     global_client,
+    versioned_client,
 )
 
 default_mapping = {
@@ -35,7 +36,20 @@ def test_global_client(global_client):
     assert global_client.info.datastack_name is None
     assert global_client.info.server_address == datastack_dict["global_server"]
     assert "Authorization" in global_client.auth.request_header
-    assert global_client.state.server_version == server_versions["json_service_version"]
+    assert (
+        global_client.state.server_version
+        == server_versions["json_service_server_version"]
+    )
+
+
+def test_versioned_client(versioned_client):
+    correct_date = datetime.datetime.strptime(
+        "2024-06-05T10:10:01.203215", "%Y-%m-%dT%H:%M:%S.%f"
+    ).replace(tzinfo=datetime.timezone.utc)
+
+    assert versioned_client.timestamp == correct_date
+    assert versioned_client.materialize.version == 3
+    assert versioned_client.chunkedgraph.timestamp == correct_date
 
 
 class TestFrameworkClient:
