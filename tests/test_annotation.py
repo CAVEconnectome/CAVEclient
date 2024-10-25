@@ -7,7 +7,7 @@ import responses
 
 from caveclient.endpoints import annotation_endpoints_v2, schema_endpoints_v2
 
-from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
+from .conftest import datastack_dict, test_info
 
 test_jsonschema = {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -57,9 +57,9 @@ test_jsonschema = {
 
 class TestAnnoClinet:
     default_mapping = {
-        "ae_server_address": TEST_LOCAL_SERVER,
-        "emas_server_address": TEST_GLOBAL_SERVER,
-        "datastack_name": TEST_DATASTACK,
+        "ae_server_address": datastack_dict["local_server"],
+        "emas_server_address": datastack_dict["global_server"],
+        "datastack_name": datastack_dict["datastack_name"],
         "aligned_volume_name": test_info.get("aligned_volume").get("name"),
         "table_name": "cell_type_test",
     }

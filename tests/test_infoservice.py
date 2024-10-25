@@ -3,7 +3,7 @@ import responses
 
 from caveclient.endpoints import infoservice_endpoints_v2
 
-from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, test_info
+from .conftest import test_info, datastack_dict
 
 
 def test_info_d(myclient):
@@ -13,8 +13,8 @@ def test_info_d(myclient):
 
 class TestInfoClient:
     default_mapping = {
-        "datastack_name": TEST_DATASTACK,
-        "i_server_address": TEST_GLOBAL_SERVER,
+        "datastack_name": datastack_dict["datastack_name"],
+        "i_server_address": datastack_dict["global_server"],
     }
     endpoints = infoservice_endpoints_v2
 

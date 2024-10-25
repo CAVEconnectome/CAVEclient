@@ -19,7 +19,7 @@ from caveclient.endpoints import (
     schema_endpoints_v2,
 )
 
-from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
+from .conftest import test_info, datastack_dict
 
 
 def test_info_d(myclient):
@@ -49,10 +49,10 @@ def serialize_dataframe(df, compression="zstd"):
 
 class TestMatclient:
     default_mapping = {
-        "me_server_address": TEST_LOCAL_SERVER,
-        "cg_server_address": TEST_LOCAL_SERVER,
+        "me_server_address": datastack_dict["local_server"],
+        "cg_server_address": datastack_dict["local_server"],
         "table_id": test_info["segmentation_source"].split("/")[-1],
-        "datastack_name": TEST_DATASTACK,
+        "datastack_name": datastack_dict["datastack_name"],
         "table_name": test_info["synapse_table"],
         "version": 1,
     }
@@ -322,7 +322,7 @@ class TestMatclient:
         myclient = copy.deepcopy(myclient)
         myclient._materialize = None
         endpoint_mapping = self.default_mapping
-        endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
+        endpoint_mapping["emas_server_address"] = datastack_dict["global_server"]
 
         mat_version_url = materialization_common["get_version"].format_map(
             endpoint_mapping

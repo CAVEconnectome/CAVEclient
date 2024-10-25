@@ -34,6 +34,7 @@ class CAVEclient(object):
         info_cache=None,
         write_server_cache=True,
         version: Optional[int] = None,
+        write_local_auth=True,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -98,6 +99,9 @@ class CAVEclient(object):
         version:
             The default materialization version of the datastack to use. If None, the
             latest version is used. Optional, defaults to None.
+        write_local_auth: bool, optional
+            If True, synchronizes the auth token for datastack-specific services in your secrets directory.
+            Does nothing if no datastack is set.
         """
         server_address = handle_server_address(
             datastack_name, server_address, write=write_server_cache
@@ -127,6 +131,7 @@ class CAVEclient(object):
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
                 version=version,
+                write_local_auth=write_local_auth,
             )
 
 
@@ -206,7 +211,12 @@ class CAVEclientGlobal(object):
         self._pool_block = pool_block
         self._info_cache = info_cache
 
-    def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
+    def change_auth(
+        self,
+        auth_token_file=None,
+        auth_token_key=None,
+        auth_token=None,
+    ):
         """Change the authentication token and reset services.
 
         Parameters
@@ -339,6 +349,7 @@ class CAVEclientFull(CAVEclientGlobal):
         desired_resolution=None,
         info_cache=None,
         version: Optional[int] = None,
+        write_local_auth: bool = True,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -395,6 +406,8 @@ class CAVEclientFull(CAVEclientGlobal):
         version:
             The default materialization version of the datastack to use. If None, the
             latest version is used. Optional, defaults to None.
+        write_local_auth: bool, optional
+            If True, synchronizes the auth token for datastack-specific services in your secrets directory.
 
         See Also
         --------
@@ -423,7 +436,8 @@ class CAVEclientFull(CAVEclientGlobal):
         self._l2cache = None
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
-        self.auth.local_server = self.local_server
+        if write_local_auth:
+            self.auth.local_server = self.local_server
 
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
