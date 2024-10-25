@@ -352,7 +352,6 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
     @local_server.setter
     def local_server(self, new_val):
         self._local_server = new_val
-        self._synchronize_local_server_file()
 
     @property
     def local_server_filepath(self):
@@ -360,6 +359,10 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
             return server_token_filename(self.local_server)
         else:
             return None
+
+    def write_local_server_token(self):
+        """Write the token secret into a file that can be used to authenticate with the local server (e.g. segmentation) from cloudvolume."""
+        self._synchronize_local_server_file()
 
     def _synchronize_local_server_file(self):
         if self.local_server:
