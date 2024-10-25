@@ -7,8 +7,6 @@ from caveclient.tools.testing import (
     get_server_versions,
 )
 
-
-# These are convenience functions to get a mix of specified and default values
 datastack_dict = get_server_information()
 server_versions = get_server_versions()
 

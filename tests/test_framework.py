@@ -8,11 +8,11 @@ from caveclient import CAVEclient, endpoints, set_session_defaults
 
 from .conftest import (
     datastack_dict,
-    global_client,
-    mat_apiv2_specified_client,
+    global_client,  # noqa: F401
+    mat_apiv2_specified_client,  # noqa: F401
     server_versions,
     test_info,
-    version_specified_client,
+    version_specified_client,  # noqa: F401
 )
 
 default_mapping = {
@@ -33,7 +33,7 @@ mapping = {
 info_url = url_template.format_map(mapping)
 
 
-def test_global_client(global_client):
+def test_global_client(global_client):  # noqa: F811
     assert global_client.info.datastack_name is None
     assert global_client.info.server_address == datastack_dict["global_server"]
     assert "Authorization" in global_client.auth.request_header
@@ -43,7 +43,7 @@ def test_global_client(global_client):
     )
 
 
-def test_versioned_client(version_specified_client):
+def test_versioned_client(version_specified_client):  # noqa: F811
     correct_date = datetime.datetime.strptime(
         "2024-06-05T10:10:01.203215", "%Y-%m-%dT%H:%M:%S.%f"
     ).replace(tzinfo=datetime.timezone.utc)
@@ -53,7 +53,7 @@ def test_versioned_client(version_specified_client):
     assert version_specified_client.chunkedgraph.timestamp == correct_date
 
 
-def test_api_version(mat_apiv2_specified_client):
+def test_api_version(mat_apiv2_specified_client):  # noqa: F811
     assert "api/v2" in mat_apiv2_specified_client.materialize._endpoints["simple_query"]
 
 

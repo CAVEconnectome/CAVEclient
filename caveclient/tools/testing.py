@@ -1,10 +1,11 @@
 import os
 import warnings
-from packaging.version import Version
 from typing import Optional
-from ..frameworkclient import CAVEclient
-from .. import endpoints
 
+from packaging.version import Version
+
+from .. import endpoints
+from ..frameworkclient import CAVEclient
 
 try:
     import responses

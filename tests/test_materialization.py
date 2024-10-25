@@ -14,7 +14,6 @@ from caveclient import materializationengine
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     materialization_common,
-    materialization_endpoints_v2,
     materialization_endpoints_v3,
     schema_endpoints_v2,
 )
