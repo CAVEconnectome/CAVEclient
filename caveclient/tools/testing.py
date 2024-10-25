@@ -12,6 +12,7 @@ except ImportError:
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
 TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
 TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
+DEFAULT_MATERIALIZATION_VERSONS = [1, 2, 4, 8]
 
 
 def default_info(local_server):
@@ -44,6 +45,14 @@ def info_url(
     return url_template.format_map(mapping)
 
 
+def get_table_name(info_file):
+    seg_source = info_file.get("segmentation_source")
+    if seg_source:
+        return seg_source.split("/")[-1]
+    else:
+        return "test_table"
+
+
 def CAVEclientMock(
     datastack_name=None,
     global_server=None,
@@ -53,11 +62,18 @@ def CAVEclientMock(
     chunkedgraph_server_version="2.15.0",
     materialization=False,
     materialization_server_version="4.30.1",
+    available_materialization_versions=None,
     json_service=False,
     json_service_server_version="0.7.0",
     skeleton_service=False,
     skeleton_service_server_version="0.3.8",
+    l2cache=False,
 ):
+    if not imports_worked:
+        raise ImportError(
+            "Please install responses to use CAVEclientMock: 'pip install responses'}"
+        )
+
     if datastack_name is None:
         datastack_name = TEST_DATASTACK
     if global_server is None:
@@ -66,15 +82,21 @@ def CAVEclientMock(
         local_server = TEST_LOCAL_SERVER
     if info_file is None:
         info_file = default_info(local_server)
+    if available_materialization_versions is None:
+        available_materialization_versions = DEFAULT_MATERIALIZATION_VERSONS
 
     @responses.activate()
     def test_client():
         url = info_url(datastack_name, global_server)
         responses.add(responses.GET, url=url, json=info_file, status=200)
         client = CAVEclient(
-            datastack_name, server_address=global_server, write_server_cache=False
+            datastack_name,
+            server_address=global_server,
+            write_server_cache=False,
+            auth_token="just_a_test",
+            max_retries=0,
         )
-        if chunkedgraph:
+        if chunkedgraph or l2cache:
             pcg_version_endpoint = endpoints.chunkedgraph_endpoints_common[
                 "get_version"
             ]
@@ -92,6 +114,19 @@ def CAVEclientMock(
                 responses.GET,
                 mat_version_url,
                 json=materialization_server_version,
+                status=200,
+            )
+
+            mat_available_endpoint = endpoints.materialization_endpoints_v3["versions"]
+            mat_mapping = {
+                "me_server_address": local_server,
+                "datastack_name": datastack_name,
+            }
+            mat_version_list_url = mat_available_endpoint.format_map(mat_mapping)
+            responses.add(
+                responses.GET,
+                mat_version_list_url,
+                json=available_materialization_versions,
                 status=200,
             )
             client.materialize
@@ -117,6 +152,24 @@ def CAVEclientMock(
                 status=200,
             )
             client.skeleton
+        if l2cache:
+            table_mapping_endpoint = endpoints.l2cache_endpoints_v1[
+                "l2cache_table_mapping"
+            ]
+            l2_mapping = {
+                "l2cache_server_address": local_server,
+                "table_id": client.chunkedgraph.table_name,
+            }
+            table_mapping_url = table_mapping_endpoint.format_map(l2_mapping)
+            print("table_mapping_url:", table_mapping_url)
+            responses.add(
+                responses.GET,
+                url=table_mapping_url,
+                json={client.chunkedgraph.table_name: "test_table"},
+                status=200,
+            )
+            print("has cache:", client.l2cache.has_cache())
+
         return client
 
     return test_client

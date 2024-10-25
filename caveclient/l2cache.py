@@ -55,6 +55,7 @@ class L2CacheClient(ClientBase):
         )
         self._default_url_mapping["table_id"] = table_name
         self._available_attributes = None
+        self._table_mapping = None
 
     @property
     def default_url_mapping(self):
@@ -123,10 +124,12 @@ class L2CacheClient(ClientBase):
         dict
             keys are pcg table names, values are dicts with fields `l2cache_id` and `cv_path`.
         """
-        endpoint_mapping = self.default_url_mapping
-        url = self._endpoints["l2cache_table_mapping"].format_map(endpoint_mapping)
-        response = self.session.get(url)
-        return handle_response(response)
+        if self._table_mapping is None:
+            endpoint_mapping = self.default_url_mapping
+            url = self._endpoints["l2cache_table_mapping"].format_map(endpoint_mapping)
+            response = self.session.get(url)
+            self._table_mapping = handle_response(response)
+        return self._table_mapping
 
     def has_cache(self, datastack_name=None):
         """Checks if the l2 cache is available for the dataset
