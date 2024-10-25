@@ -6,7 +6,12 @@ from responses.matchers import query_param_matcher
 
 from caveclient import CAVEclient, endpoints, set_session_defaults
 
-from .conftest import test_info, datastack_dict
+from .conftest import (
+    test_info,
+    datastack_dict,
+    server_versions,
+    global_client,
+)
 
 default_mapping = {
     "me_server_address": datastack_dict["local_server"],
@@ -24,6 +29,13 @@ mapping = {
     "datastack_name": datastack_dict["datastack_name"],
 }
 info_url = url_template.format_map(mapping)
+
+
+def test_global_client(global_client):
+    assert global_client.info.datastack_name is None
+    assert global_client.info.server_address == datastack_dict["global_server"]
+    assert "Authorization" in global_client.auth.request_header
+    assert global_client.state.server_version == server_versions["json_service_version"]
 
 
 class TestFrameworkClient:

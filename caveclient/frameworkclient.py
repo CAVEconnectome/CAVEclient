@@ -103,10 +103,6 @@ class CAVEclient(object):
             If True, synchronizes the auth token for datastack-specific services in your secrets directory.
             Does nothing if no datastack is set.
         """
-        server_address = handle_server_address(
-            datastack_name, server_address, write=write_server_cache
-        )
-
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
                 server_address=server_address,
@@ -119,6 +115,10 @@ class CAVEclient(object):
                 info_cache=info_cache,
             )
         else:
+            server_address = handle_server_address(
+                datastack_name, server_address, write=write_server_cache
+            )
+
             return CAVEclientFull(
                 datastack_name=datastack_name,
                 server_address=server_address,

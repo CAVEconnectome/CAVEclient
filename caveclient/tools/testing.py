@@ -1,5 +1,6 @@
 import os
 import warnings
+from packaging.version import Version
 from typing import Optional
 from ..frameworkclient import CAVEclient
 from .. import endpoints
@@ -22,6 +23,39 @@ TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
 TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
 TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
 DEFAULT_MATERIALIZATION_VERSONS = [1, 2]
+
+
+def get_server_versions(
+    chunkedgraph_version: str = DEFAULT_CHUNKEDGRAPH_SERVER_VERSION,
+    materialization_version: str = DEFAULT_MATERIALIZATION_SERVER_VERSON,
+    skeleton_service_version: str = DEFAULT_SKELETON_SERVICE_SERVER_VERSION,
+    json_service_version: str = DEFAULT_JSON_SERVICE_SERVER_VERSION,
+) -> dict:
+    """Get the server versions for the services used in testing.
+
+    Parameters
+    ----------
+    chunkedgraph_version : str, optional
+        Version of the chunkedgraph server, by default DEFAULT_CHUNKEDGRAPH_SERVER_VERSION.
+    materialization_version : str, optional
+        Version of the materialization server, by default DEFAULT_MATERIALIZATION_SERVER_VERSON.
+    skeleton_service_version : str, optional
+        Version of the skeleton service server, by default DEFAULT_SKELETON_SERVICE_SERVER_VERSION.
+    json_service_version : str, optional
+        Version of the json service server, by default DEFAULT_JSON_SERVICE_SERVER_VERSION.
+
+    Returns
+    -------
+    dict
+        Dictionary with keys: "chunkedgraph_version", "materialization_version", "skeleton_service_version", "json_service_version".
+        Values are Version objects from packaging.versions.
+    """
+    return {
+        "chunkedgraph_version": Version(chunkedgraph_version),
+        "materialization_version": Version(materialization_version),
+        "skeleton_service_version": Version(skeleton_service_version),
+        "json_service_version": Version(json_service_version),
+    }
 
 
 def get_server_information(
@@ -147,6 +181,7 @@ def CAVEclientMock(
     skeleton_service_server_version: str = DEFAULT_SKELETON_SERVICE_SERVER_VERSION,
     l2cache: bool = False,
     l2cache_disabled: bool = False,
+    global_only: bool = False,
 ):
     """Created a mocked CAVEclient function for testing using the responses library to mock
     the server responses. This function returns a drop-in replacement for the `CAVEclient` function
@@ -195,6 +230,8 @@ def CAVEclientMock(
     l2cache_disabled : bool, optional
         If True, allows a subclient to be initialized, but emulates a situation without an L2 cache, by default False
         Only used if l2cache is True.
+    global_only : bool, optional
+        If True, only initializes the global services and does not use a datastack, by default False.
 
     Returns
     -------
@@ -244,28 +281,39 @@ def CAVEclientMock(
             "Please install responses to use CAVEclientMock: e.g. 'pip install responses'}"
         )
 
-    if datastack_name is None:
-        datastack_name = TEST_DATASTACK
     if global_server is None:
         global_server = TEST_GLOBAL_SERVER
-    if local_server is None:
-        local_server = TEST_LOCAL_SERVER
-    if info_file is None:
-        info_file = default_info(local_server)
-    if available_materialization_versions is None:
-        available_materialization_versions = DEFAULT_MATERIALIZATION_VERSONS
+
+    if global_only:
+        datastack_name = None
+        local_server = None
+        chunkedgraph = False
+        materialization = False
+        skeleton_service = False
+        l2cache = False
+    else:
+        if datastack_name is None:
+            datastack_name = TEST_DATASTACK
+        if local_server is None:
+            local_server = TEST_LOCAL_SERVER
+        if info_file is None:
+            info_file = default_info(local_server)
+        if available_materialization_versions is None:
+            available_materialization_versions = DEFAULT_MATERIALIZATION_VERSONS
 
     @responses.activate()
     def mockedCAVEclient():
         url = info_url(datastack_name, global_server)
         responses.add(responses.GET, url=url, json=info_file, status=200)
         client = CAVEclient(
-            datastack_name,
+            datastack_name=datastack_name,
             server_address=global_server,
             write_server_cache=False,
             auth_token="just_a_test",
             write_local_auth=False,
+            global_only=global_only,
         )
+        client.info
         if chunkedgraph or l2cache or materialization:
             pcg_version_url = version_url(
                 local_server,
