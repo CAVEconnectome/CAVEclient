@@ -55,3 +55,13 @@ def version_specified_client():
         set_version=3,
         **server_versions,
     )
+
+
+@pytest.fixture()
+def mat_apiv2_specified_client():
+    return CAVEclientMock(
+        materialization=True,
+        available_materialization_versions=[1, 2, 3],
+        materialization_api_versions=[2],
+        **server_versions,
+    )

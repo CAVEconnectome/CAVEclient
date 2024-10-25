@@ -12,6 +12,7 @@ from .conftest import (
     server_versions,
     global_client,
     version_specified_client,
+    mat_apiv2_specified_client,
 )
 
 default_mapping = {
@@ -50,6 +51,10 @@ def test_versioned_client(version_specified_client):
     assert version_specified_client.timestamp == correct_date
     assert version_specified_client.materialize.version == 3
     assert version_specified_client.chunkedgraph.timestamp == correct_date
+
+
+def test_api_version(mat_apiv2_specified_client):
+    assert "api/v2" in mat_apiv2_specified_client.materialize._endpoints["simple_query"]
 
 
 class TestFrameworkClient:
