@@ -30,6 +30,10 @@ DEFAULT_MATERIALIZATION_VERSION_METADATA = {
     "expires_on": "2080-06-05T10:10:01.203215",
 }
 
+MATERIALIZATION_API_VERSIONS = [2, 3]
+CHUNKEDGRAPH_API_VERSIONS = [0, 1]
+SCHEMA_API_VERSIONS = [1, 2]
+
 
 def get_materialiation_info(
     materialization_versions: list = DEFAULT_MATERIALIZATION_VERSONS,
@@ -186,6 +190,16 @@ def version_url(
     return version_endpoint.format_map(mapping)
 
 
+def api_version_url(
+    server_address: str,
+    endpoint_dictionary: dict,
+    service_key: str,
+):
+    return endpoint_dictionary["get_api_versions"].format_map(
+        {service_key: server_address}
+    )
+
+
 def get_table_name(info_file):
     """Get the table name from the info file dictionary"""
     seg_source = info_file.get("segmentation_source")
@@ -202,8 +216,10 @@ def CAVEclientMock(
     info_file: Optional[dict] = None,
     chunkedgraph: bool = False,
     chunkedgraph_server_version: str = DEFAULT_CHUNKEDGRAPH_SERVER_VERSION,
+    chunkedgraph_api_versions: Optional[list] = None,
     materialization: bool = False,
     materialization_server_version: str = DEFAULT_MATERIALIZATION_SERVER_VERSON,
+    materialization_api_versions: Optional[list] = None,
     available_materialization_versions: Optional[list] = None,
     set_version: Optional[int] = None,
     set_version_metadata: Optional[dict] = None,
@@ -211,6 +227,7 @@ def CAVEclientMock(
     json_service_server_version: str = DEFAULT_JSON_SERVICE_SERVER_VERSION,
     skeleton_service: bool = False,
     skeleton_service_server_version: str = DEFAULT_SKELETON_SERVICE_SERVER_VERSION,
+    schema_api_versions: Optional[list] = None,
     l2cache: bool = False,
     l2cache_disabled: bool = False,
     global_only: bool = False,
@@ -341,6 +358,12 @@ def CAVEclientMock(
             available_materialization_versions = DEFAULT_MATERIALIZATION_VERSONS
         if set_version_metadata is None:
             set_version_metadata = DEFAULT_MATERIALIZATION_VERSION_METADATA
+        if chunkedgraph_api_versions is None:
+            chunkedgraph_api_versions = CHUNKEDGRAPH_API_VERSIONS
+        if materialization_api_versions is None:
+            materialization_api_versions = MATERIALIZATION_API_VERSIONS
+        if schema_api_versions is None:
+            schema_api_versions = SCHEMA_API_VERSIONS
 
     @responses.activate()
     def mockedCAVEclient():
@@ -359,7 +382,36 @@ def CAVEclientMock(
                 json=str(chunkedgraph_server_version),
                 status=200,
             )
+
+            pcg_api_url = api_version_url(
+                local_server,
+                endpoints.chunkedgraph_endpoints_common,
+                "cg_server_address",
+            )
+            responses.add(
+                responses.GET,
+                pcg_api_url,
+                json=chunkedgraph_api_versions,
+                status=200,
+            )
+            pcg_endpoints = endpoints.chunkedgraph_api_versions[
+                max(chunkedgraph_api_versions)
+            ]
         if materialization:
+            mat_api_url = api_version_url(
+                local_server,
+                endpoints.materialization_common,
+                "me_server_address",
+            )
+            responses.add(
+                responses.GET,
+                mat_api_url,
+                json=materialization_api_versions,
+            )
+            mat_endpoints = endpoints.materialization_api_versions[
+                max(materialization_api_versions)
+            ]
+
             mat_version_url = version_url(
                 local_server,
                 endpoints.materialization_common,
@@ -372,7 +424,7 @@ def CAVEclientMock(
                 status=200,
             )
 
-            mat_available_endpoint = endpoints.materialization_endpoints_v3["versions"]
+            mat_available_endpoint = mat_endpoints["versions"]
             mat_mapping = {
                 "me_server_address": local_server,
                 "datastack_name": datastack_name,
@@ -383,30 +435,14 @@ def CAVEclientMock(
                 mat_version_list_url,
                 json=available_materialization_versions,
                 status=200,
+                match=[query_param_matcher({"expired": True})],
             )
 
             if set_version is not None:
-                mat_available_endpoint = endpoints.materialization_endpoints_v2[
-                    "versions"
-                ]
-                mat_mapping = {
-                    "me_server_address": local_server,
-                    "datastack_name": datastack_name,
-                }
-                mat_version_list_url = mat_available_endpoint.format_map(mat_mapping)
-
-                responses.add(
-                    responses.GET,
-                    url=mat_version_list_url,
-                    json=available_materialization_versions,
-                    status=200,
-                    match=[query_param_matcher({"expired": True})],
-                )
-
                 mat_mapping["version"] = set_version
-                version_metadata_url = endpoints.materialization_endpoints_v2[
-                    "version_metadata"
-                ].format_map(mat_mapping)
+                version_metadata_url = mat_endpoints["version_metadata"].format_map(
+                    mat_mapping
+                )
                 responses.add(
                     responses.GET,
                     version_metadata_url,

@@ -56,7 +56,7 @@ class TestMatclient:
         "table_name": test_info["synapse_table"],
         "version": 1,
     }
-    endpoints = materialization_endpoints_v2
+    endpoints = materialization_endpoints_v3
 
     table_metadata = {
         "aligned_volume": "minnie65_phase3",

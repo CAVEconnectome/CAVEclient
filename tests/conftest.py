@@ -44,7 +44,7 @@ def global_client():
 
 
 @pytest.fixture()
-def versioned_client():
+def version_specified_client():
     return CAVEclientMock(
         chunkedgraph=True,
         materialization=True,
