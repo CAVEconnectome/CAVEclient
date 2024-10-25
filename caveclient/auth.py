@@ -238,7 +238,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         switch_token: bool = True,
         write_to_server_file: bool = True,
         ignore_readonly: bool = True,
-        local_server: bool = False,
+        local_server: bool = True,
     ):
         """Conveniently save a token in the correct format.
 
