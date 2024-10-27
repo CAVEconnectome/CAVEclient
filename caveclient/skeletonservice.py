@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import binascii
 import gzip
+import io
 import json
 from io import BytesIO, StringIO
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 import logging
 import pandas as pd
 from cachetools import TTLCache, cached
@@ -210,7 +212,7 @@ class SkeletonClient(ClientBase):
         output_format: str,
     ):
         """
-        Building the URL in a separate function facilities testing
+        Building the URL in a separate function facilitates testing
         """
         if datastack_name is None:
             datastack_name = self._datastack_name
@@ -244,6 +246,62 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
+    def build_bulk_endpoint(
+        self,
+        root_ids: List,
+        datastack_name: str,
+        skeleton_version: int,
+        output_format: str,
+        generate_missing_sks: bool,
+    ):
+        """
+        Building the URL in a separate function facilitates testing
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_ids"] = ','.join([str(v) for v in root_ids])
+        endpoint_mapping["output_format"] = output_format
+        endpoint_mapping["gen_missing_sks"] = generate_missing_sks
+
+        if skeleton_version is None:
+            endpoint = "get_bulk_skeletons_via_rids"
+        else:
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            endpoint = "get_bulk_skeletons_via_skvn_rids"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        return url
+
+    def build_bulk_async_endpoint(
+        self,
+        root_ids: List,
+        datastack_name: str,
+        skeleton_version: int,
+    ):
+        """
+        Building the URL in a separate function facilitates testing
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_ids"] = ','.join([str(v) for v in root_ids])
+
+        if skeleton_version is None:
+            endpoint = "gen_bulk_skeletons_via_rids"
+        else:
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            endpoint = "gen_bulk_skeletons_via_skvn_rids"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        return url
+
     @cached(TTLCache(maxsize=32, ttl=3600))
     def get_precomputed_skeleton_info(
         self,
@@ -256,6 +314,7 @@ class SkeletonClient(ClientBase):
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+            
         if datastack_name is None:
             datastack_name = self._datastack_name
         assert datastack_name is not None
@@ -322,8 +381,18 @@ class SkeletonClient(ClientBase):
         url = self.build_endpoint(
             root_id, datastack_name, skeleton_version, output_format
         )
-
-        response = self.session.get(url)
+        
+        DEBUG_GZIP_ENCODING = False
+        if not DEBUG_GZIP_ENCODING:       
+            response = self.session.get(url)
+        else:
+            encoding = "gzip" if output_format in ["json", "arrays"] else None
+            if verbose_level >= 1:
+                print(f"get_skeleton() encoding: {encoding}")
+            response = self.session.get(
+                url,
+                headers={"Accept-Encoding": encoding},
+            )
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
@@ -382,3 +451,96 @@ class SkeletonClient(ClientBase):
             return skeleton_bytesio
 
         raise ValueError(f"Unknown output format: {output_format}")
+
+    def get_bulk_skeletons(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 0,
+        output_format: Literal[
+            "json",
+            "swc",
+        ] = "json",
+        generate_missing_skeletons: bool = False,
+        log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
+    ):
+        """Generates skeletons for a list of root ids without retrieving them.
+
+        Parameters
+        ----------
+        root_ids : List
+            A list of root ids of the skeletons to generate
+        datastack_name : str
+            The name of the datastack to check
+        skeleton_version : int
+            The skeleton version to generate. Use 0 for latest.
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        url = self.build_bulk_endpoint(
+            root_ids, datastack_name, skeleton_version, output_format, generate_missing_skeletons
+        )
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        if verbose_level >= 1:
+            print(f"Generated skeletons for root_ids {root_ids}")
+        
+        if output_format == "json":
+           sk_jsons = {}
+           for rid, swc_bytes in response.json().items():
+                try:
+                    sk_json = SkeletonClient.decompressBytesToDict(io.BytesIO(binascii.unhexlify(swc_bytes)).getvalue())
+                    sk_jsons[rid] = sk_json
+                except Exception as e:
+                    print(f"Error decompressing skeleton for root_id {rid}: {e}")
+           return sk_jsons
+        elif output_format == "swc":
+           sk_dfs = {}
+           for rid, swc_bytes in response.json().items():
+                try:
+                    sk_csv = io.BytesIO(binascii.unhexlify(swc_bytes)).getvalue().decode()
+                    # I got the SWC column header from skeleton_plot.skel_io.py
+                    sk_df = pd.read_csv(
+                        StringIO(sk_csv),
+                        sep=" ",
+                        names=["id", "type", "x", "y", "z", "radius", "parent"],
+                    )
+                    sk_dfs[rid] = sk_df
+                except Exception as e:
+                    print(f"Error decompressing skeleton for root_id {rid}: {e}")
+           return sk_dfs
+    
+
+    def generate_bulk_skeletons_async(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 0,
+        log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
+    ):
+        """Generates skeletons for a list of root ids without retrieving them.
+
+        Parameters
+        ----------
+        root_ids : List
+            A list of root ids of the skeletons to generate
+        datastack_name : str
+            The name of the datastack to check
+        skeleton_version : int
+            The skeleton version to generate. Use 0 for latest.
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        url = self.build_bulk_async_endpoint(
+            root_ids, datastack_name, skeleton_version
+        )
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        if verbose_level >= 1:
+            print(f"Queued asynchronous skeleton generation for root_ids: {root_ids}")

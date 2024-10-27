@@ -301,12 +301,23 @@ skeletonservice_endpoints_v1 = {
     "get_version": skeleton_common + "/version",
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
     "skeleton_info_versioned": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/info/{skvn}",
+        + "/{datastack_name}/precomputed/skeleton/info/{skvn}",
+    
     "get_skeleton_via_rid": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/{root_id}",
+        + "/{datastack_name}/precomputed/skeleton/{root_id}",
     "get_skeleton_via_skvn_rid": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
+        + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
     "get_skeleton_via_skvn_rid_fmt": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
+        + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
+    
+    "get_bulk_skeletons_via_rids": skeleton_v1
+        + "/{datastack_name}/bulk/get_skeletons/{output_format}/{gen_missing_sks}/{root_ids}",
+    "get_bulk_skeletons_via_skvn_rids": skeleton_v1
+        + "/{datastack_name}/bulk/get_skeletons/{skeleton_version}/{output_format}/{gen_missing_sks}/{root_ids}",
+    
+    "gen_bulk_skeletons_via_rids": skeleton_v1
+        + "/{datastack_name}/bulk/gen_skeletons/{root_ids}",
+    "gen_bulk_skeletons_via_skvn_rids": skeleton_v1
+        + "/{datastack_name}/bulk/gen_skeletons/{skeleton_version}/{root_ids}",
 }
 skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}
