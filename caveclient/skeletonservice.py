@@ -5,7 +5,7 @@ import gzip
 import io
 import json
 from io import BytesIO, StringIO
-from typing import Literal, Optional, List
+from typing import Union, Literal, Optional, List
 import logging
 import pandas as pd
 from cachetools import TTLCache, cached
@@ -222,7 +222,7 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_id"] = root_id
 
-        if skeleton_version is None:
+        if not skeleton_version:
             # Pylance incorrectly thinks that skeleton_version cannot be None here,
             # but it most certainly can, and that is precisely how I intended it.
             # Google searching revealed this as a known problem with Pylance and Selenium,
@@ -267,7 +267,7 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["output_format"] = output_format
         endpoint_mapping["gen_missing_sks"] = generate_missing_sks
 
-        if skeleton_version is None:
+        if not skeleton_version:
             endpoint = "get_bulk_skeletons_via_rids"
         else:
             endpoint_mapping["skeleton_version"] = skeleton_version
@@ -293,7 +293,7 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_ids"] = ','.join([str(v) for v in root_ids])
 
-        if skeleton_version is None:
+        if not skeleton_version:
             endpoint = "gen_bulk_skeletons_via_rids"
         else:
             endpoint_mapping["skeleton_version"] = skeleton_version
@@ -301,6 +301,41 @@ class SkeletonClient(ClientBase):
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
+    
+    def get_cache_contents(self,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 0,
+        root_id_prefixes: Union[int, str, List] = 0,
+        limit: Optional[int] = 0,
+        log_warning: bool = True,
+    ):
+        """
+        Mirror CloudFilesClient.get_cache_contents() for skeletons as a pass-through interface to the underlying bucket.
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        if isinstance(root_id_prefixes, int):
+            root_id_prefixes = str(root_id_prefixes)
+        elif isinstance(root_id_prefixes, List):
+            root_id_prefixes = ",".join([str(v) for v in root_id_prefixes])
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_id_prefixes"] = root_id_prefixes
+        endpoint_mapping["limit"] = limit
+
+        if not skeleton_version:
+            url = self._endpoints["get_cache_contents_via_ridprefix"].format_map(endpoint_mapping)
+        else:
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            url = self._endpoints["get_cache_contents_via_skvn_ridprefix"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        return response.json()
 
     @cached(TTLCache(maxsize=32, ttl=3600))
     def get_precomputed_skeleton_info(
@@ -486,7 +521,7 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
-            print(f"Generated skeletons for root_ids {root_ids}")
+            print(f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})")
         
         if output_format == "json":
            sk_jsons = {}
