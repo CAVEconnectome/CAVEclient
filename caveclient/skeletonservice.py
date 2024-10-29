@@ -328,12 +328,12 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["limit"] = limit
 
         if not skeleton_version:
-            url = self._endpoints["get_cache_contents_via_ridprefix"].format_map(
+            url = self._endpoints["get_cache_contents_via_ridprefixes"].format_map(
                 endpoint_mapping
             )
         else:
             endpoint_mapping["skeleton_version"] = skeleton_version
-            url = self._endpoints["get_cache_contents_via_skvn_ridprefix"].format_map(
+            url = self._endpoints["get_cache_contents_via_skvn_ridprefixes"].format_map(
                 endpoint_mapping
             )
 

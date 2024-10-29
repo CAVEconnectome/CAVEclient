@@ -304,9 +304,9 @@ skeletonservice_endpoints_v1 = {
     "skeleton_info_versioned": skeleton_v1
         + "/{datastack_name}/precomputed/skeleton/info/{skvn}",
     
-    "get_cache_contents_via_ridprefix": skeleton_v1
+    "get_cache_contents_via_ridprefixes": skeleton_v1
         + "/{datastack_name}/precomputed/skeleton/query_cache/{root_id_prefixes}/{limit}",
-    "get_cache_contents_via_skvn_ridprefix": skeleton_v1
+    "get_cache_contents_via_skvn_ridprefixes": skeleton_v1
         + "/{datastack_name}/precomputed/skeleton/query_cache/{skeleton_version}/{root_id_prefixes}/{limit}",
     
     "get_skeleton_via_rid": skeleton_v1
