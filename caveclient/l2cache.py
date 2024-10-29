@@ -1,5 +1,4 @@
 import json
-import time
 from typing import Optional, Union
 from urllib.parse import urlparse
 from warnings import warn
