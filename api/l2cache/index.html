@@ -780,6 +780,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.l2cache.L2CacheClient.get_l2data_table" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_l2data_table
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.l2cache.L2CacheClient.has_cache" class="md-nav__link">
     <span class="md-ellipsis">
       has_cache
@@ -1091,6 +1100,14 @@
               </td>
             </tr>
             <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClient.get_l2data_table" href="#caveclient.l2cache.L2CacheClient.get_l2data_table">get_l2data_table</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets the attributed statistics data for L2 ids, returned as a dataframe.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
               <td><code><a class="autorefs autorefs-internal" title="caveclient.l2cache.L2CacheClient.has_cache" href="#caveclient.l2cache.L2CacheClient.has_cache">has_cache</a></code></td>
               <td>
                 <div class="doc-md-description">
@@ -1242,11 +1259,11 @@ version of the datastack itself.</p>
                 <code>l2_ids</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or <span title="np.ndarray">ndarray</span></code>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>a list of level 2 ids</p>
+                <p>A list of level 2 ids.</p>
               </div>
             </td>
             <td>
@@ -1262,8 +1279,19 @@ version of the datastack itself.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>a list of attributes to retrieve. Defaults to None which will return all that are available.
-Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_nm', 'pca', 'pca_val', 'rep_coord_nm', 'size_nm3']. See docs for more description.</p>
+                <p>A list of attributes to retrieve. Defaults to <code>None</code>, which will return all
+that are available. Available stats are:</p>
+<ul>
+<li><code>area_nm2</code></li>
+<li><code>chunk_intersect_count</code></li>
+<li><code>max_dt_nm</code></li>
+<li><code>mean_dt_nm</code></li>
+<li><code>pca</code></li>
+<li><code>pca_val</code></li>
+<li><code>rep_coord_nm</code></li>
+<li><code>size_nm3</code></li>
+</ul>
+<p>See <a href="../../tutorials/l2cache">the tutorial</a> for more description.</p>
               </div>
             </td>
             <td>
@@ -1289,7 +1317,122 @@ Available stats are ['area_nm2', 'chunk_intersect_count', 'max_dt_nm', 'mean_dt_
             </td>
             <td>
               <div class="doc-md-description">
-                <p>keys are l2 ids, values are data</p>
+                <p>Keys are l2 ids, values are data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.l2cache.L2CacheClient.get_l2data_table" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_l2data_table</span><span class="p">(</span><span class="n">l2_ids</span><span class="p">,</span> <span class="n">attributes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.l2cache.L2CacheClient.get_l2data_table" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Gets the attributed statistics data for L2 ids, returned as a dataframe.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>l2_ids</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a> or <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of level 2 ids.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>attributes</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of attributes to retrieve. Defaults to <code>None</code>, which will return all
+that are available. Available stats are:</p>
+<ul>
+<li><code>area_nm2</code></li>
+<li><code>chunk_intersect_count</code></li>
+<li><code>max_dt_nm</code></li>
+<li><code>mean_dt_nm</code></li>
+<li><code>pca</code></li>
+<li><code>pca_val</code></li>
+<li><code>rep_coord_nm</code></li>
+<li><code>size_nm3</code></li>
+</ul>
+<p>See <a href="../../tutorials/l2cache">the tutorial</a> for more description.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>split_columns</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to split columns with multiple values into separate columns.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A pandas dataframe with the requested attributes as columns and indexed by l2_id.</p>
               </div>
             </td>
           </tr>
