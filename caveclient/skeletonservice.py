@@ -122,28 +122,28 @@ class SkeletonClient(ClientBase):
             # I could write a complicated test that confirms that an AssertionError is raised
             # when datastack_name and self._datastack_name are both None, but I'm just don't want to at the moment.
             # The combinatorial explosion of test varieties is getting out of hand.
-            url = parse(self.build_endpoint(rid, None, None, "precomputed"))
+            url = parse(self._build_endpoint(rid, None, None, "precomputed"))
             assert url == f"{self._datastack_name}{innards}{rid}"
 
-            url = parse(self.build_endpoint(rid, None, None, "json"))
+            url = parse(self._build_endpoint(rid, None, None, "json"))
             assert url == f"{self._datastack_name}{innards}0/{rid}/json"
 
-        url = parse(self.build_endpoint(rid, ds, None, "precomputed"))
+        url = parse(self._build_endpoint(rid, ds, None, "precomputed"))
         assert url == f"{ds}{innards}{rid}"
 
-        url = parse(self.build_endpoint(rid, ds, None, "json"))
+        url = parse(self._build_endpoint(rid, ds, None, "json"))
         assert url == f"{ds}{innards}0/{rid}/json"
 
-        url = parse(self.build_endpoint(rid, ds, 0, "precomputed"))
+        url = parse(self._build_endpoint(rid, ds, 0, "precomputed"))
         assert url == f"{ds}{innards}0/{rid}"
 
-        url = parse(self.build_endpoint(rid, ds, 0, "json"))
+        url = parse(self._build_endpoint(rid, ds, 0, "json"))
         assert url == f"{ds}{innards}0/{rid}/json"
 
-        url = parse(self.build_endpoint(rid, ds, 1, "precomputed"))
+        url = parse(self._build_endpoint(rid, ds, 1, "precomputed"))
         assert url == f"{ds}{innards}1/{rid}"
 
-        url = parse(self.build_endpoint(rid, ds, 1, "json"))
+        url = parse(self._build_endpoint(rid, ds, 1, "json"))
         assert url == f"{ds}{innards}1/{rid}/json"
 
     @staticmethod
@@ -204,7 +204,7 @@ class SkeletonClient(ClientBase):
         inputBytesStrDict = json.loads(inputBytesStr)
         return inputBytesStrDict
 
-    def build_endpoint(
+    def _build_endpoint(
         self,
         root_id: int,
         datastack_name: str,
@@ -246,7 +246,7 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
-    def build_bulk_endpoint(
+    def _build_bulk_endpoint(
         self,
         root_ids: List,
         datastack_name: str,
@@ -276,7 +276,7 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
-    def build_bulk_async_endpoint(
+    def _build_bulk_async_endpoint(
         self,
         root_ids: List,
         datastack_name: str,
@@ -418,21 +418,11 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
-        url = self.build_endpoint(
+        url = self._build_endpoint(
             root_id, datastack_name, skeleton_version, output_format
         )
 
-        DEBUG_GZIP_ENCODING = False
-        if not DEBUG_GZIP_ENCODING:
-            response = self.session.get(url)
-        else:
-            encoding = "gzip" if output_format in ["json", "arrays"] else None
-            if verbose_level >= 1:
-                print(f"get_skeleton() encoding: {encoding}")
-            response = self.session.get(
-                url,
-                headers={"Accept-Encoding": encoding},
-            )
+        response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
@@ -519,7 +509,7 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
-        url = self.build_bulk_endpoint(
+        url = self._build_bulk_endpoint(
             root_ids,
             datastack_name,
             skeleton_version,
@@ -585,7 +575,7 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
-        url = self.build_bulk_async_endpoint(root_ids, datastack_name, skeleton_version)
+        url = self._build_bulk_async_endpoint(root_ids, datastack_name, skeleton_version)
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
