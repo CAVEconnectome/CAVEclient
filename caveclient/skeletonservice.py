@@ -540,7 +540,9 @@ class SkeletonClient(ClientBase):
                     )
                     sk_jsons[rid] = sk_json
                 except Exception as e:
-                    logging.error(f"Error decompressing skeleton for root_id {rid}: {e}")
+                    logging.error(
+                        f"Error decompressing skeleton for root_id {rid}: {e}"
+                    )
             return sk_jsons
         elif output_format == "swc":
             sk_dfs = {}
@@ -557,7 +559,9 @@ class SkeletonClient(ClientBase):
                     )
                     sk_dfs[rid] = sk_df
                 except Exception as e:
-                    logging.error(f"Error decompressing skeleton for root_id {rid}: {e}")
+                    logging.error(
+                        f"Error decompressing skeleton for root_id {rid}: {e}"
+                    )
             return sk_dfs
 
     @_check_version_compatibility(method_constraint=">=0.5.9")
@@ -590,4 +594,6 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
-            logging.info(f"Queued asynchronous skeleton generation for root_ids: {root_ids}")
+            logging.info(
+                f"Queued asynchronous skeleton generation for root_ids: {root_ids}"
+            )
