@@ -98,9 +98,6 @@ class CAVEclient(object):
         version:
             The default materialization version of the datastack to use. If None, the
             latest version is used. Optional, defaults to None.
-        write_local_auth: bool, optional
-            If True, synchronizes the auth token for datastack-specific services in your secrets directory.
-            Does nothing if no datastack is set.
         """
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
@@ -403,8 +400,6 @@ class CAVEclientFull(CAVEclientGlobal):
         version:
             The default materialization version of the datastack to use. If None, the
             latest version is used. Optional, defaults to None.
-        write_local_auth: bool, optional
-            If True, synchronizes the auth token for datastack-specific services in your secrets directory.
 
         See Also
         --------
