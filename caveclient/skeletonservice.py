@@ -85,25 +85,25 @@ class SkeletonClient(ClientBase):
         self._datastack_name = datastack_name
 
     def _test_get_version(self) -> Optional[Version]:
-        print("_test_get_version()")
+        logging.info("_test_get_version()")
         endpoint_mapping = self.default_url_mapping
         endpoint = self._endpoints.get("get_version_test", None)
-        print(f"endpoint: {endpoint}")
+        logging.info(f"endpoint: {endpoint}")
         if endpoint is None:
             return None
 
         url = endpoint.format_map(endpoint_mapping)
-        print(f"url: {url}")
+        logging.info(f"url: {url}")
         response = self.session.get(url)
-        print(f"response: {response}")
+        logging.info(f"response: {response}")
         if response.status_code == 404:  # server doesn't have this endpoint yet
-            print("404")
+            logging.info("404")
             return None
         else:
             version_str = response.json()
-            print(f"version_str: {type(version_str)} {version_str}")
+            logging.info(f"version_str: {type(version_str)} {version_str}")
             version = Version(version_str)
-            print(f"version: {version}")
+            logging.info(f"version: {version}")
             return version
 
     def _test_l2cache_exception(self):
@@ -427,7 +427,7 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
-            print(
+            logging.info(
                 f"get_skeleton() response contains content of size {len(response.content)} bytes"
             )
 
@@ -521,7 +521,7 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
-            print(
+            logging.info(
                 f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
             )
 
@@ -534,7 +534,7 @@ class SkeletonClient(ClientBase):
                     )
                     sk_jsons[rid] = sk_json
                 except Exception as e:
-                    print(f"Error decompressing skeleton for root_id {rid}: {e}")
+                    logging.error(f"Error decompressing skeleton for root_id {rid}: {e}")
             return sk_jsons
         elif output_format == "swc":
             sk_dfs = {}
@@ -551,7 +551,7 @@ class SkeletonClient(ClientBase):
                     )
                     sk_dfs[rid] = sk_df
                 except Exception as e:
-                    print(f"Error decompressing skeleton for root_id {rid}: {e}")
+                    logging.error(f"Error decompressing skeleton for root_id {rid}: {e}")
             return sk_dfs
 
     def generate_bulk_skeletons_async(
@@ -583,4 +583,4 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         if verbose_level >= 1:
-            print(f"Queued asynchronous skeleton generation for root_ids: {root_ids}")
+            logging.info(f"Queued asynchronous skeleton generation for root_ids: {root_ids}")
