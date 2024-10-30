@@ -12,6 +12,10 @@ import pandas as pd
 from cachetools import TTLCache, cached
 from packaging.version import Version
 
+from .base import (
+    _check_version_compatibility,
+)
+
 try:
     import cloudvolume
 
@@ -303,6 +307,7 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
+    @_check_version_compatibility(method_constraint=">=0.5.9")
     def get_cache_contents(
         self,
         datastack_name: Optional[str] = None,
@@ -483,6 +488,7 @@ class SkeletonClient(ClientBase):
 
         raise ValueError(f"Unknown output format: {output_format}")
 
+    @_check_version_compatibility(method_constraint=">=0.5.9")
     def get_bulk_skeletons(
         self,
         root_ids: List,
@@ -554,6 +560,7 @@ class SkeletonClient(ClientBase):
                     logging.error(f"Error decompressing skeleton for root_id {rid}: {e}")
             return sk_dfs
 
+    @_check_version_compatibility(method_constraint=">=0.5.9")
     def generate_bulk_skeletons_async(
         self,
         root_ids: List,
