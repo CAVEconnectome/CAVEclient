@@ -575,7 +575,9 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
-        url = self._build_bulk_async_endpoint(root_ids, datastack_name, skeleton_version)
+        url = self._build_bulk_async_endpoint(
+            root_ids, datastack_name, skeleton_version
+        )
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
