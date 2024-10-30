@@ -4,9 +4,10 @@ import binascii
 import gzip
 import io
 import json
-from io import BytesIO, StringIO
-from typing import Union, Literal, Optional, List
 import logging
+from io import BytesIO, StringIO
+from typing import List, Literal, Optional, Union
+
 import pandas as pd
 from cachetools import TTLCache, cached
 from packaging.version import Version
