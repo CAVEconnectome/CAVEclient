@@ -741,6 +741,30 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#writing-unit-tests-using-caveclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writing unit tests using caveclient
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing unit tests using caveclient">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specifying conditions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -923,6 +947,80 @@ properly. Some of these parameters are also adjustable at the client level.</p>
 </code></pre></div>
 <p>More information on the available parameters can be found in the
 <a href="../../api/config/">API documentation</a>.</p>
+<h3 id="writing-unit-tests-using-caveclient">Writing unit tests using caveclient<a class="headerlink" href="#writing-unit-tests-using-caveclient" title="Permanent link">&para;</a></h3>
+<p>If you have a module that relies on caveclient and you want to write unit tests for it,
+you can use the <code>caveclient.testing</code> module to help you create an initialized, mocked
+client with user-specified options.
+This helps deal with the complex conversation that caveclient has with various services
+when initializing itself so that you get the appropriate functionality.
+The function <code>CAVEclientMock</code> offers a number of options for how to build a client,
+including server versions for various services, available API versions, and more.
+Importantly, the module provides sensible defaults but also allows you to override
+them as needed.
+Note that using testing requires the <a href="https://github.com/getsentry/responses">responses</a>
+to be installed, which is not a dependency of caveclient.</p>
+<p>The <code>CAVEclientMock</code> function requires you to specify which services you expect to call on
+in order to ensure that your code is working as expected.
+For example, to create a pytest fixture that would utilize the <code>chunkedgraph</code> module,
+but otherwise use default nonsense test values, you could include this in your <code>conftest.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">caveclient.tools.testing</span> <span class="kn">import</span> <span class="n">CAVEclientMock</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">test_client</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">CAVEclientMock</span><span class="p">(</span>
+        <span class="n">chunkedgraph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Then, in your test module, you can use the <code>test_client</code> fixture to get a client.
+Note that after mocked initialization, the client will attempt normal network requests and
+thus you should mock the responses.
+If you only care to get a specific value back from a given function, you can use <a href="https://github.com/pytest-dev/pytest-mock/">pytest-mock</a>
+to mock the response to a given function call.
+For example, if you have a function <code>do_something_with_roots</code> that takes a caveclient that uses the <code>get_roots</code> function,
+you could mock the <code>get_roots</code> function so that it return a specific value:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">pytest_mock</span> <span class="kn">import</span> <span class="n">mocker</span>
+<span class="kn">from</span> <span class="nn">conftest</span> <span class="kn">import</span> <span class="n">test_client</span>
+<span class="kn">from</span> <span class="nn">my_module</span> <span class="kn">import</span> <span class="n">do_something_with_roots</span>
+
+<span class="k">def</span> <span class="nf">test_get_roots</span><span class="p">(</span><span class="n">mocker</span><span class="p">,</span> <span class="n">test_client</span><span class="p">):</span>
+    <span class="n">mocker</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">object</span><span class="p">(</span><span class="n">test_client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="p">,</span> <span class="s1">&#39;get_roots&#39;</span><span class="p">,</span> <span class="n">return_value</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+    <span class="n">test_data</span> <span class="o">=</span> <span class="c1"># Something appropriate</span>
+    <span class="n">test_output</span> <span class="o">=</span> <span class="n">do_something_with_roots</span><span class="p">(</span><span class="n">test_client</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">test_output</span> <span class="o">==</span> <span class="c1"># The expected answer</span>
+</code></pre></div>
+<h4 id="specifying-conditions">Specifying conditions<a class="headerlink" href="#specifying-conditions" title="Permanent link">&para;</a></h4>
+<p>While sensible defaults are provided, you can also specify things like server versions to make sure your code
+works with the versions of the services you expect.
+For example, let's make a richer mock client that specifies the server versions for the <code>chunkedgraph</code>, <code>materailization</code>,
+and <code>l2cache</code> services:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">version_specified_client</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">CAVEclientMock</span><span class="p">(</span>
+        <span class="n">chunkedgraph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">chunkedgraph_server_version</span><span class="o">=</span><span class="s1">&#39;3.0.1&#39;</span><span class="p">,</span>
+        <span class="n">materialization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">materialization_server_version</span><span class="o">=</span><span class="s1">&#39;2.0.0&#39;</span><span class="p">,</span>
+        <span class="n">l2cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p>Note that some services like <code>l2cache</code> do not currently use a server version to offer different functionality, and this value
+is not exposed for them currently. See the API documentation for more information.</p>
+<p>You can also override default values like <code>server_address</code> or <code>datastack_name</code>:
+<div class="highlight"><pre><span></span><code><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">server_specified_client</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">CAVEclientMock</span><span class="p">(</span>
+        <span class="n">datastack_name</span><span class="o">=</span><span class="s1">&#39;my_datastack&#39;</span><span class="p">,</span>
+        <span class="n">server_address</span><span class="o">=</span><span class="s1">&#39;http://my.server.com&#39;</span><span class="p">,</span>
+        <span class="n">chunkedgraph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">materialization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></p>
+<p>If you want to get access to the various default values of server version, datastack name, datastack info file, and api versions,
+you can use functions <code>get_server_versions</code>, <code>get_server_information</code>, <code>default_info</code>, <code>get_api_versions</code> respectively.
+Each of these functions will return a dictionary of the values that can be used as a kwargs input into CAVEclientMock.
+If you specify your own override values, it will take precedence over the default value and you can just use the dictionary in your tests.
+See the caveclient tests for an example of how to use these functions.</p>
 
 
 
