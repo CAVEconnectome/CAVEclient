@@ -1,75 +1,65 @@
-import os
-
 import pytest
-import responses
 
-from caveclient import CAVEclient, endpoints
+from caveclient.tools.testing import (
+    CAVEclientMock,
+    default_info,
+    get_server_information,
+    get_server_versions,
+)
 
-TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
-TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
-TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
+datastack_dict = get_server_information()
+server_versions = get_server_versions()
 
-test_info = {
-    "viewer_site": "http://neuromancer-seung-import.appspot.com/",
-    "aligned_volume": {
-        "name": "test_volume",
-        "image_source": f"precomputed://https://{TEST_LOCAL_SERVER}/test-em/v1",
-        "id": 1,
-        "description": "This is a test only dataset.",
-    },
-    "synapse_table": "test_synapse_table",
-    "description": "This is the first test datastack. ",
-    "local_server": TEST_LOCAL_SERVER,
-    "segmentation_source": f"graphene://https://{TEST_LOCAL_SERVER}/segmentation/table/test_v1",
-    "soma_table": "test_soma",
-    "analysis_database": None,
-    "viewer_resolution_x": 4.0,
-    "viewer_resolution_y": 4.0,
-    "viewer_resolution_z": 40,
-}
-url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
-mapping = {"i_server_address": TEST_GLOBAL_SERVER, "datastack_name": TEST_DATASTACK}
-url = url_template.format_map(mapping)
+test_info = default_info(datastack_dict["local_server"])
 
 
 @pytest.fixture()
-@responses.activate
 def myclient():
-    responses.add(responses.GET, url, json=test_info, status=200)
-
-    client = CAVEclient(
-        TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False
+    return CAVEclientMock(
+        chunkedgraph=True,
+        materialization=True,
+        json_service=True,
+        skeleton_service=True,
+        l2cache=True,
+        **datastack_dict,
     )
-
-    # need to mock the response of the version checking code for each sub-client which
-    # wants that information, and then create the sub-client here since the mock is
-    # narrowly scoped to this function
-    version_url = f"{TEST_LOCAL_SERVER}/segmentation/api/version"
-    responses.add(responses.GET, version_url, json="2.15.0", status=200)
-    client.chunkedgraph  # this will trigger the version check
-
-    mat_version_url = f"{TEST_LOCAL_SERVER}/materialize/version"
-    responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
-    client.materialize
-
-    return client
 
 
 @pytest.fixture()
-@responses.activate
 def old_chunkedgraph_client():
-    responses.add(responses.GET, url, json=test_info, status=200)
-
-    client = CAVEclient(
-        TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False
+    return CAVEclientMock(
+        chunkedgraph=True, chunkedgraph_server_version="1.0.0", **datastack_dict
     )
 
-    # need to mock the response of the version checking code for each sub-client which
-    # wants that information, and then create the sub-client here since the mock is
-    # narrowly scoped to this function
-    version_url = f"{TEST_LOCAL_SERVER}/segmentation/api/version"
-    responses.add(responses.GET, version_url, json="1.0.0", status=200)
 
-    client.chunkedgraph  # this will trigger the version check
+@pytest.fixture()
+def global_client():
+    return CAVEclientMock(
+        global_server=datastack_dict["global_server"],
+        global_only=True,
+        json_service=True,
+    )
 
-    return client
+
+@pytest.fixture()
+def version_specified_client():
+    return CAVEclientMock(
+        chunkedgraph=True,
+        materialization=True,
+        json_service=True,
+        skeleton_service=True,
+        l2cache=True,
+        available_materialization_versions=[1, 2, 3],
+        set_version=3,
+        **server_versions,
+    )
+
+
+@pytest.fixture()
+def mat_apiv2_specified_client():
+    return CAVEclientMock(
+        materialization=True,
+        available_materialization_versions=[1, 2, 3],
+        materialization_api_versions=[2],
+        **server_versions,
+    )

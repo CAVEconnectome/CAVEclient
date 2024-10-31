@@ -14,7 +14,7 @@ from caveclient.endpoints import (
     chunkedgraph_endpoints_v1,
 )
 
-from .conftest import TEST_LOCAL_SERVER, test_info
+from .conftest import datastack_dict, test_info
 
 
 def binary_body_match(body):
@@ -39,7 +39,7 @@ def package_timestamp(timestamp, name="timestamp"):
 
 class TestChunkedgraph:
     _default_endpoint_map = {
-        "cg_server_address": TEST_LOCAL_SERVER,
+        "cg_server_address": datastack_dict["local_server"],
         "table_id": test_info["segmentation_source"].split("/")[-1],
     }
 
@@ -539,7 +539,9 @@ class TestChunkedgraph:
         assert qid_map == id_map
 
     def test_cloudvolume_path(self, myclient):
-        cvpath = f"graphene://{TEST_LOCAL_SERVER}/segmentation/api/v1/test_v1"
+        cvpath = (
+            f"graphene://{datastack_dict['local_server']}/segmentation/api/v1/test_v1"
+        )
         assert myclient.chunkedgraph.cloudvolume_path == cvpath
 
     @responses.activate
