@@ -989,6 +989,7 @@ you could mock the <code>get_roots</code> function so that it return a specific 
     <span class="n">test_output</span> <span class="o">=</span> <span class="n">do_something_with_roots</span><span class="p">(</span><span class="n">test_client</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">test_output</span> <span class="o">==</span> <span class="c1"># The expected answer</span>
 </code></pre></div>
+<p>Note that if you your own datastack <code>info_file</code> that has a different <code>local_server</code> address than the default value (<code>TEST_LOCAL_SERVER</code> variable, which defaults to <code>https://local.cave.com</code>) you will also need to specify a <code>local_server</code> with the same value as in the <code>local_server</code> field of your info file.</p>
 <h4 id="specifying-conditions">Specifying conditions<a class="headerlink" href="#specifying-conditions" title="Permanent link">&para;</a></h4>
 <p>While sensible defaults are provided, you can also specify things like server versions to make sure your code
 works with the versions of the services you expect.
