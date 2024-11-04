@@ -2,6 +2,40 @@
 title: Changelog
 ---
 
+## 6.5.0 (November 15, 2024)
+
+- Added endpoints for bulk skeleton retrieval and querying whether a skeleton exists or not.
+
+## 6.4.1
+
+- Fix networkx deprecation warning.
+
+## 6.4.0 (October 31, 2024)
+
+- Added a CAVEclientMock function to ease the use of fully mocked CAVEclients in testing.
+- Fix a bug about use of global server.
+- Fix writing of local server secret to be more secure.
+
+## 6.3.0
+
+- Add a convenience function to get a complete L2 feature dataframe.
+
+## 6.2.0
+
+- Fix things so that auth will not error if the secrets directory is read-only.
+
+## 6.1.2
+
+- Fix query filter bug in tables interface.
+
+## 6.1.1
+
+- Fix warnings.
+
+## 6.1.0
+
+- Added support for inequality filters for numerical columns in materialization tables interface.
+
 ## 6.0.0 (October 14, 2024)
 
 - Refactored CAVEclient internals away from a factory syntax. Most users should not notice a difference, but code that relied on specific subclient type logic may be affected.
