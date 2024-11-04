@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#600-october-14-2024" class="md-skip">
+        <a href="#650-november-15-2024" class="md-skip">
           Skip to content
         </a>
       
@@ -622,6 +622,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#650-november-15-2024" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.5.0 (November 15, 2024)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#641" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.4.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#640-october-31-2024" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.4.0 (October 31, 2024)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#630" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.3.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#620" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.2.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#612" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1.2
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#611" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1.1
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#610" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1.0
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#600-october-14-2024" class="md-nav__link">
     <span class="md-ellipsis">
       6.0.0 (October 14, 2024)
@@ -941,6 +1013,40 @@
 
   <h1>Changelog</h1>
 
+<h3 id="650-november-15-2024">6.5.0 (November 15, 2024)<a class="headerlink" href="#650-november-15-2024" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added endpoints for bulk skeleton retrieval and querying whether a skeleton exists or not.</li>
+</ul>
+<h3 id="641">6.4.1<a class="headerlink" href="#641" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fix networkx deprecation warning.</li>
+</ul>
+<h3 id="640-october-31-2024">6.4.0 (October 31, 2024)<a class="headerlink" href="#640-october-31-2024" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added a CAVEclientMock function to ease the use of fully mocked CAVEclients in testing.</li>
+<li>Fix a bug about use of global server.</li>
+<li>Fix writing of local server secret to be more secure.</li>
+</ul>
+<h3 id="630">6.3.0<a class="headerlink" href="#630" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add a convenience function to get a complete L2 feature dataframe.</li>
+</ul>
+<h3 id="620">6.2.0<a class="headerlink" href="#620" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fix things so that auth will not error if the secrets directory is read-only.</li>
+</ul>
+<h3 id="612">6.1.2<a class="headerlink" href="#612" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fix query filter bug in tables interface.</li>
+</ul>
+<h3 id="611">6.1.1<a class="headerlink" href="#611" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Fix warnings.</li>
+</ul>
+<h3 id="610">6.1.0<a class="headerlink" href="#610" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added support for inequality filters for numerical columns in materialization tables interface.</li>
+</ul>
 <h3 id="600-october-14-2024">6.0.0 (October 14, 2024)<a class="headerlink" href="#600-october-14-2024" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Refactored CAVEclient internals away from a factory syntax. Most users should not notice a difference, but code that relied on specific subclient type logic may be affected.</li>
