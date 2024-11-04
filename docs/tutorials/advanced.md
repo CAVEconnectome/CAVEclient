@@ -81,6 +81,8 @@ def test_get_roots(mocker, test_client):
     assert test_output == # The expected answer
 ```
 
+Note that if you your own datastack `info_file` that has a different `local_server` address than the default value (`TEST_LOCAL_SERVER` variable, which defaults to `https://local.cave.com`) you will also need to specify a `local_server` with the same value as in the `local_server` field of your info file.
+
 ### Specifying conditions
 
 While sensible defaults are provided, you can also specify things like server versions to make sure your code
