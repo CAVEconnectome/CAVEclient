@@ -35,6 +35,7 @@ nav:
     - General functions: 
       - api/config.md
       - api/datastack_lookup.md
+      - api/testing.md
   - Glossary: glossary.md
   - Contributing: contributing.md
   - Changelog: changelog.md

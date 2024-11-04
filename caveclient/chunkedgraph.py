@@ -996,7 +996,7 @@ class ChunkedGraphClient(ClientBase):
             ]
 
         if as_nx_graph:
-            return nx.node_link_graph(r)
+            return nx.node_link_graph(r, edges="links")
         else:
             return r
 

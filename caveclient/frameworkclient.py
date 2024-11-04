@@ -99,10 +99,6 @@ class CAVEclient(object):
             The default materialization version of the datastack to use. If None, the
             latest version is used. Optional, defaults to None.
         """
-        server_address = handle_server_address(
-            datastack_name, server_address, write=write_server_cache
-        )
-
         if global_only or datastack_name is None:
             return CAVEclientGlobal(
                 server_address=server_address,
@@ -115,6 +111,10 @@ class CAVEclient(object):
                 info_cache=info_cache,
             )
         else:
+            server_address = handle_server_address(
+                datastack_name, server_address, write=write_server_cache
+            )
+
             return CAVEclientFull(
                 datastack_name=datastack_name,
                 server_address=server_address,
@@ -206,7 +206,12 @@ class CAVEclientGlobal(object):
         self._pool_block = pool_block
         self._info_cache = info_cache
 
-    def change_auth(self, auth_token_file=None, auth_token_key=None, auth_token=None):
+    def change_auth(
+        self,
+        auth_token_file=None,
+        auth_token_key=None,
+        auth_token=None,
+    ):
         """Change the authentication token and reset services.
 
         Parameters
