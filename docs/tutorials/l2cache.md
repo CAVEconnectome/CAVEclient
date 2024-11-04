@@ -133,6 +133,8 @@ chunkedgraph and the L2cache if available
 accurately place the level 2 nodes in space using the `rep_coord_nm`
 value.
 
+Note that there is detailed documentation on the Skeleton Client interface at [the skeletonization tutorial]({{ tutorial_paths.skeleton }}).
+
 ### Trajectory Distributions
 
 If one is interested in the bulk direction of processes in a region of
