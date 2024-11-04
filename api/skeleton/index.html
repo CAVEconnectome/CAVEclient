@@ -833,6 +833,42 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#caveclient.skeletonservice.SkeletonClient.get_cache_contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_cache_contents
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.skeletonservice.SkeletonClient.skeletons_exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      skeletons_exist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_bulk_skeletons
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async" class="md-nav__link">
+    <span class="md-ellipsis">
+      generate_bulk_skeletons_async
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1057,6 +1093,38 @@
                 </div>
               </td>
             </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.get_cache_contents" href="#caveclient.skeletonservice.SkeletonClient.get_cache_contents">get_cache_contents</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Mirror CloudFiles.list() for skeletons as a pass-through interface to the underlying service and bucket.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.skeletons_exist" href="#caveclient.skeletonservice.SkeletonClient.skeletons_exist">skeletons_exist</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Confirm or deny that a set of root ids have H5 skeletons in the cache.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons" href="#caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons">get_bulk_skeletons</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generates skeletons for a list of root ids without retrieving them.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async" href="#caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async">generate_bulk_skeletons_async</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generates skeletons for a list of root ids without retrieving them.</p>
+                </div>
+              </td>
+            </tr>
       </tbody>
     </table>
 
@@ -1242,6 +1310,200 @@ version of the datastack itself.</p>
               <div class="doc-md-description">
                 <p>Skeleton of the requested type. See <code>output_format</code> for details.</p>
               </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.get_cache_contents" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_cache_contents</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">root_id_prefixes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.get_cache_contents" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Mirror CloudFiles.list() for skeletons as a pass-through interface to the underlying service and bucket.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.skeletons_exist" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">skeletons_exist</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">root_ids</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.skeletons_exist" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Confirm or deny that a set of root ids have H5 skeletons in the cache.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_bulk_skeletons</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Generates skeletons for a list of root ids without retrieving them.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>root_ids</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of root ids of the skeletons to generate</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>datastack_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the datastack to check</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>skeleton_version</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The skeleton version to generate. Use 0 for latest.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">generate_bulk_skeletons_async</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Generates skeletons for a list of root ids without retrieving them.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>root_ids</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A list of root ids of the skeletons to generate</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>datastack_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the datastack to check</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>skeleton_version</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The skeleton version to generate. Use 0 for latest.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
             </td>
           </tr>
       </tbody>
