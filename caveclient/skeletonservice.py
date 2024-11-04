@@ -317,7 +317,7 @@ class SkeletonClient(ClientBase):
         log_warning: bool = True,
     ):
         """
-        Mirror CloudFilesClient.get_cache_contents() for skeletons as a pass-through interface to the underlying bucket.
+        Mirror CloudFiles.list() for skeletons as a pass-through interface to the underlying service and bucket.
         """
         if datastack_name is None:
             datastack_name = self._datastack_name
@@ -347,6 +347,52 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         return response.json()
+
+    @_check_version_compatibility(method_constraint=">=0.5.10")
+    def skeletons_exist(
+        self,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 0,
+        root_ids: Union[int, str, List] = 0,
+        log_warning: bool = True,
+    ):
+        """
+        Confirm or deny that a set of root ids have H5 skeletons in the cache.
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        if isinstance(root_ids, int):
+            root_ids = str(root_ids)
+        elif isinstance(root_ids, List):
+            root_ids = ",".join([str(v) for v in root_ids])
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_ids"] = root_ids
+
+        if not skeleton_version:
+            url = self._endpoints["skeletons_exist_via_rids"].format_map(
+                endpoint_mapping
+            )
+        else:
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            url = self._endpoints["skeletons_exist_via_skvn_rids"].format_map(
+                endpoint_mapping
+            )
+
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        result_json = response.json()
+        if isinstance(result_json, bool):
+            # When investigating a single root id, this returns a single bool, not a dict, list, etc.
+            return result_json
+        result_json_w_ints = {
+            int(key): value for key, value in result_json.items()
+        }
+        return result_json_w_ints
 
     @cached(TTLCache(maxsize=32, ttl=3600))
     def get_precomputed_skeleton_info(
