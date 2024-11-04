@@ -389,9 +389,7 @@ class SkeletonClient(ClientBase):
         if isinstance(result_json, bool):
             # When investigating a single root id, this returns a single bool, not a dict, list, etc.
             return result_json
-        result_json_w_ints = {
-            int(key): value for key, value in result_json.items()
-        }
+        result_json_w_ints = {int(key): value for key, value in result_json.items()}
         return result_json_w_ints
 
     @cached(TTLCache(maxsize=32, ttl=3600))
