@@ -637,7 +637,14 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
+        estimated_async_time_secs_upper_bound = float(response.text)
+
         if verbose_level >= 1:
             logging.info(
                 f"Queued asynchronous skeleton generation for root_ids: {root_ids}"
             )
+            logging.info(
+                f"Upper estimate to generate {len(root_ids)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
+            )
+
+        return f"Upper estimate to generate {len(root_ids)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
