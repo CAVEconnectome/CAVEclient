@@ -17,6 +17,7 @@ nav:
     - tutorials/schemas.md
     - tutorials/state.md
     - tutorials/materialization.md
+    - tutorials/skeletonization.md
     - tutorials/advanced.md
   - API reference: # these match the client property names
     # - api/index.md
@@ -163,6 +164,8 @@ extra:
     state: ../api/state.md#caveclient.jsonservice.JSONService
     schema: ../api/schema.md#caveclient.emannotationschemas.SchemaClient
     skeleton: ../api/client.md#caveclient.skeletonservice.SkeletonClient
+  tutorial_paths:
+    skeleton: ../tutorials/skeletonization.md
 
 watch:
   - caveclient/
