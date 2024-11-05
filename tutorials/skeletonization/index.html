@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://caveconnectome.github.io/CAVEclient/tutorials/advanced/">
+        <link rel="canonical" href="https://caveconnectome.github.io/CAVEclient/tutorials/skeletonization/">
       
       
-        <link rel="prev" href="../skeletonization/">
+        <link rel="prev" href="../materialization/">
       
       
-        <link rel="next" href="../../api/client/">
+        <link rel="next" href="../advanced/">
       
       
       <link rel="icon" href="../../images/logo-cleanest.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Advanced Usage - CAVEclient</title>
+        <title>Skeletonization - CAVEclient</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#changing-session-configurations" class="md-skip">
+        <a href="#initializing-the-client" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Advanced Usage
+              Skeletonization
             
           </span>
         </div>
@@ -690,27 +690,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../skeletonization/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Skeletonization
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -725,7 +704,7 @@
           
   
   <span class="md-ellipsis">
-    Advanced Usage
+    Skeletonization
   </span>
   
 
@@ -736,7 +715,7 @@
         
   
   <span class="md-ellipsis">
-    Advanced Usage
+    Skeletonization
   </span>
   
 
@@ -756,35 +735,65 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#changing-session-configurations" class="md-nav__link">
+  <a href="#initializing-the-client" class="md-nav__link">
     <span class="md-ellipsis">
-      Changing session configurations
+      Initializing the client
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#writing-unit-tests-using-caveclient" class="md-nav__link">
+  <a href="#retrieving-a-skeleton" class="md-nav__link">
     <span class="md-ellipsis">
-      Writing unit tests using caveclient
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Writing unit tests using caveclient">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#specifying-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Specifying conditions
+      Retrieving a skeleton
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#peering-into-the-contents-of-the-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      Peering into the contents of the cache
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#querying-the-presence-of-a-skeleton-in-the-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      Querying the presence of a skeleton in the cache
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-multiple-skeletons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieving multiple skeletons
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generating-multiple-skeletons-in-parallel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generating multiple skeletons in parallel
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-asynchronously-generated-skeletons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieving asynchronously generated skeletons
+    </span>
+  </a>
   
 </li>
       
@@ -792,6 +801,27 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Advanced Usage
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -932,7 +962,7 @@
                   
 
   
-    <a href="https://github.com/CAVEconnectome/CAVEclient/edit/master/docs/tutorials/advanced.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/CAVEconnectome/CAVEclient/edit/master/docs/tutorials/skeletonization.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -941,110 +971,166 @@
     
       
     
-    <a href="https://github.com/CAVEconnectome/CAVEclient/raw/master/docs/tutorials/advanced.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/CAVEconnectome/CAVEclient/raw/master/docs/tutorials/skeletonization.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-  <h1>Advanced Usage</h1>
+  <h1>Skeletonization</h1>
 
-<h3 id="changing-session-configurations">Changing session configurations<a class="headerlink" href="#changing-session-configurations" title="Permanent link">&para;</a></h3>
-<p>It is possible to change details of how a client talks to the various servers it needs
-to interface with. For instance, the <code>CAVEclient</code> will attempt to retry
-specific failed requests to the server, but will only try a specific number of times,
-and will only wait specific amounts of time between retries. These values can be changed
-via the <code>set_session_defaults</code> method. For instance, to change the number of retries to
-5, and to increase the delay between subsequent retries, you could do:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">caveclient</span> <span class="kn">import</span> <span class="n">set_session_defaults</span>
+<p>The skeleton service enables you to generate and retrieve skeletons from the server. This saves you the trouble of performing skeletonization routines on your local machine, while also saving you the trouble of understanding many of the details inside of skeletonization. Furthermore, the server offers the ability to generate multiple skeletons simultaneously, in parallel. And lastly, the server caches each skeleton that is generated so that it only ever needs to be generated once. All subsequent requests for the same skeleton will simply return the cached skeleton with notable turn-around-time improvements.</p>
+<h3 id="initializing-the-client">Initializing the client<a class="headerlink" href="#initializing-the-client" title="Permanent link">&para;</a></h3>
+<p>The simplest way to initialize the CAVEclient is by merely providing the datastack of interest:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">CAVEclient</span><span class="p">(</span><span class="o">&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">)</span>
+</code></pre></div>
+<p>With a CAVEclient built, you can now investigate the current build version of the SkeletonClient:</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span>
+</code></pre></div>
+<p>And you can see a list of available skeleton versions. In most cases you will want to use the highest (most recent) version provided.</p>
+<div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="retrieving-a-skeleton">Retrieving a skeleton<a class="headerlink" href="#retrieving-a-skeleton" title="Permanent link">&para;</a></h3>
+<p>Retrieve a skeleton using <code>get_skeleton()</code>. The simplest usage is:</p>
+<div class="highlight"><pre><span></span><code><span class="n">sk</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_skeleton</span><span class="p">(</span>
+    <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">output_format</span><span class="o">=&lt;</span><span class="n">output_format</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>where the availale output_formats (described below) are:</p>
+<ul>
+<li>none (default if unspecified)</li>
+<li>h5</li>
+<li>swc</li>
+<li>swccompressed</li>
+<li>json</li>
+<li>jsoncompressed</li>
+<li>arrays</li>
+<li>arrayscompressed</li>
+<li>precomputed</li>
+</ul>
+<p>If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.</p>
+<p>To specify a nondefault skeleton version:</p>
+<div class="highlight"><pre><span></span><code><span class="n">sk</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_skeleton</span><span class="p">(</span>
+    <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">output_format</span><span class="o">=&lt;</span><span class="n">output_format</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>To specify a specific datastack:</p>
+<div class="highlight"><pre><span></span><code><span class="n">sk</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_skeleton</span><span class="p">(</span>
+    <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">output_format</span><span class="o">=&lt;</span><span class="n">output_format</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="peering-into-the-contents-of-the-cache">Peering into the contents of the cache<a class="headerlink" href="#peering-into-the-contents-of-the-cache" title="Permanent link">&para;</a></h3>
+<p>Most end-users shouldn't need to use the following function very much, but to see the contents of the cache for a given root id, set of root ids, root id prefix, or set of prefixes:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_cache_contents</span><span class="p">(</span>
+    <span class="n">root_id_prefixes</span><span class="o">=&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>You can also add addiional parameters as needed:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_cache_contents</span><span class="p">(</span>
+    <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">root_id_prefixes</span><span class="o">=&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>The primary parameter, <code>root_id_prefixes</code>, can be a list of root ids:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_cache_contents</span><span class="p">(</span>
+    <span class="n">root_id_prefixes</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>The primary parameter can also be a root id prefix, which will match any associated root ids. Since this could potentially return a large list of results, there is an optional <code>limit</code> parameter so you don't overwhelm the memory of your processing environment, e.g., a Jupyter notebook or some other Python script running on your local machine:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_cache_contents</span><span class="p">(</span>
+    <span class="n">root_id_prefixes</span><span class="o">=&lt;</span><span class="n">root_id_prefix</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">limit</span><span class="o">=&lt;</span><span class="n">limit</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Note that the limit only constraints the size of the return value. The internal operation of the function will still receive the full list when it passes the prefix on to CloudFiles. Consequently, calling this function for a short prefix may block for a long time.</p>
+<p>And of course you can also pass in a list of prefixes (or a mixture of full ids and partial prefixes):</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_cache_contents</span><span class="p">(</span>
+    <span class="n">root_id_prefixes</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id_prefix</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id_prefix</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">limit</span><span class="o">=&lt;</span><span class="n">limit</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="querying-the-presence-of-a-skeleton-in-the-cache">Querying the presence of a skeleton in the cache<a class="headerlink" href="#querying-the-presence-of-a-skeleton-in-the-cache" title="Permanent link">&para;</a></h3>
+<p>The function shown above isn't necessarily the most direct way to simply inquire whether a skeleton exists in the cache for a given root id. For that purpose, the following function is better suited:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons_exist</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Or:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons_exist</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Note that this function doesn't accept prefixes, as supported by <code>cache_query_contents()</code>. Only full root ides are supported. When querying with as single root id, the return value will be a boolean. When querying with a list of ids, the return value will be a Python dictionary mapping from each id to a boolean.</p>
+<p>This function also takes the same optional parameters described above:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons_exist</span><span class="p">(</span>
+    <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">root_ids</span><span class="o">=&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>  <span class="c1"># Or [&lt;root_id&gt;, &lt;root_id&gt;, ...],</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="retrieving-multiple-skeletons">Retrieving multiple skeletons<a class="headerlink" href="#retrieving-multiple-skeletons" title="Permanent link">&para;</a></h3>
+<p>You can retrieve a large set of skeletons in a single function call:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_bulk_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>If any skeletons are not generated yet, the default behavior is to skip those root ids and only return skeletons that are already available. But you can override this default behavior:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_bulk_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="o">|</span><span class="kc">True</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Any root ids for which skeletonization is required will be generated one at a time, at a cost of 20-60 seconds each. Consequently, there is a hard-coded limit of 10, after which all subsequent missing skeletons will not be returned.</p>
+<p>By default, skeletons are returned in JSON format. However SWC is also supported, thusly:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_bulk_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">output_format</span><span class="o">=&lt;</span><span class="s2">&quot;json&quot;</span><span class="o">|</span><span class="s2">&quot;swc&quot;</span><span class="o">&gt;</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>And the usual defaults can be overridden again:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_bulk_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="generating-multiple-skeletons-in-parallel">Generating multiple skeletons in parallel<a class="headerlink" href="#generating-multiple-skeletons-in-parallel" title="Permanent link">&para;</a></h3>
+<p><code>get_bulk_skeletons()</code> is not an effective way to produce a large number of skeletons since it operates synchronously, generating one skeleton at a time. In order to generate a large number of skeletons it is better to do so in parallel. The following function dispatches numerous root ids for skeletonization without returning anything immediately. The root ids are then distributed on the server for parallel skeletonization and eventual caching. Once they are in the cache, you can retrieve them. Of course, it can be tricky to know when they are available. That is addressed further below. Here's how to dispatch asynchronous bulk skeletonization:</p>
+<div class="highlight"><pre><span></span><code><span class="n">generate_bulk_skeletons_async</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>And with the usual overrides:</p>
+<div class="highlight"><pre><span></span><code><span class="n">get_bulk_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="retrieving-asynchronously-generated-skeletons">Retrieving asynchronously generated skeletons<a class="headerlink" href="#retrieving-asynchronously-generated-skeletons" title="Permanent link">&para;</a></h3>
+<p>In order to retrieve asynchronously generated skeletons, it is necessary to <em>poll</em> the cache for the availability of the skeletons and then eventually retrieve them. Here's an example of such a workflow:</p>
+<div class="highlight"><pre><span></span><code># Dispatch multiple asynchronous, parallel skeletonization and caching processes
+generate_bulk_skeletons_async(root_ids)
 
-<span class="n">set_session_defaults</span><span class="p">(</span><span class="n">max_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">backoff_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-</code></pre></div>
-<p>Note that this needs to happen before initializing the client for this to work
-properly. Some of these parameters are also adjustable at the client level.</p>
-<p>To view the current session defaults, you can use the <code>get_session_defaults</code> method:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">caveclient</span> <span class="kn">import</span> <span class="n">get_session_defaults</span>
+# Repeatedly query the cache for the existence of the skeletons until they are all available
+while True:
+    skeletons_that_exist = client.skeleton.skeletons_exist(root_ids=rids)
+    num_skeletons_found = sum(skeletons_that_exist.values())
+    if num_skeletons_found == len(rids):
+        break
+    sleep(10)  # Pause for ten seconds and check again
 
-<span class="n">client</span><span class="o">.</span><span class="n">get_session_defaults</span><span class="p">()</span>
+# Retrieve the skeletons (remember, SWC is also offered)
+skeletons_json = get_bulk_skeletons(root_ids)
 </code></pre></div>
-<p>More information on the available parameters can be found in the
-<a href="../../api/config/">API documentation</a>.</p>
-<h3 id="writing-unit-tests-using-caveclient">Writing unit tests using caveclient<a class="headerlink" href="#writing-unit-tests-using-caveclient" title="Permanent link">&para;</a></h3>
-<p>If you have a module that relies on caveclient and you want to write unit tests for it,
-you can use the <code>caveclient.testing</code> module to help you create an initialized, mocked
-client with user-specified options.
-This helps deal with the complex conversation that caveclient has with various services
-when initializing itself so that you get the appropriate functionality.
-The function <code>CAVEclientMock</code> offers a number of options for how to build a client,
-including server versions for various services, available API versions, and more.
-Importantly, the module provides sensible defaults but also allows you to override
-them as needed.
-Note that using testing requires the <a href="https://github.com/getsentry/responses">responses</a>
-to be installed, which is not a dependency of caveclient.</p>
-<p>The <code>CAVEclientMock</code> function requires you to specify which services you expect to call on
-in order to ensure that your code is working as expected.
-For example, to create a pytest fixture that would utilize the <code>chunkedgraph</code> module,
-but otherwise use default nonsense test values, you could include this in your <code>conftest.py</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pytest</span>
-<span class="kn">from</span> <span class="nn">caveclient.tools.testing</span> <span class="kn">import</span> <span class="n">CAVEclientMock</span>
-
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">test_client</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">CAVEclientMock</span><span class="p">(</span>
-        <span class="n">chunkedgraph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div>
-<p>Then, in your test module, you can use the <code>test_client</code> fixture to get a client.
-Note that after mocked initialization, the client will attempt normal network requests and
-thus you should mock the responses.
-If you only care to get a specific value back from a given function, you can use <a href="https://github.com/pytest-dev/pytest-mock/">pytest-mock</a>
-to mock the response to a given function call.
-For example, if you have a function <code>do_something_with_roots</code> that takes a caveclient that uses the <code>get_roots</code> function,
-you could mock the <code>get_roots</code> function so that it return a specific value:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">pytest_mock</span> <span class="kn">import</span> <span class="n">mocker</span>
-<span class="kn">from</span> <span class="nn">conftest</span> <span class="kn">import</span> <span class="n">test_client</span>
-<span class="kn">from</span> <span class="nn">my_module</span> <span class="kn">import</span> <span class="n">do_something_with_roots</span>
-
-<span class="k">def</span> <span class="nf">test_get_roots</span><span class="p">(</span><span class="n">mocker</span><span class="p">,</span> <span class="n">test_client</span><span class="p">):</span>
-    <span class="n">mocker</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">object</span><span class="p">(</span><span class="n">test_client</span><span class="o">.</span><span class="n">chunkedgraph</span><span class="p">,</span> <span class="s1">&#39;get_roots&#39;</span><span class="p">,</span> <span class="n">return_value</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
-    <span class="n">test_data</span> <span class="o">=</span> <span class="c1"># Something appropriate</span>
-    <span class="n">test_output</span> <span class="o">=</span> <span class="n">do_something_with_roots</span><span class="p">(</span><span class="n">test_client</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">test_output</span> <span class="o">==</span> <span class="c1"># The expected answer</span>
-</code></pre></div>
-<p>Note that if you your own datastack <code>info_file</code> that has a different <code>local_server</code> address than the default value (<code>TEST_LOCAL_SERVER</code> variable, which defaults to <code>https://local.cave.com</code>) you will also need to specify a <code>local_server</code> with the same value as in the <code>local_server</code> field of your info file.</p>
-<h4 id="specifying-conditions">Specifying conditions<a class="headerlink" href="#specifying-conditions" title="Permanent link">&para;</a></h4>
-<p>While sensible defaults are provided, you can also specify things like server versions to make sure your code
-works with the versions of the services you expect.
-For example, let's make a richer mock client that specifies the server versions for the <code>chunkedgraph</code>, <code>materailization</code>,
-and <code>l2cache</code> services:</p>
-<div class="highlight"><pre><span></span><code><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">version_specified_client</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">CAVEclientMock</span><span class="p">(</span>
-        <span class="n">chunkedgraph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">chunkedgraph_server_version</span><span class="o">=</span><span class="s1">&#39;3.0.1&#39;</span><span class="p">,</span>
-        <span class="n">materialization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">materialization_server_version</span><span class="o">=</span><span class="s1">&#39;2.0.0&#39;</span><span class="p">,</span>
-        <span class="n">l2cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div>
-<p>Note that some services like <code>l2cache</code> do not currently use a server version to offer different functionality, and this value
-is not exposed for them currently. See the API documentation for more information.</p>
-<p>You can also override default values like <code>server_address</code> or <code>datastack_name</code>:
-<div class="highlight"><pre><span></span><code><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">server_specified_client</span><span class="p">():</span>
-    <span class="k">return</span> <span class="n">CAVEclientMock</span><span class="p">(</span>
-        <span class="n">datastack_name</span><span class="o">=</span><span class="s1">&#39;my_datastack&#39;</span><span class="p">,</span>
-        <span class="n">server_address</span><span class="o">=</span><span class="s1">&#39;http://my.server.com&#39;</span><span class="p">,</span>
-        <span class="n">chunkedgraph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">materialization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div></p>
-<p>If you want to get access to the various default values of server version, datastack name, datastack info file, and api versions,
-you can use functions <code>get_server_versions</code>, <code>get_server_information</code>, <code>default_info</code>, <code>get_api_versions</code> respectively.
-Each of these functions will return a dictionary of the values that can be used as a kwargs input into CAVEclientMock.
-If you specify your own override values, it will take precedence over the default value and you can just use the dictionary in your tests.
-See the caveclient tests for an example of how to use these functions.</p>
 
 
 
@@ -1083,7 +1169,7 @@ See the caveclient tests for an example of how to use these functions.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../skeletonization/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Skeletonization">
+          <a href="../materialization/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Materialization">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1093,20 +1179,20 @@ See the caveclient tests for an example of how to use these functions.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Skeletonization
+                Materialization
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../api/client/" class="md-footer__link md-footer__link--next" aria-label="Next: caveclient.CAVEclient">
+          <a href="../advanced/" class="md-footer__link md-footer__link--next" aria-label="Next: Advanced Usage">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                caveclient.CAVEclient
+                Advanced Usage
               </div>
             </div>
             <div class="md-footer__button md-icon">
