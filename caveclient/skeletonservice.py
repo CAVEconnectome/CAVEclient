@@ -440,16 +440,9 @@ class SkeletonClient(ClientBase):
         datastack_name: Optional[str] = None,
         skeleton_version: Optional[int] = 0,
         output_format: Literal[
-            "none",
-            "h5",
+            "dict",
             "swc",
-            "swccompressed",
-            "json",
-            "jsoncompressed",
-            "arrays",
-            "arrayscompressed",
-            "precomputed",
-        ] = "none",
+        ] = "dict",
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
@@ -466,14 +459,8 @@ class SkeletonClient(ClientBase):
         output_format : string
             The format to retrieve. Options are:
 
-            - 'none': No return value (this can be used to generate a skeleton without retrieving it)
-            - 'precomputed': A cloudvolume.Skeleton object
-            - 'json': A dictionary
-            - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
-            - 'arrays': A dictionary (literally a subset of the json response)
-            - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
+            - 'dict': A dictionary
             - 'swc': A pandas DataFrame
-            - 'h5': An BytesIO object containing bytes for an h5 file
 
         Returns
         -------
@@ -484,8 +471,13 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
+        if output_format == "dict":
+            endpoint_format = "jsoncompressed"
+        elif output_format == "swc":
+            endpoint_format = "swccompressed"
+
         url = self._build_endpoint(
-            root_id, datastack_name, skeleton_version, output_format
+            root_id, datastack_name, skeleton_version, endpoint_format
         )
 
         response = self.session.get(url)
@@ -496,34 +488,10 @@ class SkeletonClient(ClientBase):
                 f"get_skeleton() response contains content of size {len(response.content)} bytes"
             )
 
-        if output_format == "none":
-            return
-        if output_format == "precomputed":
-            if not CLOUDVOLUME_AVAILABLE:
-                raise ImportError(
-                    "'precomputed' output format requires cloudvolume, which is not available."
-                )
-            metadata = self.get_precomputed_skeleton_info(
-                skeleton_version, datastack_name
-            )
-            vertex_attributes = metadata["vertex_attributes"]
-            return cloudvolume.Skeleton.from_precomputed(
-                response.content, vertex_attributes=vertex_attributes
-            )
-        if output_format == "json":
-            return response.json()
-        if output_format == "jsoncompressed":
+        if endpoint_format == "jsoncompressed":
             return SkeletonClient.decompressBytesToDict(response.content)
-        if output_format == "arrays":
-            return response.json()
-        if output_format == "arrayscompressed":
-            return SkeletonClient.decompressBytesToDict(response.content)
-        if output_format == "swc" or output_format == "swccompressed":
-            file_content = (
-                response.content.decode()
-                if output_format == "swc"
-                else SkeletonClient.decompressBytesToString(response.content)
-            )
+        if endpoint_format == "swccompressed":
+            file_content = SkeletonClient.decompressBytesToString(response.content)
 
             # I got the SWC column header from skeleton_plot.skel_io.py
             df = pd.read_csv(
@@ -542,9 +510,6 @@ class SkeletonClient(ClientBase):
             # df = df.apply(pd.to_numeric, downcast='float')
 
             return df
-        if output_format == "h5":
-            skeleton_bytesio = BytesIO(response.content)
-            return skeleton_bytesio
 
         raise ValueError(f"Unknown output format: {output_format}")
 
