@@ -299,6 +299,7 @@ skeleton_common = "{skeleton_server_address}/skeletoncache/api"
 skeleton_v1 = "{skeleton_server_address}/skeletoncache/api/v1"
 skeletonservice_endpoints_v1 = {
     "get_version": skeleton_common + "/version",
+    "get_versions": skeleton_common + "/versions",
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
     "bulk_skeleton_info": skeleton_v1 + "/{datastack_name}/bulk/skeleton/info",
     "skeleton_info_versioned": skeleton_v1
