@@ -88,28 +88,6 @@ class SkeletonClient(ClientBase):
 
         self._datastack_name = datastack_name
 
-    def _test_get_version(self) -> Optional[Version]:
-        logging.info("_test_get_version()")
-        endpoint_mapping = self.default_url_mapping
-        endpoint = self._endpoints.get("get_version_test", None)
-        logging.info(f"endpoint: {endpoint}")
-        if endpoint is None:
-            return None
-
-        url = endpoint.format_map(endpoint_mapping)
-        logging.info(f"url: {url}")
-        response = self.session.get(url)
-        logging.info(f"response: {response}")
-        if response.status_code == 404:  # server doesn't have this endpoint yet
-            logging.info("404")
-            return None
-        else:
-            version_str = response.json()
-            logging.info(f"version_str: {type(version_str)} {version_str}")
-            version = Version(version_str)
-            logging.info(f"version: {version}")
-            return version
-
     def _test_l2cache_exception(self):
         raise NoL2CacheException(
             "This is a test of SkeletonClient's behavior when no L2Cache is found."
@@ -150,6 +128,44 @@ class SkeletonClient(ClientBase):
 
         url = parse(self._build_endpoint(rid, ds, 1, "json"))
         assert url == f"{ds}{innards}1/{rid}/json"
+
+    def get_version(self):
+        logging.info("get_version()")
+        endpoint_mapping = self.default_url_mapping
+        endpoint = self._endpoints.get("get_version", None)
+        logging.info(f"endpoint: {endpoint}")
+
+        url = endpoint.format_map(endpoint_mapping)
+        logging.info(f"url: {url}")
+        response = self.session.get(url)
+        logging.info(f"response: {response}")
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            logging.info("404")
+            return None
+        else:
+            version_str = response.json()
+            logging.info(f"version_str: {type(version_str)} {version_str}")
+            version = Version(version_str)
+            logging.info(f"version: {version}")
+            return version
+
+    def get_versions(self):
+        logging.info("get_versions()")
+        endpoint_mapping = self.default_url_mapping
+        endpoint = self._endpoints.get("get_versions", None)
+        logging.info(f"endpoint: {endpoint}")
+
+        url = endpoint.format_map(endpoint_mapping)
+        logging.info(f"url: {url}")
+        response = self.session.get(url)
+        logging.info(f"response: {response}")
+        if response.status_code == 404:  # server doesn't have this endpoint yet
+            logging.info("404")
+            return None
+        else:
+            versions = response.json()
+            logging.info(f"versions: {type(versions)} {versions}")
+            return versions
 
     @staticmethod
     def compressStringToBytes(inputString):
