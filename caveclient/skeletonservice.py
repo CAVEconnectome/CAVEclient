@@ -12,12 +12,12 @@ import pandas as pd
 from cachetools import TTLCache, cached
 from packaging.version import Version
 
+from .auth import AuthClient
 from .base import (
+    ClientBase,
+    _api_endpoints,
     _check_version_compatibility,
 )
-
-from .auth import AuthClient
-from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
 SERVER_KEY = "skeleton_server_address"
