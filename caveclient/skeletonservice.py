@@ -16,17 +16,6 @@ from .base import (
     _check_version_compatibility,
 )
 
-try:
-    import cloudvolume
-
-    CLOUDVOLUME_AVAILABLE = True
-except ImportError:
-    logging.warning(
-        "cloudvolume not available. 'precomputed' output format will not work."
-    )
-
-    CLOUDVOLUME_AVAILABLE = False
-
 from .auth import AuthClient
 from .base import ClientBase, _api_endpoints
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
