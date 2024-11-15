@@ -400,7 +400,7 @@ class SkeletonClient(ClientBase):
     @cached(TTLCache(maxsize=32, ttl=3600))
     def get_precomputed_skeleton_info(
         self,
-        skvn: int = 0,
+        skvn,
         datastack_name: Optional[str] = None,
     ):
         """get's the precomputed skeleton information
@@ -427,7 +427,7 @@ class SkeletonClient(ClientBase):
         self,
         root_id: int,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = None,
         output_format: Literal[
             "dict",
             "swc",
@@ -444,7 +444,7 @@ class SkeletonClient(ClientBase):
         datastack_name : str
             The name of the datastack to check
         skeleton_version : int
-            The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.
+            The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
         output_format : string
             The format to retrieve. Options are:
 
@@ -459,11 +459,33 @@ class SkeletonClient(ClientBase):
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+        
+        if output_format not in ["dict", "swc"]:
+            raise ValueError(f"Unknown output format: {output_format}")
 
+        if verbose_level >= 1:
+            logging.info(f"SkeletonService version: {self._server_version}")
+        
+        if self._server_version < Version("0.6.0"):
+            logging.warning("SkeletonService version is less than 0.6.0. Please upgrade to the latest version.")
+
+        # The output formats were changed in server v0.6.0 and must be handled differently by the client
         if output_format == "dict":
-            endpoint_format = "jsoncompressed"
+            if self._server_version < Version("0.6.0"):
+                endpoint_format = "jsoncompressed"
+            else:
+                endpoint_format = "flatdict"
         elif output_format == "swc":
             endpoint_format = "swccompressed"
+        
+        if skeleton_version is None:
+            logging.warning("The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version.")
+            skeleton_version = -1
+        
+        # -1, to specify the latest version, was only added in server v0.6.1
+        if self._server_version < Version("0.6.1") and skeleton_version == -1:
+            skeleton_versions = self.get_versions()
+            skeleton_version = sorted(skeleton_versions)[-1]
 
         url = self._build_endpoint(
             root_id, datastack_name, skeleton_version, endpoint_format
@@ -478,6 +500,18 @@ class SkeletonClient(ClientBase):
             )
 
         if endpoint_format == "jsoncompressed":
+            assert self._server_version < Version("0.6.0")
+            sk_json = SkeletonClient.decompressBytesToDict(response.content)
+            if 'vertex_properties' in sk_json.keys():
+                for key in sk_json['vertex_properties'].keys():
+                    # Radius was redundantly store both as a top-level parameter and in vertex_properties.
+                    # We could either check for it (or any such redundancy key) and skip over it, or we could overwrite it.
+                    # Since they were created as duplicates anyway, it doesn't matter which approach is used.
+                    sk_json[key] = sk_json['vertex_properties'][key]
+                del sk_json['vertex_properties']
+            return sk_json
+        if endpoint_format == "flatdict":
+            assert self._server_version >= Version("0.6.0")
             return SkeletonClient.decompressBytesToDict(response.content)
         if endpoint_format == "swccompressed":
             file_content = SkeletonClient.decompressBytesToString(response.content)
@@ -507,11 +541,11 @@ class SkeletonClient(ClientBase):
         self,
         root_ids: List,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = None,
         output_format: Literal[
-            "json",
+            "dict",
             "swc",
-        ] = "json",
+        ] = "dict",
         generate_missing_skeletons: bool = False,
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
@@ -525,16 +559,25 @@ class SkeletonClient(ClientBase):
         datastack_name : str
             The name of the datastack to check
         skeleton_version : int
-            The skeleton version to generate. Use 0 for latest.
+            The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
+        if output_format == "dict":
+            endpoint_format = "flatdict"
+        elif output_format == "swc":
+            endpoint_format = "swc"
+        
+        if skeleton_version is None:
+            logging.warning("The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version.")
+            skeleton_version = -1
+        
         url = self._build_bulk_endpoint(
             root_ids,
             datastack_name,
             skeleton_version,
-            output_format,
+            endpoint_format,
             generate_missing_skeletons,
         )
         response = self.session.get(url)
@@ -545,7 +588,7 @@ class SkeletonClient(ClientBase):
                 f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
             )
 
-        if output_format == "json":
+        if endpoint_format == "flatdict":
             sk_jsons = {}
             for rid, swc_bytes in response.json().items():
                 try:
@@ -558,7 +601,7 @@ class SkeletonClient(ClientBase):
                         f"Error decompressing skeleton for root_id {rid}: {e}"
                     )
             return sk_jsons
-        elif output_format == "swc":
+        elif endpoint_format == "swc":
             sk_dfs = {}
             for rid, swc_bytes in response.json().items():
                 try:
@@ -583,7 +626,7 @@ class SkeletonClient(ClientBase):
         self,
         root_ids: List,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = None,
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
@@ -596,10 +639,14 @@ class SkeletonClient(ClientBase):
         datastack_name : str
             The name of the datastack to check
         skeleton_version : int
-            The skeleton version to generate. Use 0 for latest.
+            The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+        
+        if skeleton_version is None:
+            logging.warning("The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version.")
+            skeleton_version = -1
 
         url = self._build_bulk_async_endpoint(
             root_ids, datastack_name, skeleton_version

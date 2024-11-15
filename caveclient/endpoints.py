@@ -303,7 +303,7 @@ skeletonservice_endpoints_v1 = {
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
     "bulk_skeleton_info": skeleton_v1 + "/{datastack_name}/bulk/skeleton/info",
     "skeleton_info_versioned": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/info/{skvn}",
+    + "/{datastack_name}/precomputed/skeleton/{skvn}/info",
     "get_cache_contents_via_ridprefixes": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/query_cache/{root_id_prefixes}/{limit}",
     "get_cache_contents_via_skvn_ridprefixes": skeleton_v1
