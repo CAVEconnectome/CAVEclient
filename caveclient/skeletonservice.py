@@ -427,7 +427,11 @@ class SkeletonClient(ClientBase):
         self,
         root_id: int,
         datastack_name: Optional[str] = None,
+<<<<<<< HEAD
         skeleton_version: Optional[int] = 3,
+=======
+        skeleton_version: Optional[int] = None,
+>>>>>>> e37c616 (SkeletonClient changes, mainly simplification of output formats (#265))
         output_format: Literal[
             "dict",
             "swc",
@@ -447,6 +451,10 @@ class SkeletonClient(ClientBase):
             The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
         output_format : string
             The format to retrieve. Options are:
+<<<<<<< HEAD
+=======
+
+>>>>>>> e37c616 (SkeletonClient changes, mainly simplification of output formats (#265))
             - 'dict': A dictionary
             - 'swc': A pandas DataFrame
 
@@ -459,10 +467,22 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
+<<<<<<< HEAD
         valid_output_formats = ["dict", "swc"]
         if output_format not in valid_output_formats:
             raise ValueError(
                 f"Unknown output format: {output_format}. Valid options: {valid_output_formats}"
+=======
+        if output_format not in ["dict", "swc"]:
+            raise ValueError(f"Unknown output format: {output_format}")
+
+        if verbose_level >= 1:
+            logging.info(f"SkeletonService version: {self._server_version}")
+
+        if self._server_version < Version("0.6.0"):
+            logging.warning(
+                "SkeletonService version is less than 0.6.0. Please upgrade to the latest version."
+>>>>>>> e37c616 (SkeletonClient changes, mainly simplification of output formats (#265))
             )
 
         # The output formats were changed in server v0.6.0 and must be handled differently by the client
@@ -546,7 +566,11 @@ class SkeletonClient(ClientBase):
         self,
         root_ids: List,
         datastack_name: Optional[str] = None,
+<<<<<<< HEAD
         skeleton_version: Optional[int] = 3,
+=======
+        skeleton_version: Optional[int] = None,
+>>>>>>> e37c616 (SkeletonClient changes, mainly simplification of output formats (#265))
         output_format: Literal[
             "dict",
             "swc",
@@ -569,6 +593,7 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
+<<<<<<< HEAD
         valid_output_formats = ["dict", "swc"]
         if output_format not in valid_output_formats:
             raise ValueError(
@@ -589,6 +614,18 @@ class SkeletonClient(ClientBase):
             raise ValueError(
                 f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
             )
+=======
+        if output_format == "dict":
+            endpoint_format = "flatdict"
+        elif output_format == "swc":
+            endpoint_format = "swc"
+
+        if skeleton_version is None:
+            logging.warning(
+                "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
+            )
+            skeleton_version = -1
+>>>>>>> e37c616 (SkeletonClient changes, mainly simplification of output formats (#265))
 
         url = self._build_bulk_endpoint(
             root_ids,
