@@ -427,7 +427,7 @@ class SkeletonClient(ClientBase):
         self,
         root_id: int,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = None,
         output_format: Literal[
             "dict",
             "swc",
@@ -448,12 +448,7 @@ class SkeletonClient(ClientBase):
         output_format : string
             The format to retrieve. Options are:
 
-            - 'none': No return value (this can be used to generate a skeleton without retrieving it)
-            - 'precomputed': A cloudvolume.Skeleton object
-            - 'json': A dictionary
-            - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
-            - 'arrays': A dictionary (literally a subset of the json response)
-            - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
+            - 'dict': A dictionary
             - 'swc': A pandas DataFrame
 
         Returns
@@ -464,6 +459,37 @@ class SkeletonClient(ClientBase):
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        if output_format not in ["dict", "swc"]:
+            raise ValueError(f"Unknown output format: {output_format}")
+
+        if verbose_level >= 1:
+            logging.info(f"SkeletonService version: {self._server_version}")
+
+        if self._server_version < Version("0.6.0"):
+            logging.warning(
+                "SkeletonService version is less than 0.6.0. Please upgrade to the latest version."
+            )
+
+        # The output formats were changed in server v0.6.0 and must be handled differently by the client
+        if output_format == "dict":
+            if self._server_version < Version("0.6.0"):
+                endpoint_format = "jsoncompressed"
+            else:
+                endpoint_format = "flatdict"
+        elif output_format == "swc":
+            endpoint_format = "swccompressed"
+
+        if skeleton_version is None:
+            logging.warning(
+                "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
+            )
+            skeleton_version = -1
+
+        # -1, to specify the latest version, was only added in server v0.6.1
+        if self._server_version < Version("0.6.1") and skeleton_version == -1:
+            skeleton_versions = self.get_versions()
+            skeleton_version = sorted(skeleton_versions)[-1]
 
         url = self._build_endpoint(
             root_id, datastack_name, skeleton_version, endpoint_format
@@ -519,7 +545,7 @@ class SkeletonClient(ClientBase):
         self,
         root_ids: List,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = None,
         output_format: Literal[
             "dict",
             "swc",
@@ -541,6 +567,17 @@ class SkeletonClient(ClientBase):
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        if output_format == "dict":
+            endpoint_format = "flatdict"
+        elif output_format == "swc":
+            endpoint_format = "swc"
+
+        if skeleton_version is None:
+            logging.warning(
+                "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
+            )
+            skeleton_version = -1
 
         url = self._build_bulk_endpoint(
             root_ids,
