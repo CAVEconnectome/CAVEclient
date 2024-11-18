@@ -1197,7 +1197,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.skeletonservice.SkeletonClient.get_skeleton" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_skeleton</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_skeleton</span><span class="p">(</span><span class="n">root_id</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 <a href="#caveclient.skeletonservice.SkeletonClient.get_skeleton" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1259,11 +1259,11 @@ version of the datastack itself.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.</p>
+                <p>The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for Neuroglancer-compatibility. Use -1 for latest.</p>
               </div>
             </td>
             <td>
-                  <code>0</code>
+                  <code>None</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -1277,19 +1277,13 @@ version of the datastack itself.</p>
               <div class="doc-md-description">
                 <p>The format to retrieve. Options are:</p>
 <ul>
-<li>'none': No return value (this can be used to generate a skeleton without retrieving it)</li>
-<li>'precomputed': A cloudvolume.Skeleton object</li>
-<li>'json': A dictionary</li>
-<li>'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')</li>
-<li>'arrays': A dictionary (literally a subset of the json response)</li>
-<li>'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')</li>
+<li>'dict': A dictionary</li>
 <li>'swc': A pandas DataFrame</li>
-<li>'h5': An BytesIO object containing bytes for an h5 file</li>
 </ul>
               </div>
             </td>
             <td>
-                  <code>&#39;none&#39;</code>
+                  <code>&#39;dict&#39;</code>
             </td>
           </tr>
       </tbody>
@@ -1359,7 +1353,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_bulk_skeletons</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_bulk_skeletons</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 <a href="#caveclient.skeletonservice.SkeletonClient.get_bulk_skeletons" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1421,11 +1415,11 @@ version of the datastack itself.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The skeleton version to generate. Use 0 for latest.</p>
+                <p>The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.</p>
               </div>
             </td>
             <td>
-                  <code>0</code>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -1439,7 +1433,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">generate_bulk_skeletons_async</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">generate_bulk_skeletons_async</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_warning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
 <a href="#caveclient.skeletonservice.SkeletonClient.generate_bulk_skeletons_async" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1501,11 +1495,11 @@ version of the datastack itself.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The skeleton version to generate. Use 0 for latest.</p>
+                <p>The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.</p>
               </div>
             </td>
             <td>
-                  <code>0</code>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>

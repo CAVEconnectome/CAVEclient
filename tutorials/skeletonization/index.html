@@ -983,7 +983,9 @@
 <p>The skeleton service enables you to generate and retrieve skeletons from the server. This saves you the trouble of performing skeletonization routines on your local machine, while also saving you the trouble of understanding many of the details inside of skeletonization. Furthermore, the server offers the ability to generate multiple skeletons simultaneously, in parallel. And lastly, the server caches each skeleton that is generated so that it only ever needs to be generated once. All subsequent requests for the same skeleton will simply return the cached skeleton with notable turn-around-time improvements.</p>
 <h3 id="initializing-the-client">Initializing the client<a class="headerlink" href="#initializing-the-client" title="Permanent link">&para;</a></h3>
 <p>The simplest way to initialize the CAVEclient is by merely providing the datastack of interest:</p>
-<div class="highlight"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">CAVEclient</span><span class="p">(</span><span class="o">&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">caveclient</span> <span class="k">as</span> <span class="nn">cc</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">cc</span><span class="o">.</span><span class="n">CAVEclient</span><span class="p">(</span><span class="o">&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">)</span>
 </code></pre></div>
 <p>With a CAVEclient built, you can now investigate the current build version of the SkeletonClient:</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_version</span><span class="p">()</span>
