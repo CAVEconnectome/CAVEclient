@@ -9,6 +9,8 @@ The skeleton service enables you to generate and retrieve skeletons from the ser
 The simplest way to initialize the CAVEclient is by merely providing the datastack of interest:
 
 ```python
+import caveclient as cc
+
 client = cc.CAVEclient(<datastack_name>)
 ```
 
