@@ -461,7 +461,9 @@ class SkeletonClient(ClientBase):
 
         valid_output_formats = ["dict", "swc"]
         if output_format not in valid_output_formats:
-            raise ValueError(f"Unknown output format: {output_format}. Valid options: {valid_output_formats}")
+            raise ValueError(
+                f"Unknown output format: {output_format}. Valid options: {valid_output_formats}"
+            )
 
         # The output formats were changed in server v0.6.0 and must be handled differently by the client
         if output_format == "dict":
@@ -474,7 +476,9 @@ class SkeletonClient(ClientBase):
 
         valid_skeleton_versions = [-1, 0, 1, 2, 3]
         if skeleton_version not in valid_skeleton_versions:
-            raise ValueError(f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}")
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+            )
 
         if verbose_level >= 1:
             logging.info(f"SkeletonService version: {self._server_version}")
@@ -567,7 +571,9 @@ class SkeletonClient(ClientBase):
 
         valid_output_formats = ["dict", "swc"]
         if output_format not in valid_output_formats:
-            raise ValueError(f"Unknown output format: {output_format}. Valid options: {valid_output_formats}")
+            raise ValueError(
+                f"Unknown output format: {output_format}. Valid options: {valid_output_formats}"
+            )
 
         # The output formats were changed in server v0.6.0 and must be handled differently by the client
         if output_format == "dict":
@@ -580,7 +586,9 @@ class SkeletonClient(ClientBase):
 
         valid_skeleton_versions = [-1, 0, 1, 2, 3]
         if skeleton_version not in valid_skeleton_versions:
-            raise ValueError(f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}")
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+            )
 
         url = self._build_bulk_endpoint(
             root_ids,
