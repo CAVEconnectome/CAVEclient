@@ -1,6 +1,11 @@
 ---
 title: Changelog
 ---
+## 7.0.0 (November 20, 2024)
+
+- Simplified skeleton client interface to only accept formats of 'dict' and 'swc'
+  Structure of the dictionary returned was also changed compared to previous "json" format, where the dict is flat with only one level of keys.
+  Corresponding change made to MeshParty 1.18.0 allows for hydration of MeshParty Skeleton object from this dict format. 
 
 ## 6.5.0 (November 15, 2024)
 
