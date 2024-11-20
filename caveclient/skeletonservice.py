@@ -484,7 +484,7 @@ class SkeletonClient(ClientBase):
             logging.info(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.6.0"):
             logging.warning(
-                "SkeletonService version is less than 0.6.0. Please upgrade to the latest version."
+                "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
             )
 
         # -1, to specify the latest version, was only added in server v0.6.1
