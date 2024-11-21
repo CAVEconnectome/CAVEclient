@@ -316,7 +316,7 @@ class SkeletonClient(ClientBase):
     def get_cache_contents(
         self,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = 3,
         root_id_prefixes: Union[int, str, List] = 0,
         limit: Optional[int] = 0,
         log_warning: bool = True,
@@ -328,6 +328,12 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
+        valid_skeleton_versions = [-1, 0, 1, 2, 3]
+        if skeleton_version not in valid_skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+            )
+
         if isinstance(root_id_prefixes, int):
             root_id_prefixes = str(root_id_prefixes)
         elif isinstance(root_id_prefixes, List):
@@ -338,15 +344,10 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["root_id_prefixes"] = root_id_prefixes
         endpoint_mapping["limit"] = limit
 
-        if not skeleton_version:
-            url = self._endpoints["get_cache_contents_via_ridprefixes"].format_map(
-                endpoint_mapping
-            )
-        else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            url = self._endpoints["get_cache_contents_via_skvn_ridprefixes"].format_map(
-                endpoint_mapping
-            )
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        url = self._endpoints["get_cache_contents_via_skvn_ridprefixes"].format_map(
+            endpoint_mapping
+        )
 
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
@@ -357,7 +358,7 @@ class SkeletonClient(ClientBase):
     def skeletons_exist(
         self,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 0,
+        skeleton_version: Optional[int] = 3,
         root_ids: Union[int, str, List] = 0,
         log_warning: bool = True,
     ):
@@ -368,6 +369,12 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
+        valid_skeleton_versions = [-1, 0, 1, 2, 3]
+        if skeleton_version not in valid_skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+            )
+
         if isinstance(root_ids, int):
             root_ids = str(root_ids)
         elif isinstance(root_ids, List):
@@ -377,15 +384,10 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_ids"] = root_ids
 
-        if not skeleton_version:
-            url = self._endpoints["skeletons_exist_via_rids"].format_map(
-                endpoint_mapping
-            )
-        else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            url = self._endpoints["skeletons_exist_via_skvn_rids"].format_map(
-                endpoint_mapping
-            )
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        url = self._endpoints["skeletons_exist_via_skvn_rids"].format_map(
+            endpoint_mapping
+        )
 
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
