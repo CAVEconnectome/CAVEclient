@@ -1002,15 +1002,8 @@
 </code></pre></div>
 <p>where the availale output_formats (described below) are:</p>
 <ul>
-<li>none (default if unspecified)</li>
-<li>h5</li>
-<li>swc</li>
-<li>swccompressed</li>
-<li>json</li>
-<li>jsoncompressed</li>
-<li>arrays</li>
-<li>arrayscompressed</li>
-<li>precomputed</li>
+<li><code>'dict'</code> (default if unspecified)</li>
+<li><code>'swc'</code> (a Pandas Dataframe)</li>
 </ul>
 <p>If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.</p>
 <p>To specify a nondefault skeleton version:</p>
@@ -1034,7 +1027,7 @@
     <span class="n">root_id_prefixes</span><span class="o">=&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
-<p>You can also add addiional parameters as needed:</p>
+<p>You can also add additional parameters as needed:</p>
 <div class="highlight"><pre><span></span><code><span class="n">get_cache_contents</span><span class="p">(</span>
     <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
     <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
