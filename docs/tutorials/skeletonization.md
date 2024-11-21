@@ -39,15 +39,8 @@ sk = client.skeleton.get_skeleton(
 
 where the availale output_formats (described below) are:
 
-* none (default if unspecified)
-* h5
-* swc
-* swccompressed
-* json
-* jsoncompressed
-* arrays
-* arrayscompressed
-* precomputed
+* ```'dict'``` (default if unspecified)
+* ```'swc'``` (a Pandas Dataframe)
 
 If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.
 
@@ -82,7 +75,7 @@ get_cache_contents(
 )
 ```
 
-You can also add addiional parameters as needed:
+You can also add additional parameters as needed:
 
 ```python
 get_cache_contents(
