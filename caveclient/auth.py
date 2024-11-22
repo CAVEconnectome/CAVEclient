@@ -24,7 +24,7 @@ deprecated_token_files = [
 ]
 
 
-def write_token(token, filepath, key, overwrite=True):
+def write_token(token, filepath, key, overwrite=True, ignore_readonly=False):
     if os.path.exists(filepath):
         with open(filepath, "r") as f:
             secrets = json.load(f)
@@ -34,15 +34,21 @@ def write_token(token, filepath, key, overwrite=True):
     else:
         secrets = {}
 
-    secrets[key] = token
+    if secrets.get(key) == token:
+        return
+    else:
+        secrets[key] = token
 
-    secret_dir = os.path.dirname(filepath)
-    if not os.path.exists(secret_dir):
-        full_dir = os.path.expanduser(secret_dir)
-        os.makedirs(full_dir)
+        secret_dir = os.path.dirname(filepath)
+        if not os.path.exists(secret_dir):
+            full_dir = os.path.expanduser(secret_dir)
+            os.makedirs(full_dir)
 
-    with open(filepath, "w") as f:
-        json.dump(secrets, f)
+        if not os.access(secret_dir, os.W_OK) and ignore_readonly:
+            return
+        else:
+            with open(filepath, "w") as f:
+                json.dump(secrets, f)
 
 
 def server_token_filename(server_address):
@@ -231,6 +237,8 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         token_file: Optional[str] = None,
         switch_token: bool = True,
         write_to_server_file: bool = True,
+        ignore_readonly: bool = True,
+        local_server: bool = True,
     ):
         """Conveniently save a token in the correct format.
 
@@ -258,6 +266,10 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         write_to_server_file: bool, optional
             If True, will write token to a server specific file to support this machine
             interacting with multiple auth servers.
+        ignore_readonly: bool, optional
+            If True, will only attempt to save a token if the directory is writeable.
+        local_server: bool, optional
+            If True, saves the token to the local server file as well.
         """
         if token is None:
             token = self.token
@@ -270,13 +282,28 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         if save_token_file is None:
             raise ValueError("No token file is set")
         if write_to_server_file:
-            write_token(token, self._server_file_path, token_key, overwrite=overwrite)
-        write_token(token, save_token_file, token_key, overwrite=overwrite)
+            write_token(
+                token,
+                self._server_file_path,
+                token_key,
+                overwrite=overwrite,
+                ignore_readonly=ignore_readonly,
+            )
+        write_token(
+            token,
+            save_token_file,
+            token_key,
+            overwrite=overwrite,
+            ignore_readonly=ignore_readonly,
+        )
 
         if switch_token:
             self._token = token
             self._token_key = token_key
             self._token_file = save_token_file
+
+        if local_server:
+            self._synchronize_local_server_file(token)
 
     def get_user_information(self, user_ids):
         """Get user data.
@@ -331,7 +358,6 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
     @local_server.setter
     def local_server(self, new_val):
         self._local_server = new_val
-        self._synchronize_local_server_file()
 
     @property
     def local_server_filepath(self):
@@ -340,21 +366,25 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         else:
             return None
 
-    def _synchronize_local_server_file(self):
+    def _synchronize_local_server_file(self, token=None):
+        if token is None:
+            token = self.token
         if self.local_server:
             if os.path.exists(self.local_server_filepath):
                 local_token = self._load_token(
                     self.local_server_filepath, self._token_key
                 )
-                if local_token != self.token:
+                if local_token != token:
                     self.save_token(
-                        token=self.token,
+                        token=token,
                         token_file=self.local_server_filepath,
                         overwrite=True,
+                        ignore_readonly=True,
                     )
             else:
                 self.save_token(
-                    token=self.token,
+                    token=token,
                     token_file=self.local_server_filepath,
                     overwrite=True,
+                    ignore_readonly=True,
                 )

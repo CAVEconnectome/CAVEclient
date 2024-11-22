@@ -6,29 +6,63 @@ from responses.matchers import query_param_matcher
 
 from caveclient import CAVEclient, endpoints, set_session_defaults
 
-from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
+from .conftest import (
+    datastack_dict,
+    global_client,  # noqa: F401
+    mat_apiv2_specified_client,  # noqa: F401
+    server_versions,
+    test_info,
+    version_specified_client,  # noqa: F401
+)
 
 default_mapping = {
-    "me_server_address": TEST_LOCAL_SERVER,
-    "cg_server_address": TEST_LOCAL_SERVER,
+    "me_server_address": datastack_dict["local_server"],
+    "cg_server_address": datastack_dict["local_server"],
     "table_id": test_info["segmentation_source"].split("/")[-1],
-    "datastack_name": TEST_DATASTACK,
+    "datastack_name": datastack_dict["datastack_name"],
     "table_name": test_info["synapse_table"],
     "version": 1,
 }
 
 
 url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
-mapping = {"i_server_address": TEST_GLOBAL_SERVER, "datastack_name": TEST_DATASTACK}
+mapping = {
+    "i_server_address": datastack_dict["global_server"],
+    "datastack_name": datastack_dict["datastack_name"],
+}
 info_url = url_template.format_map(mapping)
+
+
+def test_global_client(global_client):  # noqa: F811
+    assert global_client.info.datastack_name is None
+    assert global_client.info.server_address == datastack_dict["global_server"]
+    assert "Authorization" in global_client.auth.request_header
+    assert (
+        global_client.state.server_version
+        == server_versions["json_service_server_version"]
+    )
+
+
+def test_versioned_client(version_specified_client):  # noqa: F811
+    correct_date = datetime.datetime.strptime(
+        "2024-06-05T10:10:01.203215", "%Y-%m-%dT%H:%M:%S.%f"
+    ).replace(tzinfo=datetime.timezone.utc)
+
+    assert version_specified_client.timestamp == correct_date
+    assert version_specified_client.materialize.version == 3
+    assert version_specified_client.chunkedgraph.timestamp == correct_date
+
+
+def test_api_version(mat_apiv2_specified_client):  # noqa: F811
+    assert "api/v2" in mat_apiv2_specified_client.materialize._endpoints["simple_query"]
 
 
 class TestFrameworkClient:
     default_mapping = {
-        "me_server_address": TEST_LOCAL_SERVER,
-        "cg_server_address": TEST_LOCAL_SERVER,
+        "me_server_address": datastack_dict["local_server"],
+        "cg_server_address": datastack_dict["local_server"],
         "table_id": test_info["segmentation_source"].split("/")[-1],
-        "datastack_name": TEST_DATASTACK,
+        "datastack_name": datastack_dict["datastack_name"],
         "table_name": test_info["synapse_table"],
         "version": 1,
     }
@@ -37,7 +71,9 @@ class TestFrameworkClient:
     def test_create_client(self):
         responses.add(responses.GET, info_url, json=test_info, status=200)
         _ = CAVEclient(
-            TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False
+            datastack_dict["datastack_name"],
+            server_address=datastack_dict["global_server"],
+            write_server_cache=False,
         )
 
     @responses.activate
@@ -45,7 +81,7 @@ class TestFrameworkClient:
         responses.add(responses.GET, info_url, json=test_info, status=200)
 
         endpoint_mapping = self.default_mapping
-        endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
+        endpoint_mapping["emas_server_address"] = datastack_dict["global_server"]
 
         api_versions_url = endpoints.chunkedgraph_endpoints_common[
             "get_api_versions"
@@ -98,15 +134,15 @@ class TestFrameworkClient:
 
         with assert_raises(ValueError):
             _ = CAVEclient(
-                TEST_DATASTACK,
-                server_address=TEST_GLOBAL_SERVER,
+                datastack_dict["datastack_name"],
+                server_address=datastack_dict["global_server"],
                 write_server_cache=False,
                 version=10,
             )
 
         versioned_client = CAVEclient(
-            TEST_DATASTACK,
-            server_address=TEST_GLOBAL_SERVER,
+            datastack_dict["datastack_name"],
+            server_address=datastack_dict["global_server"],
             write_server_cache=False,
             version=1,
         )
@@ -139,7 +175,9 @@ class TestFrameworkClient:
             status_forcelist=status_forcelist,
         )
         client = CAVEclient(
-            TEST_DATASTACK, server_address=TEST_GLOBAL_SERVER, write_server_cache=False
+            datastack_dict["datastack_name"],
+            server_address=datastack_dict["global_server"],
+            write_server_cache=False,
         )
         assert client.l2cache.session.adapters["https://"]._pool_maxsize == pool_maxsize
         assert client.l2cache.session.adapters["https://"]._pool_block
