@@ -16,11 +16,6 @@ on:
         type: boolean
         required: true
         default: true
-      skip-tests:
-        description: "Skip tests"
-        type: boolean
-        required: true
-        default: false
 
 jobs:
   bump:

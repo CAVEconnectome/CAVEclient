@@ -28,33 +28,19 @@ jobs:
       - name: Get gh-pages branch
         run: git fetch origin gh-pages --depth=1
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Update pip
-        run: python -m pip install --upgrade pip
-
-      - name: Cache for virtual environment
-        uses: actions/cache@v3
-        with:
-          path: ./.venv
-          key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('doc_requirements.txt') }}
-
-      - name: Install dependencies
-        run: pip install -r doc_requirements.txt
-
       - name: Configure git for github-actions[bot]
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      # - name: Build and push versioned docs with mike
-      #   run: |
-      #     poetry run mike deploy --push --update-aliases dev
-      #     poetry run mike set-default stable --push
+      - name: Install the latest version of uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "0.5.2"
 
-      - name: Build and push docs
-        run: |
-          mkdocs gh-deploy --force --remote-branch gh-pages --remote-name origin
+      - name: Set up Python
+        run: uv sync --python ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uvx --from poethepoet poe docpush

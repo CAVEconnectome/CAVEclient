@@ -7,9 +7,9 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - "README.rst"
   pull_request:
+    branches:
+      - master
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   # Allows other workflows to trigger this workflow
@@ -27,24 +27,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install the latest version of uv
         id: setup-uv
         uses: astral-sh/setup-uv@v2
         with:
-          version: "latest"
-          enable-cache: true
+          version: "0.5.2"
 
-      - name: Check cache
-        if: steps.setup-uv.outputs.cache-hit == 'true'
-        run: echo "Cache was restored"
+      - name: Set up venv
+        run: uv sync --python ${{ matrix.python-version }}
 
       - name: Test with pytest
         run: |
-          uv venv
-          uv pip install ".[test]"
-          uv run pytest
+          uvx --from poethepoet poe test

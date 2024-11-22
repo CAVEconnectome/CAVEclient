@@ -1,5 +1,5 @@
 [project]
-authors = [{ name = "CAVE Developers", email = "test@cave.com" }]
+authors = [{ name = "CAVE Developers" }]
 classifiers = []
 dependencies = [
     "attrs>=21.3.0",
@@ -8,19 +8,19 @@ dependencies = [
     "jsonschema",
     "networkx",
     "oldest-supported-numpy",
+    "packaging>=24.1",
     "pandas<3.0.0",
     "pyarrow>=3",
     "requests",
     "urllib3",
-    "packaging>=24.1"
 ]
 description = "A client for interacting with the Connectome Annotation Versioning Engine"
 license = "MIT"
-maintainers = [{ name = "CAVE Developers", email = "test@cave.com" }]
+maintainers = [{ name = "CAVE Developers" }]
 name = "caveclient"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "5.29.5"
+version = "7.0.2"
 
 [project.urls]
 Documentation = "https://caveconnectome.github.io/CAVEclient/"
@@ -29,9 +29,14 @@ Issues = "https://github.com/CAVEconnectome/CAVEclient/issues"
 Repository = "https://github.com/CAVEconnectome/CAVEclient/"
 
 [project.optional-dependencies]
-all = ['caveclient[docs,cv,test]']
 cv = ["cloud-volume"]
-dev = ['caveclient[docs,test]']
+
+[dependency-groups]
+dev = [
+    { include-group = 'docs' },
+    { include-group = 'lint' },
+    { include-group = 'test' },
+]
 docs = [
     "mkdocs",
     "mkdocs-autorefs",
@@ -48,13 +53,61 @@ docs = [
     "mknotebooks",
     "pymdown-extensions",
 ]
-test = [
-    "pytest",
-    "pytest-cov",
-    "pytest-env",
-    "pytest-mock",
-    "responses",
-]
+lint = ["ruff"]
+test = ["pytest", "pytest-cov", "pytest-env", "pytest-mock", "responses"]
+
+[tool.bumpversion]
+allow_dirty = false
+commit = true
+commit_args = ""
+current_version = "7.0.2"
+ignore_missing_version = false
+message = "v{new_version}"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+regex = false
+replace = "{new_version}"
+search = "{current_version}"
+serialize = ["{major}.{minor}.{patch}"]
+sign_tags = false
+tag = true
+tag_message = "Bump version: {current_version} → {new_version}"
+tag_name = "v{new_version}"
+
+[tool.poe.tasks]
+checks = ['lint', 'test', 'docbuild'] # noqa
+lint = ['lintcheck', 'lintformat']
+
+[tool.poe.tasks.drybump]
+cmd = "uv run bump-my-version bump --dry-run --verbose"
+help = "Dry run of version bump for the project. Use with 'patch', 'minor', or 'major' to specify the version change."
+
+[tool.poe.tasks.bump]
+cmd = "uv run bump-my-version bump"
+help = "Bump the version number in the project. Use with 'patch', 'minor', or 'major' to specify the version change."
+
+[tool.poe.tasks.test]
+cmd = "uv run pytest tests"
+help = "Run pytest."
+
+[tool.poe.tasks.docbuild]
+cmd = "mkdocs build"
+help = "Build the documentation."
+
+[tool.poe.tasks.docserve]
+cmd = "mkdocs serve"
+help = "Serve the documentation locally."
+
+[tool.poe.tasks.docpush]
+cmd = "mkdocs gh-deploy --force --remote-branch gh-pages --remote-name origin"
+help = "Build and push the documentation to GitHub Pages."
+
+[tool.poe.tasks.lintformat]
+cmd = "uv run ruff format . --check"
+help = "Check for issues with ruff."
+
+[tool.poe.tasks.lintcheck]
+cmd = "uv run ruff check . --extend-select I "
+help = "Check for syntax issues with ruff."
 
 [build-system]
 build-backend = "hatchling.build"
