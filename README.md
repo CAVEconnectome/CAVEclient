@@ -17,8 +17,17 @@ A full description of the Connectome Annotation Versioning Engine can be found [
 ```bash
 pip install caveclient
 ```
+
+To add optional dependencies (currently for interfacing with the segmentation, imagery,
+and some skeleton formats via cloud-volume), you can install with the following:
+
+```bash
+pip install caveclient[cv]
+```
+
 ## Python version support
-Currently we are officially supporting and testing against python 3.8, 3.9, 3.10,  3.11 and 3.12.
+
+Currently we are officially supporting and testing against Python 3.8, 3.9, 3.10, 3.11 and 3.12.
 
 ## Documentation
 
