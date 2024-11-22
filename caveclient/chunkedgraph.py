@@ -10,6 +10,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import pytz
+from packaging.version import Version
 
 from .auth import AuthClient
 from .base import (
@@ -996,7 +997,10 @@ class ChunkedGraphClient(ClientBase):
             ]
 
         if as_nx_graph:
-            return nx.node_link_graph(r)
+            if Version(nx.__version__) >= Version("3.4"):
+                return nx.node_link_graph(r, edges="links")
+            else:
+                return nx.node_link_graph(r)
         else:
             return r
 

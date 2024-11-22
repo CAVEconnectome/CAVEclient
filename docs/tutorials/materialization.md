@@ -342,6 +342,23 @@ nuc_df = client.materialize.tables.nucleus_detection_v0(
 ).query()
 ```
 
+If you are not using any filters, you can omit the parenthesis and use the `get_all`
+or `get_all_live` functions directly, which act similarly to the `query` and `live_query` functions
+respectively.
+The first example could be rewritten as:
+
+```python
+nuc_df = client.materialize.tables.nucleus_detection_v0.get_all()
+```
+
+If you want to list all available fields, you can use the `.fields` attribute.
+Similarly, you can get all numeric fields with the `.numeric_fields` attribute
+and all spatial fields (allowing bounding box queries) with `.spatial_fields`.
+
+```python
+nuc_df = client.materialize.tables.nucleus_detection_v0.spatial_fields
+```
+
 If you need to specify the table programmatically, you can also use a
 dictionary-style approach to getting the table filtering function. For
 example, an equivalent version of the above line would be:
@@ -368,6 +385,26 @@ nuc_df = client.materialize.tables.nucleus_detection_v0(
     split_positions=True,
     desired_resolution=[1,1,1],
 )
+```
+
+Inequalities can also be used in filtering numeric columns.
+Here, you can pass a dictionary instead of a list of values, with the keys being
+inequality operators (">", ">=", "<", and "<=") and the values being the comparison.
+For example, to query for all nuclei with a volume greater than 1000:
+
+```python
+client.materialize.tables.nucleus_detection_v0(
+    volume={">": 1000}
+).query()
+```
+
+You can also use multiple inequalities in the same dictionary to filter within a range.
+For example, to query for all nuclei with a volume between 500 and 750:
+
+```python
+client.materialize.tables.nucleus_detection_v0(
+    volume={">": 500, "<": 750}
+).query()
 ```
 
 If you want to do a live query instead of a materialized query, the

@@ -14,12 +14,11 @@ from caveclient import materializationengine
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     materialization_common,
-    materialization_endpoints_v2,
     materialization_endpoints_v3,
     schema_endpoints_v2,
 )
 
-from .conftest import TEST_DATASTACK, TEST_GLOBAL_SERVER, TEST_LOCAL_SERVER, test_info
+from .conftest import datastack_dict, test_info
 
 
 def test_info_d(myclient):
@@ -49,14 +48,14 @@ def serialize_dataframe(df, compression="zstd"):
 
 class TestMatclient:
     default_mapping = {
-        "me_server_address": TEST_LOCAL_SERVER,
-        "cg_server_address": TEST_LOCAL_SERVER,
+        "me_server_address": datastack_dict["local_server"],
+        "cg_server_address": datastack_dict["local_server"],
         "table_id": test_info["segmentation_source"].split("/")[-1],
-        "datastack_name": TEST_DATASTACK,
+        "datastack_name": datastack_dict["datastack_name"],
         "table_name": test_info["synapse_table"],
         "version": 1,
     }
-    endpoints = materialization_endpoints_v2
+    endpoints = materialization_endpoints_v3
 
     table_metadata = {
         "aligned_volume": "minnie65_phase3",
@@ -322,7 +321,7 @@ class TestMatclient:
         myclient = copy.deepcopy(myclient)
         myclient._materialize = None
         endpoint_mapping = self.default_mapping
-        endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
+        endpoint_mapping["emas_server_address"] = datastack_dict["global_server"]
 
         mat_version_url = materialization_common["get_version"].format_map(
             endpoint_mapping
@@ -399,6 +398,37 @@ class TestMatclient:
         assert "single_neurons" in myclient.materialize.views
         vqry = myclient.materialize.views.single_neurons(pt_root_id=[123, 456])
         assert 123 in vqry.filter_kwargs_mat.get("filter_in_dict").get("pt_root_id")
+
+        qry_url = materialization_endpoints_v3["join_query"].format_map(
+            endpoint_mapping
+        )
+        query_d = {
+            "return_pyarrow": True,
+            "arrow_format": True,
+            "split_positions": True,
+        }
+        query_string = urlencode(query_d)
+        qry_url = qry_url + "?" + query_string
+        correct_query_data = {
+            "filter_in_dict": {"nucleus_detection_v0": {"pt_root_id": [123, 456]}},
+            "filter_equal_dict": {"allen_column_mtypes_v2": {"target_id": 271700}},
+            "suffix_map": {
+                "allen_column_mtypes_v2": "_ref",
+                "nucleus_detection_v0": "",
+            },
+            "tables": [
+                ["allen_column_mtypes_v2", "target_id"],
+                ["nucleus_detection_v0", "id"],
+            ],
+        }
+        responses.add(
+            responses.POST,
+            qry_url,
+            body=serialize_dataframe(pd.DataFrame()),
+            content_type="data.arrow",
+            match=[json_params_matcher(correct_query_data)],
+        )
+        qry.query(metadata=False)
 
     @responses.activate
     def test_matclient(self, myclient, mocker):
