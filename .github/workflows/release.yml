@@ -43,11 +43,9 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Set up environment
-        run: uv sync --python 3.11
       - name: Bump version with bumpversion
         run: |
-          uvx --from poethepoet  ${{ github.event.inputs.part }}
+          uvx --from bump-my-version bump-my-version bump ${{ github.event.inputs.part }}
       - name: Commit and push with tags
         if: ${{ github.event.inputs.dry-run == 'false' }}
         run: git push --follow-tags
@@ -80,12 +78,13 @@ jobs:
         with:
           # want this to be the version that was just bumped
           ref: master
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.11"
-      - name: build sdist
-        run: python setup.py sdist
+          version: "0.5.2"
+      - name: Build
+        run: uv build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:

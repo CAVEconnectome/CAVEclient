@@ -32,7 +32,9 @@ Repository = "https://github.com/CAVEconnectome/CAVEclient/"
 cv = ["cloud-volume"]
 
 [dependency-groups]
+bump = ['bump-my-version']
 dev = [
+    { include-group = 'bump' },
     { include-group = 'docs' },
     { include-group = 'lint' },
     { include-group = 'test' },
@@ -74,40 +76,15 @@ tag_message = "Bump version: {current_version} → {new_version}"
 tag_name = "v{new_version}"
 
 [tool.poe.tasks]
-checks = ['lint', 'test', 'docbuild'] # noqa
-lint = ['lintcheck', 'lintformat']
-
-[tool.poe.tasks.drybump]
-cmd = "uv run bump-my-version bump --dry-run --verbose"
-help = "Dry run of version bump for the project. Use with 'patch', 'minor', or 'major' to specify the version change."
-
-[tool.poe.tasks.bump]
-cmd = "uv run bump-my-version bump"
-help = "Bump the version number in the project. Use with 'patch', 'minor', or 'major' to specify the version change."
-
-[tool.poe.tasks.test]
-cmd = "uv run pytest tests"
-help = "Run pytest."
-
-[tool.poe.tasks.docbuild]
-cmd = "mkdocs build"
-help = "Build the documentation."
-
-[tool.poe.tasks.docserve]
-cmd = "mkdocs serve"
-help = "Serve the documentation locally."
-
-[tool.poe.tasks.docpush]
-cmd = "mkdocs gh-deploy --force --remote-branch gh-pages --remote-name origin"
-help = "Build and push the documentation to GitHub Pages."
-
-[tool.poe.tasks.lintformat]
-cmd = "uv run ruff format . --check"
-help = "Check for issues with ruff."
-
-[tool.poe.tasks.lintcheck]
-cmd = "uv run ruff check . --extend-select I "
-help = "Check for syntax issues with ruff."
+checks = ['doc-build', 'lint', 'test']
+doc-build = "mkdocs build"
+doc-push = "mkdocs gh-deploy --force --remote-branch gh-pages --remote-name origin"
+doc-serve = "mkdocs serve"
+dry-bump = "uv run bump-my-version bump --dry-run --verbose"
+lint = ['lint-check', 'lint-format']
+lint-check = "uv run ruff check . --extend-select I"
+lint-format = "uv run ruff format . --check"
+test = "uv run pytest tests"
 
 [build-system]
 build-backend = "hatchling.build"
