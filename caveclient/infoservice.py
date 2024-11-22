@@ -21,61 +21,15 @@ from .format_utils import (
 SERVER_KEY = "i_server_address"
 
 
-def InfoServiceClient(
-    server_address=None,
-    datastack_name=None,
-    auth_client=None,
-    api_version="latest",
-    verify=True,
-    max_retries=None,
-    pool_maxsize=None,
-    pool_block=None,
-    over_client=None,
-    info_cache=None,
-) -> "InfoServiceClientV2":
-    if server_address is None:
-        server_address = default_global_server_address
+class InfoServiceClient(ClientBaseWithDatastack):
+    """Client for interacting with the info service."""
 
-    if auth_client is None:
-        auth_client = AuthClient()
-
-    auth_header = auth_client.request_header
-    endpoints, api_version = _api_endpoints(
-        api_version,
-        SERVER_KEY,
-        server_address,
-        infoservice_common,
-        infoservice_api_versions,
-        auth_header,
-        verify=verify,
-    )
-
-    InfoClient = client_mapping[api_version]
-    return InfoClient(
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        SERVER_KEY,
-        datastack_name,
-        verify=verify,
-        max_retries=max_retries,
-        pool_maxsize=pool_maxsize,
-        pool_block=pool_block,
-        over_client=over_client,
-        info_cache=info_cache,
-    )
-
-
-class InfoServiceClientV2(ClientBaseWithDatastack):
     def __init__(
         self,
-        server_address,
-        auth_header,
-        api_version,
-        endpoints,
-        server_name,
-        datastack_name,
+        server_address=None,
+        datastack_name=None,
+        auth_client=None,
+        api_version="latest",
         verify=True,
         max_retries=None,
         pool_maxsize=None,
@@ -83,12 +37,28 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
         over_client=None,
         info_cache=None,
     ):
-        super(InfoServiceClientV2, self).__init__(
+        if server_address is None:
+            server_address = default_global_server_address
+
+        if auth_client is None:
+            auth_client = AuthClient()
+
+        auth_header = auth_client.request_header
+        endpoints, api_version = _api_endpoints(
+            api_version,
+            SERVER_KEY,
+            server_address,
+            infoservice_common,
+            infoservice_api_versions,
+            auth_header,
+            verify=verify,
+        )
+        super(InfoServiceClient, self).__init__(
             server_address,
             auth_header,
             api_version,
             endpoints,
-            server_name,
+            SERVER_KEY,
             datastack_name,
             verify=verify,
             max_retries=max_retries,
@@ -477,9 +447,3 @@ class InfoServiceClientV2(ClientBaseWithDatastack):
             **kwargs,
         )
         return cv
-
-
-client_mapping = {
-    2: InfoServiceClientV2,
-    "latest": InfoServiceClientV2,
-}

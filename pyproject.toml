@@ -11,7 +11,8 @@ dependencies = [
     "pandas<3.0.0",
     "pyarrow>=3",
     "requests",
-    "urllib3>=2.0.2",
+    "urllib3",
+    "packaging>=24.1"
 ]
 description = "A client for interacting with the Connectome Annotation Versioning Engine"
 license = "MIT"

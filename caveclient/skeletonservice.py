@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import gzip
+import json
 import logging
 from io import BytesIO, StringIO
 from typing import Literal, Optional
 
 import pandas as pd
+from cachetools import TTLCache, cached
 from packaging.version import Version
 
 try:
@@ -25,11 +28,6 @@ from .endpoints import skeletonservice_api_versions, skeletonservice_common
 SERVER_KEY = "skeleton_server_address"
 
 
-"""
-Usage
-"""
-
-
 class NoL2CacheException(Exception):
     def __init__(self, value=""):
         """
@@ -40,6 +38,8 @@ class NoL2CacheException(Exception):
 
 
 class SkeletonClient(ClientBase):
+    """Client for interacting with the skeleton service."""
+
     def __init__(
         self,
         server_address: str,
@@ -145,6 +145,64 @@ class SkeletonClient(ClientBase):
         url = parse(self.build_endpoint(rid, ds, 1, "json"))
         assert url == f"{ds}{innards}1/{rid}/json"
 
+    @staticmethod
+    def compressStringToBytes(inputString):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        REF: https://stackoverflow.com/questions/15525837/which-is-the-best-way-to-compress-json-to-store-in-a-memory-based-store-like-red
+        read the given string, encode it in utf-8, compress the data and return it as a byte array.
+        """
+        bio = BytesIO()
+        bio.write(inputString.encode("utf-8"))
+        bio.seek(0)
+        stream = BytesIO()
+        compressor = gzip.GzipFile(fileobj=stream, mode="w")
+        while True:  # until EOF
+            chunk = bio.read(8192)
+            if not chunk:  # EOF?
+                compressor.close()
+                return stream.getvalue()
+            compressor.write(chunk)
+
+    @staticmethod
+    def compressDictToBytes(inputDict, remove_spaces=True):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        """
+        inputDictStr = json.dumps(inputDict)
+        if remove_spaces:
+            inputDictStr = inputDictStr.replace(" ", "")
+        inputDictStrBytes = SkeletonClient.compressStringToBytes(inputDictStr)
+        return inputDictStrBytes
+
+    @staticmethod
+    def decompressBytesToString(inputBytes):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        REF: https://stackoverflow.com/questions/15525837/which-is-the-best-way-to-compress-json-to-store-in-a-memory-based-store-like-red
+        decompress the given byte array (which must be valid compressed gzip data) and return the decoded text (utf-8).
+        """
+        bio = BytesIO()
+        stream = BytesIO(inputBytes)
+        decompressor = gzip.GzipFile(fileobj=stream, mode="r")
+        while True:  # until EOF
+            chunk = decompressor.read(8192)
+            if not chunk:
+                decompressor.close()
+                bio.seek(0)
+                return bio.read().decode("utf-8")
+            bio.write(chunk)
+        return None
+
+    @staticmethod
+    def decompressBytesToDict(inputBytes):
+        """
+        Shamelessly copied from SkeletonService to avoid importing the entire repo. Consider pushing these utilities to a separate module.
+        """
+        inputBytesStr = SkeletonClient.decompressBytesToString(inputBytes)
+        inputBytesStrDict = json.loads(inputBytesStr)
+        return inputBytesStrDict
+
     def build_endpoint(
         self,
         root_id: int,
@@ -187,13 +245,45 @@ class SkeletonClient(ClientBase):
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
+    @cached(TTLCache(maxsize=32, ttl=3600))
+    def get_precomputed_skeleton_info(
+        self,
+        skvn: int = 0,
+        datastack_name: Optional[str] = None,
+    ):
+        """get's the precomputed skeleton information
+        Args:
+            datastack_name (Optional[str], optional): _description_. Defaults to None.
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["skvn"] = skvn
+        url = self._endpoints["skeleton_info_versioned"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        self.raise_for_status(response)
+        return response.json()
+
     def get_skeleton(
         self,
         root_id: int,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = None,
+        skeleton_version: Optional[int] = 0,
         output_format: Literal[
-            "none", "h5", "swc", "json", "arrays", "precomputed"
+            "none",
+            "h5",
+            "swc",
+            "json",
+            "jsoncompressed",
+            "arrays",
+            "arrayscompressed",
+            "precomputed",
         ] = "none",
         log_warning: bool = True,
     ):
@@ -208,17 +298,22 @@ class SkeletonClient(ClientBase):
         skeleton_version : int
             The skeleton version to generate and retrieve. Options are documented in SkeletonService. Use 0 for latest.
         output_format : string
-            The format to retrieve. Options are 'none', 'h5', 'swc', 'json', 'arrays', 'precomputed'
+            The format to retrieve. Options are:
+
+            - 'none': No return value (this can be used to generate a skeleton without retrieving it)
+            - 'precomputed': A cloudvolume.Skeleton object
+            - 'json': A dictionary
+            - 'jsoncompressed': A dictionary using compression for transmission (generally faster than 'json')
+            - 'arrays': A dictionary (literally a subset of the json response)
+            - 'arrayscompressed': A dictionary using compression for transmission (generally faster than 'arrays')
+            - 'swc': A pandas DataFrame
+            - 'h5': An BytesIO object containing bytes for an h5 file
 
         Returns
         -------
-        The return type will vary greatly depending on the output_format parameter. The options are:
-        - 'none': No return value (this can be used to generate a skeleton without retrieving it)
-        - 'precomputed': A cloudvolume.Skeleton object
-        - 'json': A dictionary
-        - 'arrays': A dictionary (literally a subset of the json response)
-        - 'swc': A pandas DataFrame
-        - 'h5': An BytesIO object containing bytes for an h5 file
+        :
+            Skeleton of the requested type. See `output_format` for details.
+
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
@@ -226,10 +321,6 @@ class SkeletonClient(ClientBase):
         url = self.build_endpoint(
             root_id, datastack_name, skeleton_version, output_format
         )
-
-        if skeleton_version is None:
-            # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
-            skeleton_version = 2
 
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
@@ -241,29 +332,39 @@ class SkeletonClient(ClientBase):
                 raise ImportError(
                     "'precomputed' output format requires cloudvolume, which is not available."
                 )
-            vertex_attributes = []
-            if skeleton_version == 2:
-                # I need code in this repo to access defaults defined in the SkeletonService repo, but wihout necesssarily importing it.
-                vertex_attributes.append(
-                    {"id": "radius", "data_type": "float32", "num_components": 1}
-                )
-                vertex_attributes.append(
-                    {"id": "compartment", "data_type": "float32", "num_components": 1}
-                )
+            metadata = self.get_precomputed_skeleton_info(
+                skeleton_version, datastack_name
+            )
+            vertex_attributes = metadata["vertex_attributes"]
             return cloudvolume.Skeleton.from_precomputed(
                 response.content, vertex_attributes=vertex_attributes
             )
         if output_format == "json":
             return response.json()
+        if output_format == "jsoncompressed":
+            return SkeletonClient.decompressBytesToDict(response.content)
         if output_format == "arrays":
             return response.json()
+        if output_format == "arrayscompressed":
+            return SkeletonClient.decompressBytesToDict(response.content)
         if output_format == "swc":
             # I got the SWC column header from skeleton_plot.skel_io.py
-            return pd.read_csv(
+            df = pd.read_csv(
                 StringIO(response.content.decode()),
                 sep=" ",
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
+
+            # Reduce 'id' and 'parent' columns from int64 to int16, and 'type' column from int64 to int8
+            df = df.apply(pd.to_numeric, downcast="integer")
+            # Convert 'type' column from int8 to uint8
+            df["type"] = df["type"].astype("uint8")
+
+            # Reduce float columns from float64 to float32. This sacrifies precision and therefore is perhaps undesirable.
+            # I have it left here, commented out, for demonstration purposes, should it be deemed desirable in the future.
+            # df = df.apply(pd.to_numeric, downcast='float')
+
+            return df
         if output_format == "h5":
             skeleton_bytesio = BytesIO(response.content)
             return skeleton_bytesio

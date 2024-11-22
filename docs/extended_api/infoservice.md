@@ -1,5 +1,0 @@
----
-title: infoservice
----
-
-::: caveclient.infoservice

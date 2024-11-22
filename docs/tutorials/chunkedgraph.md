@@ -34,7 +34,7 @@ Usually in Neuroglancer, one never notices supervoxel ids, but they are
 important for programmatic work. In order to look up the root id for a
 location in space, one needs to use the supervoxel segmentation to get
 the associated supervoxel id. The ChunkedGraph client makes this easy
-using the [client.chunkedgraph.get_root_id()]({{ client_api_paths.chunkedgraph }}.get_root_id)
+using the [client.chunkedgraph.get_root_id()]({{ api_paths.chunkedgraph }}.get_root_id)
 method.
 
 ```python
@@ -61,7 +61,7 @@ client.chunkedgraph.get_root_id(supervoxel_id=sv_id, timestamp=timestamp)
 
 If you are doing this across lots of supervoxels (or any nodes) then you
 can do it more efficiently in one request with
-[client.chunkedgraph.get_roots()]({{ client_api_paths.chunkedgraph }}.get_roots)
+[client.chunkedgraph.get_roots()]({{ api_paths.chunkedgraph }}.get_roots)
 
 ```python
 node_ids = [104200755619042523, 104200755619042524,104200755619042525]
@@ -72,7 +72,7 @@ root_ids = client.chunkedgraph.get_roots(node_ids)
 
 A root id is associated with a particular agglomeration of supervoxels,
 which can be found with the
-[client.chunkedgraph.get_leaves()]({{ client_api_paths.chunkedgraph }}.get_leaves) method.
+[client.chunkedgraph.get_leaves()]({{ api_paths.chunkedgraph }}.get_leaves) method.
 A new root id is generated for every new change in the chunkedgraph, so time stamps do not apply.
 
 ```python
@@ -90,10 +90,10 @@ client.chunkedgraph.get_leaves(root_id,stop_layer=2)
 
 This will get all the level 2 IDs for this root, which correspond to the
 lowest chunk of the hierarchy. An analogous option exists for
-[client.chunkedgraph.get_roots()]({{ client_api_paths.chunkedgraph }}.get_roots).
+[client.chunkedgraph.get_roots()]({{ api_paths.chunkedgraph }}.get_roots).
 This is useful to help find nodes to query within the `l2cache`, amongst other things.
 
 ## Other functions
 
 There are a variety of other interesting functions to explore in
-[client.chunkedgraph]({{ client_api_paths.chunkedgraph }}).
+[client.chunkedgraph]({{ api_paths.chunkedgraph }}).

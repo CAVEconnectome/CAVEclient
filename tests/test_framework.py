@@ -47,16 +47,20 @@ class TestFrameworkClient:
         endpoint_mapping = self.default_mapping
         endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
 
-        print(endpoints.chunkedgraph_endpoints_common.keys())
         api_versions_url = endpoints.chunkedgraph_endpoints_common[
             "get_api_versions"
         ].format_map(endpoint_mapping)
         responses.add(responses.GET, url=api_versions_url, json=[0, 1], status=200)
 
-        version_url = endpoints.chunkedgraph_endpoints_common["get_version"].format_map(
+        cg_version_url = endpoints.chunkedgraph_endpoints_common[
+            "get_version"
+        ].format_map(endpoint_mapping)
+        responses.add(responses.GET, cg_version_url, json="2.15.0", status=200)
+
+        mat_version_url = endpoints.materialization_common["get_version"].format_map(
             endpoint_mapping
         )
-        responses.add(responses.GET, version_url, json="2.15.0", status=200)
+        responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
 
         responses.add(
             responses.GET,
@@ -125,7 +129,6 @@ class TestFrameworkClient:
         pool_block = True
         max_retries = 5
         backoff_factor = 0.5
-        backoff_max = 240
         status_forcelist = (502, 503, 504, 505)
 
         set_session_defaults(
@@ -133,7 +136,6 @@ class TestFrameworkClient:
             pool_block=pool_block,
             max_retries=max_retries,
             backoff_factor=backoff_factor,
-            backoff_max=backoff_max,
             status_forcelist=status_forcelist,
         )
         client = CAVEclient(
@@ -147,9 +149,6 @@ class TestFrameworkClient:
         assert (
             client.l2cache.session.adapters["https://"].max_retries.backoff_factor
             == 0.5
-        )
-        assert (
-            client.l2cache.session.adapters["https://"].max_retries.backoff_max == 240
         )
         assert client.l2cache.session.adapters[
             "https://"

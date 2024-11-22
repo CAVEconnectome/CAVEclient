@@ -320,8 +320,14 @@ class TestMatclient:
     @responses.activate
     def test_matclient_v3_tableinterface(self, myclient, mocker):
         myclient = copy.deepcopy(myclient)
+        myclient._materialize = None
         endpoint_mapping = self.default_mapping
         endpoint_mapping["emas_server_address"] = TEST_GLOBAL_SERVER
+
+        mat_version_url = materialization_common["get_version"].format_map(
+            endpoint_mapping
+        )
+        responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
 
         api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
             endpoint_mapping
@@ -333,6 +339,7 @@ class TestMatclient:
             json=[3],
             status=200,
         )
+        myclient.materialize  # done here to trigger version check
 
         versionurl = materialization_endpoints_v3["versions"].format_map(
             endpoint_mapping
@@ -379,7 +386,7 @@ class TestMatclient:
         responses.add(
             responses.GET, url=get_views_schema_url, json=self.views_schema, status=200
         )
-
+        print(len(myclient.materialize.tables))
         assert len(myclient.materialize.tables) == 2
         qry = myclient.materialize.tables.allen_column_mtypes_v2(
             pt_root_id=[123, 456], target_id=271700
@@ -631,19 +638,19 @@ class TestMatclient:
             return np.array([timestamp_dict[root_id] for root_id in root_ids])
 
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_roots",
+            "caveclient.chunkedgraph.ChunkedGraphClient.get_roots",
             my_get_roots,
         )
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_past_ids",
+            "caveclient.chunkedgraph.ChunkedGraphClient.get_past_ids",
             mocked_get_past_ids,
         )
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.is_latest_roots",
+            "caveclient.chunkedgraph.ChunkedGraphClient.is_latest_roots",
             mock_is_latest_roots,
         )
         mocker.patch(
-            "caveclient.chunkedgraph.ChunkedGraphClientV1.get_root_timestamps",
+            "caveclient.chunkedgraph.ChunkedGraphClient.get_root_timestamps",
             mock_get_root_timestamps,
         )
         df = pd.read_pickle("tests/test_data/live_query_before.pkl")
@@ -800,8 +807,10 @@ class TestMatclient:
         new_xyz = np.vstack(df.ctr_pt_position.values)
         assert np.all(new_xyz == orig_xyz * [4, 4, 40])
 
-        myclient._materialize = None
-        myclient.desired_resolution = [1, 1, 1]
+        # NOTE: this messed up the mock on the version endpoint
+        # myclient._materialize = None
+        # myclient.desired_resolution = [1, 1, 1]
+        myclient._materialize.desired_resolution = [1, 1, 1]
         df = myclient.materialize.query_table(
             test_info["synapse_table"],
             filter_in_dict={"pre_pt_root_id": [500]},
