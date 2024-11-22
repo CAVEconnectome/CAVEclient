@@ -43,4 +43,4 @@ jobs:
         run: uv sync --python ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uvx --from poethepoet poe docpush
+        run: uvx --from poethepoet poe doc-push
