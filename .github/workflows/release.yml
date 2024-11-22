@@ -16,11 +16,6 @@ on:
         type: boolean
         required: true
         default: true
-      skip-tests:
-        description: "Skip tests"
-        type: boolean
-        required: true
-        default: false
 
 jobs:
   bump:
@@ -37,23 +32,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "0.5.2"
       - name: Get tags
         run: git fetch --tags origin
       - name: Configure git for github-actions[bot]
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install Twine
-        run: pip install twine
-      - name: Install bumpversion
-        run: pip install bumpversion
       - name: Bump version with bumpversion
         run: |
-          bumpversion ${{ github.event.inputs.part }}
+          uvx --from bump-my-version bump-my-version bump ${{ github.event.inputs.part }}
       - name: Commit and push with tags
         if: ${{ github.event.inputs.dry-run == 'false' }}
         run: git push --follow-tags
@@ -86,12 +78,13 @@ jobs:
         with:
           # want this to be the version that was just bumped
           ref: master
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.11"
-      - name: build sdist
-        run: python setup.py sdist
+          version: "0.5.2"
+      - name: Build
+        run: uv build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
