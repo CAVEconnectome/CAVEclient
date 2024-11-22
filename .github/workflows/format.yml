@@ -14,14 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install  uv
+      - name: Install uv
         id: setup-uv
         uses: astral-sh/setup-uv@v2
         with:
           version: "0.5.2"
-
       - name: Set up environment
         run: uv sync --python 3.11
-
       - name: Run format checks
         run: uvx --from poethepoet poe lint
