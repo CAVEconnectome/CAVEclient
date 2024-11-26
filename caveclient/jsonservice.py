@@ -197,7 +197,7 @@ class JSONService(ClientBase):
         self,
         json_state: dict,
         state_id: Optional[int] = None,
-        timestamp: Optional["datetime.datetime"] = None,
+        timestamp: Optional["time.time"] = None,  # noqa: F821
     ) -> int:
         """Upload a Neuroglancer JSON state
 
