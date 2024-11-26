@@ -2,7 +2,7 @@ import json
 import numbers
 import os
 import re
-from typing import Optional
+from typing import Literal, Optional, Union
 
 import numpy as np
 
@@ -21,6 +21,8 @@ from .endpoints import (
 )
 
 SERVER_KEY = "json_server_address"
+SEUNGLAB_NAMES = ["seunglab"]
+SPELUNKER_NAMES = ["spelunker", "mainline", "cave-explorer"]
 
 
 def neuroglancer_json_encoder(obj):
@@ -100,20 +102,20 @@ class JSONService(ClientBase):
         self._ngl_url = ngl_url
 
     @property
-    def state_service_endpoint(self):
+    def state_service_endpoint(self) -> str:
         """Endpoint URL for posting JSON state"""
         url_mapping = self.default_url_mapping
         return self._endpoints["upload_state"].format_map(url_mapping)
 
     @property
-    def ngl_url(self):
+    def ngl_url(self) -> str:
         return self._ngl_url
 
     @ngl_url.setter
     def ngl_url(self, new_ngl_url):
         self._ngl_url = new_ngl_url
 
-    def get_neuroglancer_info(self, ngl_url=None):
+    def get_neuroglancer_info(self, ngl_url: Optional[str] = None) -> dict:
         """Get the info field from a Neuroglancer deployment
 
         Parameters
@@ -142,28 +144,36 @@ class JSONService(ClientBase):
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
-    def get_state_json(self, state_id):
+    def get_state_json(
+        self,
+        state_id: Union[int, str],
+    ) -> dict:
         """Download a Neuroglancer JSON state
 
         Parameters
         ----------
-        state_id : int
-            ID of a JSON state uploaded to the state service.
+        state_id : int or string
+            ID of a JSON state uploaded to the state service. If a string, treats this as the url to the json state.
 
         Returns
         -------
         dict
             JSON specifying a Neuroglancer state.
         """
-        url_mapping = self.default_url_mapping
-        url_mapping["state_id"] = state_id
-        url = self._endpoints["get_state"].format_map(url_mapping)
+        url = None
+        try:
+            state_id = int(state_id)
+            url_mapping = self.default_url_mapping
+            url_mapping["state_id"] = state_id
+            url = self._endpoints["get_state"].format_map(url_mapping)
+        except ValueError:
+            url = state_id
         response = self.session.get(url)
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
     @_check_version_compatibility(method_constraint=">=0.4.0")
-    def get_property_json(self, state_id):
+    def get_property_json(self, state_id: int) -> dict:
         """Download a Neuroglancer JSON state
 
         Parameters
@@ -183,7 +193,12 @@ class JSONService(ClientBase):
         handle_response(response, as_json=False)
         return json.loads(response.content)
 
-    def upload_state_json(self, json_state, state_id=None, timestamp=None):
+    def upload_state_json(
+        self,
+        json_state: dict,
+        state_id: Optional[int] = None,
+        timestamp: Optional["datetime.datetime"] = None,
+    ) -> int:
         """Upload a Neuroglancer JSON state
 
         Parameters
@@ -224,10 +239,10 @@ class JSONService(ClientBase):
     @_check_version_compatibility(">=0.4.0")
     def upload_property_json(
         self,
-        property_json,
-        state_id=None,
+        property_json: dict,
+        state_id: Optional[int] = None,
         max_size: Optional[int] = 2_500_000,
-    ):
+    ) -> int:
         """Upload a Neuroglancer JSON state
 
         Parameters
@@ -277,7 +292,12 @@ class JSONService(ClientBase):
         response_re = re.search(".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
-    def save_state_json_local(self, json_state, filename, overwrite=False):
+    def save_state_json_local(
+        self,
+        json_state: dict,
+        filename: str,
+        overwrite: bool = False,
+    ) -> None:
         """Save a Neuroglancer JSON state to a JSON file locally.
 
         Parameters
@@ -300,12 +320,14 @@ class JSONService(ClientBase):
 
     def build_neuroglancer_url(
         self,
-        state_id,
-        ngl_url=None,
-        target_site=None,
-        static_url=False,
-        format_properties=False,
-    ):
+        state_id: int,
+        ngl_url: Optional[str] = None,
+        target_site: Optional[
+            Literal["seunglab", "cave-explorer", "mainline", "spelunker"]
+        ] = None,
+        static_url: bool = False,
+        format_properties: bool = False,
+    ) -> str:
         """Build a URL for a Neuroglancer deployment that will automatically retrieve specified state.
         If the datastack is specified, this is prepopulated from the info file field "viewer_site".
         If no ngl_url is specified in either the function or the client, a fallback neuroglancer deployment is used.
@@ -339,9 +361,9 @@ class JSONService(ClientBase):
         if target_site is None and ngl_url is not None:
             ngl_info = self.get_neuroglancer_info(ngl_url)
             if len(ngl_info) > 0:
-                target_site = "cave-explorer"
+                target_site = SPELUNKER_NAMES[0]
             else:
-                target_site = "seunglab"
+                target_site = SEUNGLAB_NAMES[0]
 
         if target_site == "seunglab":
             if ngl_url[-1] == "/":
@@ -349,7 +371,7 @@ class JSONService(ClientBase):
             else:
                 parameter_text = "/?json_url="
             auth_text = ""
-        elif target_site == "cave-explorer" or target_site == "mainline":
+        elif target_site in SPELUNKER_NAMES:
             if ngl_url[-1] == "/":
                 parameter_text = "#!"
             else:
