@@ -443,8 +443,8 @@ class ChunkedGraphClient(ClientBase):
 
         Parameters
         ----------
-        root_id : int
-            Root ID to query.
+        root_id : int or Iterable
+            Root ID or Root IDs to query.
         bounds: np.array or None, optional
             If specified, returns supervoxels within a 3x2 numpy array of bounds
             ``[[minx,maxx],[miny,maxy],[minz,maxz]]``. If None, finds all supervoxels.
@@ -454,19 +454,38 @@ class ChunkedGraphClient(ClientBase):
 
         Returns
         -------
-        np.array of np.int64
+        np.array of np.int64 or dict
             Array of supervoxel IDs (or node ids if `stop_layer>1`).
+            if root_ids is Iterable will return a dict with root_id as key and
+            the list of supervoxel/node_ids as values.
+
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["root_id"] = root_id
-        url = self._endpoints["leaves_from_root"].format_map(endpoint_mapping)
+
         query_d = {}
         if bounds is not None:
             query_d["bounds"] = package_bounds(bounds)
         if stop_layer is not None:
             query_d["stop_layer"] = int(stop_layer)
-        response = self.session.get(url, params=query_d)
-        return np.int64(handle_response(response)["leaf_ids"])
+
+        if isinstance(root_id, Iterable):
+            url = self._endpoints["leaves_many"].format_map(endpoint_mapping)
+            data = json.dumps({"node_ids": root_id}, cls=BaseEncoder)
+            response = self.session.post(
+                url,
+                data=data,
+                params=query_d,
+                headers={"Content-Type": "application/json"},
+            )
+            response = self.session.post(url, data=data, params=query_d)
+            data_d = handle_response(response)
+            return {np.int64(k): np.int64(v) for k, v in data_d.items()}
+
+        else:
+            endpoint_mapping["root_id"] = root_id
+            url = self._endpoints["leaves_from_root"].format_map(endpoint_mapping)
+            response = self.session.get(url, params=query_d)
+            return np.int64(handle_response(response)["leaf_ids"])
 
     def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)) -> None:
         """Perform a merge on the chunked graph.
