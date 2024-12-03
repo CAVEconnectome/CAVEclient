@@ -128,11 +128,10 @@ class TestChunkedgraph:
             864691135217871271: [97557743795364048, 75089979126506763],
             864691135217871272: [97557743795364049, 750899791265067632],
         }
-        svids = np.array(svlist, dtype=np.int64)
 
         data = {"node_ids": root_ids}
         responses.add(
-            responses.GET, json=sv_dict, url=url, match=[json_params_matcher(data)]
+            responses.POST, json=sv_dict, url=url, match=[json_params_matcher(data)]
         )
 
         svids_ret = myclient.chunkedgraph.get_leaves(root_ids)
