@@ -261,6 +261,7 @@ class ChunkedGraphClient(ClientBase):
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response, as_json=True)["root_id"])
 
+    @_check_version_compatibility(method_api_constraint=">=2.18.0")
     def get_minimal_covering_nodes(self, node_ids: Iterable[np.int64 or int]) -> dict:
         """Get the minimal covering nodes for a list of root IDs.
 
