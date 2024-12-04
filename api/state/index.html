@@ -1136,7 +1136,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.jsonservice.JSONService.state_service_endpoint" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">state_service_endpoint</span></code>
+            <code class="highlight language-python"><span class="n">state_service_endpoint</span><span class="p">:</span> <span class="nb">str</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
@@ -1451,11 +1451,11 @@ If None, defaults to the value for the datastack or the client.</p>
           <tr class="doc-section-item">
             <td><code>state_id</code></td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/string.html#module-string">string</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>ID of a JSON state uploaded to the state service.</p>
+                <p>ID of a JSON state uploaded to the state service. If a string, treats this as the url to the json state.</p>
               </div>
             </td>
             <td>
@@ -1745,6 +1745,7 @@ Using a state_id is an admin feature.</p>
           <tr class="doc-section-item">
             <td><code>timestamp</code></td>
             <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="time.time" href="https://docs.python.org/3/library/time.html#time.time">time</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
