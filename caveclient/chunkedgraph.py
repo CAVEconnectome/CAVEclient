@@ -261,6 +261,33 @@ class ChunkedGraphClient(ClientBase):
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response, as_json=True)["root_id"])
 
+    def get_minimal_covering_nodes(self, node_ids: Iterable[np.int64 or int]) -> dict:
+        """Get the minimal covering nodes for a list of root IDs.
+
+        Parameters
+        ----------
+        nodes_ids : Iterable of int or np.int64
+            List of root IDs to query.
+        
+        Returns
+        -------
+        np.array of np.int64:
+            List of PCG node_ids that minimally and exactly cover the input nodes
+        """
+
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["minimal_covering_nodes"].format_map(endpoint_mapping)
+        query_d = {}
+        query_d["as_array"] = True
+        data = json.dumps({"node_ids": node_ids}, cls=BaseEncoder)
+        response = self.session.post(
+            url,
+            data=data,
+            params=query_d,
+            headers={"Content-Type": "application/json"},
+        )
+        return np.frombuffer(response.content, dtype=np.uint64)
+    
     def get_merge_log(self, root_id) -> list:
         """Get the merge log (splits and merges) for an object.
 
