@@ -119,6 +119,26 @@ class TestChunkedgraph:
         assert np.all(svids == svids_ret)
 
     @responses.activate
+    def test_get_leaves_many(self, myclient):
+        endpoint_mapping = self._default_endpoint_map
+        root_ids = [864691135217871271, 864691135217871272]
+        url = chunkedgraph_endpoints_v1["leaves_many"].format_map(endpoint_mapping)
+
+        sv_dict = {
+            "864691135217871271": [97557743795364048, 75089979126506763],
+            "864691135217871272": [97557743795364049, 750899791265067632],
+        }
+
+        data = {"node_ids": root_ids}
+        responses.add(
+            responses.POST, json=sv_dict, url=url, match=[json_params_matcher(data)]
+        )
+
+        svids_ret = myclient.chunkedgraph.get_leaves_many(root_ids)
+        for k, v in svids_ret.items():
+            assert np.all(v == sv_dict[str(k)])
+
+    @responses.activate
     def test_get_root(self, myclient):
         endpoint_mapping = self._default_endpoint_map
         root_id = 864691135217871271

@@ -438,6 +438,43 @@ class ChunkedGraphClient(ClientBase):
 
         return changelog_dict
 
+    def get_leaves_many(self, root_ids, bounds=None, stop_layer: int = None) -> dict:
+        """Get all supervoxels for a list of root IDs.
+
+        Parameters
+        ----------
+        root_ids : Iterable
+            Root IDs to query.
+        bounds: np.array or None, optional
+            If specified, returns supervoxels within a 3x2 numpy array of bounds
+            ``[[minx,maxx],[miny,maxy],[minz,maxz]]``. If None, finds all supervoxels.
+        stop_layer: int, optional
+            If specified, returns chunkedgraph nodes at layer `stop_layer`
+            default will be `stop_layer=1` (supervoxels).
+
+        Returns
+        -------
+        dict
+            Dict relating ids to contacts
+        """
+        endpoint_mapping = self.default_url_mapping
+        url = self._endpoints["leaves_many"].format_map(endpoint_mapping)
+        data = json.dumps({"node_ids": root_ids}, cls=BaseEncoder)
+        query_d = {}
+        if bounds is not None:
+            query_d["bounds"] = package_bounds(bounds)
+        if stop_layer is not None:
+            query_d["stop_layer"] = int(stop_layer)
+
+        response = self.session.post(
+            url,
+            data=data,
+            params=query_d,
+            headers={"Content-Type": "application/json"},
+        )
+        data_d = handle_response(response)
+        return {np.int64(k): np.int64(v) for k, v in data_d.items()}
+
     def get_leaves(self, root_id, bounds=None, stop_layer: int = None) -> np.ndarray:
         """Get all supervoxels for a root ID.
 
@@ -458,13 +495,15 @@ class ChunkedGraphClient(ClientBase):
             Array of supervoxel IDs (or node ids if `stop_layer>1`).
         """
         endpoint_mapping = self.default_url_mapping
-        endpoint_mapping["root_id"] = root_id
-        url = self._endpoints["leaves_from_root"].format_map(endpoint_mapping)
+
         query_d = {}
         if bounds is not None:
             query_d["bounds"] = package_bounds(bounds)
         if stop_layer is not None:
             query_d["stop_layer"] = int(stop_layer)
+
+        endpoint_mapping["root_id"] = root_id
+        url = self._endpoints["leaves_from_root"].format_map(endpoint_mapping)
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response)["leaf_ids"])
 
