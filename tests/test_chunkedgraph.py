@@ -136,7 +136,7 @@ class TestChunkedgraph:
 
         svids_ret = myclient.chunkedgraph.get_leaves_many(root_ids)
         for k, v in svids_ret.items():
-            assert np.all(v == sv_dict[k])
+            assert np.all(v == sv_dict[str(k)])
 
     @responses.activate
     def test_get_root(self, myclient):
