@@ -269,7 +269,7 @@ class ChunkedGraphClient(ClientBase):
         ----------
         nodes_ids : Iterable of int or np.int64
             List of root IDs to query.
-        
+
         Returns
         -------
         np.array of np.int64:
@@ -288,7 +288,7 @@ class ChunkedGraphClient(ClientBase):
             headers={"Content-Type": "application/json"},
         )
         return np.frombuffer(response.content, dtype=np.uint64)
-    
+
     def get_merge_log(self, root_id) -> list:
         """Get the merge log (splits and merges) for an object.
 
