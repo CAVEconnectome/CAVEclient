@@ -233,7 +233,7 @@ class JSONService(ClientBase):
             ),
         )
         handle_response(response, as_json=False)
-        response_re = re.search(".*\/(\d+)", str(response.content))
+        response_re = re.search(r".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
     @_check_version_compatibility(">=0.4.0")
@@ -289,7 +289,7 @@ class JSONService(ClientBase):
             data=data,
         )
         handle_response(response, as_json=False)
-        response_re = re.search(".*\/(\d+)", str(response.content))
+        response_re = re.search(r".*\/(\d+)", str(response.content))
         return int(response_re.groups()[0])
 
     def save_state_json_local(
