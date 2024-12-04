@@ -134,7 +134,7 @@ class TestChunkedgraph:
             responses.POST, json=sv_dict, url=url, match=[json_params_matcher(data)]
         )
 
-        svids_ret = myclient.chunkedgraph.get_leaves(root_ids)
+        svids_ret = myclient.chunkedgraph.get_leaves_many(root_ids)
         for k, v in svids_ret.items():
             assert np.all(v == sv_dict[k])
 
