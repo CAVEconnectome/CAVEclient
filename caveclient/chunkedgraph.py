@@ -474,13 +474,13 @@ class ChunkedGraphClient(ClientBase):
         )
         data_d = handle_response(response)
         return {np.int64(k): np.int64(v) for k, v in data_d.items()}
-    
+
     def get_leaves(self, root_id, bounds=None, stop_layer: int = None) -> np.ndarray:
         """Get all supervoxels for a root ID.
 
         Parameters
         ----------
-        root_id : int 
+        root_id : int
             Root ID to query.
         bounds: np.array or None, optional
             If specified, returns supervoxels within a 3x2 numpy array of bounds
@@ -491,7 +491,7 @@ class ChunkedGraphClient(ClientBase):
 
         Returns
         -------
-        np.array of np.int64 
+        np.array of np.int64
             Array of supervoxel IDs (or node ids if `stop_layer>1`).
         """
         endpoint_mapping = self.default_url_mapping
