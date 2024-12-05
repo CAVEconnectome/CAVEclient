@@ -374,6 +374,7 @@ class AnnotationClient(ClientBase):
         notice_text: str, optional
             Text the user will see when querying this table. Can be used to warn users of flaws,
             and uncertainty in the data, or to advertise citations that should be used with this table.
+            If you wish to remove the notice_text pass an empty string.
             Defaults to None. (will not update)
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
