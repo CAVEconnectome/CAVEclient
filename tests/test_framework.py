@@ -91,7 +91,7 @@ class TestFrameworkClient:
         cg_version_url = endpoints.chunkedgraph_endpoints_common[
             "get_version"
         ].format_map(endpoint_mapping)
-        responses.add(responses.GET, cg_version_url, json="2.15.0", status=200)
+        responses.add(responses.GET, cg_version_url, json="2.18.0", status=200)
 
         mat_version_url = endpoints.materialization_common["get_version"].format_map(
             endpoint_mapping
