@@ -767,6 +767,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.chunkedgraph.ChunkedGraphClient.get_minimal_covering_nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_minimal_covering_nodes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.chunkedgraph.ChunkedGraphClient.get_merge_log" class="md-nav__link">
     <span class="md-ellipsis">
       get_merge_log
@@ -1611,6 +1620,75 @@ defaults to the current time.</p>
             <td>
               <div class="doc-md-description">
                 <p>Root ID containing the supervoxel.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.chunkedgraph.ChunkedGraphClient.get_minimal_covering_nodes" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_minimal_covering_nodes</span><span class="p">(</span><span class="n">node_ids</span><span class="p">)</span></code>
+
+<a href="#caveclient.chunkedgraph.ChunkedGraphClient.get_minimal_covering_nodes" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the minimal covering nodes for a list of root IDs.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>nodes_ids</code></td>
+            <td>
+                  <code>Iterable of int or np.int64</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of root IDs to query.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>np.array of np.int64:</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of PCG node_ids that minimally and exactly cover the input nodes</p>
               </div>
             </td>
           </tr>
