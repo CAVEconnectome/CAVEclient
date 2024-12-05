@@ -370,6 +370,7 @@ class AnnotationClient(ClientBase):
         notice_text: str, optional
             Text the user will see when querying this table. Can be used to warn users of flaws,
             and uncertainty in the data, or to advertise citations that should be used with this table.
+            If you wish to remove the notice_text pass an empty string.
             Defaults to None. (will not update)
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
@@ -405,7 +406,10 @@ class AnnotationClient(ClientBase):
         if user_id is not None:
             metadata["user_id"] = user_id
         if notice_text is not None:
-            metadata["notice_text"] = notice_text
+            if notice_text == "None":
+                metadata["notice_text"] = ''
+            else:
+                metadata["notice_text"] = notice_text
 
         data = {"table_name": table_name, "metadata": metadata}
         response = self.session.put(url, json=data)
