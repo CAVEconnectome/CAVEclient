@@ -79,7 +79,7 @@ tag_name = "v{new_version}"
 filename = "pyproject.toml"
 
 [tool.ruff.lint]
-exclude = ["docs", "tests", '*.ipynb']
+exclude = ['*.ipynb']
 
 [tool.poe.tasks]
 checks = ['doc-build', 'lint', 'test']
