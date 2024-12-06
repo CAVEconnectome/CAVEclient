@@ -312,6 +312,10 @@ class AnnotationClient(ClientBase):
         if user_id is not None:
             metadata["user_id"] = user_id
         if notice_text is not None:
+            if notice_text.lower() == "none":
+                # This alteration is actually redundant with similar code in the server,
+                # but there's no harm in doubling up on it here.
+                notice_text = ""
             metadata["notice_text"] = notice_text
         if reference_table is not None:
             metadata["table_metadata"] = {
@@ -404,6 +408,8 @@ class AnnotationClient(ClientBase):
             metadata["flat_segmentation_source"] = flat_segmentation_source
         if user_id is not None:
             metadata["user_id"] = user_id
+        if notice_text in ["none", "None", "NONE"]:
+            notice_text = ""
         if notice_text is not None:
             metadata["notice_text"] = notice_text
 
