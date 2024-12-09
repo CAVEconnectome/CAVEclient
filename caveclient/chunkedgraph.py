@@ -1317,11 +1317,6 @@ class ChunkedGraphClient(ClientBase):
         -------
         np.array of bool
             Array of whether these are valid IDs.
-
-        Raises
-        -----
-        OverflowError
-            If any root_id is too large or negative to be represented as np.uint64.
         """
         node_ids = np.array(node_ids, dtype=np.int64)
         invalid_mask = (node_ids == -1) | (node_ids == 0)
