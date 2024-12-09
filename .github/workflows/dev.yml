@@ -34,7 +34,7 @@ jobs:
           version: "0.5.2"
 
       - name: Set up venv
-        run: uv sync --python ${{ matrix.python-version }} --no-build
+        run: uv sync --python ${{ matrix.python-version }}
 
       - name: Test with pytest
         run: |
