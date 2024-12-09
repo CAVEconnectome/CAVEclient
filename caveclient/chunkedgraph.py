@@ -1321,7 +1321,7 @@ class ChunkedGraphClient(ClientBase):
         Raises
         -----
         OverflowError
-            If the root_id are too large or negative to be represented as np.uint64.
+            If any root_id is too large or negative to be represented as np.uint64.
         """
 
         node_ids = root_id_int_list_check(node_ids, make_unique=False)
