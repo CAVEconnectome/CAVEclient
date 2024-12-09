@@ -7,7 +7,7 @@ dependencies = [
     "ipython>6",
     "jsonschema",
     "networkx",
-    "numpy",
+    "numpy>1.19.3",
     "packaging>=24.1",
     "pandas<3.0.0",
     "pyarrow>=3",
@@ -19,7 +19,7 @@ license = "MIT"
 maintainers = [{ name = "CAVE Developers" }]
 name = "caveclient"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 version = "7.3.1"
 
 [project.urls]
