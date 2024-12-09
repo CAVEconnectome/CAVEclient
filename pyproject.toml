@@ -7,7 +7,6 @@ dependencies = [
     "ipython>6",
     "jsonschema",
     "networkx",
-    "oldest-supported-numpy",
     "packaging>=24.1",
     "pandas<3.0.0",
     "pyarrow>=3",
