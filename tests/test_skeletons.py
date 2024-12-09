@@ -10,18 +10,16 @@ from .conftest import (
     version_specified_client,  # noqa: F401
 )
 
-url_template = endpoints.skeletonservice_endpoints_v1["skeleton_info"]
 sk_mapping = {
     "skeleton_server_address": datastack_dict["local_server"],
     "datastack_name": datastack_dict["datastack_name"],
 }
-info_url = url_template.format_map(sk_mapping)
 
-url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
 info_mapping = {
     "i_server_address": datastack_dict["global_server"],
     "datastack_name": datastack_dict["datastack_name"],
 }
+url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
 info_url = url_template.format_map(info_mapping)
 
 
