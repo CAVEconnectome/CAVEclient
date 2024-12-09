@@ -1,13 +1,11 @@
 import responses
-from pytest import raises as assert_raises
 
-from caveclient import CAVEclient, endpoints, set_session_defaults
+from caveclient import CAVEclient, endpoints
 
 from .conftest import (
     datastack_dict,
     global_client,  # noqa: F401
     mat_apiv2_specified_client,  # noqa: F401
-    server_versions,
     test_info,
     version_specified_client,  # noqa: F401
 )
