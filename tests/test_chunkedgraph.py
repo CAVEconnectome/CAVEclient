@@ -1037,5 +1037,5 @@ class TestChunkedgraph:
             json=return_data,
             match=[json_params_matcher(data)],
         )
-        out = myclient.chunkedgraph.is_valid_nodes(query_nodes)
-        assert not np.any(out)
+        with pytest.raises(OverflowError):
+            out = myclient.chunkedgraph.is_valid_nodes(query_nodes)
