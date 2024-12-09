@@ -1319,7 +1319,7 @@ class ChunkedGraphClient(ClientBase):
             Array of whether these are valid IDs.
         """
         node_ids = np.array(node_ids, dtype=np.int64)
-        invalid_mask = (node_ids == -1) | (node_ids == 0)
+        invalid_mask = node_ids <= 0
         valid_mask = ~invalid_mask
 
         valid_node_ids = node_ids[valid_mask]
