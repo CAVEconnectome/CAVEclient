@@ -26,6 +26,7 @@ info_mapping = {
 }
 info_url = url_template.format_map(info_mapping)
 
+
 class TestSkeletonsClient:
     sk_endpoints = endpoints.skeletonservice_endpoints_v1
 
@@ -41,7 +42,7 @@ class TestSkeletonsClient:
     @responses.activate
     def test_get_version(self, myclient, mocker):
         metadata_url = self.sk_endpoints.get("get_version").format_map(sk_mapping)
-        responses.add(responses.GET, url=metadata_url, json='0.1.2', status=200)
+        responses.add(responses.GET, url=metadata_url, json="0.1.2", status=200)
 
         print(myclient.skeleton.get_version())
         # client.skeleton.get_version()
