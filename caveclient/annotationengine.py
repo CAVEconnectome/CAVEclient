@@ -407,7 +407,7 @@ class AnnotationClient(ClientBase):
             metadata["user_id"] = user_id
         if notice_text is not None:
             if notice_text == "None":
-                metadata["notice_text"] = ''
+                metadata["notice_text"] = ""
             else:
                 metadata["notice_text"] = notice_text
 
