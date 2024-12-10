@@ -1,6 +1,24 @@
 ---
 title: Changelog
 ---
+## 7.3.2
+Dropped oldest supported numpy requirements and declared python 3.8 support
+
+## 7.3.1
+Improved documentation to annotation.update_table_metadata
+
+## 7.3.0
+Added get_minimal_covering_nodes to chunkedgraph (#274)
+
+## 7.2.1 (December 3, 2024)
+Added raw strings to avoid deprecation warning (#275)
+
+## 7.2.0 (December 3, 2024)
+Allow get_state_json to accept direct URLs (#271)
+
+## 7.1.0 (December 3, 2024)
+Added get_leaves_multiple to chunkedgraph module (#273)
+
 ## 7.0.0 (November 20, 2024)
 
 - Simplified skeleton client interface to only accept formats of 'dict' and 'swc'
