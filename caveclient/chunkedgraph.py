@@ -1318,7 +1318,16 @@ class ChunkedGraphClient(ClientBase):
         np.array of bool
             Array of whether these are valid IDs.
         """
-        node_ids = root_id_int_list_check(node_ids, make_unique=False)
+        node_ids = np.array(node_ids, dtype=np.int64)
+        invalid_mask = node_ids <= 0
+        valid_mask = ~invalid_mask
+
+        valid_node_ids = node_ids[valid_mask]
+
+        if valid_node_ids.size == 0:
+            return np.full(node_ids.shape, False, dtype=bool)
+
+        valid_node_ids = root_id_int_list_check(valid_node_ids, make_unique=False)
 
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["valid_nodes"].format_map(endpoint_mapping)
@@ -1343,15 +1352,17 @@ class ChunkedGraphClient(ClientBase):
                 )
             )
 
-        data = {"node_ids": node_ids}
+        data = {"node_ids": valid_node_ids}
         r = handle_response(
             self.session.get(
                 url, data=json.dumps(data, cls=BaseEncoder), params=query_d
             )
         )
         valid_ids = np.array(r["valid_roots"], np.uint64)
+        result = np.full(node_ids.shape, False, dtype=bool)
+        result[valid_mask] = np.isin(valid_node_ids, valid_ids)
 
-        return np.isin(node_ids, valid_ids)
+        return result
 
     @_check_version_compatibility(
         kwarg_use_constraints={
