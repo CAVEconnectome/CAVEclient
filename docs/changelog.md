@@ -1,13 +1,13 @@
 ---
 title: Changelog
 ---
-## 7.3.2
+## 7.3.2 (December 10, 2024)
 Dropped oldest supported numpy requirements and declared python 3.8 support
 
-## 7.3.1
+## 7.3.1 (December 5, 2024)
 Improved documentation to annotation.update_table_metadata
 
-## 7.3.0
+## 7.3.0 (December 5, 2024)
 Added get_minimal_covering_nodes to chunkedgraph (#274)
 
 ## 7.2.1 (December 3, 2024)
