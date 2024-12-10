@@ -7,7 +7,7 @@ dependencies = [
     "ipython>6",
     "jsonschema",
     "networkx",
-    "oldest-supported-numpy",
+    "numpy>1.19.3",
     "packaging>=24.1",
     "pandas<3.0.0",
     "pyarrow>=3",
@@ -19,8 +19,8 @@ license = "MIT"
 maintainers = [{ name = "CAVE Developers" }]
 name = "caveclient"
 readme = "README.md"
-requires-python = ">=3.8"
-version = "7.3.1"
+requires-python = ">=3.9"
+version = "7.3.2"
 
 [project.urls]
 Documentation = "https://caveconnectome.github.io/CAVEclient/"
@@ -62,7 +62,7 @@ test = ["pytest", "pytest-cov", "pytest-env", "pytest-mock", "responses"]
 allow_dirty = false
 commit = true
 commit_args = ""
-current_version = "7.3.1"
+current_version = "7.3.2"
 ignore_missing_version = false
 message = "Bump version: {current_version} → {new_version}"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
