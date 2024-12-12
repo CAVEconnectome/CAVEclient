@@ -4,9 +4,10 @@ import jsonschema
 import numpy as np
 import pytest
 import responses
+from responses.matchers import json_params_matcher
 
 from caveclient.endpoints import annotation_endpoints_v2, schema_endpoints_v2
-from responses.matchers import json_params_matcher
+
 
 from .conftest import datastack_dict, test_info
 
