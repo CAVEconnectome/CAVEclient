@@ -351,31 +351,32 @@ class AnnotationClient(ClientBase):
         ----------
         table_name (str): name of table to update
         description (str, optional): text description of the the table.
-            Defaults to None (will not update).
+            Defaults to the None type, in which case no change will be made to this metadata field.
         flat_segmentation_source (str, optional): cloudpath to a flat segmentation associated with this table.
-            Defaults to None (will not update).
+            Defaults to the None type, in which case no change will be made to this metadata field.
         read_permission: str, optional
             What permissions to give the table for reading. One of
             PRIVATE: only you can read this table. Intended to be used for sorting out bugs.
             GROUP: only members that share a group with you can read (intended for within group vetting)
             PUBLIC: anyone with permissions to read this datastack can read this data
-            Defaults to None (will not update).
+            Defaults to the None type, in which case no change will be made to this metadata field.
         write_permission: str, optional
             What permissions to give the table for writing.  One of
             PRIVATE: only you can write to this table
             GROUP: only members that share a group with you can write (excluding some groups)
             PUBLIC: Anyone can write to this table. Note all data is logged, and deletes are done
             by marking rows as deleted, so all data is always recoverable
-            Defaults to None (will not update).
+            Defaults to the None type, in which case no change will be made to this metadata field.
         user_id (int, optional): change ownership of this table to this user_id.
             Note, if you use this you will not be able to update the metadata on this table any longer
             and depending on permissions may not be able to read or write to it
-            Defaults to None. (will not update)
+            Defaults to the None type, in which case no change will be made to this metadata field.
         notice_text: str, optional
             Text the user will see when querying this table. Can be used to warn users of flaws,
             and uncertainty in the data, or to advertise citations that should be used with this table.
-            If you wish to remove the notice_text pass an empty string.
-            Defaults to None. (will not update)
+            If you wish to remove the notice_text pass an empty string, or "none", "None", "NONE",
+            or any other capitaliztion of the word "none".
+            Defaults to the None type, in which case no change will be made to this metadata field.
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
         """
