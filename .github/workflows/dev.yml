@@ -39,3 +39,9 @@ jobs:
       - name: Test with pytest
         run: |
           uvx --from poethepoet poe test
+      
+      - name: Upload to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .coverage.xml
