@@ -8,7 +8,6 @@ from responses.matchers import json_params_matcher
 
 from caveclient.endpoints import annotation_endpoints_v2, schema_endpoints_v2
 
-
 from .conftest import datastack_dict, test_info
 
 test_jsonschema = {
@@ -199,16 +198,16 @@ class TestAnnoClinet:
         post_url = self.ae_endpoints.get("tables").format_map(endpoint_mapping)
 
         metadata = {"description": "a new description", "notice_text": ""}
-
+        metadata_return = {"description": "a new description", "notice_text": None}
         metadata_match = {"metadata": metadata, "table_name": update_table_name}
         responses.add(
             responses.PUT,
             url=post_url,
-            json=metadata,
+            json=metadata_return,
             match=[json_params_matcher(metadata_match)],
         )
 
         resp = myclient.annotation.update_metadata(
             update_table_name, description="a new description", notice_text="None"
         )
-        print(resp)
+        assert resp["notice_text"] == None
