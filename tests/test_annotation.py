@@ -210,4 +210,4 @@ class TestAnnoClinet:
         resp = myclient.annotation.update_metadata(
             update_table_name, description="a new description", notice_text="None"
         )
-        assert resp["notice_text"] == None
+        assert resp["notice_text"] is None
