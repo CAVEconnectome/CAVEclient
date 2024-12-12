@@ -90,7 +90,7 @@ dry-bump = "uv run bump-my-version bump --dry-run --verbose"
 lint = ['lint-check', 'lint-format']
 lint-check = "uv run ruff check . --extend-select I"
 lint-format = "uv run ruff format . --check"
-test = "uv run pytest tests"
+test = "uv run pytest --cov --cov-report xml tests"
 
 [build-system]
 build-backend = "hatchling.build"
