@@ -4,6 +4,7 @@ import jsonschema
 import numpy as np
 import pytest
 import responses
+from responses.matchers import json_params_matcher
 
 from caveclient.endpoints import annotation_endpoints_v2, schema_endpoints_v2
 
@@ -187,3 +188,26 @@ class TestAnnoClinet:
             myclient.annotation.upload_staged_annotations(schema_stage)
         schema_stage.table_name = self.default_mapping.get("table_name")
         myclient.annotation.upload_staged_annotations(schema_stage)
+
+    @responses.activate
+    def test_update_metadata(self, myclient):
+        update_table_name = "test_table"
+        endpoint_mapping = self.default_mapping
+        endpoint_mapping["table_name"] = update_table_name
+
+        post_url = self.ae_endpoints.get("tables").format_map(endpoint_mapping)
+
+        metadata = {"description": "a new description", "notice_text": ""}
+        metadata_return = {"description": "a new description", "notice_text": None}
+        metadata_match = {"metadata": metadata, "table_name": update_table_name}
+        responses.add(
+            responses.PUT,
+            url=post_url,
+            json=metadata_return,
+            match=[json_params_matcher(metadata_match)],
+        )
+
+        resp = myclient.annotation.update_metadata(
+            update_table_name, description="a new description", notice_text="None"
+        )
+        assert resp["notice_text"] is None

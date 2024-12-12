@@ -90,6 +90,7 @@ dry-bump = "uv run bump-my-version bump --dry-run --verbose"
 lint = ['lint-check', 'lint-format']
 lint-check = "uv run ruff check . --extend-select I"
 lint-format = "uv run ruff format . --check"
+lint-fix = "uv run ruff format caveclient tests"
 test = "uv run pytest tests"
 
 [build-system]
