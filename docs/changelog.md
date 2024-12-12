@@ -1,6 +1,10 @@
 ---
 title: Changelog
 ---
+## 7.4.0 (December 12, 2024)
+annotation module: Added support for "None", "none", etc. to remove notice_text and 
+improved documentation on method
+
 ## 7.3.2 (December 10, 2024)
 Dropped oldest supported numpy requirements and declared python 3.8 support
 
