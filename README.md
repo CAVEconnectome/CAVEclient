@@ -2,6 +2,7 @@
 
 ![PyPI - Version](https://img.shields.io/pypi/v/CAVEclient)
 [![build status](https://github.com/CAVEconnectome/CAVEclient/actions/workflows/daily.yml/badge.svg)](https://github.com/CAVEconnectome/CAVEclient/actions/workflows/daily.yml) [![Downloads](https://static.pepy.tech/badge/caveclient)](https://pepy.tech/project/caveclient)
+[![codecov](https://codecov.io/gh/CAVEconnectome/CAVEclient/graph/badge.svg?token=KVI1AG6B8A)](https://codecov.io/gh/CAVEconnectome/CAVEclient)
 
 CAVE is short for Connectome Annotation Versioning Engine. CAVE is a set of microservices
 that provide a framework for storing and versioning connectomics data and large sets of
