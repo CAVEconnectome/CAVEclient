@@ -30,6 +30,27 @@ pip install caveclient[cv]
 
 Currently we are officially supporting and testing against Python 3.8, 3.9, 3.10, 3.11 and 3.12.
 
+## Development
+To develop caveclient, install uv via 
+```
+pip install uv
+```
+
+To run tests
+```bash
+uvx --from poethepoet poe test
+```
+
+to run linting
+```bash
+uvx --from poethepoet poe lint
+```
+
+to fix linting
+```bash
+uvx --from poethepoet poe lint-fix
+```
+
 ## Documentation
 
 You can find full documentation at [caveconnectome.github.io/CAVEclient](https://caveconnectome.github.io/CAVEclient).
