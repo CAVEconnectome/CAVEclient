@@ -8,6 +8,7 @@ import logging
 from io import BytesIO, StringIO
 from typing import List, Literal, Optional, Union
 
+import numpy as np
 import pandas as pd
 from cachetools import TTLCache, cached
 from packaging.version import Version
@@ -374,6 +375,9 @@ class SkeletonClient(ClientBase):
             raise ValueError(
                 f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
             )
+
+        if isinstance(root_ids, np.ndarray):
+            root_ids = root_ids.tolist()
 
         if isinstance(root_ids, int):
             root_ids = str(root_ids)
