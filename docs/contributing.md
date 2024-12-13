@@ -45,7 +45,7 @@ If you are proposing a feature:
 - Keep the scope as narrow as possible, to make it easier to implement.
 - Remember that while contributions are welcome, developer/maintainer time is limited.
 
-## Get Started
+## Modifying Code
 
 Ready to contribute? Here's how to set up `{{ names.package }}` for local development.
 
@@ -56,17 +56,22 @@ Ready to contribute? Here's how to set up `{{ names.package }}` for local develo
 git clone git@github.com:your_name_here/{{ names.repo_title }}.git
 ```
 
-- Ensure [pip](https://pip.pypa.io/en/stable/installation/) is installed.
-- Create a virtual environment (here we use venv):
+- We use [`uv`](https://docs.astral.sh/uv/) for various developer tasks. Ensure you have `uv` installed according to the [installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
+
+!!! note
+
+    While we recommend using `uv` as described here, these tasks could also be achieved using `pip` to install and run the various required tools. You can view the development requirements and build/check commands in our [`pyproject.toml`](https://github.com/CAVEconnectome/CAVEclient/blob/master/pyproject.toml), so we avoid duplicating them here.
+
+- Navigate to the newly cloned directory, e.g.:
 
   ```console
-  python3 -m venv .venv
+  cd {{ names.repo_title }}
   ```
 
-- Start your virtualenv:
+- Create a synced virtual environment, optionally specifying a Python version:
 
   ```console
-  source .venv/bin/activate
+  uv sync --python 3.12
   ```
 
 - Create a branch for local development:
@@ -76,37 +81,57 @@ git clone git@github.com:your_name_here/{{ names.repo_title }}.git
   ```
 
 - Make your changes locally
-- Install development requirements:
+
+- If you have added code that should be tested, add [tests](https://github.com/{{ config.repo_name }}/tree/master/tests).
+
+- If you have modified dependencies in any way, make sure to run
 
   ```console
-  pip install -r test_requirements.txt
-  pip install -e .
+  uv sync
   ```
 
-- When you're done making changes, check that your changes pass the
-  tests by running [pytest](https://docs.pytest.org/en/):
+- Make sure you have added documentation for any additions or modifications to public functions or classes. You can build the documentation locally to make sure it renders correctly with:
 
   ```console
-  pytest tests
+  uvx --from poethepoet poe doc-build
   ```
 
-  Note that once you submit your pull request, GitHub Actions will run the tests also,
-  including on multiple operating systems and Python versions. Your pull request will
-  have to pass on all of these before it can be merged.
+## Automated Checks
 
-- Ensure your contribution meets style guidelines. First, install [ruff](https://docs.astral.sh/ruff/):
+- Run the autoformatter:
 
   ```console
-  pip install ruff
+  uvx --from poethepoet poe lint-fix
   ```
 
-- Fix linting and formatting. From the root of the repository, run the following commands:
+- Ensure that your changes pass the checks that will be run on Github Actions, including building the documentation, checking the formatting of the code, and running the tests. To run all at once, do:
 
   ```console
-  ruff check . --extend-select I --fix
-  ruff format .
+  uvx --from poethepoet poe checks
   ```
 
+- You may be interested in running some of these checks individually, such as:
+    - To run the tests:
+  
+      ```console
+      uvx --from poethepoet poe test
+      ```
+
+    - To build the documentation:
+
+      ```console
+      uvx --from poethepoet poe doc-build
+      ```
+
+    - To run the linter
+
+      ```console
+      uvx --from poethepoet poe lint
+      ```
+
+## Submitting a Pull Request
+
+- Ensure your code has passed all of the tests described above.
 - Commit your changes and push your branch to GitHub:
 
   ```console
@@ -117,22 +142,11 @@ git clone git@github.com:your_name_here/{{ names.repo_title }}.git
 
 - [Submit a pull request](https://github.com/{{ config.repo_name }}/compare) through the GitHub website.
 
-## Pull Request Guidelines
-
 Before you submit a pull request, check that it meets these guidelines:
 
 - The pull request should include tests if adding a new feature.
 - The docs should be updated with whatever changes you have made. Put
   your new functionality into a function with a docstring, and make sure the new
-  functionality is documented after building the documentation.
+  functionality is documented after building the documentation (described above).
 
-## Documentation style
-
-We use [mkdocs](https://www.mkdocs.org/) to build the documentation. In particular, we
-use the [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) theme, and a
-variety of other extensions.
-
-!!! note
-
-    More information codifying our documentation style and principles coming soon. For
-    now, just try to follow the style of the existing documentation.
+- Once you submit a pull request, automated checks will run. You may require administrator approval before running these checks if this is your first time contributing to the repo.
