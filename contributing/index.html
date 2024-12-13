@@ -666,27 +666,27 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-started" class="md-nav__link">
+  <a href="#modifying-code" class="md-nav__link">
     <span class="md-ellipsis">
-      Get Started
+      Modifying Code
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#pull-request-guidelines" class="md-nav__link">
+  <a href="#automated-checks" class="md-nav__link">
     <span class="md-ellipsis">
-      Pull Request Guidelines
+      Automated Checks
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#documentation-style" class="md-nav__link">
+  <a href="#submitting-a-pull-request" class="md-nav__link">
     <span class="md-ellipsis">
-      Documentation style
+      Submitting a Pull Request
     </span>
   </a>
   
@@ -783,7 +783,7 @@ articles, and such.</p>
 <li>Keep the scope as narrow as possible, to make it easier to implement.</li>
 <li>Remember that while contributions are welcome, developer/maintainer time is limited.</li>
 </ul>
-<h3 id="get-started">Get Started<a class="headerlink" href="#get-started" title="Permanent link">&para;</a></h3>
+<h3 id="modifying-code">Modifying Code<a class="headerlink" href="#modifying-code" title="Permanent link">&para;</a></h3>
 <p>Ready to contribute? Here's how to set up <code>caveclient</code> for local development.</p>
 <ul>
 <li><a href="https://github.com/CAVEconnectome/CAVEclient/fork">Fork</a> the repo on GitHub.</li>
@@ -792,15 +792,21 @@ articles, and such.</p>
 <div class="highlight"><pre><span></span><code><span class="go">git clone git@github.com:your_name_here/CAVEclient.git</span>
 </code></pre></div>
 <ul>
-<li>Ensure <a href="https://pip.pypa.io/en/stable/installation/">pip</a> is installed.</li>
-<li>Create a virtual environment (here we use venv):</li>
+<li>We use <a href="https://docs.astral.sh/uv/"><code>uv</code></a> for various developer tasks. Ensure you have <code>uv</code> installed according to the <a href="https://docs.astral.sh/uv/getting-started/installation/">installation instructions</a>.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="go">python3 -m venv .venv</span>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>While we recommend using <code>uv</code> as described here, these tasks could also be achieved using <code>pip</code> to install and run the various required tools. You can view the development requirements and build/check commands in our <a href="https://github.com/CAVEconnectome/CAVEclient/blob/master/pyproject.toml"><code>pyproject.toml</code></a>, so we avoid duplicating them here.</p>
+</div>
+<ul>
+<li>Navigate to the newly cloned directory, e.g.:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">cd CAVEclient</span>
 </code></pre></div>
 <ul>
-<li>Start your virtualenv:</li>
+<li>Create a synced virtual environment, optionally specifying a Python version:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="go">source .venv/bin/activate</span>
+<div class="highlight"><pre><span></span><code><span class="go">uv sync --python 3.12</span>
 </code></pre></div>
 <ul>
 <li>Create a branch for local development:</li>
@@ -808,33 +814,57 @@ articles, and such.</p>
 <div class="highlight"><pre><span></span><code><span class="go">git checkout -b name-of-your-bugfix-or-feature</span>
 </code></pre></div>
 <ul>
-<li>Make your changes locally</li>
-<li>Install development requirements:</li>
+<li>
+<p>Make your changes locally</p>
+</li>
+<li>
+<p>If you have added code that should be tested, add <a href="https://github.com/CAVEconnectome/CAVEclient/tree/master/tests">tests</a>.</p>
+</li>
+<li>
+<p>If you have modified dependencies in any way, make sure to run</p>
+</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="go">pip install -r test_requirements.txt</span>
-<span class="go">pip install -e .</span>
+<div class="highlight"><pre><span></span><code><span class="go">uv sync</span>
 </code></pre></div>
 <ul>
-<li>When you're done making changes, check that your changes pass the
-  tests by running <a href="https://docs.pytest.org/en/">pytest</a>:</li>
+<li>Make sure you have added documentation for any additions or modifications to public functions or classes. You can build the documentation locally to make sure it renders correctly with:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="go">pytest tests</span>
+<div class="highlight"><pre><span></span><code><span class="go">uvx --from poethepoet poe doc-build</span>
 </code></pre></div>
-<p>Note that once you submit your pull request, GitHub Actions will run the tests also,
-  including on multiple operating systems and Python versions. Your pull request will
-  have to pass on all of these before it can be merged.</p>
+<h3 id="automated-checks">Automated Checks<a class="headerlink" href="#automated-checks" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Ensure your contribution meets style guidelines. First, install <a href="https://docs.astral.sh/ruff/">ruff</a>:</li>
+<li>Run the autoformatter:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="go">pip install ruff</span>
+<div class="highlight"><pre><span></span><code><span class="go">uvx --from poethepoet poe lint-fix</span>
 </code></pre></div>
 <ul>
-<li>Fix linting and formatting. From the root of the repository, run the following commands:</li>
+<li>Ensure that your changes pass the checks that will be run on Github Actions, including building the documentation, checking the formatting of the code, and running the tests. To run all at once, do:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="go">ruff check . --extend-select I --fix</span>
-<span class="go">ruff format .</span>
+<div class="highlight"><pre><span></span><code><span class="go">uvx --from poethepoet poe checks</span>
 </code></pre></div>
 <ul>
+<li>
+<p>You may be interested in running some of these checks individually, such as:</p>
+<ul>
+<li>To run the tests:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">uvx --from poethepoet poe test</span>
+</code></pre></div>
+<ul>
+<li>To build the documentation:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">uvx --from poethepoet poe doc-build</span>
+</code></pre></div>
+<ul>
+<li>To run the linter</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="go">uvx --from poethepoet poe lint</span>
+</code></pre></div>
+</li>
+</ul>
+<h3 id="submitting-a-pull-request">Submitting a Pull Request<a class="headerlink" href="#submitting-a-pull-request" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ensure your code has passed all of the tests described above.</li>
 <li>Commit your changes and push your branch to GitHub:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="go">git add .</span>
@@ -844,23 +874,18 @@ articles, and such.</p>
 <ul>
 <li><a href="https://github.com/CAVEconnectome/CAVEclient/compare">Submit a pull request</a> through the GitHub website.</li>
 </ul>
-<h3 id="pull-request-guidelines">Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Permanent link">&para;</a></h3>
 <p>Before you submit a pull request, check that it meets these guidelines:</p>
 <ul>
 <li>The pull request should include tests if adding a new feature.</li>
-<li>The docs should be updated with whatever changes you have made. Put
+<li>
+<p>The docs should be updated with whatever changes you have made. Put
   your new functionality into a function with a docstring, and make sure the new
-  functionality is documented after building the documentation.</li>
+  functionality is documented after building the documentation (described above).</p>
+</li>
+<li>
+<p>Once you submit a pull request, automated checks will run. You may require administrator approval before running these checks if this is your first time contributing to the repo.</p>
+</li>
 </ul>
-<h3 id="documentation-style">Documentation style<a class="headerlink" href="#documentation-style" title="Permanent link">&para;</a></h3>
-<p>We use <a href="https://www.mkdocs.org/">mkdocs</a> to build the documentation. In particular, we
-use the <a href="https://squidfunk.github.io/mkdocs-material/">mkdocs-material</a> theme, and a
-variety of other extensions.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>More information codifying our documentation style and principles coming soon. For
-now, just try to follow the style of the existing documentation.</p>
-</div>
 
 
 
