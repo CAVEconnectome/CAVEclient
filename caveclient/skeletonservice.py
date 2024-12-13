@@ -713,10 +713,20 @@ class SkeletonClient(ClientBase):
                 )
 
         if estimated_async_time_secs_upper_bound_sum < 60:
-            return f"Upper estimate to generate all {len(root_ids)} skeletons: {estimated_async_time_secs_upper_bound_sum:.0f} seconds"
-        if estimated_async_time_secs_upper_bound_sum < 3600:
-            return f"Upper estimate to generate all {len(root_ids)} skeletons: {(estimated_async_time_secs_upper_bound_sum / 60):.1f} minutes"
+            estimate_time_str = (
+                f"{estimated_async_time_secs_upper_bound_sum:.0f} seconds"
+            )
+        elif estimated_async_time_secs_upper_bound_sum < 3600:
+            estimate_time_str = (
+                f"{(estimated_async_time_secs_upper_bound_sum / 60):.1f} minutes"
+            )
         # With a 10000 skeleton limit, the maximum time about 12 hours, so we don't need to check for more than that.
-        if True:  # estimated_async_time_secs_upper_bound_sum < 86400:
-            return f"Upper estimate to generate all {len(root_ids)} skeletons: {(estimated_async_time_secs_upper_bound_sum / 3600):.1f} hours"
-        # return f"Upper estimate to generate all {len(root_ids)} skeletons: {(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
+        # elif estimated_async_time_secs_upper_bound_sum < 86400:
+        else:
+            estimate_time_str = (
+                f"{(estimated_async_time_secs_upper_bound_sum / 3600):.1f} hours"
+            )
+        # else:
+        #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
+
+        return f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
