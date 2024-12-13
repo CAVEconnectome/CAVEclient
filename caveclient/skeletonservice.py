@@ -26,6 +26,7 @@ SERVER_KEY = "skeleton_server_address"
 MAX_BULK_ASYNCHRONOUS_SKELETONS = 10000
 BULK_ASYNC_SKELETONS_BATCH_SIZE = 100
 
+
 class NoL2CacheException(Exception):
     def __init__(self, value=""):
         """
@@ -674,14 +675,14 @@ class SkeletonClient(ClientBase):
                 "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
             )
             skeleton_version = -1
-        
+
         if isinstance(root_ids, np.ndarray):
             root_ids = root_ids.tolist()
         if not isinstance(root_ids, list):
             raise ValueError(
                 f"root_ids must be a list or numpy array of root_ids, not a {type(root_ids)}"
             )
-        
+
         if len(root_ids) > MAX_BULK_ASYNCHRONOUS_SKELETONS:
             logging.warning(
                 f"The number of root_ids exceeds the current limit of {MAX_BULK_ASYNCHRONOUS_SKELETONS}. Only the first {MAX_BULK_ASYNCHRONOUS_SKELETONS} will be processed."
@@ -699,7 +700,9 @@ class SkeletonClient(ClientBase):
             self.raise_for_status(response, log_warning=log_warning)
 
             estimated_async_time_secs_upper_bound = float(response.text)
-            estimated_async_time_secs_upper_bound_sum += estimated_async_time_secs_upper_bound
+            estimated_async_time_secs_upper_bound_sum += (
+                estimated_async_time_secs_upper_bound
+            )
 
             if verbose_level >= 1:
                 logging.info(
