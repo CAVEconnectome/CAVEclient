@@ -1,6 +1,21 @@
 import responses
+import json
 
 from .conftest import datastack_dict
+
+
+json_v1 = "{json_server_address}/nglstate/api/v1"
+jsonservice_endpoints_v1 = {
+    "upload_state": json_v1 + "/post",
+    "upload_state_w_id": json_v1 + "/post/{state_id}",
+    "get_state": json_v1 + "/{state_id}",
+    "get_state_raw": json_v1 + "/raw/{state_id}",
+    "get_properties": json_v1 + "/property/{state_id}/info",
+    "upload_properties": json_v1 + "/property/post",
+    "get_properties_raw": json_v1 + "/property/raw/{state_id}",
+    "upload_properties_w_id": json_v1 + "/property/post/{state_id}",
+    "get_version": json_v1 + "/version",
+}
 
 
 @responses.activate()
@@ -36,7 +51,7 @@ def test_get_neuroglancer_info(myclient):
 def test_get_property_json(myclient):
     global_server = datastack_dict["global_server"]
     state_id = 1234
-    url = f"{global_server}/nglstate/api/v1/{state_id}/properties"
+    url = f"{global_server}/nglstate/api/v1/property/{state_id}/info"
     responses.add(
         responses.GET, url=url, json={"properties": ["prop1", "prop2"]}, status=200
     )
@@ -48,23 +63,29 @@ def test_get_property_json(myclient):
 def test_upload_state_json(myclient):
     global_server = datastack_dict["global_server"]
     json_state = {"layers": ["img", "seg"]}
-    url = f"{global_server}/nglstate/api/v1/upload"
+    url = f"{global_server}/nglstate/api/v1/post"
     responses.add(responses.POST, url=url, body="/1234", status=200)
     state_id = myclient.state.upload_state_json(json_state)
     assert state_id == 1234
+
+    ## test the get_state_json method
+    url = f"{global_server}/nglstate/api/v1/{state_id}"
+    responses.add(responses.GET, url=url, json=json_state, status=200)
+    state = myclient.state.get_state_json(state_id)
+    assert "img" in state["layers"]
 
 
 @responses.activate
 def test_upload_property_json(myclient):
     global_server = datastack_dict["global_server"]
     property_json = {"properties": ["prop1", "prop2"]}
-    url = f"{global_server}/nglstate/api/v1/upload_properties"
+    url = f"{global_server}/nglstate/api/v1/property/post"
     responses.add(responses.POST, url=url, body="/1234", status=200)
     state_id = myclient.state.upload_property_json(property_json)
     assert state_id == 1234
 
 
-def test_save_state_json_local(tmp_path):
+def test_save_state_json_local(myclient, tmp_path):
     json_state = {"layers": ["img", "seg"]}
     filename = tmp_path / "state.json"
     myclient.state.save_state_json_local(json_state, str(filename))
