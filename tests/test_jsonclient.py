@@ -55,7 +55,7 @@ def test_upload_state_json(myclient):
     state_id = myclient.state.upload_state_json(json_state)
     assert state_id == 1234
 
-    ## test the get_state_json method
+    # test the get_state_json method
     url = f"{global_server}/nglstate/api/v1/{state_id}"
     responses.add(responses.GET, url=url, json=json_state, status=200)
     state = myclient.state.get_state_json(state_id)
