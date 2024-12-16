@@ -18,6 +18,7 @@ from .base import (
     ClientBase,
     _api_endpoints,
     _check_version_compatibility,
+    handle_response,
 )
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
@@ -295,6 +296,7 @@ class SkeletonClient(ClientBase):
         root_ids: List,
         datastack_name: str,
         skeleton_version: int,
+        post: bool = False,
     ):
         """
         Building the URL in a separate function facilitates testing
@@ -305,13 +307,19 @@ class SkeletonClient(ClientBase):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
+        if not post:
+            endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
 
-        if not skeleton_version:
-            endpoint = "gen_bulk_skeletons_via_rids"
+            if not skeleton_version:
+                endpoint = "gen_bulk_skeletons_via_rids"
+            else:
+                endpoint_mapping["skeleton_version"] = skeleton_version
+                endpoint = "gen_bulk_skeletons_via_skvn_rids"
         else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            endpoint = "gen_bulk_skeletons_via_skvn_rids"
+            if not skeleton_version:
+                endpoint = "gen_bulk_skeletons_via_rids_as_post"
+            else:
+                endpoint = "gen_bulk_skeletons_via_skvn_rids_as_post"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -693,16 +701,24 @@ class SkeletonClient(ClientBase):
                 f"The number of root_ids exceeds the current limit of {MAX_BULK_ASYNCHRONOUS_SKELETONS}. Only the first {MAX_BULK_ASYNCHRONOUS_SKELETONS} will be processed."
             )
             root_ids = root_ids[:MAX_BULK_ASYNCHRONOUS_SKELETONS]
+        
+        # TODO: I recently converted this function to a batched approach to alleviate sending a long URL of root_ids via GET,
+        # but has since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
+        # So consider reverting to the unbatched approach in the future.
 
         estimated_async_time_secs_upper_bound_sum = 0
         for batch in range(0, len(root_ids), BULK_ASYNC_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_ASYNC_SKELETONS_BATCH_SIZE]
 
             url = self._build_bulk_async_endpoint(
-                rids_one_batch, datastack_name, skeleton_version
+                rids_one_batch, datastack_name, skeleton_version, post=True
             )
-            response = self.session.get(url)
-            self.raise_for_status(response, log_warning=log_warning)
+            data = {
+                "root_ids": rids_one_batch,
+                "skeleton_version": skeleton_version,
+            }
+            response = self.session.post(url, json=data)
+            response = handle_response(response, as_json=False)
 
             estimated_async_time_secs_upper_bound = float(response.text)
             estimated_async_time_secs_upper_bound_sum += (
