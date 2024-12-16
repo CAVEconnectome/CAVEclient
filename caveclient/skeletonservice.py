@@ -674,7 +674,7 @@ class SkeletonClient(ClientBase):
             The name of the datastack to check
         skeleton_version : int
             The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
-        
+
         Returns
         -------
         float
@@ -701,7 +701,7 @@ class SkeletonClient(ClientBase):
                 f"The number of root_ids exceeds the current limit of {MAX_BULK_ASYNCHRONOUS_SKELETONS}. Only the first {MAX_BULK_ASYNCHRONOUS_SKELETONS} will be processed."
             )
             root_ids = root_ids[:MAX_BULK_ASYNCHRONOUS_SKELETONS]
-        
+
         # TODO: I recently converted this function to a batched approach to alleviate sending a long URL of root_ids via GET,
         # but has since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
         # So consider reverting to the unbatched approach in the future.
@@ -750,5 +750,7 @@ class SkeletonClient(ClientBase):
         # else:
         #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
 
-        logging.info(f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}")
+        logging.info(
+            f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
+        )
         return estimated_async_time_secs_upper_bound_sum
