@@ -308,7 +308,7 @@ class SkeletonClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         if not post:
-            # DEPRECATED: This endpoint is deprecated and will be removed in the future.
+            # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.
             # Please use the POST endpoint in the future.
             endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
 
