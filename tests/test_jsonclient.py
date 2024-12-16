@@ -99,7 +99,66 @@ def test_build_neuroglancer_url(myclient):
     state_id = 1234
     ngl_url = "https://my-fake-url.com"
     global_server = datastack_dict["global_server"]
-    url = f"{global_server}/nglstate/api/v1/{state_id}"
-    responses.add(responses.GET, url=f"{ngl_url}/version.json", json={}, status=200)
+
+    # Mock different responses from ngl_url/version.json
+    responses.add(
+        responses.GET,
+        url=f"{ngl_url}/version.json",
+        json={"version": "1.0.0"},
+        status=200,
+    )
+
+    # Test with target_site as 'seunglab'
+    built_url = myclient.state.build_neuroglancer_url(
+        state_id, ngl_url=ngl_url, target_site="seunglab"
+    )
+    assert built_url.startswith(ngl_url)
+    assert "json_url" in built_url
+
+    # Test with target_site as 'cave-explorer'
+    built_url = myclient.state.build_neuroglancer_url(
+        state_id, ngl_url=ngl_url, target_site="cave-explorer"
+    )
+    assert built_url.startswith(ngl_url)
+    assert "middleauth+" in built_url
+
+    # Test with target_site as 'mainline'
+    built_url = myclient.state.build_neuroglancer_url(
+        state_id, ngl_url=ngl_url, target_site="mainline"
+    )
+    assert built_url.startswith(ngl_url)
+    assert "middleauth+" in built_url
+
+    responses.remove(responses.GET, url=f"{ngl_url}/version.json")
+    responses.add(responses.GET, url=f"{ngl_url}/version.json", json={}, status=404)
+
+    # Test with target_site as None and version.json not found
     built_url = myclient.state.build_neuroglancer_url(state_id, ngl_url=ngl_url)
     assert built_url.startswith(ngl_url)
+    assert "json_url" in built_url
+
+    responses.add(
+        responses.GET, url=f"{ngl_url}/version.json", json="version1234", status=200
+    )
+    # Test with target_site as None and version.json found
+    built_url = myclient.state.build_neuroglancer_url(state_id, ngl_url=ngl_url)
+    assert built_url.startswith(ngl_url)
+    assert (
+        built_url
+        == f"{ngl_url}/#!middleauth+{global_server}/nglstate/api/v1/{state_id}"
+    )
+
+    # Test with static_url as True
+    built_url = myclient.state.build_neuroglancer_url(
+        "https://my-site.com/myjsonfile.json", ngl_url=ngl_url, static_url=True
+    )
+    assert built_url == f"{ngl_url}/#!https://my-site.com/myjsonfile.json"
+
+    # Test with format_properties as True
+    built_url = myclient.state.build_neuroglancer_url(
+        state_id, ngl_url=ngl_url, format_properties=True
+    )
+    assert (
+        built_url
+        == f"precomputed://middleauth+{global_server}/nglstate/api/v1/property/{state_id}"
+    )
