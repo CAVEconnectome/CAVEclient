@@ -308,6 +308,8 @@ class SkeletonClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         if not post:
+            # DEPRECATED: This endpoint is deprecated and will be removed in the future.
+            # Please use the POST endpoint in the future.
             endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
 
             if not skeleton_version:
@@ -703,7 +705,7 @@ class SkeletonClient(ClientBase):
             root_ids = root_ids[:MAX_BULK_ASYNCHRONOUS_SKELETONS]
 
         # TODO: I recently converted this function to a batched approach to alleviate sending a long URL of root_ids via GET,
-        # but has since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
+        # but have since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
         # So consider reverting to the unbatched approach in the future.
 
         estimated_async_time_secs_upper_bound_sum = 0
