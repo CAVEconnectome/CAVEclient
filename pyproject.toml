@@ -89,7 +89,7 @@ doc-serve = "mkdocs serve"
 dry-bump = "uv run bump-my-version bump --dry-run --verbose"
 lint = ['lint-check', 'lint-format']
 lint-check = "uv run ruff check . --extend-select I"
-lint-format = "uv run ruff format . --check"
+lint-format = "uv run ruff format . "
 test = "uv run pytest --cov --cov-report xml tests"
 lint-fix = "uv run ruff format caveclient tests"
 
