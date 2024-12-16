@@ -851,3 +851,46 @@ class TestMatclient:
         )
         new_xyz = np.vstack(df.ctr_pt_position.values)
         assert np.all(new_xyz == orig_xyz * [4, 4, 40])
+
+
+@responses.activate
+def test_get_view_metadata(myclient):
+    datastack_name = "test_datastack"
+    view_name = "test_view"
+    materialization_version = 1
+
+    url = f"{datastack_dict['local_server']}/materialize/api/v3/datastack/{datastack_name}/version/{materialization_version}/views/{view_name}/metadata"
+    # Mock the response
+    mock_response = {"metadata_key": "metadata_value"}
+    responses.add(responses.GET, url=url, json=mock_response, status=200)
+
+    # Call the method
+    result = myclient.materialize.get_view_metadata(
+        view_name, materialization_version, datastack_name
+    )
+
+    # Verify the result
+    assert result == mock_response
+    assert "metadata_key" in result
+    assert result["metadata_key"] == "metadata_value"
+
+
+@responses.activate
+def test_get_unique_string_values(myclient):
+    datastack_name = "test_datastack"
+    table_name = "test_table"
+
+    url = f"{datastack_dict['local_server']}/materialize/api/v3/datastack/{datastack_name}/table/{table_name}/unique_string_values"
+    # Mock the response
+    mock_response = {"column1": ["value1", "value2"], "column2": ["value3", "value4"]}
+    responses.add(responses.GET, url=url, json=mock_response, status=200)
+
+    # Call the method
+    result = myclient.materialize.get_unique_string_values(table_name, datastack_name)
+
+    # Verify the result
+    assert result == mock_response
+    assert "column1" in result
+    assert "column2" in result
+    assert result["column1"] == ["value1", "value2"]
+    assert result["column2"] == ["value3", "value4"]
