@@ -666,6 +666,11 @@ class SkeletonClient(ClientBase):
             The name of the datastack to check
         skeleton_version : int
             The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
+        
+        Returns
+        -------
+        float
+            The estimated time in seconds to generate all skeletons (a comparable message will be output to the console prior to return).
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
@@ -729,4 +734,5 @@ class SkeletonClient(ClientBase):
         # else:
         #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
 
-        return f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
+        logging.info(f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}")
+        return estimated_async_time_secs_upper_bound_sum
