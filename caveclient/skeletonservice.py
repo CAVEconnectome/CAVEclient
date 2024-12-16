@@ -697,6 +697,11 @@ class SkeletonClient(ClientBase):
             raise ValueError(
                 f"root_ids must be a list or numpy array of root_ids, not a {type(root_ids)}"
             )
+        
+        if self._server_version < Version("0.8.0"):
+            logging.warning(
+                "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
+            )
 
         if len(root_ids) > MAX_BULK_ASYNCHRONOUS_SKELETONS:
             logging.warning(
@@ -712,15 +717,21 @@ class SkeletonClient(ClientBase):
         for batch in range(0, len(root_ids), BULK_ASYNC_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_ASYNC_SKELETONS_BATCH_SIZE]
 
-            url = self._build_bulk_async_endpoint(
-                rids_one_batch, datastack_name, skeleton_version, post=True
-            )
-            data = {
-                "root_ids": rids_one_batch,
-                "skeleton_version": skeleton_version,
-            }
-            response = self.session.post(url, json=data)
-            response = handle_response(response, as_json=False)
+            if self._server_version < Version("0.8.0"):
+                url = self._build_bulk_async_endpoint(
+                    rids_one_batch, datastack_name, skeleton_version
+                )
+                response = self.session.get(url)
+            else:
+                url = self._build_bulk_async_endpoint(
+                    rids_one_batch, datastack_name, skeleton_version, post=True
+                )
+                data = {
+                    "root_ids": rids_one_batch,
+                    "skeleton_version": skeleton_version,
+                }
+                response = self.session.post(url, json=data)
+                response = handle_response(response, as_json=False)
 
             estimated_async_time_secs_upper_bound = float(response.text)
             estimated_async_time_secs_upper_bound_sum += (
