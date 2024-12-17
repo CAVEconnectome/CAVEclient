@@ -18,6 +18,7 @@ from .base import (
     ClientBase,
     _api_endpoints,
     _check_version_compatibility,
+    handle_response,
 )
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
@@ -295,6 +296,7 @@ class SkeletonClient(ClientBase):
         root_ids: List,
         datastack_name: str,
         skeleton_version: int,
+        post: bool = False,
     ):
         """
         Building the URL in a separate function facilitates testing
@@ -305,13 +307,21 @@ class SkeletonClient(ClientBase):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
+        if not post:
+            # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.
+            # Please use the POST endpoint in the future.
+            endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
 
-        if not skeleton_version:
-            endpoint = "gen_bulk_skeletons_via_rids"
+            if not skeleton_version:
+                endpoint = "gen_bulk_skeletons_via_rids"
+            else:
+                endpoint_mapping["skeleton_version"] = skeleton_version
+                endpoint = "gen_bulk_skeletons_via_skvn_rids"
         else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            endpoint = "gen_bulk_skeletons_via_skvn_rids"
+            if not skeleton_version:
+                endpoint = "gen_bulk_skeletons_via_rids_as_post"
+            else:
+                endpoint = "gen_bulk_skeletons_via_skvn_rids_as_post"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -666,6 +676,11 @@ class SkeletonClient(ClientBase):
             The name of the datastack to check
         skeleton_version : int
             The skeleton version to generate. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
+
+        Returns
+        -------
+        float
+            The estimated time in seconds to generate all skeletons (a comparable message will be output to the console prior to return).
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
@@ -682,6 +697,11 @@ class SkeletonClient(ClientBase):
             raise ValueError(
                 f"root_ids must be a list or numpy array of root_ids, not a {type(root_ids)}"
             )
+        
+        if self._server_version < Version("0.8.0"):
+            logging.warning(
+                "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
+            )
 
         if len(root_ids) > MAX_BULK_ASYNCHRONOUS_SKELETONS:
             logging.warning(
@@ -689,15 +709,29 @@ class SkeletonClient(ClientBase):
             )
             root_ids = root_ids[:MAX_BULK_ASYNCHRONOUS_SKELETONS]
 
+        # TODO: I recently converted this function to a batched approach to alleviate sending a long URL of root_ids via GET,
+        # but have since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
+        # So consider reverting to the unbatched approach in the future.
+
         estimated_async_time_secs_upper_bound_sum = 0
         for batch in range(0, len(root_ids), BULK_ASYNC_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_ASYNC_SKELETONS_BATCH_SIZE]
 
-            url = self._build_bulk_async_endpoint(
-                rids_one_batch, datastack_name, skeleton_version
-            )
-            response = self.session.get(url)
-            self.raise_for_status(response, log_warning=log_warning)
+            if self._server_version < Version("0.8.0"):
+                url = self._build_bulk_async_endpoint(
+                    rids_one_batch, datastack_name, skeleton_version
+                )
+                response = self.session.get(url)
+            else:
+                url = self._build_bulk_async_endpoint(
+                    rids_one_batch, datastack_name, skeleton_version, post=True
+                )
+                data = {
+                    "root_ids": rids_one_batch,
+                    "skeleton_version": skeleton_version,
+                }
+                response = self.session.post(url, json=data)
+                response = handle_response(response, as_json=False)
 
             estimated_async_time_secs_upper_bound = float(response.text)
             estimated_async_time_secs_upper_bound_sum += (
@@ -729,4 +763,7 @@ class SkeletonClient(ClientBase):
         # else:
         #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
 
-        return f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
+        logging.info(
+            f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
+        )
+        return estimated_async_time_secs_upper_bound_sum
