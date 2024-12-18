@@ -418,7 +418,7 @@ class SkeletonClient(ClientBase):
             root_ids = str(root_ids)
         if isinstance(root_ids, np.ndarray):
             root_ids = root_ids.tolist()
-        if not isinstance(root_ids, List):  # It must be a string at this point
+        if not isinstance(root_ids, List):  # If not a list, it can only be a string at this point
             root_ids = [root_ids]
 
         if len(root_ids) > MAX_SKELETONS_EXISTS_QUERY_SIZE:
