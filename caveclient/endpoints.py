@@ -308,8 +308,12 @@ skeletonservice_endpoints_v1 = {
     + "/{datastack_name}/precomputed/skeleton/{skvn}/info",
     "get_cache_contents_via_skvn_ridprefixes": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/query_cache/{skeleton_version}/{root_id_prefixes}/{limit}",
+    # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.
+    # Please use the POST endpoint in the future.
     "skeletons_exist_via_skvn_rids": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/exists/{skeleton_version}/{root_ids}",
+    "skeletons_exist_via_skvn_rids_as_post": skeleton_v1
+    + "/{datastack_name}/precomputed/skeleton/exists",
     "get_skeleton_via_rid": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{root_id}",
     "get_skeleton_via_skvn_rid": skeleton_v1
