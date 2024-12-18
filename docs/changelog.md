@@ -1,6 +1,9 @@
 ---
 title: Changelog
 ---
+## 7.4.2 (December 18, 2024)
+- Eliminated skeleton client skeleton_exists() issue in which passing a large number of root ids would cause a "URI too big" error.
+
 ## 7.4.1 (December 17, 2024)
 - Enabled skeleton client skeleton_exists() and generate_bulk_skeletons_async() endpoints to accept a either a list or a numpy array of root ids.
 - Eliminated skeleton client generate_bulk_skeletons_async() issue in which passing a large number of root ids would cause a "URI too big" error.
