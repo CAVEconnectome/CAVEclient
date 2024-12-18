@@ -219,7 +219,7 @@ class SkeletonClient(ClientBase):
         inputBytesStr = SkeletonClient.decompressBytesToString(inputBytes)
         inputBytesStrDict = json.loads(inputBytesStr)
         return inputBytesStrDict
-    
+
     def _build_skeletons_exist_endpoint(
         self,
         root_ids: List,
@@ -235,7 +235,7 @@ class SkeletonClient(ClientBase):
             endpoint = "skeletons_exist_via_skvn_rids"
         else:
             endpoint = "skeletons_exist_via_skvn_rids_as_post"
-        
+
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
 
@@ -407,7 +407,7 @@ class SkeletonClient(ClientBase):
         if datastack_name is None:
             datastack_name = self._datastack_name
         assert datastack_name is not None
-        
+
         valid_skeleton_versions = [-1, 0, 1, 2, 3]
         if skeleton_version not in valid_skeleton_versions:
             raise ValueError(
@@ -430,13 +430,17 @@ class SkeletonClient(ClientBase):
         results = {}
         for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
-            
+
             if self._server_version < Version("0.8.0"):
-                url = self._build_skeletons_exist_endpoint(rids_one_batch, datastack_name, skeleton_version)
+                url = self._build_skeletons_exist_endpoint(
+                    rids_one_batch, datastack_name, skeleton_version
+                )
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
             else:
-                url = self._build_skeletons_exist_endpoint(rids_one_batch, datastack_name, skeleton_version, True)
+                url = self._build_skeletons_exist_endpoint(
+                    rids_one_batch, datastack_name, skeleton_version, True
+                )
                 data = {
                     "root_ids": rids_one_batch,
                     "skeleton_version": skeleton_version,
@@ -453,7 +457,7 @@ class SkeletonClient(ClientBase):
                 results[int(rids_one_batch[0])] = result_json
             else:
                 raise ValueError(f"Unexpected response type: {type(result_json)}")
-        
+
         if len(results) == 1:
             # When investigating a single root id, this returns a single bool, not a dict, list, etc.
             return list(results.values())[0]
@@ -727,7 +731,7 @@ class SkeletonClient(ClientBase):
         """
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
-        
+
         if self._server_version < Version("0.8.0"):
             logging.warning(
                 "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
