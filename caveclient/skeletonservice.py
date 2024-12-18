@@ -399,7 +399,7 @@ class SkeletonClient(ClientBase):
         """
         Confirm or deny that a set of root ids have H5 skeletons in the cache.
         """
-        if self._server_version < Version("0.8.0"):
+        if self._server_version < Version("0.9.0"):
             logging.warning(
                 "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
             )
@@ -431,7 +431,7 @@ class SkeletonClient(ClientBase):
         for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
 
-            if self._server_version < Version("0.8.0"):
+            if self._server_version < Version("0.9.0"):
                 url = self._build_skeletons_exist_endpoint(
                     rids_one_batch, datastack_name, skeleton_version
                 )
