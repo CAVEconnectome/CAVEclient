@@ -362,10 +362,10 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         if isinstance(root_id_prefixes, int):
@@ -408,10 +408,10 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         if isinstance(root_ids, int):
@@ -540,10 +540,10 @@ class SkeletonClient(ClientBase):
         elif output_format == "swc":
             endpoint_format = "swccompressed"
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         if verbose_level >= 1:
@@ -650,10 +650,10 @@ class SkeletonClient(ClientBase):
         elif output_format == "swc":
             endpoint_format = "swccompressed"
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         url = self._build_bulk_endpoint(
