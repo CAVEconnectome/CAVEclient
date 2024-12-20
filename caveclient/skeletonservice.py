@@ -362,10 +362,10 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         if isinstance(root_id_prefixes, int):
@@ -408,17 +408,19 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         if isinstance(root_ids, int):
             root_ids = str(root_ids)
         if isinstance(root_ids, np.ndarray):
             root_ids = root_ids.tolist()
-        if not isinstance(root_ids, List):  # If not a list, it can only be a string at this point
+        if not isinstance(
+            root_ids, List
+        ):  # If not a list, it can only be a string at this point
             root_ids = [root_ids]
 
         if len(root_ids) > MAX_SKELETONS_EXISTS_QUERY_SIZE:
@@ -540,10 +542,10 @@ class SkeletonClient(ClientBase):
         elif output_format == "swc":
             endpoint_format = "swccompressed"
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         if verbose_level >= 1:
@@ -650,10 +652,10 @@ class SkeletonClient(ClientBase):
         elif output_format == "swc":
             endpoint_format = "swccompressed"
 
-        valid_skeleton_versions = [-1, 0, 1, 2, 3]
-        if skeleton_version not in valid_skeleton_versions:
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
             raise ValueError(
-                f"Unknown skeleton version: {skeleton_version}. Valid options: {valid_skeleton_versions}"
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
         url = self._build_bulk_endpoint(
