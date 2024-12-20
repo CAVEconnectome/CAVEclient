@@ -495,7 +495,7 @@ class SkeletonClient(ClientBase):
         self,
         root_id: int,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 3,
+        skeleton_version: Optional[int] = 4,
         output_format: Literal[
             "dict",
             "swc",
@@ -614,7 +614,7 @@ class SkeletonClient(ClientBase):
         self,
         root_ids: List,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 3,
+        skeleton_version: Optional[int] = 4,
         output_format: Literal[
             "dict",
             "swc",
@@ -743,7 +743,7 @@ class SkeletonClient(ClientBase):
             logging.warning(
                 "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
             )
-            skeleton_version = -1
+            skeleton_version = 4
 
         if isinstance(root_ids, np.ndarray):
             root_ids = root_ids.tolist()
