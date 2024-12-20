@@ -2,7 +2,7 @@
 title: Changelog
 ---
 ## 7.4.3 (December 20, 2024)
-- Enabled skeleton client to generate & retrieve the new V4 skeleton format (and all future skeleton versions without necessitating CAVEclient upgrades).
+- Enabled skeleton client to generate & retrieve the new V4 skeleton format (and all future skeleton versions without necessitating CAVEclient upgrades -- unless the hard-coded default version needs to be continually updated I suppose).
 
 ## 7.4.2 (December 18, 2024)
 - Eliminated skeleton client skeleton_exists() issue in which passing a large number of root ids would cause a "URI too big" error.
