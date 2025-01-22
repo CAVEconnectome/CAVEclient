@@ -305,7 +305,7 @@ skeletonservice_endpoints_v1 = {
     "skeleton_info": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/info",
     "bulk_skeleton_info": skeleton_v1 + "/{datastack_name}/bulk/skeleton/info",
     "skeleton_info_versioned": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/{skvn}/info",
+    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/info",
     "get_cache_contents_via_skvn_ridprefixes": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/query_cache/{skeleton_version}/{root_id_prefixes}/{limit}",
     # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.

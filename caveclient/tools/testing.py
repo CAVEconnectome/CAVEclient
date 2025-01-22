@@ -18,7 +18,7 @@ except ImportError:
 
 DEFAULT_CHUNKEDGRAPH_SERVER_VERSION = "2.18.0"
 DEFAULT_MATERIALIZATION_SERVER_VERSON = "4.30.1"
-DEFAULT_SKELETON_SERVICE_SERVER_VERSION = "0.3.8"
+DEFAULT_SKELETON_SERVICE_SERVER_VERSION = "999.0.0"  # Individual tests might confirm the ability to adapt to old versions by mocking older versions, but make the default test behavior assume an up-to-date system.
 DEFAULT_JSON_SERVICE_SERVER_VERSION = "0.7.0"
 
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
