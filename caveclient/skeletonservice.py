@@ -484,7 +484,7 @@ class SkeletonClient(ClientBase):
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
-        endpoint_mapping["skvn"] = skvn
+        endpoint_mapping["skeleton_version"] = skvn
         url = self._endpoints["skeleton_info_versioned"].format_map(endpoint_mapping)
 
         response = self.session.get(url)

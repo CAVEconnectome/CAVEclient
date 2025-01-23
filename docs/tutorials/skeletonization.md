@@ -196,7 +196,7 @@ generate_bulk_skeletons_async(
 And with the usual overrides:
 
 ```python
-get_bulk_skeletons(
+generate_bulk_skeletons_async(
     root_ids=[<root_id>, <root_id>, ...],
     datastack_name=<datastack_name>,
     skeleton_version=<sk_version>,
