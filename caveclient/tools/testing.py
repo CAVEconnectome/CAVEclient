@@ -219,16 +219,6 @@ def version_url(
     return version_endpoint.format_map(mapping)
 
 
-def versions_url(
-    server_address: str,
-    endpoint_dictionary: dict,
-    service_key: str,
-) -> str:
-    version_endpoint = endpoint_dictionary["get_versions"]
-    mapping = {service_key: server_address}
-    return version_endpoint.format_map(mapping)
-
-
 def api_version_url(
     server_address: str,
     endpoint_dictionary: dict,
