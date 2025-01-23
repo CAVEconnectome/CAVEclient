@@ -103,7 +103,7 @@ class TestSkeletonsClient:
         )
 
         result = myclient.skeleton.skeletons_exist(None, 3, 0)
-        assert result == True
+        assert result
 
     @responses.activate
     def test_multiple_skeletons_exist(self, myclient, mocker):
