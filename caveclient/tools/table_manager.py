@@ -861,7 +861,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     offset=offset,
                     select_columns=select_columns,
                     get_counts=get_counts,
-                    log_warning=log_warning,
                     **self.filter_kwargs_mat,
                 )
 
