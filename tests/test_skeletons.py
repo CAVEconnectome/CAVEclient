@@ -144,7 +144,7 @@ class TestSkeletonsClient:
         }
 
         responses.add(responses.GET, url=metadata_url, json=info, status=200)
-        result = myclient.skeleton.get_precomputed_skeleton_info(3, None)
+        result = myclient.skeleton.get_precomputed_skeleton_info(4, None)
         assert result == info
 
     @responses.activate
