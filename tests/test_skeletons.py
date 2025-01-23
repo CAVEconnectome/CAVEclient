@@ -1,6 +1,5 @@
 import responses
 from packaging.version import Version
-from unittest import mock
 
 from caveclient import CAVEclient, endpoints
 from caveclient.skeletonservice import SkeletonClient
