@@ -664,6 +664,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 metadata: bool = True,
                 desired_resolution: Optional[list] = None,
                 get_counts: bool = False,
+                log_warning: bool = True,
             ):
                 """Set data return options for the specified query
 
@@ -687,6 +688,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     A three element vector setting the return resolution of position information, by default None
                 get_counts : bool, optional
                     If True, only return the number of rows that match the query, by default False
+                log_warning : bool, optional
+                    Whether to log warnings associated with tables
 
                 Returns
                 -------
@@ -706,12 +709,10 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         timestamp=timestamp,
                         get_counts=get_counts,
                         metadata=metadata,
+                        log_warning=log_warning,
                         **self.filter_kwargs_mat,
                     )
                 elif timestamp is None:
-                    logger.warning(
-                        "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
-                    )
                     qry_table = self._reference_table
                     return client.materialize.join_query(
                         tables=self.basic_join,
@@ -723,6 +724,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         desired_resolution=desired_resolution,
                         suffixes={self._reference_table: "_ref", self._base_table: ""},
                         metadata=metadata,
+                        log_warning=log_warning,
                         **self.filter_kwargs_mat,
                     )
                 else:
@@ -734,6 +736,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         metadata=metadata,
                         desired_resolution=desired_resolution,
                         allow_missing_lookups=False,
+                        log_warning=log_warning,
                         **self.filter_kwargs_mat,
                     )
 
@@ -746,6 +749,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 metadata: bool = True,
                 desired_resolution: Optional[list] = None,
                 allow_missing_lookups: bool = False,
+                log_warning: bool = True,
             ):
                 """Set data return options for the specified live query
 
@@ -766,6 +770,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     If True, will return values even if the database is still ingesting new information, by default False.
                     IMPORTANT: If set to True, the database could return different answers to the same query at the same timestamp.
                     Do not set to True if writing code you intended to give consistent answers every time.
+                log_warning : bool, optional
+                    Whether to log warnings associated with tables
 
                 Returns
                 -------
@@ -773,9 +779,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     Query data
                 """
 
-                logger.warning(
-                    "The `client.materialize.tables` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 if self._reference_table is None:
                     qry_table = self._base_table
                     return client.materialize.live_live_query(
@@ -787,6 +790,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         desired_resolution=desired_resolution,
                         allow_missing_lookups=allow_missing_lookups,
                         metadata=metadata,
+                        log_warning=log_warning,
                         **self.filter_kwargs_live,
                     )
                 else:
@@ -801,6 +805,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         suffixes={self._reference_table: "_ref", self._base_table: ""},
                         allow_missing_lookups=allow_missing_lookups,
                         metadata=metadata,
+                        log_warning=log_warning,
                         **self.filter_kwargs_live,
                         **self.joins_kwargs,
                     )
@@ -819,6 +824,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 metadata: bool = True,
                 desired_resolution: Optional[list] = None,
                 get_counts: bool = False,
+                log_warning: bool = True,
             ):
                 """Query views through the table interface
 
@@ -842,10 +848,9 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     If default, uses the values in the table directly.
                 get_counts : bool, optional
                     Only return number of rows in the query, by default False
+                log_warning : bool, optional
+                    Whether to log warnings associated with tables
                 """
-                logger.warning(
-                    "The `client.materialize.views` interface is experimental and might experience breaking changes before the feature is stabilized."
-                )
                 return client.materialize.query_view(
                     self._base_table,
                     metadata=metadata,
