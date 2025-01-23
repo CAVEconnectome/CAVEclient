@@ -504,18 +504,6 @@ def CAVEclientMock(
                 status=200,
             )
         if skeleton_service:
-            # ss_versions_url = versions_url(
-            #     local_server,
-            #     endpoints.skeletonservice_endpoints_v1,
-            #     "skeleton_server_address",
-            # )
-            # responses.add(
-            #     responses.GET,
-            #     ss_versions_url,
-            #     json=str(skeleton_service_server_version),
-            #     status=200,
-            # )
-
             ss_version_url = version_url(
                 local_server,
                 endpoints.skeletonservice_endpoints_v1,
