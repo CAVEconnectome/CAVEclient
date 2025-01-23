@@ -219,6 +219,16 @@ def version_url(
     return version_endpoint.format_map(mapping)
 
 
+def versions_url(
+    server_address: str,
+    endpoint_dictionary: dict,
+    service_key: str,
+) -> str:
+    version_endpoint = endpoint_dictionary["get_versions"]
+    mapping = {service_key: server_address}
+    return version_endpoint.format_map(mapping)
+
+
 def api_version_url(
     server_address: str,
     endpoint_dictionary: dict,
@@ -494,6 +504,18 @@ def CAVEclientMock(
                 status=200,
             )
         if skeleton_service:
+            # ss_versions_url = versions_url(
+            #     local_server,
+            #     endpoints.skeletonservice_endpoints_v1,
+            #     "skeleton_server_address",
+            # )
+            # responses.add(
+            #     responses.GET,
+            #     ss_versions_url,
+            #     json=str(skeleton_service_server_version),
+            #     status=200,
+            # )
+
             ss_version_url = version_url(
                 local_server,
                 endpoints.skeletonservice_endpoints_v1,

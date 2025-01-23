@@ -67,6 +67,8 @@ class TestSkeletonsClient:
                                                             "num_found": 1,
                                                             "files": ["filename"],
                                                         }, status=200)
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3], status=200)
 
         result = myclient.skeleton.get_cache_contents(None, 3, 0, 0)
         assert result == {
@@ -76,11 +78,35 @@ class TestSkeletonsClient:
 
     @responses.activate
     def test_skeletons_exist(self, myclient, mocker):
-        metadata_url = self.sk_endpoints.get("skeletons_exist_via_skvn_rids").format_map(sk_mapping)
-        responses.add(responses.GET, url=metadata_url, json={0: True}, status=200)
+        metadata_url = self.sk_endpoints.get("skeletons_exist_via_skvn_rids_as_post").format_map(sk_mapping)
+        data = {
+            0: True,
+        }
+        responses.add(responses.POST, url=metadata_url, json=data, status=200)
 
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3], status=200)
+        
         result = myclient.skeleton.skeletons_exist(None, 3, 0)
-        assert result == {0: True}
+        assert result == True
+
+    @responses.activate
+    def test_multiple_skeletons_exist(self, myclient, mocker):
+        metadata_url = self.sk_endpoints.get("skeletons_exist_via_skvn_rids_as_post").format_map(sk_mapping)
+        data = {
+            0: True,
+            1: False,
+        }
+        responses.add(responses.POST, url=metadata_url, json=data, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3], status=200)
+        
+        result = myclient.skeleton.skeletons_exist(None, 3, 0)
+        assert result == {
+            0: True,
+            1: False,
+        }
 
     @responses.activate
     def test_get_precomputed_skeleton_info(self, myclient, mocker):
@@ -112,11 +138,12 @@ class TestSkeletonsClient:
         mocker.patch.object(myclient.l2cache, 'has_cache', return_value=True)
 
         metadata_url = self.sk_endpoints.get("get_skeleton_via_skvn_rid_fmt").format_map(sk_mapping)
-
         sk = {"test_skeleton": "data"}
         dict_bytes = SkeletonClient.compressDictToBytes(sk)
-
         responses.add(responses.GET, url=metadata_url, body=dict_bytes, status=200)
 
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3], status=200)
+        
         result = myclient.skeleton.get_skeleton(0, None, 3, "dict")
         assert result == sk
