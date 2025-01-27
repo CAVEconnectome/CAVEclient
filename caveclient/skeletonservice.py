@@ -585,7 +585,20 @@ class SkeletonClient(ClientBase):
             return sk_json
         if endpoint_format == "flatdict":
             assert self._server_version >= Version("0.6.0")
-            return SkeletonClient.decompressBytesToDict(response.content)
+            sk_json = SkeletonClient.decompressBytesToDict(response.content)
+            if "edges" in sk_json.keys():
+                sk_json["edges"] = np.array(sk_json["edges"])
+            if "mesh_to_skel_map" in sk_json.keys():
+                sk_json["mesh_to_skel_map"] = np.array(sk_json["mesh_to_skel_map"])
+            if "vertices" in sk_json.keys():
+                sk_json["vertices"] = np.array(sk_json["vertices"])
+            if "lvl2_ids" in sk_json.keys():
+                sk_json["lvl2_ids"] = np.array(sk_json["lvl2_ids"])
+            if "radius" in sk_json.keys():
+                sk_json["radius"] = np.array(sk_json["radius"])
+            if "compartment" in sk_json.keys():
+                sk_json["compartment"] = np.array(sk_json["compartment"])
+            return sk_json
         if endpoint_format == "swccompressed":
             file_content = SkeletonClient.decompressBytesToString(response.content)
 

@@ -56,7 +56,14 @@ docs = [
     "pymdown-extensions",
 ]
 lint = ["ruff"]
-test = ["pytest", "pytest-cov", "pytest-env", "pytest-mock", "responses"]
+test = [
+    "deepdiff>=8.1.1",
+    "pytest",
+    "pytest-cov",
+    "pytest-env",
+    "pytest-mock",
+    "responses",
+]
 
 [tool.bumpversion]
 allow_dirty = false
