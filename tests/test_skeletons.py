@@ -1,3 +1,6 @@
+import copy
+import deepdiff
+import numpy as np
 import responses
 from packaging.version import Version
 
@@ -184,8 +187,8 @@ class TestSkeletonsClient:
             },
             "edges": [
                 [
-                0,
-                1
+                1,
+                0
                 ],
             ],
             "mesh_to_skel_map": [
@@ -195,14 +198,10 @@ class TestSkeletonsClient:
             "root": 0,
             "vertices": [
                 [
-                971832,
-                842176,
-                906480
+                1054848., 827272., 601920.
                 ],
                 [
-                972568,
-                842920,
-                905920
+                1054856., 827192., 601920.
                 ],
             ],
             "compartment": [
@@ -210,10 +209,21 @@ class TestSkeletonsClient:
                 3
             ],
             "radius": [
-                237.11754897434668,
-                237.11754897434668
+                203.6853403, 203.6853403
+            ],
+            'lvl2_ids': [
+                173056326983745934, 173126695727923522
             ]
         }
+
+        sk_result = copy.deepcopy(sk)
+        sk_result["edges"] = np.array(sk_result["edges"])
+        sk_result["mesh_to_skel_map"] = np.array(sk_result["mesh_to_skel_map"])
+        sk_result["vertices"] = np.array(sk_result["vertices"])
+        sk_result["lvl2_ids"] = np.array(sk_result["lvl2_ids"])
+        sk_result["radius"] = np.array(sk_result["radius"])
+        sk_result["compartment"] = np.array(sk_result["compartment"])
+
         dict_bytes = SkeletonClient.compressDictToBytes(sk)
         responses.add(responses.GET, url=metadata_url, body=dict_bytes, status=200)
 
@@ -223,4 +233,4 @@ class TestSkeletonsClient:
         )
 
         result = myclient.skeleton.get_skeleton(0, None, 4, "dict")
-        assert result == sk
+        assert not deepdiff.DeepDiff(result, sk_result)
