@@ -343,6 +343,7 @@ bump = [
 ]
 dev = [
     { name = "bump-my-version" },
+    { name = "deepdiff" },
     { name = "mkdocs" },
     { name = "mkdocs-autorefs" },
     { name = "mkdocs-git-authors-plugin" },
@@ -384,6 +385,7 @@ lint = [
     { name = "ruff" },
 ]
 test = [
+    { name = "deepdiff" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-env" },
@@ -412,6 +414,7 @@ requires-dist = [
 bump = [{ name = "bump-my-version" }]
 dev = [
     { name = "bump-my-version" },
+    { name = "deepdiff", specifier = ">=8.1.1" },
     { name = "mkdocs" },
     { name = "mkdocs-autorefs" },
     { name = "mkdocs-git-authors-plugin" },
@@ -451,6 +454,7 @@ docs = [
 ]
 lint = [{ name = "ruff" }]
 test = [
+    { name = "deepdiff", specifier = ">=8.1.1" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-env" },
