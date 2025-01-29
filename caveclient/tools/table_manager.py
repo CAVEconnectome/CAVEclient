@@ -835,7 +835,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 metadata: bool = True,
                 desired_resolution: Optional[list] = None,
                 get_counts: bool = False,
-                log_warning: bool = True,
                 random_sample: Optional[int] = None,
             ):
                 """Query views through the table interface
@@ -860,8 +859,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     If default, uses the values in the table directly.
                 get_counts : bool, optional
                     Only return number of rows in the query, by default False
-                log_warning : bool, optional
-                    Whether to log warnings associated with tables
                 random_sample: int, optional
                     Number of random subsamples to return, by default None
                 """
@@ -875,7 +872,6 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     offset=offset,
                     select_columns=select_columns,
                     get_counts=get_counts,
-                    log_warning=log_warning,
                     random_sample=random_sample,
                     **self.filter_kwargs_mat,
                 )
