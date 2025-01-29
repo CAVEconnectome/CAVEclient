@@ -665,6 +665,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution: Optional[list] = None,
                 get_counts: bool = False,
                 log_warning: bool = True,
+                random_sample: Optional[int] = None,
             ):
                 """Set data return options for the specified query
 
@@ -710,6 +711,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         get_counts=get_counts,
                         metadata=metadata,
                         log_warning=log_warning,
+                        random_sample=random_sample,
                         **self.filter_kwargs_mat,
                     )
                 elif timestamp is None:
@@ -725,6 +727,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         suffixes={self._reference_table: "_ref", self._base_table: ""},
                         metadata=metadata,
                         log_warning=log_warning,
+                        random_sample=random_sample,
                         **self.filter_kwargs_mat,
                     )
                 else:
@@ -737,6 +740,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         desired_resolution=desired_resolution,
                         allow_missing_lookups=False,
                         log_warning=log_warning,
+                        random_sample=random_sample,
                         **self.filter_kwargs_mat,
                     )
 
@@ -750,6 +754,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution: Optional[list] = None,
                 allow_missing_lookups: bool = False,
                 log_warning: bool = True,
+                random_sample: Optional[int] = None,
             ):
                 """Set data return options for the specified live query
 
@@ -791,6 +796,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         allow_missing_lookups=allow_missing_lookups,
                         metadata=metadata,
                         log_warning=log_warning,
+                        random_sample=random_sample,
                         **self.filter_kwargs_live,
                     )
                 else:
@@ -806,6 +812,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                         allow_missing_lookups=allow_missing_lookups,
                         metadata=metadata,
                         log_warning=log_warning,
+                        random_sample=random_sample,
                         **self.filter_kwargs_live,
                         **self.joins_kwargs,
                     )
@@ -825,6 +832,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 desired_resolution: Optional[list] = None,
                 get_counts: bool = False,
                 log_warning: bool = True,
+                random_sample: Optional[int] = None,
             ):
                 """Query views through the table interface
 
@@ -850,6 +858,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     Only return number of rows in the query, by default False
                 log_warning : bool, optional
                     Whether to log warnings associated with tables
+                random_sample: int, optional
+                    Number of random samples to return, by default None
                 """
                 return client.materialize.query_view(
                     self._base_table,
@@ -862,6 +872,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     select_columns=select_columns,
                     get_counts=get_counts,
                     log_warning=log_warning,
+                    random_sample=random_sample,
                     **self.filter_kwargs_mat,
                 )
 
