@@ -691,6 +691,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     If True, only return the number of rows that match the query, by default False
                 log_warning : bool, optional
                     Whether to log warnings associated with tables
+                random_sample: int, optional
+                    Number of random subsamples to return, by default None
 
                 Returns
                 -------
@@ -777,6 +779,8 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                     Do not set to True if writing code you intended to give consistent answers every time.
                 log_warning : bool, optional
                     Whether to log warnings associated with tables
+                random_sample: int, optional
+                    Number of random subsamples to return, by default None
 
                 Returns
                 -------
@@ -859,7 +863,7 @@ def make_kwargs_mixin(client, is_view=False, live_compatible=True):
                 log_warning : bool, optional
                     Whether to log warnings associated with tables
                 random_sample: int, optional
-                    Number of random samples to return, by default None
+                    Number of random subsamples to return, by default None
                 """
                 return client.materialize.query_view(
                     self._base_table,
