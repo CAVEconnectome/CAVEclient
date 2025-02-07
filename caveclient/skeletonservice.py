@@ -245,6 +245,7 @@ class SkeletonClient(ClientBase):
         datastack_name: str,
         skeleton_version: int,
         output_format: str,
+        async_: bool,
     ):
         """
         Building the URL in a separate function facilitates testing
@@ -257,26 +258,48 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_id"] = root_id
 
-        if not skeleton_version:
-            # Pylance incorrectly thinks that skeleton_version cannot be None here,
-            # but it most certainly can, and that is precisely how I intended it.
-            # Google searching revealed this as a known problem with Pylance and Selenium,
-            # but I have not been successful in solving it yet.
-            if output_format == "precomputed":
-                endpoint = "get_skeleton_via_rid"
+        if not async_:
+            if not skeleton_version:
+                # Pylance incorrectly thinks that skeleton_version cannot be None here,
+                # but it most certainly can, and that is precisely how I intended it.
+                # Google searching revealed this as a known problem with Pylance and Selenium,
+                # but I have not been successful in solving it yet.
+                if output_format == "precomputed":
+                    endpoint = "get_skeleton_via_rid"
+                else:
+                    # Note that there isn't currently an endpoint for this scenario,
+                    # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
+                    endpoint_mapping["skeleton_version"] = 0
+                    endpoint_mapping["output_format"] = output_format
+                    endpoint = "get_skeleton_via_skvn_rid_fmt"
             else:
-                # Note that there isn't currently an endpoint for this scenario,
-                # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
-                endpoint_mapping["skeleton_version"] = 0
-                endpoint_mapping["output_format"] = output_format
-                endpoint = "get_skeleton_via_skvn_rid_fmt"
+                endpoint_mapping["skeleton_version"] = skeleton_version
+                if output_format == "precomputed":
+                    endpoint = "get_skeleton_via_skvn_rid"
+                else:
+                    endpoint_mapping["output_format"] = output_format
+                    endpoint = "get_skeleton_via_skvn_rid_fmt"
         else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            if output_format == "precomputed":
-                endpoint = "get_skeleton_via_skvn_rid"
+            if not skeleton_version:
+                # Pylance incorrectly thinks that skeleton_version cannot be None here,
+                # but it most certainly can, and that is precisely how I intended it.
+                # Google searching revealed this as a known problem with Pylance and Selenium,
+                # but I have not been successful in solving it yet.
+                if output_format == "precomputed":
+                    endpoint = "get_skeleton_async_via_rid"
+                else:
+                    # Note that there isn't currently an endpoint for this scenario,
+                    # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
+                    endpoint_mapping["skeleton_version"] = 0
+                    endpoint_mapping["output_format"] = output_format
+                    endpoint = "get_skeleton_async_via_skvn_rid_fmt"
             else:
-                endpoint_mapping["output_format"] = output_format
-                endpoint = "get_skeleton_via_skvn_rid_fmt"
+                endpoint_mapping["skeleton_version"] = skeleton_version
+                if output_format == "precomputed":
+                    endpoint = "get_skeleton_async_via_skvn_rid"
+                else:
+                    endpoint_mapping["output_format"] = output_format
+                    endpoint = "get_skeleton_async_via_skvn_rid_fmt"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -500,6 +523,7 @@ class SkeletonClient(ClientBase):
             "dict",
             "swc",
         ] = "dict",
+        async_: bool = False,
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
@@ -561,7 +585,7 @@ class SkeletonClient(ClientBase):
             skeleton_version = sorted(skeleton_versions)[-1]
 
         url = self._build_get_skeleton_endpoint(
-            root_id, datastack_name, skeleton_version, endpoint_format
+            root_id, datastack_name, skeleton_version, endpoint_format, async_
         )
 
         response = self.session.get(url)
@@ -688,35 +712,39 @@ class SkeletonClient(ClientBase):
 
         if endpoint_format == "flatdict":
             sk_jsons = {}
-            for rid, swc_bytes in response.json().items():
-                try:
-                    sk_json = SkeletonClient.decompressBytesToDict(
-                        io.BytesIO(binascii.unhexlify(swc_bytes)).getvalue()
-                    )
-                    sk_jsons[rid] = sk_json
-                except Exception as e:
-                    logging.error(
-                        f"Error decompressing skeleton for root_id {rid}: {e}"
-                    )
+            for rid, dict_bytes in response.json().items():
+                if dict_bytes != "async":
+                    try:
+                        sk_json = SkeletonClient.decompressBytesToDict(
+                            io.BytesIO(binascii.unhexlify(dict_bytes)).getvalue()
+                        )
+                        sk_jsons[rid] = sk_json
+                    except Exception as e:
+                        logging.error(
+                            f"Error decompressing skeleton for root_id {rid}: {e}"
+                        )
             return sk_jsons
         elif endpoint_format == "swc":
             sk_dfs = {}
             for rid, swc_bytes in response.json().items():
-                try:
-                    sk_csv = (
-                        io.BytesIO(binascii.unhexlify(swc_bytes)).getvalue().decode()
-                    )
-                    # I got the SWC column header from skeleton_plot.skel_io.py
-                    sk_df = pd.read_csv(
-                        StringIO(sk_csv),
-                        sep=" ",
-                        names=["id", "type", "x", "y", "z", "radius", "parent"],
-                    )
-                    sk_dfs[rid] = sk_df
-                except Exception as e:
-                    logging.error(
-                        f"Error decompressing skeleton for root_id {rid}: {e}"
-                    )
+                if swc_bytes != "async":
+                    try:
+                        sk_csv = (
+                            io.BytesIO(binascii.unhexlify(swc_bytes))
+                            .getvalue()
+                            .decode()
+                        )
+                        # I got the SWC column header from skeleton_plot.skel_io.py
+                        sk_df = pd.read_csv(
+                            StringIO(sk_csv),
+                            sep=" ",
+                            names=["id", "type", "x", "y", "z", "radius", "parent"],
+                        )
+                        sk_dfs[rid] = sk_df
+                    except Exception as e:
+                        logging.error(
+                            f"Error decompressing skeleton for root_id {rid}: {e}"
+                        )
             return sk_dfs
 
     @_check_version_compatibility(method_constraint=">=0.5.9")
