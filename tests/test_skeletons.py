@@ -158,7 +158,7 @@ class TestSkeletonsClient:
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
         metadata_url = self.sk_endpoints.get(
-            "get_skeleton_via_skvn_rid_fmt"
+            "get_skeleton_async_via_skvn_rid_fmt"
         ).format_map(sk_mapping)
         sk = {
             "meta": {
