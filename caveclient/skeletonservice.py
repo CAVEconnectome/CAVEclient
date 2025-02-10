@@ -523,7 +523,6 @@ class SkeletonClient(ClientBase):
             "dict",
             "swc",
         ] = "dict",
-        async_: bool = False,
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
@@ -584,6 +583,7 @@ class SkeletonClient(ClientBase):
             skeleton_versions = self.get_versions()
             skeleton_version = sorted(skeleton_versions)[-1]
 
+        async_ = True
         url = self._build_get_skeleton_endpoint(
             root_id, datastack_name, skeleton_version, endpoint_format, async_
         )
