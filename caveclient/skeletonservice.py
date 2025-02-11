@@ -258,48 +258,22 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_id"] = root_id
 
+        assert skeleton_version is not None
+
         if not async_:
-            if not skeleton_version:
-                # Pylance incorrectly thinks that skeleton_version cannot be None here,
-                # but it most certainly can, and that is precisely how I intended it.
-                # Google searching revealed this as a known problem with Pylance and Selenium,
-                # but I have not been successful in solving it yet.
-                if output_format == "precomputed":
-                    endpoint = "get_skeleton_via_rid"
-                else:
-                    # Note that there isn't currently an endpoint for this scenario,
-                    # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
-                    endpoint_mapping["skeleton_version"] = 0
-                    endpoint_mapping["output_format"] = output_format
-                    endpoint = "get_skeleton_via_skvn_rid_fmt"
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            if output_format == "precomputed":
+                endpoint = "get_skeleton_via_skvn_rid"
             else:
-                endpoint_mapping["skeleton_version"] = skeleton_version
-                if output_format == "precomputed":
-                    endpoint = "get_skeleton_via_skvn_rid"
-                else:
-                    endpoint_mapping["output_format"] = output_format
-                    endpoint = "get_skeleton_via_skvn_rid_fmt"
+                endpoint_mapping["output_format"] = output_format
+                endpoint = "get_skeleton_via_skvn_rid_fmt"
         else:
-            if not skeleton_version:
-                # Pylance incorrectly thinks that skeleton_version cannot be None here,
-                # but it most certainly can, and that is precisely how I intended it.
-                # Google searching revealed this as a known problem with Pylance and Selenium,
-                # but I have not been successful in solving it yet.
-                if output_format == "precomputed":
-                    endpoint = "get_skeleton_async_via_rid"
-                else:
-                    # Note that there isn't currently an endpoint for this scenario,
-                    # so we'll just use the skvn_rid_fmt endpoint with skvn set to the default value of 0
-                    endpoint_mapping["skeleton_version"] = 0
-                    endpoint_mapping["output_format"] = output_format
-                    endpoint = "get_skeleton_async_via_skvn_rid_fmt"
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            if output_format == "precomputed":
+                endpoint = "get_skeleton_async_via_skvn_rid"
             else:
-                endpoint_mapping["skeleton_version"] = skeleton_version
-                if output_format == "precomputed":
-                    endpoint = "get_skeleton_async_via_skvn_rid"
-                else:
-                    endpoint_mapping["output_format"] = output_format
-                    endpoint = "get_skeleton_async_via_skvn_rid_fmt"
+                endpoint_mapping["output_format"] = output_format
+                endpoint = "get_skeleton_async_via_skvn_rid_fmt"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -325,11 +299,10 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["output_format"] = output_format
         endpoint_mapping["gen_missing_sks"] = generate_missing_sks
 
-        if not skeleton_version:
-            endpoint = "get_bulk_skeletons_via_rids"
-        else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            endpoint = "get_bulk_skeletons_via_skvn_rids"
+        assert skeleton_version is not None
+
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        endpoint = "get_bulk_skeletons_via_skvn_rids"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -348,6 +321,8 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
+        assert skeleton_version is not None
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         if not post:
@@ -355,16 +330,10 @@ class SkeletonClient(ClientBase):
             # Please use the POST endpoint in the future.
             endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
 
-            if not skeleton_version:
-                endpoint = "gen_bulk_skeletons_via_rids"
-            else:
-                endpoint_mapping["skeleton_version"] = skeleton_version
-                endpoint = "gen_bulk_skeletons_via_skvn_rids"
+            endpoint_mapping["skeleton_version"] = skeleton_version
+            endpoint = "gen_bulk_skeletons_via_skvn_rids"
         else:
-            if not skeleton_version:
-                endpoint = "gen_bulk_skeletons_via_rids_as_post"
-            else:
-                endpoint = "gen_bulk_skeletons_via_skvn_rids_as_post"
+            endpoint = "gen_bulk_skeletons_via_skvn_rids_as_post"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
