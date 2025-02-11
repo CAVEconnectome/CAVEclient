@@ -308,32 +308,22 @@ skeletonservice_endpoints_v1 = {
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/info",
     "get_cache_contents_via_skvn_ridprefixes": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/query_cache/{skeleton_version}/{root_id_prefixes}/{limit}",
-    # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.
-    # Please use the POST endpoint in the future.
     "skeletons_exist_via_skvn_rids": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/exists/{skeleton_version}/{root_ids}",
     "skeletons_exist_via_skvn_rids_as_post": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/exists",
-    "get_skeleton_via_rid": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/{root_id}",
     "get_skeleton_via_skvn_rid": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
     "get_skeleton_via_skvn_rid_fmt": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
-    "get_bulk_skeletons_via_rids": skeleton_v1
-    + "/{datastack_name}/bulk/get_skeletons/{output_format}/{gen_missing_sks}/{root_ids}",
     "get_bulk_skeletons_via_skvn_rids": skeleton_v1
     + "/{datastack_name}/bulk/get_skeletons/{skeleton_version}/{output_format}/{gen_missing_sks}/{root_ids}",
-    # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.
-    # Please use the POST endpoint in the future.
-    "gen_bulk_skeletons_via_rids": skeleton_v1
-    + "/{datastack_name}/bulk/gen_skeletons/{root_ids}",
-    # TODO: DEPRECATED: This endpoint is deprecated and will be removed in the future.
-    # Please use the POST endpoint in the future.
+    "get_skeleton_async_via_skvn_rid": skeleton_v1
+    + "/{datastack_name}/async/get_skeleton/{skeleton_version}/{root_id}",
+    "get_skeleton_async_via_skvn_rid_fmt": skeleton_v1
+    + "/{datastack_name}/async/get_skeleton/{skeleton_version}/{root_id}/{output_format}",
     "gen_bulk_skeletons_via_skvn_rids": skeleton_v1
     + "/{datastack_name}/bulk/gen_skeletons/{skeleton_version}/{root_ids}",
-    "gen_bulk_skeletons_via_rids_as_post": skeleton_v1
-    + "/{datastack_name}/bulk/gen_skeletons",
     "gen_bulk_skeletons_via_skvn_rids_as_post": skeleton_v1
     + "/{datastack_name}/bulk/gen_skeletons",
 }
