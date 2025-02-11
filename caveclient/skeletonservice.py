@@ -553,6 +553,12 @@ class SkeletonClient(ClientBase):
             skeleton_version = sorted(skeleton_versions)[-1]
 
         async_ = True
+        if self._server_version < Version("0.13.7"):
+            async_ = False
+            logging.warning(
+                "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
+            )
+            
         url = self._build_get_skeleton_endpoint(
             root_id, datastack_name, skeleton_version, endpoint_format, async_
         )
