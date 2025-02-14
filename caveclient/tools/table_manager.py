@@ -984,7 +984,7 @@ class TableManager(object):
         return self._tables
 
     def find(self, search_str):
-        """Find tables that contain a string
+        """Find tables that contain a string. Case is ignored.
 
         Parameters
         ----------
@@ -996,7 +996,7 @@ class TableManager(object):
         list
             Table names with that string
         """
-        return [tn for tn in self.table_names if search_str in tn]
+        return [tn for tn in self.table_names if search_str.lower() in tn.lower()]
 
     def __len__(self):
         return len(self._tables)
@@ -1033,7 +1033,7 @@ class ViewManager(object):
         return self._views
 
     def find(self, search_str):
-        """Find tables that contain a string
+        """Find tables that contain a string. Case is ignored.
 
         Parameters
         ----------
@@ -1045,7 +1045,7 @@ class ViewManager(object):
         list
             Table names with that string
         """
-        return [tn for tn in self.table_names if search_str in tn]
+        return [tn for tn in self.table_names if search_str.lower() in tn.lower()]
 
     def __len__(self):
         return len(self._views)
