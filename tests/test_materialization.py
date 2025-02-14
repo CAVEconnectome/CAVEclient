@@ -387,6 +387,9 @@ class TestMatclient:
         )
         print(len(myclient.materialize.tables))
         assert len(myclient.materialize.tables) == 2
+
+        assert myclient.materialize.tables.find("column")[0] == "allen_column_mtypes_v2"
+
         qry = myclient.materialize.tables.allen_column_mtypes_v2(
             pt_root_id=[123, 456], target_id=271700
         )
@@ -396,6 +399,8 @@ class TestMatclient:
         assert "allen_column_mtypes_v2" == qry.joins_kwargs.get("joins")[0][0]
 
         assert "single_neurons" in myclient.materialize.views
+        assert myclient.materialize.views.find("single")[0] == "single_neurons"
+
         vqry = myclient.materialize.views.single_neurons(pt_root_id=[123, 456])
         assert 123 in vqry.filter_kwargs_mat.get("filter_in_dict").get("pt_root_id")
 
