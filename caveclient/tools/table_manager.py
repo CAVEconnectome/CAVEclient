@@ -983,6 +983,21 @@ class TableManager(object):
     def table_names(self):
         return self._tables
 
+    def find(self, search_str):
+        """Find tables that contain a string
+
+        Parameters
+        ----------
+        search_str : str
+
+
+        Returns
+        -------
+        list
+            Table names with that string
+        """
+        return [tn for tn in self.table_names if search_str in tn]
+
     def __len__(self):
         return len(self._tables)
 
@@ -1016,6 +1031,21 @@ class ViewManager(object):
     @property
     def table_names(self):
         return self._views
+
+    def find(self, search_str):
+        """Find tables that contain a string
+
+        Parameters
+        ----------
+        search_str : str
+
+
+        Returns
+        -------
+        list
+            Table names with that string
+        """
+        return [tn for tn in self.table_names if search_str in tn]
 
     def __len__(self):
         return len(self._views)
