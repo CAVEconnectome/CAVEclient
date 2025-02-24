@@ -685,7 +685,7 @@ class SkeletonClient(ClientBase):
                 f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
             )
 
-        if endpoint_format == "flatdict":
+        if endpoint_format == "jsoncompressed" or endpoint_format == "flatdict":
             sk_jsons = {}
             for rid, dict_bytes in response.json().items():
                 if dict_bytes != "async":
@@ -699,7 +699,7 @@ class SkeletonClient(ClientBase):
                             f"Error decompressing skeleton for root_id {rid}: {e}"
                         )
             return sk_jsons
-        elif endpoint_format == "swc":
+        elif endpoint_format == "swccompressed":
             sk_dfs = {}
             for rid, swc_bytes in response.json().items():
                 if swc_bytes != "async":
