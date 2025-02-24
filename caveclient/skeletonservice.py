@@ -161,6 +161,21 @@ class SkeletonClient(ClientBase):
             versions = response.json()
             logging.info(f"versions: {type(versions)} {versions}")
             return versions
+    
+    @staticmethod
+    def compressBytes(inputBytes: BytesIO):
+        """
+        Modeled on compressStringToBytes()
+        """
+        inputBytes.seek(0)
+        stream = BytesIO()
+        compressor = gzip.GzipFile(fileobj=stream, mode='wb')
+        while True:  # until EOF
+            chunk = inputBytes.read(8192)
+            if not chunk:  # EOF?
+                compressor.close()
+                return stream.getvalue()
+            compressor.write(chunk)
 
     @staticmethod
     def compressStringToBytes(inputString):
@@ -191,6 +206,23 @@ class SkeletonClient(ClientBase):
             inputDictStr = inputDictStr.replace(" ", "")
         inputDictStrBytes = SkeletonClient.compressStringToBytes(inputDictStr)
         return inputDictStrBytes
+    
+    @staticmethod
+    def decompressBytes(inputBytes):
+        """
+        Modeled on compressStringToBytes()
+        """
+        bio = BytesIO()
+        stream = BytesIO(inputBytes)
+        decompressor = gzip.GzipFile(fileobj=stream, mode='r')
+        while True:  # until EOF
+            chunk = decompressor.read(8192)
+            if not chunk:
+                decompressor.close()
+                bio.seek(0)
+                return bio.read()
+            bio.write(chunk)
+        return None
 
     @staticmethod
     def decompressBytesToString(inputBytes):
@@ -235,6 +267,23 @@ class SkeletonClient(ClientBase):
             endpoint = "skeletons_exist_via_skvn_rids"
         else:
             endpoint = "skeletons_exist_via_skvn_rids_as_post"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        return url
+    
+    def _build_get_meshwork_endpoint(
+        self,
+        root_id: int,
+        datastack_name: str,
+    ):
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_id"] = root_id
+        endpoint = "get_meshwork_via_rid"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -303,6 +352,25 @@ class SkeletonClient(ClientBase):
 
         endpoint_mapping["skeleton_version"] = skeleton_version
         endpoint = "get_bulk_skeletons_via_skvn_rids"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        return url
+
+    def _build_bulk_meshwork_async_endpoint(
+        self,
+        root_ids: List,
+        datastack_name: str,
+    ):
+        """
+        Building the URL in a separate function facilitates testing
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint = "gen_bulk_meshworks_via_rids_as_post"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
         return url
@@ -482,6 +550,26 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response)
         return response.json()
+
+    @_check_version_compatibility(method_constraint=">=0.16.4")
+    def get_meshwork(
+        self,
+        root_id: int,
+        datastack_name: Optional[str] = None,
+        log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
+    ):
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+        
+        url = self._build_get_meshwork_endpoint(
+            root_id, datastack_name
+        )
+
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        return SkeletonClient.decompressBytes(response.content)
 
     def get_skeleton(
         self,
@@ -721,6 +809,103 @@ class SkeletonClient(ClientBase):
                             f"Error decompressing skeleton for root_id {rid}: {e}"
                         )
             return sk_dfs
+    
+    def print_estimated_async_time(self, num_root_ids, estimated_async_time_secs_upper_bound_sum):
+        if estimated_async_time_secs_upper_bound_sum < 60:
+            estimate_time_str = (
+                f"{estimated_async_time_secs_upper_bound_sum:.0f} seconds"
+            )
+        elif estimated_async_time_secs_upper_bound_sum < 3600:
+            estimate_time_str = (
+                f"{(estimated_async_time_secs_upper_bound_sum / 60):.1f} minutes"
+            )
+        # With a 10000 meshwork limit, the maximum time about 12 hours, so we don't need to check for more than that.
+        # elif estimated_async_time_secs_upper_bound_sum < 86400:
+        else:
+            estimate_time_str = (
+                f"{(estimated_async_time_secs_upper_bound_sum / 3600):.1f} hours"
+            )
+        # else:
+        #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
+
+        logging.info(
+            f"Upper estimate to generate all {num_root_ids} meshworks: {estimate_time_str}"
+        )
+
+    @_check_version_compatibility(method_constraint=">=0.16.4")
+    def generate_bulk_meshworks_async(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
+    ):
+        """Generates meshworks for a list of root ids without retrieving them.
+
+        Parameters
+        ----------
+        root_ids : List
+            A list of root ids of the skeletons to generate
+        datastack_name : str
+            The name of the datastack to check
+
+        Returns
+        -------
+        float
+            The estimated time in seconds to generate all skeletons (a comparable message will be output to the console prior to return).
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        if isinstance(root_ids, np.ndarray):
+            root_ids = root_ids.tolist()
+        if not isinstance(root_ids, list):
+            raise ValueError(
+                f"root_ids must be a list or numpy array of root_ids, not a {type(root_ids)}"
+            )
+
+        if len(root_ids) > MAX_BULK_ASYNCHRONOUS_SKELETONS:
+            logging.warning(
+                f"The number of root_ids exceeds the current limit of {MAX_BULK_ASYNCHRONOUS_SKELETONS}. Only the first {MAX_BULK_ASYNCHRONOUS_SKELETONS} will be processed."
+            )
+            root_ids = root_ids[:MAX_BULK_ASYNCHRONOUS_SKELETONS]
+
+        # TODO: I recently converted this function to a batched approach to alleviate sending a long URL of root_ids via GET,
+        # but have since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
+        # So consider reverting to the unbatched approach in the future.
+
+        estimated_async_time_secs_upper_bound_sum = 0
+        for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
+            rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
+
+            url = self._build_bulk_meshwork_async_endpoint(
+                rids_one_batch, datastack_name
+            )
+            if verbose_level >= 1:
+                logging.info(
+                    f"URL: {url}"
+                )
+            data = {
+                "root_ids": rids_one_batch,
+            }
+            response = self.session.post(url, json=data)
+            response = handle_response(response, as_json=False)
+
+            estimated_async_time_secs_upper_bound = float(response.text)
+            estimated_async_time_secs_upper_bound_sum += (
+                estimated_async_time_secs_upper_bound
+            )
+
+            if verbose_level >= 1:
+                logging.info(
+                    f"Queued asynchronous meshwork generation for one batch of root_ids: {rids_one_batch}"
+                )
+                logging.info(
+                    f"Upper estimate to generate one batch of {len(rids_one_batch)} meshworks: {estimated_async_time_secs_upper_bound} seconds"
+                )
+
+        self.print_estimated_async_time(len(root_ids), estimated_async_time_secs_upper_bound_sum)
+        return estimated_async_time_secs_upper_bound_sum
 
     @_check_version_compatibility(method_constraint=">=0.5.9")
     def generate_bulk_skeletons_async(
@@ -812,24 +997,5 @@ class SkeletonClient(ClientBase):
                     f"Upper estimate to generate one batch of {len(rids_one_batch)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
                 )
 
-        if estimated_async_time_secs_upper_bound_sum < 60:
-            estimate_time_str = (
-                f"{estimated_async_time_secs_upper_bound_sum:.0f} seconds"
-            )
-        elif estimated_async_time_secs_upper_bound_sum < 3600:
-            estimate_time_str = (
-                f"{(estimated_async_time_secs_upper_bound_sum / 60):.1f} minutes"
-            )
-        # With a 10000 skeleton limit, the maximum time about 12 hours, so we don't need to check for more than that.
-        # elif estimated_async_time_secs_upper_bound_sum < 86400:
-        else:
-            estimate_time_str = (
-                f"{(estimated_async_time_secs_upper_bound_sum / 3600):.1f} hours"
-            )
-        # else:
-        #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
-
-        logging.info(
-            f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
-        )
+        self.print_estimated_async_time(len(root_ids), estimated_async_time_secs_upper_bound_sum)
         return estimated_async_time_secs_upper_bound_sum

@@ -312,6 +312,8 @@ skeletonservice_endpoints_v1 = {
     + "/{datastack_name}/precomputed/skeleton/exists/{skeleton_version}/{root_ids}",
     "skeletons_exist_via_skvn_rids_as_post": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/exists",
+    "get_meshwork_via_rid": skeleton_v1
+    + "/{datastack_name}/precomputed/meshwork/{root_id}",
     "get_skeleton_via_skvn_rid": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
     "get_skeleton_via_skvn_rid_fmt": skeleton_v1
@@ -322,6 +324,8 @@ skeletonservice_endpoints_v1 = {
     + "/{datastack_name}/async/get_skeleton/{skeleton_version}/{root_id}",
     "get_skeleton_async_via_skvn_rid_fmt": skeleton_v1
     + "/{datastack_name}/async/get_skeleton/{skeleton_version}/{root_id}/{output_format}",
+    "gen_bulk_meshworks_via_rids_as_post": skeleton_v1
+    + "/{datastack_name}/bulk/gen_meshworks",
     "gen_bulk_skeletons_via_skvn_rids": skeleton_v1
     + "/{datastack_name}/bulk/gen_skeletons/{skeleton_version}/{root_ids}",
     "gen_bulk_skeletons_via_skvn_rids_as_post": skeleton_v1
