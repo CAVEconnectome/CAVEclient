@@ -154,6 +154,11 @@ class TestSkeletonsClient:
         assert result == info
 
     @responses.activate
+    def test_get_meshwork(self, myclient, mocker):
+        # TODO: Placeholder. Implement this test.
+        pass
+
+    @responses.activate
     def test_get_skeleton(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
@@ -322,6 +327,11 @@ class TestSkeletonsClient:
 
         result = myclient.skeleton.get_bulk_skeletons([0, 1], None, 4, "dict")
         assert not deepdiff.DeepDiff(result, sks_result)
+
+    @responses.activate
+    def test_generate_bulk_meshworks_async(self, myclient, mocker):
+        # TODO: Placeholder. Implement this test.
+        pass
 
     @responses.activate
     def test_generate_bulk_skeletons_async(self, myclient, mocker):
