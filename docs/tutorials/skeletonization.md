@@ -26,6 +26,20 @@ And you can see a list of available skeleton versions. In most cases you will wa
 client.skeleton.get_versions()
 ```
 
+## Skeleton output formats and versions
+
+Skeletons are available in a combination of output formats versions. Output formats refer to various ways in which skeleton data can be packaged and presented. The two primary formats are:
+
+* ```'dict'``` (default if unspecified)
+* ```'swc'``` (a Pandas Dataframe)
+
+Skeletons are also available in a variety of numerical versions:
+
+1. The first skeleton version, probably no longer needed.
+2. An extension of v1 to include radii and compartments, and which is compatible with Neuroglancer.
+3. An alteration of v2 that stores compartments more efficiently as uint8 instead of float32, but which is therefore incompatible witb Neuroglancer.
+4. An extension of v3 to include level-2 ids. Note that the SWC output format does not support or include level-2 ids and therefore a v4 skeleton is identical to a v3 skeleton when the SWC output format is indicated.
+
 ## Retrieving a skeleton
 
 Retrieve a skeleton using `get_skeleton()`. The simplest usage is:
@@ -37,12 +51,7 @@ sk = client.skeleton.get_skeleton(
 )
 ```
 
-where the availale output_formats (described below) are:
-
-* ```'dict'``` (default if unspecified)
-* ```'swc'``` (a Pandas Dataframe)
-
-If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.
+where the available output_formats are indicated and described above. If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.
 
 To specify a nondefault skeleton version:
 
