@@ -744,6 +744,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#skeleton-output-formats-and-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skeleton output formats and versions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#retrieving-a-skeleton" class="md-nav__link">
     <span class="md-ellipsis">
       Retrieving a skeleton
@@ -993,6 +1002,19 @@
 <p>And you can see a list of available skeleton versions. In most cases you will want to use the highest (most recent) version provided.</p>
 <div class="highlight"><pre><span></span><code><span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_versions</span><span class="p">()</span>
 </code></pre></div>
+<h3 id="skeleton-output-formats-and-versions">Skeleton output formats and versions<a class="headerlink" href="#skeleton-output-formats-and-versions" title="Permanent link">&para;</a></h3>
+<p>Skeletons are available in a combination of output formats versions. Output formats refer to various ways in which skeleton data can be packaged and presented. The two primary formats are:</p>
+<ul>
+<li><code>'dict'</code> (default if unspecified)</li>
+<li><code>'swc'</code> (a Pandas Dataframe)</li>
+</ul>
+<p>Skeletons are also available in a variety of numerical versions:</p>
+<ol>
+<li>The first skeleton version, probably no longer needed.</li>
+<li>An extension of v1 to include radii and compartments, and which is compatible with Neuroglancer.</li>
+<li>An alteration of v2 that stores compartments more efficiently as uint8 instead of float32, but which is therefore incompatible witb Neuroglancer.</li>
+<li>An extension of v3 to include level-2 ids. Note that the SWC output format does not support or include level-2 ids and therefore a v4 skeleton is identical to a v3 skeleton when the SWC output format is indicated.</li>
+</ol>
 <h3 id="retrieving-a-skeleton">Retrieving a skeleton<a class="headerlink" href="#retrieving-a-skeleton" title="Permanent link">&para;</a></h3>
 <p>Retrieve a skeleton using <code>get_skeleton()</code>. The simplest usage is:</p>
 <div class="highlight"><pre><span></span><code><span class="n">sk</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_skeleton</span><span class="p">(</span>
@@ -1000,12 +1022,7 @@
     <span class="n">output_format</span><span class="o">=&lt;</span><span class="n">output_format</span><span class="o">&gt;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
-<p>where the availale output_formats (described below) are:</p>
-<ul>
-<li><code>'dict'</code> (default if unspecified)</li>
-<li><code>'swc'</code> (a Pandas Dataframe)</li>
-</ul>
-<p>If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.</p>
+<p>where the available output_formats are indicated and described above. If the skeleton doesn't exist in the server cache, it may take 20-60 seconds to generate the skeleton before it is returned. This function will block during that time. Any subsequent retrieval of the same skeleton should go very quickly however.</p>
 <p>To specify a nondefault skeleton version:</p>
 <div class="highlight"><pre><span></span><code><span class="n">sk</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">get_skeleton</span><span class="p">(</span>
     <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span>
