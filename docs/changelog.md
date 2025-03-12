@@ -1,6 +1,13 @@
 ---
 title: Changelog
 ---
+## 7.6.1 (March 12, 2025)
+-- Verbose flags passed into skeleton client are now passed along to the server.
+
+## 7.6.0 (February, 2025)
+-- Added tables.find() and views.find().
+-- Asynchronous skeleton generation and low/high priority skeleton generation (via PubSub).
+
 ## 7.5.1 (January 27, 2025)
 - Skeleton client get_skeleton(), when called with a 'dict' output format request, now populates the dictionary with numpy arrays instead of Python lists.
 
