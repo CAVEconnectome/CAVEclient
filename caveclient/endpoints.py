@@ -306,14 +306,15 @@ skeletonservice_endpoints_v1 = {
     "bulk_skeleton_info": skeleton_v1 + "/{datastack_name}/bulk/skeleton/info",
     "skeleton_info_versioned": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/info",
-    "get_cache_contents_via_skvn_ridprefixes": skeleton_v1
+    # Key renamed but value unchanged
+    "get_cache_contents_via_skvn_ridprefixes_limit": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/query_cache/{skeleton_version}/{root_id_prefixes}/{limit}",
     "skeletons_exist_via_skvn_rids": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/exists/{skeleton_version}/{root_ids}",
     "skeletons_exist_via_skvn_rids_as_post": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/exists",
-    "get_skeleton_via_skvn_rid": skeleton_v1
-    + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
+    # Defunct. Doesn't apply to current or past versions going back "a long way" (hard to quantify)
+    # "get_skeleton_via_skvn_rid":                         skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
     "get_skeleton_via_skvn_rid_fmt": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
     "get_bulk_skeletons_via_skvn_rids": skeleton_v1
