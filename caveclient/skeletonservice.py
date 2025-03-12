@@ -225,7 +225,8 @@ class SkeletonClient(ClientBase):
         root_ids: List,
         datastack_name: str,
         skeleton_version: int,
-        post: bool = False,
+        verbose_level: int,
+        post: bool,
     ):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -237,6 +238,7 @@ class SkeletonClient(ClientBase):
             endpoint = "skeletons_exist_via_skvn_rids_as_post"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
         return url
 
     def _build_get_skeleton_endpoint(
@@ -246,6 +248,7 @@ class SkeletonClient(ClientBase):
         skeleton_version: int,
         output_format: str,
         async_: bool,
+        verbose_level: int,
     ):
         """
         Building the URL in a separate function facilitates testing
@@ -254,28 +257,21 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
+        assert skeleton_version is not None
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_id"] = root_id
-
-        assert skeleton_version is not None
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        endpoint_mapping["output_format"] = output_format
 
         if not async_:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            if output_format == "precomputed":
-                endpoint = "get_skeleton_via_skvn_rid"
-            else:
-                endpoint_mapping["output_format"] = output_format
-                endpoint = "get_skeleton_via_skvn_rid_fmt"
+            endpoint = "get_skeleton_via_skvn_rid_fmt"
         else:
-            endpoint_mapping["skeleton_version"] = skeleton_version
-            if output_format == "precomputed":
-                endpoint = "get_skeleton_async_via_skvn_rid"
-            else:
-                endpoint_mapping["output_format"] = output_format
-                endpoint = "get_skeleton_async_via_skvn_rid_fmt"
+            endpoint = "get_skeleton_async_via_skvn_rid_fmt"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
         return url
 
     def _build_bulk_endpoint(
@@ -285,6 +281,7 @@ class SkeletonClient(ClientBase):
         skeleton_version: int,
         output_format: str,
         generate_missing_sks: bool,
+        verbose_level: int,
     ):
         """
         Building the URL in a separate function facilitates testing
@@ -293,18 +290,19 @@ class SkeletonClient(ClientBase):
             datastack_name = self._datastack_name
         assert datastack_name is not None
 
+        assert skeleton_version is not None
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
         endpoint_mapping["output_format"] = output_format
         endpoint_mapping["gen_missing_sks"] = generate_missing_sks
-
-        assert skeleton_version is not None
-
         endpoint_mapping["skeleton_version"] = skeleton_version
+
         endpoint = "get_bulk_skeletons_via_skvn_rids"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
         return url
 
     def _build_bulk_async_endpoint(
@@ -312,7 +310,8 @@ class SkeletonClient(ClientBase):
         root_ids: List,
         datastack_name: str,
         skeleton_version: int,
-        post: bool = False,
+        verbose_level: int,
+        post: bool,
     ):
         """
         Building the URL in a separate function facilitates testing
@@ -331,11 +330,13 @@ class SkeletonClient(ClientBase):
             endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
 
             endpoint_mapping["skeleton_version"] = skeleton_version
+
             endpoint = "gen_bulk_skeletons_via_skvn_rids"
         else:
             endpoint = "gen_bulk_skeletons_via_skvn_rids_as_post"
 
         url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
         return url
 
     @_check_version_compatibility(method_constraint=">=0.5.9")
@@ -346,6 +347,7 @@ class SkeletonClient(ClientBase):
         root_id_prefixes: Union[int, str, List] = 0,
         limit: Optional[int] = 0,
         log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
     ):
         """
         Mirror CloudFiles.list() for skeletons as a pass-through interface to the underlying service and bucket.
@@ -369,11 +371,12 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["root_id_prefixes"] = root_id_prefixes
         endpoint_mapping["limit"] = limit
-
         endpoint_mapping["skeleton_version"] = skeleton_version
-        url = self._endpoints["get_cache_contents_via_skvn_ridprefixes"].format_map(
-            endpoint_mapping
-        )
+
+        endpoint = "get_cache_contents_via_skvn_ridprefixes_limit"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
 
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
@@ -387,6 +390,7 @@ class SkeletonClient(ClientBase):
         skeleton_version: Optional[int] = 3,
         root_ids: Union[int, str, List] = 0,
         log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
     ):
         """
         Confirm or deny that a set of root ids have H5 skeletons in the cache.
@@ -425,19 +429,23 @@ class SkeletonClient(ClientBase):
         for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
 
+            use_post = self._server_version >= Version("0.9.0")
+            url = self._build_skeletons_exist_endpoint(
+                rids_one_batch,
+                datastack_name,
+                skeleton_version,
+                verbose_level,
+                use_post,
+            )
+
             if self._server_version < Version("0.9.0"):
-                url = self._build_skeletons_exist_endpoint(
-                    rids_one_batch, datastack_name, skeleton_version
-                )
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
             else:
-                url = self._build_skeletons_exist_endpoint(
-                    rids_one_batch, datastack_name, skeleton_version, True
-                )
                 data = {
                     "root_ids": rids_one_batch,
                     "skeleton_version": skeleton_version,
+                    "verbose_level": verbose_level,
                 }
                 response = self.session.post(url, json=data)
                 response = handle_response(response, as_json=False)
@@ -540,8 +548,7 @@ class SkeletonClient(ClientBase):
                 f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
-        if verbose_level >= 1:
-            logging.info(f"SkeletonService version: {self._server_version}")
+        logging.info(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.6.0"):
             logging.warning(
                 "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
@@ -558,18 +565,22 @@ class SkeletonClient(ClientBase):
             logging.warning(
                 "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
             )
-            
+
         url = self._build_get_skeleton_endpoint(
-            root_id, datastack_name, skeleton_version, endpoint_format, async_
+            root_id,
+            datastack_name,
+            skeleton_version,
+            endpoint_format,
+            async_,
+            verbose_level,
         )
 
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
-        if verbose_level >= 1:
-            logging.info(
-                f"get_skeleton() response contains content of size {len(response.content)} bytes"
-            )
+        logging.info(
+            f"get_skeleton() response contains content of size {len(response.content)} bytes"
+        )
 
         if endpoint_format == "jsoncompressed":
             assert self._server_version < Version("0.6.0")
@@ -676,14 +687,14 @@ class SkeletonClient(ClientBase):
             skeleton_version,
             endpoint_format,
             generate_missing_skeletons,
+            verbose_level,
         )
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
-        if verbose_level >= 1:
-            logging.info(
-                f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
-            )
+        logging.info(
+            f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
+        )
 
         if endpoint_format == "flatdict":
             sk_jsons = {}
@@ -782,19 +793,23 @@ class SkeletonClient(ClientBase):
         for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
             rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
 
+            use_post = self._server_version >= Version("0.8.0")
+            url = self._build_bulk_async_endpoint(
+                rids_one_batch,
+                datastack_name,
+                skeleton_version,
+                verbose_level,
+                use_post,
+            )
+
             if self._server_version < Version("0.8.0"):
-                url = self._build_bulk_async_endpoint(
-                    rids_one_batch, datastack_name, skeleton_version
-                )
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
             else:
-                url = self._build_bulk_async_endpoint(
-                    rids_one_batch, datastack_name, skeleton_version, post=True
-                )
                 data = {
                     "root_ids": rids_one_batch,
                     "skeleton_version": skeleton_version,
+                    "verbose_level": verbose_level,
                 }
                 response = self.session.post(url, json=data)
                 response = handle_response(response, as_json=False)
@@ -804,13 +819,12 @@ class SkeletonClient(ClientBase):
                 estimated_async_time_secs_upper_bound
             )
 
-            if verbose_level >= 1:
-                logging.info(
-                    f"Queued asynchronous skeleton generation for one batch of root_ids: {rids_one_batch}"
-                )
-                logging.info(
-                    f"Upper estimate to generate one batch of {len(rids_one_batch)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
-                )
+            logging.info(
+                f"Queued asynchronous skeleton generation for one batch of root_ids: {rids_one_batch}"
+            )
+            logging.info(
+                f"Upper estimate to generate one batch of {len(rids_one_batch)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
+            )
 
         if estimated_async_time_secs_upper_bound_sum < 60:
             estimate_time_str = (
