@@ -70,7 +70,7 @@ class TestSkeletonsClient:
     @responses.activate
     def test_get_cache_contents(self, myclient, mocker):
         metadata_url = self.sk_endpoints.get(
-            "get_cache_contents_via_skvn_ridprefixes"
+            "get_cache_contents_via_skvn_ridprefixes_limit"
         ).format_map(sk_mapping)
         responses.add(
             responses.GET,
