@@ -315,7 +315,7 @@ skeletonservice_endpoints_v1 = {
     # Defunct. Doesn't apply to current or past versions going back "a long way" (hard to quantify).
     # However, I'm leaving it in place for clarity becuase I'm unsure how to confidently establish its
     # irrelevance all the way back through time without manually scrounging every prior version of the file.
-    # "get_skeleton_via_skvn_rid":                         skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
+    # "get_skeleton_via_skvn_rid": skeleton_v1 + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}",
     "get_skeleton_via_skvn_rid_fmt": skeleton_v1
     + "/{datastack_name}/precomputed/skeleton/{skeleton_version}/{root_id}/{output_format}",
     "get_bulk_skeletons_via_skvn_rids": skeleton_v1
