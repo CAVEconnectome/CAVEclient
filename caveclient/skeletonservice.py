@@ -266,7 +266,6 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["output_format"] = output_format
 
         if not async_:
-            # async_ will only be False for older versions of the server so I will not maintain every combination of parameters (e.g., verbose_level)
             endpoint = "get_skeleton_via_skvn_rid_fmt"
         else:
             endpoint = "get_skeleton_async_via_skvn_rid_fmt"
