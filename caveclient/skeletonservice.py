@@ -233,7 +233,6 @@ class SkeletonClient(ClientBase):
         if not post:
             endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
             endpoint_mapping["skeleton_version"] = skeleton_version
-            endpoint_mapping["verbose_level"] = verbose_level
             endpoint = "skeletons_exist_via_skvn_rids"
         else:
             endpoint = "skeletons_exist_via_skvn_rids_as_post"
@@ -265,7 +264,6 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["root_id"] = root_id
         endpoint_mapping["skeleton_version"] = skeleton_version
         endpoint_mapping["output_format"] = output_format
-        endpoint_mapping["verbose_level"] = verbose_level
 
         if not async_:
             # async_ will only be False for older versions of the server so I will not maintain every combination of parameters (e.g., verbose_level)
@@ -301,7 +299,6 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["output_format"] = output_format
         endpoint_mapping["gen_missing_sks"] = generate_missing_sks
         endpoint_mapping["skeleton_version"] = skeleton_version
-        endpoint_mapping["verbose_level"] = verbose_level
 
         endpoint = "get_bulk_skeletons_via_skvn_rids"
 
@@ -376,7 +373,6 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["root_id_prefixes"] = root_id_prefixes
         endpoint_mapping["limit"] = limit
         endpoint_mapping["skeleton_version"] = skeleton_version
-        endpoint_mapping["verbose_level"] = verbose_level
 
         endpoint = "get_cache_contents_via_skvn_ridprefixes_limit"
 
