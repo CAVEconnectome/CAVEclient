@@ -619,14 +619,8 @@ class SkeletonClient(ClientBase):
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
 
-            # Reduce 'id' and 'parent' columns from int64 to int16, and 'type' column from int64 to int8
-            df = df.apply(pd.to_numeric, downcast="integer")
             # Convert 'type' column from int8 to uint8
             df["type"] = df["type"].astype("uint8")
-
-            # Reduce float columns from float64 to float32. This sacrifies precision and therefore is perhaps undesirable.
-            # I have it left here, commented out, for demonstration purposes, should it be deemed desirable in the future.
-            # df = df.apply(pd.to_numeric, downcast='float')
 
             return df
 
