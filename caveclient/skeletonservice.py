@@ -618,10 +618,7 @@ class SkeletonClient(ClientBase):
                 sep=" ",
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
-
-            # Convert 'type' column from int8 to uint8
-            df["type"] = df["type"].astype("uint8")
-
+            
             return df
 
         raise ValueError(f"Unknown output format: {output_format}")
