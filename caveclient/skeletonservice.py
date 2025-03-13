@@ -646,7 +646,7 @@ class SkeletonClient(ClientBase):
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
-        """Generates skeletons for a list of root ids without retrieving them.
+        """Generates skeletons for a list of root ids in a "small" bulk (ten at the time of this writing). Use the async interface for larger bulk requests.
 
         Parameters
         ----------
@@ -710,7 +710,7 @@ class SkeletonClient(ClientBase):
                             f"Error decompressing skeleton for root_id {rid}: {e}"
                         )
             return sk_jsons
-        elif endpoint_format == "swc":
+        elif endpoint_format == "swccompressed":
             sk_dfs = {}
             for rid, swc_bytes in response.json().items():
                 if swc_bytes != "async":
