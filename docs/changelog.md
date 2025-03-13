@@ -1,6 +1,9 @@
 ---
 title: Changelog
 ---
+## 7.6.2 (March 13, 2025)
+- Bug fix. SWC skeletons weren't working through the skeleton client's get_bulk_skeletons().
+
 ## 7.6.1 (March 12, 2025)
 - Verbose flags passed into skeleton client are now passed along to the server.
 
