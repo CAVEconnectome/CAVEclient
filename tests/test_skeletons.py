@@ -25,9 +25,14 @@ sk_mapping = {
     "limit": 0,
     "root_ids": "0,1",
     "root_id": "0",
-    "output_format": "flatdict",
     "gen_missing_sks": False,
 }
+
+sk_flatdict = copy.deepcopy(sk_mapping)
+sk_flatdict["output_format"] = "flatdict"
+
+sk_swc = copy.deepcopy(sk_mapping)
+sk_swc["output_format"] = "swccompressed"
 
 info_mapping = {
     "i_server_address": datastack_dict["global_server"],
@@ -154,12 +159,12 @@ class TestSkeletonsClient:
         assert result == info
 
     @responses.activate
-    def test_get_skeleton(self, myclient, mocker):
+    def test_get_skeleton__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
         metadata_url = self.sk_endpoints.get(
             "get_skeleton_async_via_skvn_rid_fmt"
-        ).format_map(sk_mapping)
+        ).format_map(sk_flatdict)
         sk = {
             "meta": {
                 "root_id": 864691135495137700,
@@ -239,12 +244,12 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sk_result)
 
     @responses.activate
-    def test_get_bulk_skeletons(self, myclient, mocker):
+    def test_get_bulk_skeletons__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
         metadata_url = self.sk_endpoints.get(
             "get_bulk_skeletons_via_skvn_rids"
-        ).format_map(sk_mapping)
+        ).format_map(sk_flatdict)
         sk = {
             "meta": {
                 "root_id": 864691135495137700,
@@ -324,6 +329,34 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sks_result)
 
     @responses.activate
+    def test_get_bulk_skeletons__swc(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get(
+            "get_bulk_skeletons_via_skvn_rids"
+        ).format_map(sk_swc)
+
+        sk_result = {}
+        responses.add(responses.GET, url=metadata_url, json=sk_result, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_bulk_skeletons([0, 1], None, 4, "swc")
+        assert not deepdiff.DeepDiff(result, sk_result)
+
+    @responses.activate
     def test_generate_bulk_skeletons_async(self, myclient, mocker):
-        # TODO: Placeholder. Implement this test.
-        pass
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get(
+            "gen_bulk_skeletons_via_skvn_rids_as_post"
+        ).format_map(sk_mapping)
+        
+        data = 60.0
+        responses.add(responses.POST, url=metadata_url, json=data, status=200)
+
+        result = myclient.skeleton.generate_bulk_skeletons_async([0, 1], datastack_dict["datastack_name"], 4)
+        assert result == 60.0
