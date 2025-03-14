@@ -1,8 +1,11 @@
 import binascii
 import copy
+from io import BytesIO
+import io
 
 import deepdiff
 import numpy as np
+import pandas as pd
 import responses
 from packaging.version import Version
 
@@ -242,6 +245,29 @@ class TestSkeletonsClient:
 
         result = myclient.skeleton.get_skeleton(0, None, 4, "dict")
         assert not deepdiff.DeepDiff(result, sk_result)
+
+    @responses.activate
+    def test_get_skeleton__swc(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get(
+            "get_skeleton_async_via_skvn_rid_fmt"
+        ).format_map(sk_swc)
+        
+        sk_df = pd.DataFrame([[0, 0, 0, 0, 0, 1, -1]], columns=['id', 'type', 'x', 'y', 'z', 'radius', 'parent'])
+        sk_csv_str = sk_df.to_csv(index=False, header=False, sep=" ")
+        swc_bytes = SkeletonClient.compressStringToBytes(sk_csv_str)
+        
+        responses.add(responses.GET, url=metadata_url, body=swc_bytes, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_skeleton(0, None, 4, "swc")
+        dif = result.compare(sk_df)
+        assert dif.empty
 
     @responses.activate
     def test_get_bulk_skeletons__dict(self, myclient, mocker):
