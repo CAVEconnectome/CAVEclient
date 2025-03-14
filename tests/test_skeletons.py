@@ -431,6 +431,11 @@ class TestSkeletonsClient:
     def test_generate_bulk_skeletons_async(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
         metadata_url = self.sk_endpoints.get(
             "gen_bulk_skeletons_via_skvn_rids_as_post"
         ).format_map(sk_mapping)
