@@ -270,6 +270,33 @@ class TestSkeletonsClient:
         assert dif.empty
 
     @responses.activate
+    def test_get_skeleton__invalid_output_format(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+        
+        for output_format in ["", "asdf", "flatdict", "json", "jsoncompressed", "swccompressed"]:
+            try:
+                result = myclient.skeleton.get_skeleton(0, None, 4, output_format)
+                assert False
+            except ValueError as e:
+                assert e.args[0] == f"Unknown output format: {output_format}. Valid options: ['dict', 'swc']"
+                
+    @responses.activate
+    def test_get_skeleton__invalid_skeleton_version(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                result = myclient.skeleton.get_skeleton(0, None, skeleton_version, "dict")
+                assert False
+            except ValueError as e:
+                assert e.args[0] == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+
+    @responses.activate
     def test_get_bulk_skeletons__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
