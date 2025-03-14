@@ -699,7 +699,7 @@ class SkeletonClient(ClientBase):
         if endpoint_format == "flatdict":
             sk_jsons = {}
             for rid, dict_bytes in response.json().items():
-                if dict_bytes != "async":
+                if dict_bytes not in ["async", "invalid_rid", "invalid_layer_rid"]:
                     try:
                         sk_json = SkeletonClient.decompressBytesToDict(
                             io.BytesIO(binascii.unhexlify(dict_bytes)).getvalue()
@@ -713,7 +713,7 @@ class SkeletonClient(ClientBase):
         elif endpoint_format == "swccompressed":
             sk_dfs = {}
             for rid, swc_bytes in response.json().items():
-                if swc_bytes != "async":
+                if swc_bytes not in ["async", "invalid_rid", "invalid_layer_rid"]:
                     try:
                         sk_csv = (
                             io.BytesIO(binascii.unhexlify(swc_bytes))
