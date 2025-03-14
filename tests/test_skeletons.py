@@ -272,7 +272,7 @@ class TestSkeletonsClient:
     @responses.activate
     def test_get_skeleton__invalid_output_format(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
-        
+
         for output_format in ["", "asdf", "flatdict", "json", "jsoncompressed", "swccompressed"]:
             try:
                 result = myclient.skeleton.get_skeleton(0, None, 4, output_format)
@@ -401,6 +401,33 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sk_result)
 
     @responses.activate
+    def test_get_bulk_skeletons__invalid_output_format(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        for output_format in ["", "asdf", "flatdict", "json", "jsoncompressed", "swccompressed"]:
+            try:
+                result = myclient.skeleton.get_bulk_skeletons([0, 1], None, 4, output_format)
+                assert False
+            except ValueError as e:
+                assert e.args[0] == f"Unknown output format: {output_format}. Valid options: ['dict', 'swc']"
+
+    @responses.activate
+    def test_get_bulk_skeletons__invalid_skeleton_version(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                result = myclient.skeleton.get_bulk_skeletons([0, 1], None, skeleton_version, "dict")
+                assert False
+            except ValueError as e:
+                assert e.args[0] == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+
+    @responses.activate
     def test_generate_bulk_skeletons_async(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
@@ -413,3 +440,19 @@ class TestSkeletonsClient:
 
         result = myclient.skeleton.generate_bulk_skeletons_async([0, 1], datastack_dict["datastack_name"], 4)
         assert result == 60.0
+
+    @responses.activate
+    def test_generate_bulk_skeletons_async__invalid_skeleton_version(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                result = myclient.skeleton.generate_bulk_skeletons_async([0, 1], datastack_dict["datastack_name"], skeleton_version)
+                assert False
+            except ValueError as e:
+                assert e.args[0] == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"

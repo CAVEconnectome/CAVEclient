@@ -772,6 +772,12 @@ class SkeletonClient(ClientBase):
             )
             skeleton_version = 4
 
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
+            )
+
         if isinstance(root_ids, np.ndarray):
             root_ids = root_ids.tolist()
         if not isinstance(root_ids, list):
