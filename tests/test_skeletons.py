@@ -265,7 +265,7 @@ class TestSkeletonsClient:
             "swccompressed",
         ]:
             try:
-                result = myclient.skeleton.get_skeleton(0, None, 4, output_format)
+                myclient.skeleton.get_skeleton(0, None, 4, output_format)
                 assert False
             except ValueError as e:
                 assert (
@@ -284,7 +284,7 @@ class TestSkeletonsClient:
 
         for skeleton_version in [-2, 999]:
             try:
-                result = myclient.skeleton.get_skeleton(
+                myclient.skeleton.get_skeleton(
                     0, None, skeleton_version, "dict"
                 )
                 assert False
@@ -391,7 +391,7 @@ class TestSkeletonsClient:
             "swccompressed",
         ]:
             try:
-                result = myclient.skeleton.get_bulk_skeletons(
+                myclient.skeleton.get_bulk_skeletons(
                     [0, 1], None, 4, output_format
                 )
                 assert False
@@ -412,7 +412,7 @@ class TestSkeletonsClient:
 
         for skeleton_version in [-2, 999]:
             try:
-                result = myclient.skeleton.get_bulk_skeletons(
+                myclient.skeleton.get_bulk_skeletons(
                     [0, 1], None, skeleton_version, "dict"
                 )
                 assert False
@@ -456,7 +456,7 @@ class TestSkeletonsClient:
 
         for skeleton_version in [-2, 999]:
             try:
-                result = myclient.skeleton.generate_bulk_skeletons_async(
+                myclient.skeleton.generate_bulk_skeletons_async(
                     [0, 1], datastack_dict["datastack_name"], skeleton_version
                 )
                 assert False
