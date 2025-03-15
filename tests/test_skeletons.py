@@ -3,6 +3,7 @@ import copy
 
 import deepdiff
 import numpy as np
+import pandas as pd
 import responses
 from packaging.version import Version
 
@@ -25,9 +26,14 @@ sk_mapping = {
     "limit": 0,
     "root_ids": "0,1",
     "root_id": "0",
-    "output_format": "flatdict",
     "gen_missing_sks": False,
 }
+
+sk_flatdict = copy.deepcopy(sk_mapping)
+sk_flatdict["output_format"] = "flatdict"
+
+sk_swc = copy.deepcopy(sk_mapping)
+sk_swc["output_format"] = "swccompressed"
 
 info_mapping = {
     "i_server_address": datastack_dict["global_server"],
@@ -154,12 +160,12 @@ class TestSkeletonsClient:
         assert result == info
 
     @responses.activate
-    def test_get_skeleton(self, myclient, mocker):
+    def test_get_skeleton__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
         metadata_url = self.sk_endpoints.get(
             "get_skeleton_async_via_skvn_rid_fmt"
-        ).format_map(sk_mapping)
+        ).format_map(sk_flatdict)
         sk = {
             "meta": {
                 "root_id": 864691135495137700,
@@ -181,42 +187,22 @@ class TestSkeletonsClient:
                 "collapse_params": {},
                 "timestamp": 1736881678.0623715,
                 "skeleton_type": "pcg_skel",
-                "meta": {
-                "datastack": "minnie65_phase3_v1",
-                "space": "l2cache"
-                },
+                "meta": {"datastack": "minnie65_phase3_v1", "space": "l2cache"},
                 "sk_dict_structure_version": 4,
-                "skeleton_version": 4
+                "skeleton_version": 4,
             },
             "edges": [
-                [
-                1,
-                0
-                ],
+                [1, 0],
             ],
-            "mesh_to_skel_map": [
-                0,
-                1
-            ],
+            "mesh_to_skel_map": [0, 1],
             "root": 0,
             "vertices": [
-                [
-                1054848., 827272., 601920.
-                ],
-                [
-                1054856., 827192., 601920.
-                ],
+                [1054848.0, 827272.0, 601920.0],
+                [1054856.0, 827192.0, 601920.0],
             ],
-            "compartment": [
-                3,
-                3
-            ],
-            "radius": [
-                203.6853403, 203.6853403
-            ],
-            'lvl2_ids': [
-                173056326983745934, 173126695727923522
-            ]
+            "compartment": [3, 3],
+            "radius": [203.6853403, 203.6853403],
+            "lvl2_ids": [173056326983745934, 173126695727923522],
         }
 
         sk_result = copy.deepcopy(sk)
@@ -239,12 +225,80 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sk_result)
 
     @responses.activate
-    def test_get_bulk_skeletons(self, myclient, mocker):
+    def test_get_skeleton__swc(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get(
+            "get_skeleton_async_via_skvn_rid_fmt"
+        ).format_map(sk_swc)
+
+        sk_df = pd.DataFrame(
+            [[0, 0, 0, 0, 0, 1, -1]],
+            columns=["id", "type", "x", "y", "z", "radius", "parent"],
+        )
+        sk_csv_str = sk_df.to_csv(index=False, header=False, sep=" ")
+        swc_bytes = SkeletonClient.compressStringToBytes(sk_csv_str)
+
+        responses.add(responses.GET, url=metadata_url, body=swc_bytes, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_skeleton(0, None, 4, "swc")
+        dif = result.compare(sk_df)
+        assert dif.empty
+
+    @responses.activate
+    def test_get_skeleton__invalid_output_format(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        for output_format in [
+            "",
+            "asdf",
+            "flatdict",
+            "json",
+            "jsoncompressed",
+            "swccompressed",
+        ]:
+            try:
+                myclient.skeleton.get_skeleton(0, None, 4, output_format)
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown output format: {output_format}. Valid options: ['dict', 'swc']"
+                )
+
+    @responses.activate
+    def test_get_skeleton__invalid_skeleton_version(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                myclient.skeleton.get_skeleton(
+                    0, None, skeleton_version, "dict"
+                )
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+                )
+
+    @responses.activate
+    def test_get_bulk_skeletons__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
 
         metadata_url = self.sk_endpoints.get(
             "get_bulk_skeletons_via_skvn_rids"
-        ).format_map(sk_mapping)
+        ).format_map(sk_flatdict)
         sk = {
             "meta": {
                 "root_id": 864691135495137700,
@@ -266,52 +320,32 @@ class TestSkeletonsClient:
                 "collapse_params": {},
                 "timestamp": 1736881678.0623715,
                 "skeleton_type": "pcg_skel",
-                "meta": {
-                "datastack": "minnie65_phase3_v1",
-                "space": "l2cache"
-                },
+                "meta": {"datastack": "minnie65_phase3_v1", "space": "l2cache"},
                 "sk_dict_structure_version": 4,
-                "skeleton_version": 4
+                "skeleton_version": 4,
             },
             "edges": [
-                [
-                1,
-                0
-                ],
+                [1, 0],
             ],
-            "mesh_to_skel_map": [
-                0,
-                1
-            ],
+            "mesh_to_skel_map": [0, 1],
             "root": 0,
             "vertices": [
-                [
-                1054848., 827272., 601920.
-                ],
-                [
-                1054856., 827192., 601920.
-                ],
+                [1054848.0, 827272.0, 601920.0],
+                [1054856.0, 827192.0, 601920.0],
             ],
-            "compartment": [
-                3,
-                3
-            ],
-            "radius": [
-                203.6853403, 203.6853403
-            ],
-            'lvl2_ids': [
-                173056326983745934, 173126695727923522
-            ]
+            "compartment": [3, 3],
+            "radius": [203.6853403, 203.6853403],
+            "lvl2_ids": [173056326983745934, 173126695727923522],
         }
 
         sks_result = {
-            '0': sk,
-            '1': sk,
+            "0": sk,
+            "1": sk,
         }
 
         json_content = {
-            0: binascii.hexlify(SkeletonClient.compressDictToBytes(sk)).decode('ascii'),
-            1: binascii.hexlify(SkeletonClient.compressDictToBytes(sk)).decode('ascii'),
+            0: binascii.hexlify(SkeletonClient.compressDictToBytes(sk)).decode("ascii"),
+            1: binascii.hexlify(SkeletonClient.compressDictToBytes(sk)).decode("ascii"),
         }
         responses.add(responses.GET, url=metadata_url, json=json_content, status=200)
 
@@ -324,6 +358,108 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sks_result)
 
     @responses.activate
+    def test_get_bulk_skeletons__swc(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get(
+            "get_bulk_skeletons_via_skvn_rids"
+        ).format_map(sk_swc)
+
+        sk_result = {}
+        responses.add(responses.GET, url=metadata_url, json=sk_result, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_bulk_skeletons([0, 1], None, 4, "swc")
+        assert not deepdiff.DeepDiff(result, sk_result)
+
+    @responses.activate
+    def test_get_bulk_skeletons__invalid_output_format(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        for output_format in [
+            "",
+            "asdf",
+            "flatdict",
+            "json",
+            "jsoncompressed",
+            "swccompressed",
+        ]:
+            try:
+                myclient.skeleton.get_bulk_skeletons(
+                    [0, 1], None, 4, output_format
+                )
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown output format: {output_format}. Valid options: ['dict', 'swc']"
+                )
+
+    @responses.activate
+    def test_get_bulk_skeletons__invalid_skeleton_version(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                myclient.skeleton.get_bulk_skeletons(
+                    [0, 1], None, skeleton_version, "dict"
+                )
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+                )
+
+    @responses.activate
     def test_generate_bulk_skeletons_async(self, myclient, mocker):
-        # TODO: Placeholder. Implement this test.
-        pass
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        metadata_url = self.sk_endpoints.get(
+            "gen_bulk_skeletons_via_skvn_rids_as_post"
+        ).format_map(sk_mapping)
+
+        data = 60.0
+        responses.add(responses.POST, url=metadata_url, json=data, status=200)
+
+        result = myclient.skeleton.generate_bulk_skeletons_async(
+            [0, 1], datastack_dict["datastack_name"], 4
+        )
+        assert result == 60.0
+
+    @responses.activate
+    def test_generate_bulk_skeletons_async__invalid_skeleton_version(
+        self, myclient, mocker
+    ):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                myclient.skeleton.generate_bulk_skeletons_async(
+                    [0, 1], datastack_dict["datastack_name"], skeleton_version
+                )
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+                )
