@@ -1134,9 +1134,9 @@ generate_bulk_skeletons_async(root_ids)
 
 # Repeatedly query the cache for the existence of the skeletons until they are all available
 while True:
-    skeletons_that_exist = client.skeleton.skeletons_exist(root_ids=rids)
+    skeletons_that_exist = client.skeleton.skeletons_exist(root_ids=root_ids)
     num_skeletons_found = sum(skeletons_that_exist.values())
-    if num_skeletons_found == len(rids):
+    if num_skeletons_found == len(root_ids):
         break
     sleep(10)  # Pause for ten seconds and check again
 
