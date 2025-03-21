@@ -2,126 +2,126 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/changelog/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/contributing/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/glossary/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/installation/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/annotation/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/auth/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/chunkedgraph/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/client/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/config/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/datastack_lookup/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/info/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/l2cache/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/materialize/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/schema/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/skeleton/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/state/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/api/testing/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/advanced/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/annotation/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/authentication/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/chunkedgraph/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/framework/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/info/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/l2cache/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/materialization/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/schemas/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/skeletonization/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
     <url>
          <loc>https://caveconnectome.github.io/CAVEclient/tutorials/state/</loc>
-         <lastmod>2025-03-18</lastmod>
+         <lastmod>2025-03-21</lastmod>
     </url>
 </urlset>
