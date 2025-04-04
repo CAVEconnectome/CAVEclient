@@ -283,15 +283,14 @@ class TestSkeletonsClient:
 
         for skeleton_version in [-2, 999]:
             try:
-                myclient.skeleton.get_skeleton(
-                    0, None, skeleton_version, "dict"
-                )
+                myclient.skeleton.get_skeleton(0, None, skeleton_version, "dict")
                 assert False
             except ValueError as e:
                 assert (
                     e.args[0]
                     == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
                 )
+
     @responses.activate
     def test_get_skeleton__refusal_list(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
@@ -305,16 +304,20 @@ class TestSkeletonsClient:
             "get_skeleton_async_via_skvn_rid_fmt"
         ).format_map(sk_flatdict)
 
-        responses.add(responses.GET, url=metadata_url,
-                      json='"Error": "Problematic root id: 112233445566778899 is in the refusal list"',
-                      status=400)
+        responses.add(
+            responses.GET,
+            url=metadata_url,
+            json='"Error": "Problematic root id: 112233445566778899 is in the refusal list"',
+            status=400,
+        )
 
         try:
-            myclient.skeleton.get_skeleton(0, None, 4, 'dict')
+            myclient.skeleton.get_skeleton(0, None, 4, "dict")
             assert False
         except HTTPError as e:
             assert (
-                e.args[0] == '400 Client Error: Bad Request for url: https://local.cave.com/skeletoncache/api/v1/test_stack/async/get_skeleton/4/0/flatdict?verbose_level=0 content: b\'"\\\\"Error\\\\": \\\\"Problematic root id: 112233445566778899 is in the refusal list\\\\""\''
+                e.args[0]
+                == '400 Client Error: Bad Request for url: https://local.cave.com/skeletoncache/api/v1/test_stack/async/get_skeleton/4/0/flatdict?verbose_level=0 content: b\'"\\\\"Error\\\\": \\\\"Problematic root id: 112233445566778899 is in the refusal list\\\\""\''
             )
 
     @responses.activate
@@ -414,9 +417,7 @@ class TestSkeletonsClient:
             "swccompressed",
         ]:
             try:
-                myclient.skeleton.get_bulk_skeletons(
-                    [0, 1], None, 4, output_format
-                )
+                myclient.skeleton.get_bulk_skeletons([0, 1], None, 4, output_format)
                 assert False
             except ValueError as e:
                 assert (
