@@ -4,9 +4,9 @@ import copy
 import deepdiff
 import numpy as np
 import pandas as pd
-from requests import HTTPError
 import responses
 from packaging.version import Version
+from requests import HTTPError
 
 from caveclient import CAVEclient, endpoints
 from caveclient.skeletonservice import SkeletonClient
