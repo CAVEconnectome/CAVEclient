@@ -4,6 +4,7 @@ import copy
 import deepdiff
 import numpy as np
 import pandas as pd
+from requests import HTTPError
 import responses
 from packaging.version import Version
 
@@ -291,6 +292,30 @@ class TestSkeletonsClient:
                     e.args[0]
                     == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
                 )
+    @responses.activate
+    def test_get_skeleton__refusal_list(self, myclient, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        metadata_url = self.sk_endpoints.get(
+            "get_skeleton_async_via_skvn_rid_fmt"
+        ).format_map(sk_flatdict)
+
+        responses.add(responses.GET, url=metadata_url,
+                      json='"Error": "Problematic root id: 112233445566778899 is in the refusal list"',
+                      status=400)
+
+        try:
+            myclient.skeleton.get_skeleton(0, None, 4, 'dict')
+            assert False
+        except HTTPError as e:
+            assert (
+                e.args[0] == '400 Client Error: Bad Request for url: https://local.cave.com/skeletoncache/api/v1/test_stack/async/get_skeleton/4/0/flatdict?verbose_level=0 content: b\'"\\\\"Error\\\\": \\\\"Problematic root id: 112233445566778899 is in the refusal list\\\\""\''
+            )
 
     @responses.activate
     def test_get_bulk_skeletons__dict(self, myclient, mocker):

@@ -88,42 +88,6 @@ class SkeletonClient(ClientBase):
             "This is a test of SkeletonClient's behavior when no L2Cache is found."
         )
 
-    def _test_endpoints(self):
-        def parse(url):
-            return url.split("/", 6)[-1]
-
-        rid = 123456789
-        ds = "test_datastack"
-        innards = "/precomputed/skeleton/"
-
-        if self._datastack_name is not None:
-            # I could write a complicated test that confirms that an AssertionError is raised
-            # when datastack_name and self._datastack_name are both None, but I'm just don't want to at the moment.
-            # The combinatorial explosion of test varieties is getting out of hand.
-            url = parse(self._build_endpoint(rid, None, None, "precomputed"))
-            assert url == f"{self._datastack_name}{innards}{rid}"
-
-            url = parse(self._build_endpoint(rid, None, None, "json"))
-            assert url == f"{self._datastack_name}{innards}0/{rid}/json"
-
-        url = parse(self._build_endpoint(rid, ds, None, "precomputed"))
-        assert url == f"{ds}{innards}{rid}"
-
-        url = parse(self._build_endpoint(rid, ds, None, "json"))
-        assert url == f"{ds}{innards}0/{rid}/json"
-
-        url = parse(self._build_endpoint(rid, ds, 0, "precomputed"))
-        assert url == f"{ds}{innards}0/{rid}"
-
-        url = parse(self._build_endpoint(rid, ds, 0, "json"))
-        assert url == f"{ds}{innards}0/{rid}/json"
-
-        url = parse(self._build_endpoint(rid, ds, 1, "precomputed"))
-        assert url == f"{ds}{innards}1/{rid}"
-
-        url = parse(self._build_endpoint(rid, ds, 1, "json"))
-        assert url == f"{ds}{innards}1/{rid}/json"
-
     def get_version(self):
         logging.info("get_version()")
         endpoint_mapping = self.default_url_mapping
