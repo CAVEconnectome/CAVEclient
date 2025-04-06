@@ -1,5 +1,5 @@
 import re
-
+from typing import Literal, Optional
 import numpy as np
 
 from .auth import AuthClient
@@ -7,6 +7,7 @@ from .base import (
     ClientBaseWithDatastack,
     _api_endpoints,
     handle_response,
+    _check_version_compatibility,
 )
 from .endpoints import (
     default_global_server_address,
@@ -87,7 +88,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
     def aligned_volume_id(self):
         return self._aligned_volume_id
 
-    def get_datastacks(self):
+    def get_datastacks(self) -> list:
         """Query which datastacks are available at the info service
 
         Returns
@@ -101,7 +102,13 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_datastack_info(self, datastack_name=None, use_stored=True):
+    # @_check_version_compatibility(kwarg_use_constraints={"image_source": ">=4.3.0"})
+    def get_datastack_info(
+        self,
+        datastack_name: Optional[str] = None,
+        use_stored: bool = True,
+        image_mirror: Optional[str] = None,
+    ) -> dict:
         """Gets the info record for a datastack
 
         Parameters
@@ -110,6 +117,8 @@ class InfoServiceClient(ClientBaseWithDatastack):
             datastack to look up. If None, uses the one specified by the client. By default None
         use_stored : bool, optional
             If True and the information has already been queried for that datastack, then uses the cached version. If False, re-queries the infromation. By default True
+        image_mirror : str, optional
+            If not None, will use this image mirror to get the datastack info. By default None
 
         Returns
         -------
@@ -121,12 +130,19 @@ class InfoServiceClient(ClientBaseWithDatastack):
         if datastack_name is None:
             raise ValueError("No Dataset set")
 
-        if (not use_stored) or (datastack_name not in self.info_cache):
+        if (
+            (not use_stored)
+            or (datastack_name not in self.info_cache)
+            or image_mirror is not None
+        ):
             endpoint_mapping = self.default_url_mapping
             endpoint_mapping["datastack_name"] = datastack_name
             url = self._endpoints["datastack_info"].format_map(endpoint_mapping)
-
-            response = self.session.get(url)
+            if image_mirror is not None:
+                params = {"image_source_name": image_mirror}
+            else:
+                params = None
+            response = self.session.get(url, params=params)
             self.raise_for_status(response)
 
             self.info_cache[datastack_name] = handle_response(response)
@@ -140,7 +156,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         use_stored=True,
         format_for="raw",
         output_map=output_map,
-    ):
+    ) -> str:
         if datastack_name is None:
             datastack_name = self.datastack_name
         if datastack_name is None:
@@ -150,42 +166,63 @@ class InfoServiceClient(ClientBaseWithDatastack):
         value = self.info_cache[datastack_name].get(info_property, None)
         return output_map.get(format_for, format_raw)(value)
 
-    def get_aligned_volumes(self):
+    def get_aligned_volumes(self) -> list:
         endpoint_mapping = self.default_url_mapping
         url = self._endpoints["aligned_volumes"].format_map(endpoint_mapping)
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_aligned_volume_info(self, datastack_name: str = None, use_stored=True):
+    def get_aligned_volume_info(
+        self,
+        datastack_name: Optional[str] = None,
+        use_stored: bool = True,
+        image_mirror: Optional[str] = None,
+    ) -> dict:
         """Gets the info record for a aligned_volume
+
+            Parameters
+            ----------
+            datastack_name : str, optional
+                datastack_name to look up. If None, uses the one specified by the client. By default None
+            use_stored : bool, optional
+                If True and the information has already been queried for that dataset, then uses the cached version. If False, re-queries the infromation. By default True
+
+            Returns
+        -------
+            dict or None
+                The complete info record for the aligned_volume
+        """
+        if image_mirror is not None:
+            av_info = self.get_image_mirrors(datastack_name=datastack_name)
+            for av in av_info:
+                if av["name"] == image_mirror:
+                    return av
+            else:
+                raise ValueError(
+                    f"Image source {image_mirror} not found in aligned volumes"
+                )
+        else:
+            return self._get_property(
+                "aligned_volume",
+                datastack_name=datastack_name,
+                use_stored=use_stored,
+            )
+
+    def get_datastacks_by_aligned_volume(
+        self,
+        aligned_volume: Optional[str] = None,
+    ) -> list:
+        """Lookup what datastacks are associated with this aligned volume
 
         Parameters
         ----------
-        datastack_name : str, optional
-            datastack_name to look up. If None, uses the one specified by the client. By default None
-        use_stored : bool, optional
-            If True and the information has already been queried for that dataset, then uses the cached version. If False, re-queries the infromation. By default True
+        aligned_volume : str, optional
+            aligned volume to lookup. If None, uses the one specified by the client. By default None
 
         Returns
         -------
-        dict or None
-            The complete info record for the aligned_volume
-        """
-        return self._get_property(
-            "aligned_volume", datastack_name=datastack_name, use_stored=use_stored
-        )
-
-    def get_datastacks_by_aligned_volume(self, aligned_volume: str = None):
-        """Lookup what datastacks are associated with this aligned volume
-
-        Args:
-            aligned_volume (str, optional): aligned volume to lookup. Defaults to None.
-
-        Raises:
-            ValueError: if no aligned volume is specified
-
-        Returns:
-            list: a list of datastack string
+        list
+            List of datastack names
         """
 
         if aligned_volume is None:
@@ -194,7 +231,6 @@ class InfoServiceClient(ClientBaseWithDatastack):
             raise ValueError(
                 "Must specify aligned_volume_id or provide datastack_name in init"
             )
-        print(aligned_volume)
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume
         url = self._endpoints["datastacks_from_aligned_volume"].format_map(
@@ -205,8 +241,24 @@ class InfoServiceClient(ClientBaseWithDatastack):
         return handle_response(response)
 
     def get_aligned_volume_info_by_id(
-        self, aligned_volume_id: int = None, use_stored=True
-    ):
+        self,
+        aligned_volume_id: int = None,
+        use_stored: bool = True,
+    ) -> dict:
+        """Gets the info record for a aligned_volume from its id instead of its name
+
+        Parameters
+        ----------
+        aligned_volume_id : int, optional
+            aligned volume id to look up. If None, uses the one specified by the client. By default None
+        use_stored : bool, optional
+            If True and the information has already been queried for that dataset, then uses the cached version. If False, re-queries the infromation. By default True
+
+        Returns
+        -------
+        dict
+            The complete info record for the aligned_volume
+        """
         if aligned_volume_id is None:
             aligned_volume_id = self._aligned_volume_id
         if aligned_volume_id is None:
@@ -221,7 +273,26 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
-    def local_server(self, datastack_name=None, use_stored=True):
+    def local_server(
+        self,
+        datastack_name: Optional[str] = None,
+        use_stored: bool = True,
+    ) -> str:
+        """Get the local server address for the datastack.
+
+        Parameters
+        ----------
+        datastack_name : str, optional
+            Name of the datastack to look up. If None, uses the value specified by the client. Default is None.
+        use_stored : bool, optional
+            If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.
+
+        Returns
+        -------
+        str
+            Local server url for the datastack
+        """
+
         return self._get_property(
             "local_server",
             datastack_name=datastack_name,
@@ -229,7 +300,9 @@ class InfoServiceClient(ClientBaseWithDatastack):
             output_map=output_map,
         )
 
-    def annotation_endpoint(self, datastack_name=None, use_stored=True):
+    def annotation_endpoint(
+        self, datastack_name: Optional[str] = None, use_stored: bool = True
+    ) -> str:
         """AnnotationEngine endpoint for a dataset.
 
         Parameters
@@ -250,7 +323,15 @@ class InfoServiceClient(ClientBaseWithDatastack):
 
         return local_server + "/annotation"
 
-    def image_source(self, datastack_name=None, use_stored=True, format_for="raw"):
+    def image_source(
+        self,
+        datastack_name: Optional[str] = None,
+        use_stored: bool = True,
+        format_for: Literal[
+            "raw", "cloudvolume", "neuroglancer", "cave_explorer", "cave-explorer"
+        ] = "raw",
+        image_mirror: Optional[str] = None,
+    ) -> str:
         """Cloud path to the imagery for the dataset
 
         Parameters
@@ -264,21 +345,76 @@ class InfoServiceClient(ClientBaseWithDatastack):
             If 'raw' (default), the path in the InfoService is passed along.
             If 'cloudvolume', a "precomputed://gs://" type path is converted to a full https URL.
             If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type path.
+            If 'cave_explorer', 'cave-explorer' or "spelunker', a full https URL is converted to a modern neuroglancer path.
+        image_mirror : str, optional
+            If not None, will use this image mirror to get the datastack info. By default None.
 
         Returns
         -------
         str
-            Formatted cloud path to the flat segmentation
+            Formatted cloud path to the imagery
         """
 
         av_info = self.get_aligned_volume_info(
-            datastack_name=datastack_name, use_stored=use_stored
+            datastack_name=datastack_name,
+            use_stored=use_stored,
+            image_mirror=image_mirror,
         )
-        return av_info["image_source"]
+        return output_map.get(format_for)(av_info["image_source"])
+
+    # @_check_version_compatibility(method_constraint=">=4.3.0")
+    def get_image_mirrors(self, datastack_name: Optional[str] = None) -> list:
+        """Get all image sources for a given aligned volume
+
+        Parameters
+        ----------
+        datastack_name : str, optional
+            Name of the datastack to look up. If None, uses the value specified by the client. Default is None.
+
+        Returns
+        -------
+        list
+            List of image mirror info files for the aligned volume
+        """
+        endpoint_mapping = self.default_url_mapping
+
+        if datastack_name is not None:
+            endpoint_mapping["datastack_name"] = datastack_name
+
+        url = self._endpoints["image_sources"].format_map(endpoint_mapping)
+
+        response = self.session.get(url)
+        return handle_response(response)
+
+    # @_check_version_compatibility(method_constraint=">=4.3.0")
+    def get_image_mirror_names(
+        self,
+        datastack_name: Optional[str] = None,
+    ) -> list:
+        """Get all image mirror names for a given aligned volume.
+
+        Parameters
+        ----------
+        datastack_name: str, optional
+            Name of the aligned volume to look up. If None, uses the value specified by the client. Default is None.
+
+        Returns
+        -------
+        list
+            List of image mirror names for the aligned volume
+        """
+        return [
+            x["name"] for x in self.get_image_mirrors(datastack_name=datastack_name)
+        ]
 
     def synapse_segmentation_source(
-        self, datastack_name=None, use_stored=True, format_for="raw"
-    ):
+        self,
+        datastack_name: Optional[str] = None,
+        use_stored: bool = True,
+        format_for: Literal[
+            "raw", "cloudvolume", "neuroglancer", "cave_explorer", "cave-explorer"
+        ] = "raw",
+    ) -> str:
         """Cloud path to the synapse segmentation for a dataset
 
         Parameters
@@ -307,7 +443,12 @@ class InfoServiceClient(ClientBaseWithDatastack):
         )
 
     def segmentation_source(
-        self, datastack_name=None, format_for="raw", use_stored=True
+        self,
+        datastack_name: Optional[str] = None,
+        use_stored: bool = True,
+        format_for: Literal[
+            "raw", "cloudvolume", "neuroglancer", "cave_explorer", "cave-explorer"
+        ] = "raw",
     ):
         """Cloud path to the chunkgraph-backed Graphene segmentation for a dataset
 
@@ -322,6 +463,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
             If 'raw' (default), the path in the InfoService is passed along.
             If 'cloudvolume', a "graphene://https://" type path is used
             If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuroglancer.
+            If 'cave_explorer', 'cave-explorer' or "spelunker', a full https URL is converted to a modern neuroglancer path.
 
         Returns
         -------
@@ -341,7 +483,9 @@ class InfoServiceClient(ClientBaseWithDatastack):
         for ds in self.info_cache.keys():
             self.get_datastack_info(datastack_name=ds, use_stored=False)
 
-    def viewer_resolution(self, datastack_name=None, use_stored=True) -> np.array:
+    def viewer_resolution(
+        self, datastack_name: Optional[str] = None, use_stored: bool = True
+    ) -> np.array:
         """Get the viewer resolution metadata for this datastack
 
         Parameters
@@ -373,7 +517,9 @@ class InfoServiceClient(ClientBaseWithDatastack):
         )
         return np.array([vx, vy, vz])
 
-    def viewer_site(self, datastack_name=None, use_stored=True) -> str:
+    def viewer_site(
+        self, datastack_name: Optional[str] = None, use_stored: bool = True
+    ) -> str:
         """Get the base Neuroglancer URL for the dataset
 
         Parameters
@@ -394,7 +540,9 @@ class InfoServiceClient(ClientBaseWithDatastack):
             use_stored=use_stored,
         )
 
-    def image_cloudvolume(self, **kwargs):
+    def image_cloudvolume(
+        self, image_mirror: Optional[str] = None, **kwargs
+    ) -> "cloudvolume.CloudVolume":
         """Generate a cloudvolume instance based on the image source, using authentication if needed and
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
@@ -403,10 +551,13 @@ class InfoServiceClient(ClientBaseWithDatastack):
         Requires cloudvolume to be installed, which is not included by default.
         """
         return self._make_cloudvolume(
-            self.image_source(format_for="cloudvolume"), **kwargs
+            self.image_source(format_for="cloudvolume", image_mirror=image_mirror),
+            **kwargs,
         )
 
-    def segmentation_cloudvolume(self, use_client_secret=True, **kwargs):
+    def segmentation_cloudvolume(
+        self, use_client_secret=True, **kwargs
+    ) -> "cloudvolume.CloudVolume":
         """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
@@ -432,7 +583,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         bounded = kwargs.pop("bounded", False)
         fill_missing = kwargs.pop("fill_missing", True)
 
-        if re.search("^graphene", cloudpath) and use_client_secret:
+        if re.search("^graphene", cloudpath) is not None and use_client_secret:
             # Authentication header is "Authorization {token}"
             secrets = {"token": self.session.headers.get("Authorization").split(" ")[1]}
         else:

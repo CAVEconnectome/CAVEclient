@@ -1,9 +1,10 @@
 import numpy as np
 import responses
+from responses import matchers
 
 from caveclient.endpoints import infoservice_endpoints_v2
 
-from .conftest import datastack_dict, test_info
+from .conftest import datastack_dict, test_info, mirror_info, image_mirrors
 
 
 def test_info_d(myclient):
@@ -37,6 +38,39 @@ class TestInfoClient:
         assert np.all(myclient.info.viewer_resolution() == viewer_res)
 
         assert myclient.info.viewer_site() == test_info["viewer_site"]
+
+    @responses.activate
+    def test_mirror_info(self, myclient):
+        endpoint_map = myclient.info.default_url_mapping
+        responses.add(
+            responses.GET,
+            url=self.endpoints.get("image_sources").format_map(endpoint_map),
+            json=image_mirrors(),
+            status=200,
+        )
+        list_of_imagery = myclient.info.get_image_mirrors()
+        assert len(list_of_imagery) == 2
+
+        imagery_names = myclient.info.get_image_mirror_names()
+        assert imagery_names[1] == "test_volume_mirror"
+
+        responses.add(
+            responses.GET,
+            url=self.endpoints.get("datastack_info").format_map(endpoint_map),
+            match=[
+                matchers.query_param_matcher(
+                    {"image_source_name": "test_volume_mirror"}
+                )
+            ],
+            json=mirror_info(),
+            status=200,
+        )
+        info = myclient.info.get_datastack_info(
+            image_mirror="test_volume_mirror",
+        )
+        assert (
+            info["aligned_volume"]["image_source"] == list_of_imagery[1]["image_source"]
+        )
 
         # can't get the server mock to change
         # url_template = infoservice_endpoints_v2["datastack_info"]

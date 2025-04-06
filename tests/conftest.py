@@ -5,12 +5,40 @@ from caveclient.tools.testing import (
     default_info,
     get_server_information,
     get_server_versions,
+    TEST_LOCAL_SERVER,
 )
 
 datastack_dict = get_server_information()
 server_versions = get_server_versions()
 
 test_info = default_info(datastack_dict["local_server"])
+
+
+def mirror_info(
+    local_server: str = TEST_LOCAL_SERVER,
+):
+    info = default_info(local_server)
+    info["aligned_volume"] = image_mirrors(local_server)[1]
+    return info
+
+
+def image_mirrors(
+    local_server: str = TEST_LOCAL_SERVER,
+):
+    return [
+        {
+            "name": "test_volume",
+            "image_source": f"precomputed://https://{local_server}/test-em/v1",
+            "id": 1,
+            "description": "This is a test only dataset.",
+        },
+        {
+            "name": "test_volume_mirror",
+            "image_source": f"precomputed://https://{local_server}/test-em/mirror",
+            "id": 2,
+            "description": "This is a test mirror dataset.",
+        },
+    ]
 
 
 @pytest.fixture()

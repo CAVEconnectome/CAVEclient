@@ -1,3 +1,4 @@
+import copy
 import datetime
 import json
 import logging
@@ -114,7 +115,7 @@ https://caveconnectome.github.io/CAVEclient/tutorials/authentication/
 or follow instructions under 
 client.auth.get_new_token() for how to set a valid API token.
 after initializing a global client with
-client=CAVEclient(server_address="{urlp.scheme +"://"+ urlp.netloc}")"""
+client=CAVEclient(server_address="{urlp.scheme + "://" + urlp.netloc}")"""
         )
 
 
@@ -221,7 +222,7 @@ class ClientBase(object):
 
     @property
     def default_url_mapping(self):
-        return self._default_url_mapping
+        return copy.copy(self._default_url_mapping)
 
     @property
     def server_address(self):
@@ -322,6 +323,7 @@ class ClientBaseWithDatastack(ClientBase):
             over_client=over_client,
         )
         self._datastack_name = datastack_name
+        self._default_url_mapping["datastack_name"] = self._datastack_name
 
     @property
     def datastack_name(self):
