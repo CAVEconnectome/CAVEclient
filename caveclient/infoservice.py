@@ -102,7 +102,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
-    # @_check_version_compatibility(kwarg_use_constraints={"image_source": ">=4.3.0"})
+    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.0"})
     def get_datastack_info(
         self,
         datastack_name: Optional[str] = None,
@@ -118,7 +118,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         use_stored : bool, optional
             If True and the information has already been queried for that datastack, then uses the cached version. If False, re-queries the infromation. By default True
         image_mirror : str, optional
-            If not None, will use this image mirror to get the datastack info. By default None
+            If not None, will use this image mirror to get the datastack info. By default None. Requires info service app version >= 4.3.0
 
         Returns
         -------
@@ -362,7 +362,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         )
         return output_map.get(format_for)(av_info["image_source"])
 
-    # @_check_version_compatibility(method_constraint=">=4.3.0")
+    @_check_version_compatibility(method_constraint=">=4.3.0")
     def get_image_mirrors(self, datastack_name: Optional[str] = None) -> list:
         """Get all image sources for a given aligned volume
 
@@ -555,6 +555,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
             **kwargs,
         )
 
+    #
     def segmentation_cloudvolume(
         self, use_client_secret=True, **kwargs
     ) -> "cloudvolume.CloudVolume":
