@@ -547,7 +547,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
     @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.0"})
     def image_cloudvolume(
         self, image_mirror: Optional[str] = None, **kwargs
-    ) -> "cloudvolume.CloudVolume":
+    ) -> "cloudvolume.CloudVolume":  # noqa: F821
         """Generate a cloudvolume instance based on the image source, using authentication if needed and
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
@@ -563,7 +563,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
     #
     def segmentation_cloudvolume(
         self, use_client_secret=True, **kwargs
-    ) -> "cloudvolume.CloudVolume":
+    ) -> "cloudvolume.CloudVolume":  # noqa: F821
         """Generate a cloudvolume instance based on the segmentation source, using authentication if needed and
         sensible default values for reading CAVE resources. By default, fill_missing is True and bounded
         is False. All keyword arguments are passed onto the CloudVolume initialization function, and defaults
