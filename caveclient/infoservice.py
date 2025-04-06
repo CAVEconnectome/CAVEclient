@@ -1,13 +1,14 @@
 import re
 from typing import Literal, Optional
+
 import numpy as np
 
 from .auth import AuthClient
 from .base import (
     ClientBaseWithDatastack,
     _api_endpoints,
-    handle_response,
     _check_version_compatibility,
+    handle_response,
 )
 from .endpoints import (
     default_global_server_address,

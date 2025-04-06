@@ -4,7 +4,7 @@ from responses import matchers
 
 from caveclient.endpoints import infoservice_endpoints_v2
 
-from .conftest import datastack_dict, test_info, mirror_info, image_mirrors
+from .conftest import datastack_dict, image_mirrors, mirror_info, test_info
 
 
 def test_info_d(myclient):
