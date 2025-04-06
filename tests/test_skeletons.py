@@ -17,6 +17,7 @@ from .conftest import (
     mat_apiv2_specified_client,  # noqa: F401
     test_info,
     version_specified_client,  # noqa: F401
+    server_versions,
 )
 
 sk_mapping = {
@@ -42,6 +43,9 @@ info_mapping = {
 }
 url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
 info_url = url_template.format_map(info_mapping)
+info_version_url = endpoints.infoservice_endpoints_v2["get_version"].format_map(
+    info_mapping
+)
 
 
 class TestSkeletonsClient:
@@ -49,6 +53,13 @@ class TestSkeletonsClient:
 
     @responses.activate
     def test_create_client(self):
+        responses.add(
+            responses.GET,
+            url=info_version_url,
+            json=str(server_versions["info_server_version"]),
+            status=200,
+        )
+
         responses.add(responses.GET, url=info_url, json=test_info, status=200)
         _ = CAVEclient(
             datastack_dict["datastack_name"],
