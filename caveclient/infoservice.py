@@ -1,6 +1,6 @@
 import re
 from typing import Literal, Optional
-
+from cachetools import cached, LRUCache
 import numpy as np
 
 from .auth import AuthClient
@@ -24,6 +24,7 @@ SERVER_KEY = "i_server_address"
 
 
 class InfoServiceClient(ClientBaseWithDatastack):
+    cache = LRUCache(maxsize=128)
     """Client for interacting with the info service."""
 
     def __init__(
@@ -132,25 +133,36 @@ class InfoServiceClient(ClientBaseWithDatastack):
             datastack_name = self.datastack_name
         if datastack_name is None:
             raise ValueError("No Dataset set")
+        if not use_stored:
+            # Bypass the cache and fetch fresh data
+            return self._fetch_datastack_info(datastack_name, image_mirror)
 
-        if (
-            (not use_stored)
-            or (datastack_name not in self.info_cache)
-            or image_mirror is not None
-        ):
-            endpoint_mapping = self.default_url_mapping
-            endpoint_mapping["datastack_name"] = datastack_name
-            url = self._endpoints["datastack_info"].format_map(endpoint_mapping)
-            if image_mirror is not None:
-                params = {"image_source_name": image_mirror}
-            else:
-                params = None
-            response = self.session.get(url, params=params)
-            self.raise_for_status(response)
+        # Use the cached version if available
+        return self._cached_get_datastack_info(datastack_name, image_mirror)
 
-            self.info_cache[datastack_name] = handle_response(response)
+    @cached(cache)
+    def _cached_get_datastack_info(
+        self,
+        datastack_name: str,
+        image_mirror: [str, None],
+    ) -> dict:
+        """Internal method to fetch and cache datastack info."""
+        return self._fetch_datastack_info(datastack_name, image_mirror)
 
-        return self.info_cache.get(datastack_name, None)
+    def _fetch_datastack_info(
+        self,
+        datastack_name: Optional[str] = None,
+        image_mirror: Optional[str] = None,
+    ) -> dict:
+        """Fetches datastack info from the server."""
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        url = self._endpoints["datastack_info"].format_map(endpoint_mapping)
+        params = {"image_source_name": image_mirror} if image_mirror else None
+        response = self.session.get(url, params=params)
+        self.raise_for_status(response)
+
+        return handle_response(response)
 
     def _get_property(
         self,
@@ -165,8 +177,10 @@ class InfoServiceClient(ClientBaseWithDatastack):
         if datastack_name is None:
             raise ValueError("No Dataset set")
 
-        self.get_datastack_info(datastack_name=datastack_name, use_stored=use_stored)
-        value = self.info_cache[datastack_name].get(info_property, None)
+        info = self.get_datastack_info(
+            datastack_name=datastack_name, use_stored=use_stored
+        )
+        value = info[datastack_name].get(info_property, None)
         return output_map.get(format_for, format_raw)(value)
 
     def get_aligned_volumes(self) -> list:
