@@ -118,7 +118,9 @@ class InfoServiceClient(ClientBaseWithDatastack):
         use_stored : bool, optional
             If True and the information has already been queried for that datastack, then uses the cached version. If False, re-queries the infromation. By default True
         image_mirror : str, optional
-            If not None, will use this image mirror to get the datastack info. By default None. Requires info service app version >= 4.3.0
+            If not None, will use this image mirror to get the datastack info. By default None. Requires info service app version >= 4.3.0.
+            Note that getting the datastack info with a specific image mirror will overwrite the cached info.
+            Use `refresh_stored_data` to reload the datastack info with the default values.
 
         Returns
         -------
