@@ -1,11 +1,11 @@
 import pytest
 
 from caveclient.tools.testing import (
+    TEST_LOCAL_SERVER,
     CAVEclientMock,
     default_info,
     get_server_information,
     get_server_versions,
-    TEST_LOCAL_SERVER,
 )
 
 datastack_dict = get_server_information()
