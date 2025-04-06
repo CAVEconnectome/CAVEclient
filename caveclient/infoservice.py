@@ -172,6 +172,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
+    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.0"})
     def get_aligned_volume_info(
         self,
         datastack_name: Optional[str] = None,
@@ -386,7 +387,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
-    # @_check_version_compatibility(method_constraint=">=4.3.0")
+    @_check_version_compatibility(method_constraint=">=4.3.0")
     def get_image_mirror_names(
         self,
         datastack_name: Optional[str] = None,
@@ -540,6 +541,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
             use_stored=use_stored,
         )
 
+    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.0"})
     def image_cloudvolume(
         self, image_mirror: Optional[str] = None, **kwargs
     ) -> "cloudvolume.CloudVolume":
