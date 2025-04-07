@@ -175,7 +175,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
-    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.0"})
+    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.1"})
     def get_aligned_volume_info(
         self,
         datastack_name: Optional[str] = None,
@@ -366,7 +366,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         )
         return output_map.get(format_for)(av_info["image_source"])
 
-    @_check_version_compatibility(method_constraint=">=4.3.0")
+    @_check_version_compatibility(method_constraint=">=4.3.1")
     def get_image_mirrors(self, datastack_name: Optional[str] = None) -> list:
         """Get all image sources for a given aligned volume
 
@@ -390,7 +390,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         response = self.session.get(url)
         return handle_response(response)
 
-    @_check_version_compatibility(method_constraint=">=4.3.0")
+    @_check_version_compatibility(method_constraint=">=4.3.1")
     def get_image_mirror_names(
         self,
         datastack_name: Optional[str] = None,
@@ -544,7 +544,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
             use_stored=use_stored,
         )
 
-    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.0"})
+    @_check_version_compatibility(kwarg_use_constraints={"image_mirror": ">=4.3.1"})
     def image_cloudvolume(
         self, image_mirror: Optional[str] = None, **kwargs
     ) -> "cloudvolume.CloudVolume":  # noqa: F821
