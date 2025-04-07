@@ -761,6 +761,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.infoservice.InfoServiceClient.get_aligned_volume_info_by_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_aligned_volume_info_by_id
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.infoservice.InfoServiceClient.get_datastack_info" class="md-nav__link">
     <span class="md-ellipsis">
       get_datastack_info
@@ -788,6 +797,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#caveclient.infoservice.InfoServiceClient.get_image_mirror_names" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_image_mirror_names
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.infoservice.InfoServiceClient.get_image_mirrors" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_image_mirrors
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#caveclient.infoservice.InfoServiceClient.image_cloudvolume" class="md-nav__link">
     <span class="md-ellipsis">
       image_cloudvolume
@@ -800,6 +827,15 @@
   <a href="#caveclient.infoservice.InfoServiceClient.image_source" class="md-nav__link">
     <span class="md-ellipsis">
       image_source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#caveclient.infoservice.InfoServiceClient.local_server" class="md-nav__link">
+    <span class="md-ellipsis">
+      local_server
     </span>
   </a>
   
@@ -1176,6 +1212,14 @@
               </td>
             </tr>
             <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClient.get_aligned_volume_info_by_id" href="#caveclient.infoservice.InfoServiceClient.get_aligned_volume_info_by_id">get_aligned_volume_info_by_id</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Gets the info record for a aligned_volume from its id instead of its name</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
               <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClient.get_datastack_info" href="#caveclient.infoservice.InfoServiceClient.get_datastack_info">get_datastack_info</a></code></td>
               <td>
                 <div class="doc-md-description">
@@ -1200,6 +1244,22 @@
               </td>
             </tr>
             <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClient.get_image_mirror_names" href="#caveclient.infoservice.InfoServiceClient.get_image_mirror_names">get_image_mirror_names</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get all image mirror names for a given aligned volume.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClient.get_image_mirrors" href="#caveclient.infoservice.InfoServiceClient.get_image_mirrors">get_image_mirrors</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get all image sources for a given aligned volume</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
               <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClient.image_cloudvolume" href="#caveclient.infoservice.InfoServiceClient.image_cloudvolume">image_cloudvolume</a></code></td>
               <td>
                 <div class="doc-md-description">
@@ -1212,6 +1272,14 @@
               <td>
                 <div class="doc-md-description">
                   <p>Cloud path to the imagery for the dataset</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="caveclient.infoservice.InfoServiceClient.local_server" href="#caveclient.infoservice.InfoServiceClient.local_server">local_server</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the local server address for the datastack.</p>
                 </div>
               </td>
             </tr>
@@ -1420,7 +1488,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.infoservice.InfoServiceClient.get_aligned_volume_info" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_aligned_volume_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_aligned_volume_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">image_mirror</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClient.get_aligned_volume_info" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1428,6 +1496,41 @@ version of the datastack itself.</p>
     <div class="doc doc-contents ">
 
         <p>Gets the info record for a aligned_volume</p>
+
+
+<details class="----parameters" open>
+  <summary><div class="highlight"><pre><span></span><code>Parameters
+</code></pre></div></summary>
+  <div class="highlight"><pre><span></span><code>datastack_name : str, optional
+    datastack_name to look up. If None, uses the one specified by the client. By default None
+use_stored : bool, optional
+    If True and the information has already been queried for that dataset, then uses the cached version. If False, re-queries the infromation. By default True
+</code></pre></div>
+</details>
+
+<details class="----returns" open>
+  <summary><div class="highlight"><pre><span></span><code>Returns
+</code></pre></div></summary>
+  <div class="highlight"><pre><span></span><code>dict or None
+    The complete info record for the aligned_volume
+</code></pre></div>
+</details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.infoservice.InfoServiceClient.get_aligned_volume_info_by_id" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_aligned_volume_info_by_id</span><span class="p">(</span><span class="n">aligned_volume_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.InfoServiceClient.get_aligned_volume_info_by_id" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Gets the info record for a aligned_volume from its id instead of its name</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1443,14 +1546,14 @@ version of the datastack itself.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>datastack_name</code>
+                <code>aligned_volume_id</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>datastack_name to look up. If None, uses the one specified by the client. By default None</p>
+                <p>aligned volume id to look up. If None, uses the one specified by the client. By default None</p>
               </div>
             </td>
             <td>
@@ -1488,7 +1591,7 @@ version of the datastack itself.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a> or None</code>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1507,7 +1610,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.infoservice.InfoServiceClient.get_datastack_info" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_datastack_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_datastack_info</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">image_mirror</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClient.get_datastack_info" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1558,6 +1661,24 @@ version of the datastack itself.</p>
             </td>
             <td>
                   <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>image_mirror</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If not None, will use this image mirror to get the datastack info. By default None. Requires info service app version &gt;= 4.3.1.
+Note that getting the datastack info with a specific image mirror will overwrite the cached info.
+Use <code>refresh_stored_data</code> to reload the datastack info with the default values.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -1642,12 +1763,202 @@ version of the datastack itself.</p>
     <div class="doc doc-contents ">
 
         <p>Lookup what datastacks are associated with this aligned volume</p>
-<p>Args:
-    aligned_volume (str, optional): aligned volume to lookup. Defaults to None.</p>
-<p>Raises:
-    ValueError: if no aligned volume is specified</p>
-<p>Returns:
-    list: a list of datastack string</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>aligned_volume</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>aligned volume to lookup. If None, uses the one specified by the client. By default None</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of datastack names</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.infoservice.InfoServiceClient.get_image_mirror_names" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_image_mirror_names</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.InfoServiceClient.get_image_mirror_names" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get all image mirror names for a given aligned volume.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>datastack_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the aligned volume to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of image mirror names for the aligned volume</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.infoservice.InfoServiceClient.get_image_mirrors" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_image_mirrors</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.InfoServiceClient.get_image_mirrors" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get all image sources for a given aligned volume</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>datastack_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of image mirror info files for the aligned volume</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
     </div>
 
@@ -1657,7 +1968,7 @@ version of the datastack itself.</p>
 
 
 <h2 id="caveclient.infoservice.InfoServiceClient.image_cloudvolume" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">image_cloudvolume</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">image_cloudvolume</span><span class="p">(</span><span class="n">image_mirror</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClient.image_cloudvolume" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1678,7 +1989,7 @@ can be overridden.</p>
 
 
 <h2 id="caveclient.infoservice.InfoServiceClient.image_source" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">image_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">image_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">image_mirror</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClient.image_source" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1743,11 +2054,28 @@ can be overridden.</p>
                 <p>Formats the path for different uses.
 If 'raw' (default), the path in the InfoService is passed along.
 If 'cloudvolume', a "precomputed://gs://" type path is converted to a full https URL.
-If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type path.</p>
+If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type path.
+If 'cave_explorer', 'cave-explorer' or "spelunker', a full https URL is converted to a modern neuroglancer path.</p>
               </div>
             </td>
             <td>
                   <code>&#39;raw&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>image_mirror</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If not None, will use this image mirror to get the datastack info. By default None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -1769,7 +2097,94 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Formatted cloud path to the flat segmentation</p>
+                <p>Formatted cloud path to the imagery</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.infoservice.InfoServiceClient.local_server" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">local_server</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+<a href="#caveclient.infoservice.InfoServiceClient.local_server" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get the local server address for the datastack.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>datastack_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the datastack to look up. If None, uses the value specified by the client. Default is None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_stored</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, uses the cached value if available. If False, re-queries the InfoService. Default is True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Local server url for the datastack</p>
               </div>
             </td>
           </tr>
@@ -1822,7 +2237,7 @@ can be overridden.</p>
 
 
 <h2 id="caveclient.infoservice.InfoServiceClient.segmentation_source" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">segmentation_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">segmentation_source</span><span class="p">(</span><span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_stored</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_for</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span></code>
 
 <a href="#caveclient.infoservice.InfoServiceClient.segmentation_source" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -1887,7 +2302,8 @@ can be overridden.</p>
                 <p>Formats the path for different uses.
 If 'raw' (default), the path in the InfoService is passed along.
 If 'cloudvolume', a "graphene://https://" type path is used
-If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuroglancer.</p>
+If 'neuroglancer', a "graphene://https://" type path is used, as needed by Neuroglancer.
+If 'cave_explorer', 'cave-explorer' or "spelunker', a full https URL is converted to a modern neuroglancer path.</p>
               </div>
             </td>
             <td>
@@ -2060,6 +2476,7 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
                 <code>datastack_name</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2075,6 +2492,7 @@ If 'neuroglancer', a full https URL is converted to a "precomputed://gs://" type
                 <code>use_stored</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
             <td>
               <div class="doc-md-description">
