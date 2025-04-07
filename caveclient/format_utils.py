@@ -59,6 +59,8 @@ def format_cloudvolume(objurl):
         return format_graphene(objurl)
     elif qry.scheme == "gs" or qry.scheme == "http" or qry.scheme == "https":
         return format_precomputed_https(objurl)
+    elif qry.scheme == "precomputed":
+        return objurl
     else:
         return None
 
@@ -85,4 +87,5 @@ output_map = {
     "neuroglancer": format_neuroglancer,
     "cave_explorer": format_cave_explorer,
     "cave-explorer": format_cave_explorer,
+    "spelunker": format_cave_explorer,
 }

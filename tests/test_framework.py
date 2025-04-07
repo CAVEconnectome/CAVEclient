@@ -31,6 +31,7 @@ mapping = {
     "datastack_name": datastack_dict["datastack_name"],
 }
 info_url = url_template.format_map(mapping)
+info_version_url = endpoints.infoservice_endpoints_v2["get_version"].format_map(mapping)
 
 
 def test_global_client(global_client):  # noqa: F811
@@ -69,7 +70,13 @@ class TestFrameworkClient:
 
     @responses.activate
     def test_create_client(self):
-        responses.add(responses.GET, info_url, json=test_info, status=200)
+        responses.add(responses.GET, url=info_url, json=test_info, status=200)
+        responses.add(
+            responses.GET,
+            url=info_version_url,
+            json=str(server_versions["info_server_version"]),
+            status=200,
+        )
         _ = CAVEclient(
             datastack_dict["datastack_name"],
             server_address=datastack_dict["global_server"],
@@ -79,6 +86,12 @@ class TestFrameworkClient:
     @responses.activate
     def test_create_versioned_client(self):
         responses.add(responses.GET, info_url, json=test_info, status=200)
+        responses.add(
+            responses.GET,
+            url=info_version_url,
+            json=str(server_versions["info_server_version"]),
+            status=200,
+        )
 
         endpoint_mapping = self.default_mapping
         endpoint_mapping["emas_server_address"] = datastack_dict["global_server"]
@@ -160,6 +173,12 @@ class TestFrameworkClient:
     @responses.activate
     def test_set_session_defaults(self):
         responses.add(responses.GET, info_url, json=test_info, status=200)
+        responses.add(
+            responses.GET,
+            url=info_version_url,
+            json=str(server_versions["info_server_version"]),
+            status=200,
+        )
 
         pool_maxsize = 21
         pool_block = True

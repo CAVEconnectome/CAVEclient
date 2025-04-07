@@ -16,10 +16,12 @@ except ImportError:
     warnings.warn("Must install responses to use CAVEclientMock for testing")
     imports_worked = False
 
-DEFAULT_CHUNKEDGRAPH_SERVER_VERSION = "2.18.0"
-DEFAULT_MATERIALIZATION_SERVER_VERSON = "4.30.1"
+
+DEFAULT_CHUNKEDGRAPH_SERVER_VERSION = "2.999.0"
+DEFAULT_MATERIALIZATION_SERVER_VERSON = "999.0.0"
 DEFAULT_SKELETON_SERVICE_SERVER_VERSION = "999.0.0"  # Individual tests might confirm the ability to adapt to old versions by mocking older versions, but make the default test behavior assumes an up-to-date system.
-DEFAULT_JSON_SERVICE_SERVER_VERSION = "0.7.0"
+DEFAULT_JSON_SERVICE_SERVER_VERSION = "999.0.0"
+DEFAULT_INFO_SERVER_VERSION = "999.0.0"
 
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
 TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
@@ -65,6 +67,7 @@ def get_server_versions(
     materialization_version: str = DEFAULT_MATERIALIZATION_SERVER_VERSON,
     skeleton_service_version: str = DEFAULT_SKELETON_SERVICE_SERVER_VERSION,
     json_service_version: str = DEFAULT_JSON_SERVICE_SERVER_VERSION,
+    info_server_version: str = DEFAULT_INFO_SERVER_VERSION,
 ) -> dict:
     """Get the server versions for the services used in testing.
 
@@ -90,6 +93,7 @@ def get_server_versions(
         "materialization_server_version": Version(materialization_version),
         "skeleton_service_server_version": Version(skeleton_service_version),
         "json_service_server_version": Version(json_service_version),
+        "info_server_version": Version(info_server_version),
     }
 
 
@@ -259,6 +263,7 @@ def CAVEclientMock(
     schema_api_versions: Optional[list] = None,
     l2cache: bool = False,
     l2cache_disabled: bool = False,
+    info_server_version: str = DEFAULT_INFO_SERVER_VERSION,
     global_only: bool = False,
 ):
     """Created a mocked CAVEclient function for testing using the responses library to mock
@@ -402,6 +407,15 @@ def CAVEclientMock(
 
     @responses.activate()
     def mockedCAVEclient():
+        info_version_url = version_url(
+            global_server, endpoints.infoservice_endpoints_v2, "i_server_address"
+        )
+        responses.add(
+            responses.GET,
+            url=info_version_url,
+            json=str(info_server_version),
+            status=200,
+        )
         url = info_url(datastack_name, global_server)
         responses.add(responses.GET, url=url, json=info_file, status=200)
 
