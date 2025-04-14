@@ -25,6 +25,7 @@ from .endpoints import skeletonservice_api_versions, skeletonservice_common
 SERVER_KEY = "skeleton_server_address"
 
 MAX_SKELETONS_EXISTS_QUERY_SIZE = 1000
+MAX_BULK_SYNCHRONOUS_SKELETONS = 10
 MAX_BULK_ASYNCHRONOUS_SKELETONS = 10000
 BULK_SKELETONS_BATCH_SIZE = 100
 
@@ -359,6 +360,7 @@ class SkeletonClient(ClientBase):
         """
         Confirm or deny that a set of root ids have H5 skeletons in the cache.
         """
+        logging.info(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.9.0"):
             logging.warning(
                 "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
@@ -529,7 +531,13 @@ class SkeletonClient(ClientBase):
             logging.warning(
                 "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
             )
-
+        
+        if not self.fc.chunkedgraph.is_valid_nodes(root_id):
+            raise ValueError(f"Invalid root id: {root_id} (perhaps it doesn't exist; the error is unclear)")
+        cv = self.fc.info.segmentation_cloudvolume()
+        if cv and cv.meta.decode_layer_id(root_id) != cv.meta.n_layers:
+            raise ValueError(f"Invalid root id: {root_id} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id)")
+        
         url = self._build_get_skeleton_endpoint(
             root_id,
             datastack_name,
@@ -615,6 +623,8 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
+        logging.info(f"SkeletonService version: {self._server_version}")
+
         valid_output_formats = ["dict", "swc"]
         if output_format not in valid_output_formats:
             raise ValueError(
@@ -635,6 +645,26 @@ class SkeletonClient(ClientBase):
             raise ValueError(
                 f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
+
+        valid_rids = []
+        cv = self.fc.info.segmentation_cloudvolume()
+        for rid in root_ids:
+            if not self.fc.chunkedgraph.is_valid_nodes(rid):
+                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
+                continue
+            if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
+                logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                continue
+            valid_rids.append(rid)
+        if not valid_rids:
+            logging.error("No valid root ids were submitted.")
+            return {}
+        root_ids = valid_rids
+
+        if len(root_ids) > MAX_BULK_SYNCHRONOUS_SKELETONS:
+            root_ids = root_ids[:MAX_BULK_SYNCHRONOUS_SKELETONS]
+            if verbose_level >= 1:
+                logging.warning(f"Truncating bulk skeleton list to {MAX_BULK_SYNCHRONOUS_SKELETONS}")
 
         url = self._build_bulk_endpoint(
             root_ids,
@@ -716,6 +746,7 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
+        logging.info(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.8.0"):
             logging.warning(
                 "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
@@ -739,6 +770,21 @@ class SkeletonClient(ClientBase):
             raise ValueError(
                 f"root_ids must be a list or numpy array of root_ids, not a {type(root_ids)}"
             )
+
+        valid_rids = []
+        cv = self.fc.info.segmentation_cloudvolume()
+        for rid in root_ids:
+            if not self.fc.chunkedgraph.is_valid_nodes(rid):
+                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
+                continue
+            if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
+                logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                continue
+            valid_rids.append(rid)
+        if not valid_rids:
+            logging.error("No valid root ids were submitted.")
+            return {}
+        root_ids = valid_rids
 
         if len(root_ids) > MAX_BULK_ASYNCHRONOUS_SKELETONS:
             logging.warning(

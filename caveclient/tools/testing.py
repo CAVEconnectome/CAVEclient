@@ -565,3 +565,14 @@ def CAVEclientMock(
         return client
 
     return mockedCAVEclient()
+
+def CloudVolumeMock():
+    def Meta():
+        def __init__(self):
+            self.n_layers = 1
+
+        def decode_layer_id(self, root_id):
+            return 1
+    
+    def __init__(self):
+        self.meta = Meta()
