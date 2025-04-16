@@ -532,11 +532,11 @@ class SkeletonClient(ClientBase):
                 "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
             )
         
-        if not self.fc.chunkedgraph.is_valid_nodes(root_id):
-            raise ValueError(f"Invalid root id: {root_id} (perhaps it doesn't exist; the error is unclear)")
         cv = self.fc.info.segmentation_cloudvolume()
         if cv and cv.meta.decode_layer_id(root_id) != cv.meta.n_layers:
             raise ValueError(f"Invalid root id: {root_id} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id)")
+        if not self.fc.chunkedgraph.is_valid_nodes(root_id):
+            raise ValueError(f"Invalid root id: {root_id} (perhaps it doesn't exist; the error is unclear)")
         
         url = self._build_get_skeleton_endpoint(
             root_id,
@@ -649,11 +649,11 @@ class SkeletonClient(ClientBase):
         valid_rids = []
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
-            if not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
-                continue
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
                 logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                continue
+            if not self.fc.chunkedgraph.is_valid_nodes(rid):
+                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
                 continue
             valid_rids.append(rid)
         if not valid_rids:
@@ -774,11 +774,11 @@ class SkeletonClient(ClientBase):
         valid_rids = []
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
-            if not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
-                continue
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
                 logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                continue
+            if not self.fc.chunkedgraph.is_valid_nodes(rid):
+                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
                 continue
             valid_rids.append(rid)
         if not valid_rids:
