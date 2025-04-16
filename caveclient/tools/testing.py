@@ -566,13 +566,15 @@ def CAVEclientMock(
 
     return mockedCAVEclient()
 
-def CloudVolumeMock():
-    def Meta():
+class CloudVolumeMock:
+    class Meta:
         def __init__(self):
             self.n_layers = 1
 
         def decode_layer_id(self, root_id):
+            if root_id == 2:
+                return 2  # Test a bad layer id (it won't match n_layers)
             return 1
     
     def __init__(self):
-        self.meta = Meta()
+        self.meta = CloudVolumeMock.Meta()

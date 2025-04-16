@@ -307,6 +307,46 @@ class TestSkeletonsClient:
                 )
 
     @responses.activate
+    def test_get_skeleton__invalid_layer(self, myclient, my_cloudvolume, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+        mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
+        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        try:
+            myclient.skeleton.get_skeleton(2, None, 4, "dict")
+            assert False
+        except ValueError as e:
+            assert (
+                e.args[0]
+                == "Invalid root id: 2 (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id)"
+            )
+
+    @responses.activate
+    def test_get_skeleton__invalid_nodes(self, myclient, my_cloudvolume, mocker):
+        mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
+        mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=False)
+        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        try:
+            myclient.skeleton.get_skeleton(0, None, 4, "dict")
+            assert False
+        except ValueError as e:
+            assert (
+                e.args[0]
+                == "Invalid root id: 0 (perhaps it doesn't exist; the error is unclear)"
+            )
+
+    @responses.activate
     def test_get_skeleton__refusal_list(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
