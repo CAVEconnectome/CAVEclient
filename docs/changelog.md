@@ -2,9 +2,10 @@
 title: Changelog
 ---
 ## 7.7.2 (April 27, 2025)
-- Remove node validation test from SkeletonClient.generate_bulk_skeletons_async() to significantly speed up that function.
+- Removed node validation test from SkeletonClient.generate_bulk_skeletons_async() to significantly speed up that function. The tests will are still performed later in the pipeline.
 
 ## 7.7.1
+- Added root id layer check and node validation check to SkeletonClient.generate_bulk_skeletons_async() to pull such checks as early in the process as possible. They are also performed in the server-side function associated with this function, as well as in the individual skeletonization process performed by the skeletonization workers for each individual root id.
 
 ## 7.7.0
 
