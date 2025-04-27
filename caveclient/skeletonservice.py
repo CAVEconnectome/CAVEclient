@@ -6,6 +6,7 @@ import io
 import json
 import logging
 from io import BytesIO, StringIO
+from timeit import default_timer
 from typing import List, Literal, Optional, Union
 
 import numpy as np
@@ -346,6 +347,10 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
+        logging.info(
+            f"get_cache_contents() response contains content of size {len(response.content)} bytes"
+        )
+
         return response.json()
 
     @_check_version_compatibility(method_constraint=">=0.5.10")
@@ -407,6 +412,10 @@ class SkeletonClient(ClientBase):
             if self._server_version < Version("0.9.0"):
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
+
+                logging.info(
+                    f"skeletons_exist() response contains content of size {len(response.content)} bytes"
+                )
             else:
                 data = {
                     "root_ids": rids_one_batch,
@@ -455,6 +464,11 @@ class SkeletonClient(ClientBase):
 
         response = self.session.get(url)
         self.raise_for_status(response)
+
+        logging.info(
+            f"get_precomputed_skeleton_info() response contains content of size {len(response.content)} bytes"
+        )
+
         return response.json()
 
     def get_skeleton(
@@ -678,6 +692,10 @@ class SkeletonClient(ClientBase):
         self.raise_for_status(response, log_warning=log_warning)
 
         logging.info(
+            f"get_bulk_skeletons() response contains content of size {len(response.content)} bytes"
+        )
+
+        logging.info(
             f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
         )
 
@@ -743,6 +761,8 @@ class SkeletonClient(ClientBase):
         float
             The estimated time in seconds to generate all skeletons (a comparable message will be output to the console prior to return).
         """
+        t0 = default_timer()
+        
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
@@ -771,13 +791,17 @@ class SkeletonClient(ClientBase):
                 f"root_ids must be a list or numpy array of root_ids, not a {type(root_ids)}"
             )
 
+        t1 = default_timer()
+
         valid_rids = []
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
                 logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
                 continue
-            if not self.fc.chunkedgraph.is_valid_nodes(rid):
+            # The following test has been removed, due to its serialized and time-intensive cost.
+            # The same test will be performed by the parallelized skeletonization worker later anyway.
+            if False:  # not self.fc.chunkedgraph.is_valid_nodes(rid):
                 logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
                 continue
             valid_rids.append(rid)
@@ -796,8 +820,15 @@ class SkeletonClient(ClientBase):
         # but have since converted the call to POST, which probably obviates the need for the considerably more complex batch handling.
         # So consider reverting to the unbatched approach in the future.
 
+        t2 = default_timer()
+
+        t3_et = 0
+        t4_et = 0
+        
         estimated_async_time_secs_upper_bound_sum = 0
         for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
+            t3_0 = default_timer()
+            
             rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
 
             use_post = self._server_version >= Version("0.8.0")
@@ -809,9 +840,16 @@ class SkeletonClient(ClientBase):
                 use_post,
             )
 
+            t3 = default_timer()
+            t3_et += t3 - t3_0
+            
             if self._server_version < Version("0.8.0"):
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
+
+                logging.info(
+                    f"generate_bulk_skeletons_async() response contains content of size {len(response.content)} bytes"
+                )
             else:
                 data = {
                     "root_ids": rids_one_batch,
@@ -820,6 +858,9 @@ class SkeletonClient(ClientBase):
                 }
                 response = self.session.post(url, json=data)
                 response = handle_response(response, as_json=False)
+
+            t4 = default_timer()
+            t4_et += t4 - t3
 
             estimated_async_time_secs_upper_bound = float(response.text)
             estimated_async_time_secs_upper_bound_sum += (
@@ -832,6 +873,8 @@ class SkeletonClient(ClientBase):
             logging.info(
                 f"Upper estimate to generate one batch of {len(rids_one_batch)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
             )
+
+        t5_0 = default_timer()
 
         if estimated_async_time_secs_upper_bound_sum < 60:
             estimate_time_str = (
@@ -853,4 +896,14 @@ class SkeletonClient(ClientBase):
         logging.info(
             f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
         )
+
+        t5 = default_timer()
+
+        t1_et = t1 - t0
+        t2_et = t2 - t1
+        t5_et = t5 - t5_0
+        logging.info(
+            f"generate_bulk_skeletons_async elapsed time: {t1_et:.3f}s {t2_et:.3f}s {t3_et:.3f}s {t4_et:.3f}s {t5_et:.3f}s"
+        )
+
         return estimated_async_time_secs_upper_bound_sum
