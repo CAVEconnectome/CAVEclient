@@ -1,6 +1,15 @@
 ---
 title: Changelog
 ---
+## 7.7.2 (April 27, 2025)
+- Remove node validation test from SkeletonClient.generate_bulk_skeletons_async() to significantly speed up that function.
+
+## 7.7.1
+
+## 7.7.0
+
+## 7.6.3
+
 ## 7.6.2 (March 13, 2025)
 - Bug fix. SWC skeletons weren't working through the skeleton client's get_bulk_skeletons().
 
