@@ -1188,9 +1188,12 @@
 
 <h3 id="772-april-27-2025">7.7.2 (April 27, 2025)<a class="headerlink" href="#772-april-27-2025" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Remove node validation test from SkeletonClient.generate_bulk_skeletons_async() to significantly speed up that function.</li>
+<li>Removed node validation test from SkeletonClient.generate_bulk_skeletons_async() to significantly speed up that function. The tests will are still performed later in the pipeline.</li>
 </ul>
 <h3 id="771">7.7.1<a class="headerlink" href="#771" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added root id layer check and node validation check to SkeletonClient.generate_bulk_skeletons_async() to pull such checks as early in the process as possible. They are also performed in the server-side function associated with this function, as well as in the individual skeletonization process performed by the skeletonization workers for each individual root id.</li>
+</ul>
 <h3 id="770">7.7.0<a class="headerlink" href="#770" title="Permanent link">&para;</a></h3>
 <h3 id="763">7.6.3<a class="headerlink" href="#763" title="Permanent link">&para;</a></h3>
 <h3 id="762-march-13-2025">7.6.2 (March 13, 2025)<a class="headerlink" href="#762-march-13-2025" title="Permanent link">&para;</a></h3>
