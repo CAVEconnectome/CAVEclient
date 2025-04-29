@@ -408,7 +408,7 @@ def CAVEclientMock(
     @responses.activate()
     def mockedCAVEclient():
         info_version_url = version_url(
-            global_server, endpoints.infoservice_endpoints_v2, "i_server_address"
+            global_server, endpoints.infoservice_common, "i_server_address"
         )
         responses.add(
             responses.GET,
@@ -566,6 +566,7 @@ def CAVEclientMock(
 
     return mockedCAVEclient()
 
+
 class CloudVolumeMock:
     class Meta:
         def __init__(self):
@@ -575,6 +576,6 @@ class CloudVolumeMock:
             if root_id == 2:
                 return 2  # Test a bad layer id (it won't match n_layers)
             return 1
-    
+
     def __init__(self):
         self.meta = CloudVolumeMock.Meta()

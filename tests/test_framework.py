@@ -31,7 +31,7 @@ mapping = {
     "datastack_name": datastack_dict["datastack_name"],
 }
 info_url = url_template.format_map(mapping)
-info_version_url = endpoints.infoservice_endpoints_v2["get_version"].format_map(mapping)
+info_version_url = endpoints.infoservice_common["get_version"].format_map(mapping)
 
 
 def test_global_client(global_client):  # noqa: F811
