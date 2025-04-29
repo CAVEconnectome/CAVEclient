@@ -43,9 +43,7 @@ info_mapping = {
 }
 url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
 info_url = url_template.format_map(info_mapping)
-info_version_url = endpoints.infoservice_endpoints_v2["get_version"].format_map(
-    info_mapping
-)
+info_version_url = endpoints.infoservice_common["get_version"].format_map(info_mapping)
 
 
 class TestSkeletonsClient:
@@ -175,7 +173,9 @@ class TestSkeletonsClient:
     def test_get_skeleton__dict(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get(
             "get_skeleton_async_via_skvn_rid_fmt"
@@ -242,7 +242,9 @@ class TestSkeletonsClient:
     def test_get_skeleton__swc(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get(
             "get_skeleton_async_via_skvn_rid_fmt"
@@ -310,7 +312,9 @@ class TestSkeletonsClient:
     def test_get_skeleton__invalid_layer(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
@@ -330,7 +334,9 @@ class TestSkeletonsClient:
     def test_get_skeleton__invalid_nodes(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=False)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
@@ -350,7 +356,9 @@ class TestSkeletonsClient:
     def test_get_skeleton__refusal_list(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
@@ -381,7 +389,9 @@ class TestSkeletonsClient:
     def test_get_bulk_skeletons__dict(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get(
             "get_bulk_skeletons_via_skvn_rids"
@@ -448,7 +458,9 @@ class TestSkeletonsClient:
     def test_get_bulk_skeletons__swc(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get(
             "get_bulk_skeletons_via_skvn_rids"
@@ -511,7 +523,9 @@ class TestSkeletonsClient:
     def test_generate_bulk_skeletons_async(self, myclient, my_cloudvolume, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume)
+        mocker.patch.object(
+            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
+        )
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
