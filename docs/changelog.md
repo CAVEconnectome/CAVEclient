@@ -1,6 +1,10 @@
 ---
 title: Changelog
 ---
+## 7.7.3 (April 29, 2025)
+- Fixed version endpoint for Info Service
+- Version endpoint fix enables the info service to be used to find image mirrors and to request image mirrors for getting datastack info.
+
 ## 7.7.2 (April 27, 2025)
 - Removed node validation test from SkeletonClient.generate_bulk_skeletons_async() to significantly speed up that function. The tests will are still performed later in the pipeline.
 
