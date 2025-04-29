@@ -104,7 +104,10 @@ materialization_api_versions = {
 # ------ Infoservice endpoints
 # -------------------------------
 
-infoservice_common = {}
+info_base = "{i_server_address}/info"
+infoservice_common = {
+    "get_version": info_base + "/version",
+}
 
 info_v1 = "{i_server_address}/info/api"
 infoservice_endpoints_v1 = {
@@ -122,7 +125,6 @@ infoservice_endpoints_v2 = {
     "datastacks_from_aligned_volume": info_v2
     + "/aligned_volume/{aligned_volume_name}/datastacks",
     "image_sources": info_v2 + "/datastack/{datastack_name}/image_sources",
-    "get_version": info_v2 + "/version",
 }
 
 infoservice_api_versions = {1: infoservice_endpoints_v1, 2: infoservice_endpoints_v2}
