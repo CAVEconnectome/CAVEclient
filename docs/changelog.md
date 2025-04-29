@@ -1,6 +1,9 @@
 ---
 title: Changelog
 ---
+## 7.7.4 (April 29, 2025)
+- Added SkeletonService.get_refusal_list(), which requires server-side SkeletonService >= v0.21.0.
+
 ## 7.7.3 (April 29, 2025)
 - Fixed version endpoint for Info Service
 - Version endpoint fix enables the info service to be used to find image mirrors and to request image mirrors for getting datastack info.
