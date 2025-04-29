@@ -305,6 +305,37 @@ class SkeletonClient(ClientBase):
         url += f"?verbose_level={verbose_level}"
         return url
 
+    @_check_version_compatibility(method_constraint=">=0.21.0")
+    def get_refusal_list(
+        self,
+        datastack_name: Optional[str] = None,
+        log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
+    ):
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint = "get_refusal_list"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
+
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        logging.info(
+            f"get_refusal_list() response contains content of size {len(response.content)} bytes"
+        )
+
+        file_content = SkeletonClient.decompressBytesToString(response.content)
+
+        df = pd.read_csv(
+            StringIO(file_content),
+            sep=",",
+            names=["DATASTACK_NAME", "ROOT_ID"],
+        )
+        
+        return df
+
     @_check_version_compatibility(method_constraint=">=0.5.9")
     def get_cache_contents(
         self,
