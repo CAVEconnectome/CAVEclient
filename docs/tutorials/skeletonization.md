@@ -78,6 +78,18 @@ sk = client.skeleton.get_skeleton(
 )
 ```
 
+## The root id refusal list
+
+Some root ids are consistently problematic and should not be subject to repeated skeletonization attempts. Examples include enormous objects (like volume-spanning blood vessel networks). To prevent such root ids from continually blocking resources that could be better applied to skeletonizing other root ids, the skeleton service utilizes a *refusal list*. Any root id added to, and subsequently found in, the refusal list will not be processed. Since a user might find it helpful to understand that certain root ids will not work for this reason, the service provides a function that lets one see the entire refusal list:
+
+```python
+get_refusal_list(
+    datastack_name=<datastack_name>,
+)
+```
+
+This function will return a Pandas Dataframe indicating, on a per-row basis, root ids specific to the requested datastack that currently reside in the refusal list. If you believe a root id ought to be skeletonizable and has been added to the list in error, contact the support team and we will remove it from the refusal list so it can be reattempted.
+
 ## Peering into the contents of the cache
 
 Most end-users shouldn't need to use the following function very much, but to see the contents of the cache for a given root id, set of root ids, root id prefix, or set of prefixes:
