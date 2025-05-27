@@ -115,7 +115,7 @@ def concatenate_position_columns(df, inplace=False):
     return df2
 
 
-def convert_timestamp(ts: datetime):
+def convert_timestamp(ts: datetime) -> datetime:
     if ts == "now":
         ts = datetime.now(timezone.utc)
 
@@ -299,7 +299,7 @@ class MaterializationClient(ClientBase):
         versions = self.get_versions(datastack_name=datastack_name)
         return np.max(np.array(versions))
 
-    def get_versions(self, datastack_name=None, expired=False):
+    def get_versions(self, datastack_name=None, expired=False) -> dict:
         """Get the versions available
 
         Parameters
@@ -325,7 +325,7 @@ class MaterializationClient(ClientBase):
         self.raise_for_status(response)
         return response.json()
 
-    def get_tables(self, datastack_name=None, version: Optional[int] = None):
+    def get_tables(self, datastack_name=None, version: Optional[int] = None) -> list:
         """Gets a list of table names for a datastack
 
         Parameters
@@ -374,7 +374,7 @@ class MaterializationClient(ClientBase):
 
     def get_version_metadata(
         self, version: Optional[int] = None, datastack_name: str = None
-    ):
+    ) -> dict:
         """Get metadata about a version
 
         Parameters
@@ -406,7 +406,9 @@ class MaterializationClient(ClientBase):
         d["expires_on"] = convert_timestamp(d["expires_on"])
         return d
 
-    def get_timestamp(self, version: Optional[int] = None, datastack_name: str = None):
+    def get_timestamp(
+        self, version: Optional[int] = None, datastack_name: str = None
+    ) -> datetime:
         """Get datetime.datetime timestamp for a materialization version.
 
         Parameters
@@ -426,7 +428,7 @@ class MaterializationClient(ClientBase):
         return convert_timestamp(meta["time_stamp"])
 
     @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
-    def get_versions_metadata(self, datastack_name=None, expired=False):
+    def get_versions_metadata(self, datastack_name=None, expired=False) -> list[dict]:
         """Get the metadata for all the versions that are presently available and valid
 
         Parameters
@@ -462,7 +464,7 @@ class MaterializationClient(ClientBase):
         datastack_name=None,
         version: Optional[int] = None,
         log_warning: bool = True,
-    ):
+    ) -> dict:
         """Get metadata about a table
 
         Parameters
@@ -662,7 +664,7 @@ class MaterializationClient(ClientBase):
         get_counts: bool = False,
         random_sample: int = None,
         log_warning: bool = True,
-    ):
+    ) -> Union[pd.DataFrame, dict]:
         """Generic query on materialization tables
 
         Parameters
@@ -896,7 +898,7 @@ class MaterializationClient(ClientBase):
         desired_resolution: Iterable = None,
         random_sample: int = None,
         log_warning: bool = True,
-    ):
+    ) -> Union[pd.DataFrame, dict]:
         """Generic query on materialization tables
 
         Parameters
@@ -1207,7 +1209,7 @@ class MaterializationClient(ClientBase):
         self,
         table_name: str,
         datastack_name: str = None,
-    ):
+    ) -> dict:
         """Trigger supervoxel lookup and root ID lookup of new annotations in a table.
 
         Parameters
@@ -1309,7 +1311,7 @@ class MaterializationClient(ClientBase):
         desired_resolution: Iterable = None,
         random_sample: int = None,
         log_warning: bool = True,
-    ):
+    ) -> pd.DataFrame:
         """Generic query on materialization tables
 
         Parameters
@@ -1937,7 +1939,7 @@ class MaterializationClient(ClientBase):
         allow_invalid_root_ids: bool = False,
         random_sample: int = None,
         log_warning: bool = True,
-    ):
+    ) -> pd.DataFrame:
         """Beta method for querying cave annotation tables with root IDs and annotations
         at a particular timestamp.  Note: this method requires more explicit mapping of
         filters and selection to table as its designed to test a more general endpoint
@@ -2200,7 +2202,9 @@ class MaterializationClient(ClientBase):
         return df
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
-    def get_views(self, version: Optional[int] = None, datastack_name: str = None):
+    def get_views(
+        self, version: Optional[int] = None, datastack_name: str = None
+    ) -> list[str]:
         """
         Get all available views for a version
 
@@ -2236,7 +2240,7 @@ class MaterializationClient(ClientBase):
         materialization_version: Optional[int] = None,
         datastack_name: str = None,
         log_warning: bool = True,
-    ):
+    ) -> dict:
         """Get metadata for a view
 
         Parameters
@@ -2276,7 +2280,7 @@ class MaterializationClient(ClientBase):
         materialization_version: Optional[int] = None,
         datastack_name: str = None,
         log_warning: bool = True,
-    ):
+    ) -> dict:
         """Get schema for a view
 
         Parameters
@@ -2315,7 +2319,7 @@ class MaterializationClient(ClientBase):
         materialization_version: Optional[int] = None,
         datastack_name: str = None,
         log_warning: bool = True,
-    ):
+    ) -> dict:
         """Get schema for a view
 
         Parameters
@@ -2377,7 +2381,7 @@ class MaterializationClient(ClientBase):
         desired_resolution: Iterable = None,
         get_counts: bool = False,
         random_sample: int = None,
-    ):
+    ) -> Union[pd.DataFrame, dict]:
         """Generic query on a view
 
         Parameters
@@ -2492,7 +2496,7 @@ class MaterializationClient(ClientBase):
             data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
-            stream=~return_df,
+            stream=not return_df,
         )
         self.raise_for_status(response)
         if return_df:
@@ -2538,7 +2542,7 @@ class MaterializationClient(ClientBase):
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_unique_string_values(
         self, table: str, datastack_name: Optional[str] = None
-    ):
+    ) -> dict[str]:
         """Get unique string values for a table
 
         Parameters
