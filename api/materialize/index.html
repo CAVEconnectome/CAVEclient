@@ -5046,7 +5046,7 @@ annotations</p>
 
 
 <h2 id="caveclient.materializationengine.MaterializationClient.query_view" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">query_view</span><span class="p">(</span><span class="n">view_name</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">merge_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">query_view</span><span class="p">(</span><span class="n">view_name</span><span class="p">,</span> <span class="n">filter_in_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_out_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_greater_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_less_equal_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_spatial_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_regex_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">select_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_positions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">materialization_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">desired_resolution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_counts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_sample</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.materializationengine.MaterializationClient.query_view" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -5357,24 +5357,6 @@ If False data is returned as one column with [x,y,z] array (slower)</p>
                 <p>Toggle to return metadata (default True), by default True. If True
 (and return_df is also True), return table and query metadata in the
 df.attr dictionary.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>merge_reference</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Toggle to automatically join reference table, by default True. If True,
-metadata will be queries and if its a reference table it will perform a
-join on the reference table to return the rows of that</p>
               </div>
             </td>
             <td>
