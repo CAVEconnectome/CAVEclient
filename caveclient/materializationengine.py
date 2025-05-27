@@ -2377,7 +2377,6 @@ class MaterializationClient(ClientBase):
         split_positions: bool = False,
         materialization_version: Optional[int] = None,
         metadata: bool = True,
-        merge_reference: bool = True,
         desired_resolution: Iterable = None,
         get_counts: bool = False,
         random_sample: int = None,
@@ -2430,10 +2429,6 @@ class MaterializationClient(ClientBase):
             Toggle to return metadata (default True), by default True. If True
             (and return_df is also True), return table and query metadata in the
             df.attr dictionary.
-        merge_reference : bool, optional
-            Toggle to automatically join reference table, by default True. If True,
-            metadata will be queries and if its a reference table it will perform a
-            join on the reference table to return the rows of that
         desired_resolution : Iterable[float], optional
             Desired resolution you want all spatial points returned in, by default None.
             If None, defaults to one specified in client, if that is None then points
