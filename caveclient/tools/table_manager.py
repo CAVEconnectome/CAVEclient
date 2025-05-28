@@ -992,7 +992,27 @@ class TableManager(object):
         return key in self._tables
 
     def __repr__(self):
-        return str(self._tables)
+        return str(self._tables)    
+    
+    def __repr_html__(self): 
+        html_string = """<html>
+            <head></head>
+            <body>
+                <h2>Tables:</h2>
+                """
+        for table_name in self.table_names:
+            value = self._table_metadata[table_name]
+            html_string += f"""
+                <details>
+                    <p>{value["description"]}</p>
+                    <summary>{table_name}</summary>
+                </details>
+                """
+        html_string += """
+            </body> 
+        </html>"""
+        return html_string
+
 
     @property
     def table_names(self):
