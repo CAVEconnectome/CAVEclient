@@ -973,17 +973,8 @@ def make_query_filter_view(view_name, meta, schema, client):
     return ViewQueryFilter
 
 
-class TableManager(object):
-    """Use schema definitions to generate query filters for each table."""
-
-    def __init__(self, client, metadata=None, schema=None):
-        self._client = client
-        self._table_metadata = get_all_table_metadata(self._client, meta=metadata)
-        self._tables = sorted(list(self._table_metadata.keys()))
-        populate_schema_cache(client, schema_definitions=schema)
-        populate_table_cache(client, metadata=self._table_metadata)
-        for tn in self._tables:
-            setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
+class BaseManager:
+    """Base class for managers that handle query filters for tables and views."""
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -999,7 +990,6 @@ class TableManager(object):
         html_string = """<html>
             <head></head>
             <body>
-                <h2>Tables:</h2>
                 """
         for table_name in self.table_names:
             value = self._table_metadata[table_name]
@@ -1037,50 +1027,32 @@ class TableManager(object):
         return len(self._tables)
 
 
+class TableManager(BaseManager):
+    """Use schema definitions to generate query filters for each table."""
+
+    def __init__(self, client, metadata=None, schema=None):
+        self._client = client
+        self._table_metadata = get_all_table_metadata(self._client, meta=metadata)
+        self._tables = sorted(list(self._table_metadata.keys()))
+        populate_schema_cache(client, schema_definitions=schema)
+        populate_table_cache(client, metadata=self._table_metadata)
+        for tn in self._tables:
+            setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
+
+
 class ViewManager(object):
     def __init__(self, client, view_metadata=None, view_schema=None):
         self._client = client
         if view_metadata is None or view_schema is None:
             view_metadata, view_schema = get_all_view_metadata(self._client)
         else:
-            self._view_metadata = view_metadata
-        self._views = sorted(list(self._view_metadata.keys()))
-        for vn in self._views:
+            self._table_metadata = view_metadata
+        self._tables = sorted(list(self._table_metadata.keys()))
+        for vn in self._tables:
             setattr(
                 self,
                 vn,
                 make_query_filter_view(
-                    vn, self._view_metadata[vn], view_schema[vn], client
+                    vn, self._table_metadata[vn], view_schema[vn], client
                 ),
             )
-
-    def __getitem__(self, key):
-        return getattr(self, key)
-
-    def __contains__(self, key):
-        return key in self._views
-
-    def __repr__(self):
-        return str(self._views)
-
-    @property
-    def table_names(self):
-        return self._views
-
-    def find(self, search_str):
-        """Find tables that contain a string. Case is ignored.
-
-        Parameters
-        ----------
-        search_str : str
-
-
-        Returns
-        -------
-        list
-            Table names with that string
-        """
-        return [tn for tn in self.table_names if search_str.lower() in tn.lower()]
-
-    def __len__(self):
-        return len(self._views)
