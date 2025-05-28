@@ -982,10 +982,10 @@ class BaseManager:
     def __contains__(self, key):
         return key in self._tables
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self._tables)
 
-    def __repr_html__(self) -> str:
+    def _repr_html_(self) -> str:
         """Generates an HTML representation for viewing tables in interactive environments."""
         html_string = """<html>
             <head></head>
@@ -1000,9 +1000,13 @@ class BaseManager:
                 </details>
                 """
         html_string += """
-            </body> 
+            </body>
         </html>"""
         return html_string
+
+    def _repr_mimebundle_(self, include=None, exclude=None):
+        """Somehow necessary for IPython to detect _repr_html_ for subclasses."""
+        return {"text/html": self._repr_html_()}, {}
 
     @property
     def table_names(self):
