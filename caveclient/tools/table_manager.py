@@ -1040,7 +1040,7 @@ class TableManager(BaseManager):
             setattr(self, tn, make_query_filter(tn, self._table_metadata[tn], client))
 
 
-class ViewManager(object):
+class ViewManager(BaseManager):
     def __init__(self, client, view_metadata=None, view_schema=None):
         self._client = client
         if view_metadata is None or view_schema is None:
