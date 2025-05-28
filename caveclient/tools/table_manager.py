@@ -992,9 +992,10 @@ class TableManager(object):
         return key in self._tables
 
     def __repr__(self):
-        return str(self._tables)    
-    
-    def __repr_html__(self): 
+        return str(self._tables)
+
+    def __repr_html__(self) -> str:
+        """Generates an HTML representation for viewing tables in interactive environments."""
         html_string = """<html>
             <head></head>
             <body>
@@ -1012,7 +1013,6 @@ class TableManager(object):
             </body> 
         </html>"""
         return html_string
-
 
     @property
     def table_names(self):
