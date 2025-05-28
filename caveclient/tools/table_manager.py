@@ -1028,8 +1028,6 @@ class BaseManager:
 
 
 class TableManager(BaseManager):
-    """Use schema definitions to generate query filters for each table."""
-
     def __init__(self, client, metadata=None, schema=None):
         self._client = client
         self._table_metadata = get_all_table_metadata(self._client, meta=metadata)
