@@ -563,7 +563,7 @@ class ChunkedGraphClient(ClientBase):
             params=params,
             headers={"Content-Type": "application/json"},
         )
-        handle_response(response)
+        return handle_response(response)
 
     def undo_operation(self, operation_id) -> dict:
         """Undo an operation.
