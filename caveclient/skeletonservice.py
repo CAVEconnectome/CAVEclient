@@ -28,6 +28,7 @@ SERVER_KEY = "skeleton_server_address"
 MAX_SKELETONS_EXISTS_QUERY_SIZE = 1000
 MAX_BULK_SYNCHRONOUS_SKELETONS = 10
 MAX_BULK_ASYNCHRONOUS_SKELETONS = 10000
+MAX_BULK_RETRIEVED_SKELETONS = 1000
 BULK_SKELETONS_BATCH_SIZE = 1000
 
 
@@ -271,6 +272,35 @@ class SkeletonClient(ClientBase):
         url += f"?verbose_level={verbose_level}"
         return url
 
+    def _build_get_bulk_available_endpoint(
+        self,
+        root_ids: List,
+        datastack_name: str,
+        skeleton_version: int,
+        output_format: str,
+        verbose_level: int,
+    ):
+        """
+        Building the URL in a separate function facilitates testing
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+
+        assert skeleton_version is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["root_ids"] = ",".join([str(v) for v in root_ids])
+        endpoint_mapping["output_format"] = output_format
+        endpoint_mapping["skeleton_version"] = skeleton_version
+
+        endpoint = "get_bulk_available_skeletons_via_skvn_rids"
+
+        url = self._endpoints[endpoint].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
+        return url
+
     def _build_bulk_async_endpoint(
         self,
         root_ids: List,
@@ -312,6 +342,10 @@ class SkeletonClient(ClientBase):
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+        
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint = "get_refusal_list"
@@ -453,6 +487,8 @@ class SkeletonClient(ClientBase):
                     "skeleton_version": skeleton_version,
                     "verbose_level": verbose_level,
                 }
+                # DEBUG
+                print(f"POSTing to {url} with data: {data}")
                 response = self.session.post(url, json=data)
                 response = handle_response(response, as_json=False)
 
@@ -514,7 +550,7 @@ class SkeletonClient(ClientBase):
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
-        """Gets basic skeleton information for a datastack
+        """Gets one skeleton, blocking for skeletonization if necessary.
 
         Parameters
         ----------
@@ -766,6 +802,163 @@ class SkeletonClient(ClientBase):
                             f"Error decompressing skeleton for root_id {rid}: {e}"
                         )
             return sk_dfs
+
+    @_check_version_compatibility(method_constraint=">=0.21.15")
+    def get_bulk_available_skeletons(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 4,
+        output_format: Literal[
+            "dict",
+            "swc",
+        ] = "dict",
+        generate_missing_skeletons: bool = False,
+        log_warning: bool = True,
+        verbose_level: Optional[int] = 0,
+    ):
+        """Generates skeletons for a list of root ids in a "small" bulk (ten at the time of this writing). Use the async interface for larger bulk requests.
+
+        Parameters
+        ----------
+        root_ids : List
+            A list of root ids of the skeletons to retrieve
+        datastack_name : str
+            The name of the datastack to check
+        skeleton_version : int
+            The skeleton version to retrieve. Use 0 for Neuroglancer-compatibility. Use -1 for latest.
+        """
+        if not self.fc.l2cache.has_cache():
+            raise NoL2CacheException("SkeletonClient requires an L2Cache.")
+
+        logging.info(f"SkeletonService version: {self._server_version}")
+
+        valid_output_formats = ["dict", "swc"]
+        if output_format not in valid_output_formats:
+            raise ValueError(
+                f"Unknown output format: {output_format}. Valid options: {valid_output_formats}"
+            )
+
+        if output_format == "dict":
+            endpoint_format = "flatdict"
+        elif output_format == "swc":
+            endpoint_format = "swccompressed"
+
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
+            )
+
+        valid_rids = []
+        cv = self.fc.info.segmentation_cloudvolume()
+        for rid in root_ids:
+            if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
+                logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                continue
+            # The following test is disabled, due to its serialized and time-intensive cost.
+            # The same test will be performed by the parallelized skeletonization worker later anyway.
+            if False:  # not self.fc.chunkedgraph.is_valid_nodes(rid):
+                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
+                continue
+            valid_rids.append(rid)
+        if not valid_rids:
+            logging.error("No valid root ids were submitted.")
+            return {}
+        root_ids = valid_rids
+
+        if len(root_ids) > MAX_BULK_RETRIEVED_SKELETONS:
+            root_ids = root_ids[:MAX_BULK_RETRIEVED_SKELETONS]
+            if verbose_level >= 1:
+                logging.warning(f"Truncating bulk skeleton list to {MAX_BULK_RETRIEVED_SKELETONS}")
+
+        url = self._build_bulk_endpoint(
+            root_ids,
+            datastack_name,
+            skeleton_version,
+            endpoint_format,
+            generate_missing_skeletons,
+            verbose_level,
+        )
+        response = self.session.get(url)
+        self.raise_for_status(response, log_warning=log_warning)
+
+        logging.info(
+            f"get_bulk_skeletons() response contains content of size {len(response.content)} bytes"
+        )
+
+        logging.info(
+            f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
+        )
+
+        results = {}
+        for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
+            rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
+
+            url = self._build_get_bulk_available_endpoint(
+                rids_one_batch,
+                datastack_name,
+                skeleton_version,
+                endpoint_format,
+                verbose_level,
+            )
+
+            data = {
+                "root_ids": rids_one_batch,
+                "skeleton_version": skeleton_version,
+                "verbose_level": verbose_level,
+            }
+            response = self.session.post(url, json=data)
+            response = handle_response(response, as_json=False)
+
+            result_json = response.json()
+            if isinstance(result_json, dict):
+                # Convert string keys to ints
+                results.update({int(key): value for key, value in result_json.items()})
+            elif isinstance(result_json, bool):
+                assert len(rids_one_batch) == 1
+                results[int(rids_one_batch[0])] = result_json
+            else:
+                raise ValueError(f"Unexpected response type: {type(result_json)}")
+
+            if endpoint_format == "flatdict":
+                sk_jsons = {}
+                for rid, dict_bytes in response.json().items():
+                    if dict_bytes not in ["async", "invalid_rid", "invalid_layer_rid"]:
+                        try:
+                            sk_json = SkeletonClient.decompressBytesToDict(
+                                io.BytesIO(binascii.unhexlify(dict_bytes)).getvalue()
+                            )
+                            sk_jsons[rid] = sk_json
+                        except Exception as e:
+                            logging.error(
+                                f"Error decompressing skeleton for root_id {rid}: {e}"
+                            )
+                return results.update(sk_jsons)
+            elif endpoint_format == "swccompressed":
+                sk_dfs = {}
+                for rid, swc_bytes in response.json().items():
+                    if swc_bytes not in ["async", "invalid_rid", "invalid_layer_rid"]:
+                        try:
+                            sk_csv = (
+                                io.BytesIO(binascii.unhexlify(swc_bytes))
+                                .getvalue()
+                                .decode()
+                            )
+                            # I got the SWC column header from skeleton_plot.skel_io.py
+                            sk_df = pd.read_csv(
+                                StringIO(sk_csv),
+                                sep=" ",
+                                names=["id", "type", "x", "y", "z", "radius", "parent"],
+                            )
+                            sk_dfs[rid] = sk_df
+                        except Exception as e:
+                            logging.error(
+                                f"Error decompressing skeleton for root_id {rid}: {e}"
+                            )
+                return results.update(sk_dfs)
+
+        return results
 
     @_check_version_compatibility(method_constraint=">=0.5.9")
     def generate_bulk_skeletons_async(
