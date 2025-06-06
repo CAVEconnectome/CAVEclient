@@ -487,8 +487,6 @@ class SkeletonClient(ClientBase):
                     "skeleton_version": skeleton_version,
                     "verbose_level": verbose_level,
                 }
-                # DEBUG
-                print(f"POSTing to {url} with data: {data}")
                 response = self.session.post(url, json=data)
                 response = handle_response(response, as_json=False)
 
