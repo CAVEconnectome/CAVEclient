@@ -435,6 +435,16 @@ class TestMatclient:
         )
         qry.query(metadata=False)
 
+        # test that __getitem__ works
+        myclient.materialize.tables["allen_column_mtypes_v2"]
+
+        # test that __repr__ works
+        assert isinstance(myclient.materialize.tables.__repr__(), str)
+
+        # test that _repr_html_ works
+        assert isinstance(myclient.materialize.tables._repr_html_(), str)
+        myclient.materialize.tables._repr_mimebundle_()
+
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
