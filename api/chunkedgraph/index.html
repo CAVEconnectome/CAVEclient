@@ -1630,6 +1630,7 @@
           <tr class="doc-section-item">
             <td><code><a class="autorefs autorefs-internal" title="caveclient.chunkedgraph.ChunkedGraphClient.base_resolution" href="#caveclient.chunkedgraph.ChunkedGraphClient.base_resolution">base_resolution</a></code></td>
             <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1723,7 +1724,7 @@ current time.</p>
 
 
 <h2 id="caveclient.chunkedgraph.ChunkedGraphClient.base_resolution" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">base_resolution</span></code>
+            <code class="highlight language-python"><span class="n">base_resolution</span><span class="p">:</span> <span class="nb">list</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
@@ -1926,6 +1927,22 @@ defaults to the current time.</p>
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>level2</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, returns the level 2 ID in the chunkedgraph instead of the root.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
       </tbody>
@@ -2506,7 +2523,7 @@ will only be one in this list.</li>
                 <code>root_ids</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></code>
+                  <code>Iterable</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2522,6 +2539,7 @@ will only be one in this list.</li>
                 <code>bounds</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2538,7 +2556,7 @@ will only be one in this list.</li>
                 <code>stop_layer</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2626,6 +2644,7 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
                 <code>bounds</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2642,7 +2661,7 @@ default will be <code>stop_layer=1</code> (supervoxels).</p>
                 <code>stop_layer</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3289,6 +3308,7 @@ Only returned if <code>return_additional_ccs</code> is True.</p>
                 <code>bounds</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3766,7 +3786,7 @@ and each edge is a list of two node IDs (source and target).</p>
                 <code>operation_ids</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a>]</code>
+                  <code><span title="caveclient.chunkedgraph.IntArrayLike">IntArrayLike</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3926,6 +3946,7 @@ tracing the history of the object in terms of merges and splits.</p>
                 <code>as_nx_graph</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3941,6 +3962,7 @@ tracing the history of the object in terms of merges and splits.</p>
                 <code>exclude_links_to_future</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3958,6 +3980,7 @@ before timestamp and one node after timestamp is kept.</p>
                 <code>exclude_links_to_past</code>
             </td>
             <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4584,6 +4607,7 @@ the current time.</p>
                 <code>root_ids</code>
             </td>
             <td>
+                  <code><span title="caveclient.chunkedgraph.IntArrayLike">IntArrayLike</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4619,7 +4643,7 @@ if you don't specify a timestamp parameter.</p>
                 <code>timestamp</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></code>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4776,7 +4800,7 @@ root IDs at <code>timestamp_past</code>/<code>timestamp_future</code>.</p>
 
 
 <h2 id="caveclient.chunkedgraph.ChunkedGraphClient.get_delta_roots" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_delta_roots</span><span class="p">(</span><span class="n">timestamp_past</span><span class="p">,</span> <span class="n">timestamp_future</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span></code>
+            <code class="highlight language-python"><span class="n">get_delta_roots</span><span class="p">(</span><span class="n">timestamp_past</span><span class="p">,</span> <span class="n">timestamp_future</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.chunkedgraph.ChunkedGraphClient.get_delta_roots" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -4828,7 +4852,7 @@ root IDs at <code>timestamp_past</code>/<code>timestamp_future</code>.</p>
               </div>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a>(<a class="autorefs autorefs-external" title="datetime.timezone.utc" href="https://docs.python.org/3/library/datetime.html#datetime.timezone.utc">utc</a>)</code>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
