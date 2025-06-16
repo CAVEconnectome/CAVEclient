@@ -3,7 +3,7 @@
 import datetime
 import json
 import logging
-from typing import Iterable, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 from urllib.parse import urlencode
 
 import networkx as nx
@@ -29,6 +29,15 @@ from .endpoints import (
 SERVER_KEY = "cg_server_address"
 
 logger = logging.getLogger(__name__)
+
+IntArrayLike = Union[
+    int,
+    np.integer,
+    np.ndarray,
+    pd.Series,
+    pd.Index,
+    list[int],
+]
 
 
 def package_bounds(bounds):
@@ -203,7 +212,12 @@ class ChunkedGraphClient(ClientBase):
         else:
             return timestamp
 
-    def get_roots(self, supervoxel_ids, timestamp=None, stop_layer=None) -> np.ndarray:
+    def get_roots(
+        self,
+        supervoxel_ids: Union[list, np.ndarray],
+        timestamp: Optional[datetime.datetime] = None,
+        stop_layer: Optional[int] = None,
+    ) -> np.ndarray:
         """Get the root ID for a list of supervoxels.
 
         Parameters
@@ -233,7 +247,12 @@ class ChunkedGraphClient(ClientBase):
         handle_response(response, as_json=False)
         return np.frombuffer(response.content, dtype=np.uint64)
 
-    def get_root_id(self, supervoxel_id, timestamp=None, level2=False) -> np.int64:
+    def get_root_id(
+        self,
+        supervoxel_id: int,
+        timestamp: Optional[datetime.datetime] = None,
+        level2: bool = False,
+    ) -> np.int64:
         """Get the root ID for a specified supervoxel.
 
         Parameters
@@ -244,6 +263,8 @@ class ChunkedGraphClient(ClientBase):
             UTC datetime to specify the state of the chunkedgraph at which to query, by
             default None. If None, uses the `timestamp` property for this client, which
             defaults to the current time.
+        level2 : bool, optional
+            If True, returns the level 2 ID in the chunkedgraph instead of the root.
 
         Returns
         -------
@@ -262,7 +283,7 @@ class ChunkedGraphClient(ClientBase):
         return np.int64(handle_response(response, as_json=True)["root_id"])
 
     @_check_version_compatibility(method_constraint="<3,>=2.18.0")
-    def get_minimal_covering_nodes(self, node_ids: Iterable[np.int64 or int]) -> dict:
+    def get_minimal_covering_nodes(self, node_ids: IntArrayLike) -> dict:
         """Get the minimal covering nodes for a list of root IDs.
 
         Parameters
@@ -289,7 +310,7 @@ class ChunkedGraphClient(ClientBase):
         )
         return np.frombuffer(response.content, dtype=np.uint64)
 
-    def get_merge_log(self, root_id) -> list:
+    def get_merge_log(self, root_id: int) -> list:
         """Get the merge log (splits and merges) for an object.
 
         Parameters
@@ -309,7 +330,7 @@ class ChunkedGraphClient(ClientBase):
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_change_log(self, root_id, filtered=True) -> dict:
+    def get_change_log(self, root_id: int, filtered: bool = True) -> dict:
         """Get the change log (splits and merges) for an object.
 
         Parameters
@@ -410,7 +431,9 @@ class ChunkedGraphClient(ClientBase):
         )
         return df
 
-    def get_tabular_change_log(self, root_ids, filtered=True) -> dict:
+    def get_tabular_change_log(
+        self, root_ids: IntArrayLike, filtered: bool = True
+    ) -> dict:
         """Get a detailed changelog for neurons.
 
         Parameters
@@ -466,7 +489,12 @@ class ChunkedGraphClient(ClientBase):
 
         return changelog_dict
 
-    def get_leaves_many(self, root_ids, bounds=None, stop_layer: int = None) -> dict:
+    def get_leaves_many(
+        self,
+        root_ids: IntArrayLike,
+        bounds: Optional[np.ndarray] = None,
+        stop_layer: Optional[int] = None,
+    ) -> dict:
         """Get all supervoxels for a list of root IDs.
 
         Parameters
@@ -503,7 +531,12 @@ class ChunkedGraphClient(ClientBase):
         data_d = handle_response(response)
         return {np.int64(k): np.int64(v) for k, v in data_d.items()}
 
-    def get_leaves(self, root_id, bounds=None, stop_layer: int = None) -> np.ndarray:
+    def get_leaves(
+        self,
+        root_id: int,
+        bounds: Optional[np.ndarray] = None,
+        stop_layer: Optional[int] = None,
+    ) -> np.ndarray:
         """Get all supervoxels for a root ID.
 
         Parameters
@@ -535,7 +568,12 @@ class ChunkedGraphClient(ClientBase):
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response)["leaf_ids"])
 
-    def do_merge(self, supervoxels, coords, resolution=(4, 4, 40)) -> None:
+    def do_merge(
+        self,
+        supervoxels: IntArrayLike,
+        coords: np.ndarray,
+        resolution: tuple = (4, 4, 40),
+    ) -> None:
         """Perform a merge on the chunked graph.
 
         Parameters
@@ -544,7 +582,7 @@ class ChunkedGraphClient(ClientBase):
             An N-long list of supervoxels to merge.
         coords : np.array
             An Nx3 array of coordinates of the supervoxels in units of `resolution`.
-        resolution : tuple, optional
+        resolution : tuple
             What to multiply `coords` by to get nanometers. Defaults to (4,4,40).
         """
 
@@ -565,7 +603,7 @@ class ChunkedGraphClient(ClientBase):
         )
         return handle_response(response)
 
-    def undo_operation(self, operation_id) -> dict:
+    def undo_operation(self, operation_id: int) -> dict:
         """Undo an operation.
 
         Parameters
@@ -713,7 +751,7 @@ class ChunkedGraphClient(ClientBase):
         else:
             return source_cc, sink_cc, success
 
-    def get_children(self, node_id) -> np.ndarray:
+    def get_children(self, node_id: int) -> np.ndarray:
         """Get the children of a node in the chunked graph hierarchy.
 
         Parameters
@@ -733,7 +771,9 @@ class ChunkedGraphClient(ClientBase):
         response = self.session.get(url)
         return np.array(handle_response(response)["children_ids"], dtype=np.int64)
 
-    def get_contact_sites(self, root_id, bounds, calc_partners=False) -> dict:
+    def get_contact_sites(
+        self, root_id: int, bounds: np.ndarray, calc_partners: Optional[bool] = False
+    ) -> dict:
         """Get contacts for a root ID.
 
         Parameters
@@ -763,7 +803,7 @@ class ChunkedGraphClient(ClientBase):
         return {int(k): v for k, v in contact_d.items()}
 
     def find_path(
-        self, root_id, src_pt, dst_pt, precision_mode=False
+        self, root_id: int, src_pt: np.ndarray, dst_pt: np.ndarray, precision_mode=False
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Find a path between two locations on a root ID using the level 2 chunked
@@ -813,7 +853,7 @@ class ChunkedGraphClient(ClientBase):
         return centroids, l2_path, failed_l2_ids
 
     def get_subgraph(
-        self, root_id, bounds
+        self, root_id: int, bounds: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Get subgraph of root id within a bounding box.
 
@@ -846,7 +886,9 @@ class ChunkedGraphClient(ClientBase):
         return np.int64(rd["nodes"]), np.double(rd["affinities"]), np.int32(rd["areas"])
 
     @_check_version_compatibility(kwarg_use_constraints={"bounds": ">=2.15.0"})
-    def level2_chunk_graph(self, root_id, bounds=None) -> list:
+    def level2_chunk_graph(
+        self, root_id: int, bounds: Optional[np.ndarray] = None
+    ) -> list:
         """
         Get graph of level 2 chunks, the smallest agglomeration level above supervoxels.
 
@@ -897,7 +939,7 @@ class ChunkedGraphClient(ClientBase):
 
         return r["edge_graph"]
 
-    def remesh_level2_chunks(self, chunk_ids) -> None:
+    def remesh_level2_chunks(self, chunk_ids: IntArrayLike) -> None:
         """Submit specific level 2 chunks to be remeshed in case of a problem.
 
         Parameters
@@ -912,7 +954,7 @@ class ChunkedGraphClient(ClientBase):
         r = self.session.post(url, json=data)
         r.raise_for_status()
 
-    def get_operation_details(self, operation_ids: Iterable[int]) -> dict:
+    def get_operation_details(self, operation_ids: IntArrayLike) -> dict:
         """Get the details of a list of operations.
 
         Parameters
@@ -962,12 +1004,12 @@ class ChunkedGraphClient(ClientBase):
 
     def get_lineage_graph(
         self,
-        root_id,
-        timestamp_past=None,
-        timestamp_future=None,
-        as_nx_graph=False,
-        exclude_links_to_future=False,
-        exclude_links_to_past=False,
+        root_id: int,
+        timestamp_past: Optional[datetime.datetime] = None,
+        timestamp_future: Optional[datetime.datetime] = None,
+        as_nx_graph: bool = False,
+        exclude_links_to_future: bool = False,
+        exclude_links_to_past: bool = False,
     ) -> Union[dict, nx.DiGraph]:
         """
         Returns the lineage graph for a root ID, optionally cut off in the past or
@@ -1072,7 +1114,10 @@ class ChunkedGraphClient(ClientBase):
             return r
 
     def get_latest_roots(
-        self, root_id, timestamp=None, timestamp_future=None
+        self,
+        root_id: int,
+        timestamp: Optional[datetime.datetime] = None,
+        timestamp_future: Optional[datetime.datetime] = None,
     ) -> np.ndarray:
         """
         Returns root IDs that are related to the given `root_id` at a given
@@ -1135,7 +1180,9 @@ class ChunkedGraphClient(ClientBase):
             in_degrees = np.array(list(in_degree_dict.values()))
             return nodes[in_degrees == 0]
 
-    def get_original_roots(self, root_id, timestamp_past=None) -> np.ndarray:
+    def get_original_roots(
+        self, root_id: int, timestamp_past: Optional[datetime.datetime] = None
+    ) -> np.ndarray:
         """Returns root IDs that are the latest successors of a given root ID.
 
         Parameters
@@ -1166,7 +1213,9 @@ class ChunkedGraphClient(ClientBase):
         in_degrees = np.array(list(in_degree_dict.values()))
         return nodes[in_degrees == 0]
 
-    def is_latest_roots(self, root_ids, timestamp=None) -> np.ndarray:
+    def is_latest_roots(
+        self, root_ids: IntArrayLike, timestamp: Optional[datetime.datetime] = None
+    ) -> np.ndarray:
         """Check whether these root IDs are still a root at this timestamp.
 
         Parameters
@@ -1204,11 +1253,11 @@ class ChunkedGraphClient(ClientBase):
 
     def suggest_latest_roots(
         self,
-        root_id,
-        timestamp=None,
-        stop_layer=None,
-        return_all=False,
-        return_fraction_overlap=False,
+        root_id: int,
+        timestamp: Optional[datetime.datetime] = None,
+        stop_layer: Optional[int] = None,
+        return_all: bool = False,
+        return_fraction_overlap: bool = False,
     ):
         """
         Suggest latest roots for a given root id, based on overlap of component
@@ -1292,7 +1341,10 @@ class ChunkedGraphClient(ClientBase):
             return curr_ids[order]
 
     def is_valid_nodes(
-        self, node_ids, start_timestamp=None, end_timestamp=None
+        self,
+        node_ids: IntArrayLike,
+        start_timestamp: Optional[datetime.datetime] = None,
+        end_timestamp: Optional[datetime.datetime] = None,
     ) -> np.ndarray:
         """Check whether nodes are valid for given timestamp range.
 
@@ -1371,7 +1423,10 @@ class ChunkedGraphClient(ClientBase):
         }
     )
     def get_root_timestamps(
-        self, root_ids, latest: bool = False, timestamp: datetime.datetime = None
+        self,
+        root_ids: IntArrayLike,
+        latest: bool = False,
+        timestamp: Optional[datetime.datetime] = None,
     ) -> np.ndarray:
         """Retrieves timestamps when roots where created.
 
@@ -1428,7 +1483,10 @@ class ChunkedGraphClient(ClientBase):
         )
 
     def get_past_ids(
-        self, root_ids, timestamp_past=None, timestamp_future=None
+        self,
+        root_ids: IntArrayLike,
+        timestamp_past: Optional[datetime.datetime] = None,
+        timestamp_future: Optional[datetime.datetime] = None,
     ) -> dict:
         """
         For a set of root IDs, get the list of IDs at a past or future time point
@@ -1483,10 +1541,8 @@ class ChunkedGraphClient(ClientBase):
     def get_delta_roots(
         self,
         timestamp_past: datetime.datetime,
-        timestamp_future: datetime.datetime = datetime.datetime.now(
-            datetime.timezone.utc
-        ),
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        timestamp_future: Optional[datetime.datetime] = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Get the list of roots that have changed between `timetamp_past` and
         `timestamp_future`.
@@ -1507,6 +1563,8 @@ class ChunkedGraphClient(ClientBase):
         new_roots : np.ndarray of np.int64
             Roots that are new in that interval.
         """
+        if timestamp_future is None:
+            timestamp_future = datetime.datetime.now(datetime.timezone.utc)
 
         endpoint_mapping = self.default_url_mapping
         params = package_timestamp(timestamp_past, name="timestamp_past")
@@ -1530,7 +1588,7 @@ class ChunkedGraphClient(ClientBase):
         return datetime.datetime.fromisoformat(response["iso"])
 
     @property
-    def cloudvolume_path(self):
+    def cloudvolume_path(self) -> str:
         return self._endpoints["cloudvolume_path"].format_map(self.default_url_mapping)
 
     @property
@@ -1543,7 +1601,7 @@ class ChunkedGraphClient(ClientBase):
         return self._segmentation_info
 
     @property
-    def base_resolution(self):
+    def base_resolution(self) -> list:
         """MIP 0 resolution for voxels assumed by the ChunkedGraph
 
         Returns
