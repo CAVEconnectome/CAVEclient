@@ -93,10 +93,10 @@ class AnnotationClient(ClientBase):
             self._schema_client = schema_client
 
     @property
-    def aligned_volume_name(self):
+    def aligned_volume_name(self) -> str:
         return self._aligned_volume_name
 
-    def get_tables(self, aligned_volume_name: str = None):
+    def get_tables(self, aligned_volume_name: Optional[str] = None) -> list[str]:
         """Gets a list of table names for a aligned_volume_name
 
         Parameters
@@ -119,7 +119,9 @@ class AnnotationClient(ClientBase):
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_annotation_count(self, table_name: str, aligned_volume_name: str = None):
+    def get_annotation_count(
+        self, table_name: str, aligned_volume_name: Optional[str] = None
+    ) -> int:
         """Get number of annotations in a table
 
         Parameters
@@ -147,7 +149,9 @@ class AnnotationClient(ClientBase):
         response = self.session.get(url)
         return handle_response(response)
 
-    def get_table_metadata(self, table_name: str, aligned_volume_name: str = None):
+    def get_table_metadata(
+        self, table_name: str, aligned_volume_name: Optional[str] = None
+    ) -> dict:
         """Get metadata about a table
 
         Parameters
@@ -160,7 +164,7 @@ class AnnotationClient(ClientBase):
 
         Returns
         -------
-        json
+        dict
             metadata about table
         """
         if aligned_volume_name is None:
@@ -179,7 +183,7 @@ class AnnotationClient(ClientBase):
         metadata_d["voxel_resolution"] = [vx, vy, vz]
         return metadata_d
 
-    def delete_table(self, table_name: str, aligned_volume_name: str = None):
+    def delete_table(self, table_name: str, aligned_volume_name: Optional[str] = None):
         """Marks a table for deletion requires super admin privileges
 
         Parameters
@@ -213,14 +217,14 @@ class AnnotationClient(ClientBase):
         schema_name: str,
         description: str,
         voxel_resolution: List[float],
-        reference_table: str = None,
-        track_target_id_updates: bool = None,
-        flat_segmentation_source: str = None,
-        user_id: int = None,
-        aligned_volume_name: str = None,
+        reference_table: Optional[str] = None,
+        track_target_id_updates: Optional[bool] = None,
+        flat_segmentation_source: Optional[str] = None,
+        user_id: Optional[int] = None,
+        aligned_volume_name: Optional[str] = None,
         write_permission: str = "PRIVATE",
         read_permission: str = "PUBLIC",
-        notice_text: str = None,
+        notice_text: Optional[str] = None,
     ):
         """Creates a new data table based on an existing schema
 
@@ -337,13 +341,13 @@ class AnnotationClient(ClientBase):
     def update_metadata(
         self,
         table_name: str,
-        description: str = None,
-        flat_segmentation_source: str = None,
-        read_permission: str = None,
-        write_permission: str = None,
-        user_id: int = None,
-        notice_text: str = None,
-        aligned_volume_name: str = None,
+        description: Optional[str] = None,
+        flat_segmentation_source: Optional[str] = None,
+        read_permission: Optional[str] = None,
+        write_permission: Optional[str] = None,
+        user_id: Optional[int] = None,
+        notice_text: Optional[str] = None,
+        aligned_volume_name: Optional[str] = None,
     ):
         """Update the metadata on an existing table
 
@@ -424,9 +428,9 @@ class AnnotationClient(ClientBase):
     def get_annotation(
         self,
         table_name: str,
-        annotation_ids: (int or Iterable),
-        aligned_volume_name: str = None,
-    ):
+        annotation_ids: Union[int, Iterable],
+        aligned_volume_name: Optional[str] = None,
+    ) -> list:
         """Retrieve an annotation or annotations by id(s) and table name.
 
         Parameters
@@ -460,7 +464,10 @@ class AnnotationClient(ClientBase):
         return handle_response(response)
 
     def post_annotation(
-        self, table_name: str, data: (dict or List), aligned_volume_name: str = None
+        self,
+        table_name: str,
+        data: Union[dict, list],
+        aligned_volume_name: Optional[str] = None,
     ):
         """Post one or more new annotations to a table in the AnnotationEngine.
         All inserted annotations will be marked as 'valid'. To invalidate
@@ -510,7 +517,7 @@ class AnnotationClient(ClientBase):
     def process_position_columns(
         df: pd.DataFrame,
         position_columns: Optional[Union[Iterable[str], Mapping[str, str]]],
-    ):
+    ) -> dict:
         """Process a dataframe into a list of dictionaries
 
         Parameters
@@ -544,7 +551,7 @@ class AnnotationClient(ClientBase):
         table_name: str,
         df: pd.DataFrame,
         position_columns: Optional[Union[Iterable[str], Mapping[str, str]]],
-        aligned_volume_name=None,
+        aligned_volume_name: Optional[str] = None,
     ):
         """Post one or more new annotations to a table in the AnnotationEngine.
         All inserted annotations will be marked as 'valid'. To invalidate
@@ -586,7 +593,10 @@ class AnnotationClient(ClientBase):
         )
 
     def update_annotation(
-        self, table_name: str, data: Union[Dict, List], aligned_volume_name: str = None
+        self,
+        table_name: str,
+        data: Union[Dict, List],
+        aligned_volume_name: Optional[str] = None,
     ):
         """Update one or more new annotations to a table in the AnnotationEngine.
         Updating is implemented by invalidating the old annotation
@@ -641,8 +651,8 @@ class AnnotationClient(ClientBase):
         self,
         table_name: str,
         df: pd.DataFrame,
-        position_columns: (Iterable[str] or Mapping[str, str] or None),
-        aligned_volume_name=None,
+        position_columns: Optional[Union[Iterable[str], Mapping[str, str]]],
+        aligned_volume_name: Optional[str] = None,
     ):
         """Update one or more annotations to a table in the AnnotationEngine using a
         dataframe as format. Updating is implemented by invalidating the old annotation
@@ -691,7 +701,7 @@ class AnnotationClient(ClientBase):
         self,
         table_name: str,
         annotation_ids: Union[dict, List],
-        aligned_volume_name: str = None,
+        aligned_volume_name: Optional[str] = None,
     ):
         """Delete one or more annotations in a table. Annotations that are
         deleted are recorded as 'non-valid' but are not physically removed from the table.
@@ -740,9 +750,9 @@ class AnnotationClient(ClientBase):
         schema_name=None,
         update=False,
         id_field=False,
-        table_resolution=None,
-        annotation_resolution=None,
-    ):
+        table_resolution: Optional[list] = None,
+        annotation_resolution: Optional[list] = None,
+    ) -> stage.StagedAnnotations:
         """
         Get a StagedAnnotations object to help produce correctly formatted annotations for a given table or schema.
         StagedAnnotation objects can be uploaded directly with `upload_staged_annotations`.
@@ -789,8 +799,8 @@ class AnnotationClient(ClientBase):
     def upload_staged_annotations(
         self,
         staged_annos: stage.StagedAnnotations,
-        aligned_volume_name: str = None,
-    ):
+        aligned_volume_name: Optional[str] = None,
+    ) -> Union[list[int], dict[int, int]]:
         """
         Upload annotations directly from an Annotation Guide object.
         This method uses the options specified in the object, including table name and if the annotation is an update or not.
