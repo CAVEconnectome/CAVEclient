@@ -312,6 +312,10 @@ class SkeletonClient(ClientBase):
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+        
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint = "get_refusal_list"
@@ -340,7 +344,7 @@ class SkeletonClient(ClientBase):
     def get_cache_contents(
         self,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 3,
+        skeleton_version: Optional[int] = 4,
         root_id_prefixes: Union[int, str, List] = 0,
         limit: Optional[int] = 0,
         log_warning: bool = True,
@@ -388,7 +392,7 @@ class SkeletonClient(ClientBase):
     def skeletons_exist(
         self,
         datastack_name: Optional[str] = None,
-        skeleton_version: Optional[int] = 3,
+        skeleton_version: Optional[int] = 4,
         root_ids: Union[int, str, List] = 0,
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
@@ -514,7 +518,7 @@ class SkeletonClient(ClientBase):
         log_warning: bool = True,
         verbose_level: Optional[int] = 0,
     ):
-        """Gets basic skeleton information for a datastack
+        """Gets one skeleton, blocking for skeletonization if necessary.
 
         Parameters
         ----------
@@ -830,7 +834,7 @@ class SkeletonClient(ClientBase):
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
                 logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
                 continue
-            # The following test has been removed, due to its serialized and time-intensive cost.
+            # The following test is disabled, due to its serialized and time-intensive cost.
             # The same test will be performed by the parallelized skeletonization worker later anyway.
             if False:  # not self.fc.chunkedgraph.is_valid_nodes(rid):
                 logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
