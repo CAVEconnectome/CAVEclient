@@ -1,6 +1,5 @@
 import binascii
 import copy
-from io import StringIO
 
 import deepdiff
 import numpy as np
