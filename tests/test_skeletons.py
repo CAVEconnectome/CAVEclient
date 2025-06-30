@@ -1,5 +1,6 @@
 import binascii
 import copy
+from io import StringIO
 
 import deepdiff
 import numpy as np
@@ -82,6 +83,28 @@ class TestSkeletonsClient:
 
         result = myclient.skeleton.get_versions()
         assert result == [-1, 0, 1, 2, 3, 4]
+
+    @responses.activate
+    def test_get_refusal_list(self, myclient, mocker):
+        refusal_rows1 = [["datastack", 112233445566778899], ["datastack", 223344556677889900]]
+        refusal_rows2 = [[str(v) for v in row] for row in refusal_rows1]
+        refusal_rows3 = [','.join(row) for row in refusal_rows2]
+        refusal_list_str = '\n'.join(refusal_rows3)
+        refusal_list_compressed = SkeletonClient.compressStringToBytes(refusal_list_str)
+        
+        metadata_url = self.sk_endpoints.get("get_refusal_list").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, body=refusal_list_compressed, status=200
+        )
+
+        result_df = myclient.skeleton.get_refusal_list()
+
+        df1 = pd.DataFrame(
+            refusal_rows1,
+            columns=["DATASTACK_NAME", "ROOT_ID"],
+        )
+
+        assert result_df.equals(df1)
 
     @responses.activate
     def test_get_cache_contents(self, myclient, mocker):
