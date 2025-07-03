@@ -1,5 +1,5 @@
-import sys
 import argparse
+
 from caveclient.frameworkclient import CAVEclient
 
 
