@@ -25,6 +25,7 @@ DEFAULT_INFO_SERVER_VERSION = "999.0.0"
 
 TEST_GLOBAL_SERVER = os.environ.get("TEST_SERVER", "https://test.cave.com")
 TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com")
+TEST_IMAGE_SERVER = os.environ.get("TEST_IMAGE_SERVER", "gs://my-test-bucket/images")
 TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
 DEFAULT_MATERIALIZATION_VERSONS = [1, 2]
 
@@ -155,6 +156,7 @@ def get_api_versions(
 
 def default_info(
     local_server: str = TEST_LOCAL_SERVER,
+    image_source: str = TEST_IMAGE_SERVER,
 ) -> dict:
     """Generate a info service info file for testing
 
@@ -172,15 +174,15 @@ def default_info(
         "viewer_site": "http://neuromancer-seung-import.appspot.com/",
         "aligned_volume": {
             "name": "test_volume",
-            "image_source": f"precomputed://https://{local_server}/test-em/v1",
+            "image_source": f"precomputed://{image_source}",
             "id": 1,
             "description": "This is a test only dataset.",
         },
         "synapse_table": "test_synapse_table",
         "description": "This is the first test datastack.",
         "local_server": local_server,
-        "segmentation_source": f"graphene://https://{local_server}/segmentation/table/test_v1",
-        "skeleton_source": f"precomputed://https://{local_server}/skeletoncache/api/v1/minnie65_phase3_v1/precomputed/skeleton/",
+        "segmentation_source": f"graphene://{local_server}/segmentation/table/test_v1",
+        "skeleton_source": f"precomputed://{local_server}/skeletoncache/api/v1/minnie65_phase3_v1/precomputed/skeleton/",
         "soma_table": "test_soma",
         "analysis_database": None,
         "viewer_resolution_x": 4.0,

@@ -52,6 +52,8 @@ def write_token(token, filepath, key, overwrite=True, ignore_readonly=False):
 
 
 def server_token_filename(server_address):
+    if urllib.parse.urlparse(server_address).scheme == "":
+        server_address = "https://" + server_address
     server = urllib.parse.urlparse(server_address).netloc
     server_file = server + "-cave-secret.json"
     server_file_path = os.path.join(default_token_location, server_file)
@@ -171,7 +173,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         if make_new:
             return self.get_new_token(open=open)
 
-        auth_url = auth_endpoints_v1["get_tokens"].format_map(
+        auth_url = auth_endpoints_v1["user_tokens_page"].format_map(
             self._default_endpoint_mapping
         )
         txt = f"""Tokens need to be acquired by hand. Please follow the following steps:
@@ -187,6 +189,21 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
         if open:
             webbrowser.open(auth_url)
         return None
+
+    def get_token_page(self, open=True) -> str:
+        """Open the token page in a web browser.
+
+        Parameters
+        ----------
+        open : bool, optional
+            If True, opens a web browser to the web page where you can retrieve a token.
+        """
+        auth_url = auth_endpoints_v1["user_tokens_page"].format_map(
+            self._default_endpoint_mapping
+        )
+        if open:
+            webbrowser.open(auth_url)
+        return auth_url
 
     def get_tokens(self):
         """Get the tokens setup for this users
@@ -281,7 +298,7 @@ rename to 'cave-secret.json' or 'SERVER_ADDRESS-cave-secret.json"""
 
         if save_token_file is None:
             raise ValueError("No token file is set")
-        if write_to_server_file:
+        if write_to_server_file and len(self._server_file_path) > 0:
             write_token(
                 token,
                 self._server_file_path,

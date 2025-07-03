@@ -261,6 +261,7 @@ auth_endpoints_v1 = {
     "get_tokens": v1_auth + "/user/token",
     "get_users": v1_auth + "/user",
     "get_group_users": v1_auth + "/group/{group_id}/user",
+    "user_tokens_page": "{auth_server_address}" + "/sticky_auth/settings/tokens",
 }
 
 auth_api_versions = {
