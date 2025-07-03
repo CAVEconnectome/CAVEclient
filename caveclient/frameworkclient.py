@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 from typing import Optional
 
+from requests.exceptions import HTTPError
+
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient
@@ -160,13 +162,22 @@ class CAVEclient(object):
             )
             new_token = new_token.strip().lower()
             if re.match(r"^[a-f0-9]{32}$", new_token):
-                break
+                try:
+                    new_client = CAVEclientGlobal(
+                        server_address=server_address,
+                        auth_token=new_token.strip(),
+                    )
+                    new_client.info.get_datastacks()
+                    break
+                except HTTPError:
+                    print(
+                        "Token did not work for login — check the token and your internet connectivity and try again!"
+                    )
             else:
                 print(
-                    "Invalid token format. Please ensure it is a 32-character alphanumeric string."
+                    "Invalid token format. Please ensure it is a 32-character hexadecimal (0-9, a-f) string."
                 )
         global_client.auth.save_token(token=new_token.strip(), overwrite=overwrite)
-
         complete_message = "You will not need to specify a server address when initializing a client for configured datastacks in the future.\nSetup complete!"
 
         client = CAVEclientGlobal(server_address=server_address)
