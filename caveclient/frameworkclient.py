@@ -1,7 +1,7 @@
-from datetime import datetime
-import re
-from typing import Optional
 import getpass
+import re
+from datetime import datetime
+from typing import Optional
 
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
