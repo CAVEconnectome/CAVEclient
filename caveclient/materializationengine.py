@@ -2248,6 +2248,11 @@ class MaterializationClient(ClientBase):
             datastack_name = self.datastack_name
         if version is None:
             version = self.version
+        if version not in self.available_versions:
+            raise ValueError(
+                f"Materialization version must not be expired for views. "
+                f"Available versions: {self.available_versions}"
+            )
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
@@ -2285,6 +2290,14 @@ class MaterializationClient(ClientBase):
             datastack_name = self.datastack_name
         if materialization_version is None:
             materialization_version = self.version
+        if (
+            materialization_version not in self.available_versions
+            and materialization_version is not None
+        ):
+            raise ValueError(
+                f"Materialization version must not be expired for view metadata query. "
+                f"Available versions: {self.available_versions}"
+            )
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["view_name"] = view_name
@@ -2361,6 +2374,14 @@ class MaterializationClient(ClientBase):
             datastack_name = self.datastack_name
         if materialization_version is None:
             materialization_version = self.version
+        if (
+            materialization_version not in self.available_versions
+            and materialization_version is not None
+        ):
+            raise ValueError(
+                f"Materialization version must not be expired for view schema query. "
+                f"Available versions: {self.available_versions}"
+            )
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -2475,6 +2496,14 @@ class MaterializationClient(ClientBase):
             materialization_version = self.version
         if datastack_name is None:
             datastack_name = self.datastack_name
+        if (
+            materialization_version not in self.available_versions
+            and materialization_version is not None
+        ):
+            raise ValueError(
+                f"Materialization version must not be expired for view query. "
+                f"Available versions: {self.available_versions}"
+            )
 
         url, data, query_args, encoding = self._format_query_components(
             datastack_name,
