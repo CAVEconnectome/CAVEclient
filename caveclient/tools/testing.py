@@ -483,7 +483,6 @@ def CAVEclientMock(
                 status=200,
                 match=[query_param_matcher({"expired": True})],
             )
-
             if set_version is not None:
                 mat_mapping["version"] = set_version
                 version_metadata_url = mat_endpoints["version_metadata"].format_map(
@@ -533,6 +532,14 @@ def CAVEclientMock(
             client.chunkedgraph
         if materialization:
             client.materialize
+            responses.add(
+                responses.GET,
+                mat_version_list_url,
+                json=available_materialization_versions,
+                status=200,
+                match=[query_param_matcher({"expired": False})],
+            )
+            client.materialize.available_versions
         if json_service:
             client.state
         if skeleton_service:
