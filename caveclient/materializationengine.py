@@ -53,7 +53,7 @@ def deserialize_query_response(response):
             )
     else:
         raise ValueError(
-            f'Unknown response type: {response.headers.get("Content-Type")}'
+            f"Unknown response type: {response.headers.get('Content-Type')}"
         )
 
 
@@ -229,6 +229,12 @@ class MaterializationClient(ClientBase):
         self._views = None
 
     @property
+    @cached(cache=TTLCache(maxsize=1, ttl=60 * 60 * 1))
+    def available_versions(self) -> list[int]:
+        """Get the available versions for this materialization client."""
+        return sorted(self.get_versions(expired=False))
+
+    @property
     def datastack_name(self):
         """The name of the datastack."""
         return self._datastack_name
@@ -361,6 +367,10 @@ class MaterializationClient(ClientBase):
             datastack_name = self.datastack_name
         if version is None:
             version = self.version
+        if version not in self.available_versions:
+            raise ValueError(
+                f"Annotation count must use a materialized version ({self.available_versions})."
+            )
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
@@ -406,6 +416,7 @@ class MaterializationClient(ClientBase):
         d["expires_on"] = convert_timestamp(d["expires_on"])
         return d
 
+    @cached(cache=TTLCache(maxsize=50, ttl=60 * 60 * 24))
     def get_timestamp(
         self, version: Optional[int] = None, datastack_name: str = None
     ) -> datetime:
@@ -741,6 +752,14 @@ class MaterializationClient(ClientBase):
 
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
+        if (
+            materialization_version not in self.available_versions
+            and materialization_version is not None
+        ):
+            timestamp = self.get_timestamp(
+                version=materialization_version, datastack_name=datastack_name
+            )
+            materialization_version = None
         if timestamp is not None:
             if materialization_version is not None:
                 raise ValueError("cannot specify timestamp and materialization version")
@@ -975,6 +994,10 @@ class MaterializationClient(ClientBase):
 
         if materialization_version is None:
             materialization_version = self.version
+        if materialization_version not in self.available_versions:
+            raise ValueError(
+                f"Cannot use `join_query` for a non-materialized version. Please use a materialized version ({self.available_versions}) or live_live_query."
+            )
         if datastack_name is None:
             datastack_name = self.datastack_name
         if desired_resolution is None:
@@ -1178,7 +1201,7 @@ class MaterializationClient(ClientBase):
                     all_svid_lengths.append(n_svids)
                     logger.info(f"{sv_col} has {n_svids} to update")
                     all_svids = np.append(all_svids, svids[~is_latest_root])
-        logger.info(f"num zero svids: {np.sum(all_svids==0)}")
+        logger.info(f"num zero svids: {np.sum(all_svids == 0)}")
         logger.info(f"all_svids dtype {all_svids.dtype}")
         logger.info(f"all_svid_lengths {all_svid_lengths}")
         with MyTimeIt("get_roots"):
