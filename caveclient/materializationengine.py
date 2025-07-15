@@ -2537,10 +2537,8 @@ class MaterializationClient(ClientBase):
             materialization_version, datastack_name=datastack_name
         ):
             raise ValueError(
-                f"Materialization version must not be expired for view query. "
-                f"Available versions: {
-                    self.available_versions(datastack_name=datastack_name)
-                }"
+                "Materialization version must not be expired for view query. "
+                f"Available versions: {self.available_versions(datastack_name=datastack_name)}"
             )
 
         url, data, query_args, encoding = self._format_query_components(
