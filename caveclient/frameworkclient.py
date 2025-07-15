@@ -187,10 +187,9 @@ class CAVEclient(object):
             print("No datastacks found. Setup complete!")
             return
         else:
-            print(f"Found datastacks:\n{''.join(datastack_name_list)}")
             while True:
                 setup_all = input(
-                    "Configure all datastacks to use this server automatically ('Y', recommended), specify individual datastacks ('n'), or finish now ('exit'). (Y/n/exit) "
+                    "Set all of your datastacks to use this token and server ('Y', recommended), specify individual datastacks ('n'), or finish now ('exit'). (Y/n/exit) "
                 )
                 if setup_all.lower() in ["y", "yes", ""]:
                     for ds in datastack_names:
@@ -204,6 +203,7 @@ class CAVEclient(object):
                     print(complete_message)
                     return
                 elif setup_all.lower() in ["n", "no"]:
+                    print(f"Found datastacks:\n{''.join(datastack_name_list)}")
                     while True:
                         datastack_name = input(
                             "Enter the name of a datastack to use this server automatically or 'exit' to finish: "
