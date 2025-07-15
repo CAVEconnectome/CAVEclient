@@ -448,14 +448,6 @@ class TestMatclient:
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
-        api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
-            endpoint_mapping
-        )
-        responses.add(responses.GET, url=api_versions_url, json=[0, 1], status=200)
-
-        versionurl = self.endpoints["versions"].format_map(endpoint_mapping)
-
-        responses.add(responses.GET, url=versionurl, json=[1], status=200)
 
         url = self.endpoints["simple_query"].format_map(endpoint_mapping)
         syn_md_url = self.endpoints["metadata"].format_map(endpoint_mapping)
@@ -870,9 +862,9 @@ class TestMatclient:
 
 @responses.activate
 def test_get_view_metadata(myclient):
-    datastack_name = "test_datastack"
+    datastack_name = datastack_dict["datastack_name"]
     view_name = "test_view"
-    materialization_version = 1
+    materialization_version = myclient.materialize.version
 
     url = f"{datastack_dict['local_server']}/materialize/api/v3/datastack/{datastack_name}/version/{materialization_version}/views/{view_name}/metadata"
     # Mock the response
@@ -892,7 +884,7 @@ def test_get_view_metadata(myclient):
 
 @responses.activate
 def test_get_unique_string_values(myclient):
-    datastack_name = "test_datastack"
+    datastack_name = datastack_dict["datastack_name"]
     table_name = "test_table"
 
     url = f"{datastack_dict['local_server']}/materialize/api/v3/datastack/{datastack_name}/table/{table_name}/unique_string_values"
