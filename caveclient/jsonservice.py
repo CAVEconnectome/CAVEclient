@@ -382,6 +382,7 @@ class JSONService(ClientBase):
             raise ValueError(target_site_error)
 
         if format_properties:
+            auth_text = "middleauth+"  # Only used in spelunker context anyway.
             url_mapping = self.default_url_mapping
             url_mapping["state_id"] = state_id
             get_state_url = self._endpoints["get_properties"][:-5].format_map(

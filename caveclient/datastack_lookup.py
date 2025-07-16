@@ -48,19 +48,21 @@ def write_map(data, filename=None):
             json.dump(data, f)
         return True
     else:
-        logging.warn(
+        logging.debug(
             f"Did not write cache — file {os.path.expanduser(filename)} is not writeable"
         )
         return False
 
 
-def handle_server_address(datastack, server_address, filename=None, write=False):
+def handle_server_address(
+    datastack, server_address, filename=None, write=False, do_log=True
+):
     data = read_map(filename)
     if server_address is not None and datastack is not None:
         if write and server_address != data.get(datastack):
             data[datastack] = server_address
             wrote = write_map(data, filename)
-            if wrote:
+            if wrote and do_log:
                 logger.warning(
                     f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'"
                 )

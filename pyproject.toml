@@ -31,6 +31,9 @@ Repository = "https://github.com/CAVEconnectome/CAVEclient/"
 [project.optional-dependencies]
 cv = ["cloud-volume"]
 
+[project.scripts]
+caveclient = "caveclient.__main__:main"
+
 [dependency-groups]
 bump = ['bump-my-version']
 dev = [

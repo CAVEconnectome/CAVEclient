@@ -1,5 +1,9 @@
+import getpass
+import re
 from datetime import datetime
 from typing import Optional
+
+from requests.exceptions import HTTPError
 
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
@@ -128,6 +132,106 @@ class CAVEclient(object):
                 info_cache=info_cache,
                 version=version,
             )
+
+    @staticmethod
+    def setup_token(
+        server_address: str,
+        overwrite: bool = True,
+        open: bool = True,
+    ):
+        """Set up a new or existing user token for a CAVE server.
+
+        Parameters
+        ----------
+        server_address : str
+            The server address to set up the token for. This will be provided by your documentation or server administrator.
+        overwrite : bool, optional
+            If True, overwrite the existing token if it exists. If False, do not overwrite existing data.
+            Optional, defaults to True.
+        open : bool, optional
+            If True, open the token page in a web browser to create or copy an existing token.
+            Optional, defaults to True.
+        """
+
+        global_client = CAVEclientGlobal(server_address=server_address)
+        page_url = global_client.auth.get_token_page(open=open)
+        print(f"Visit {page_url} and copy an existing token or create a new one.")
+        while True:
+            new_token = getpass.getpass(
+                "Paste your auth token (input will be hidden): "
+            )
+            new_token = new_token.strip().lower()
+            if re.match(r"^[a-f0-9]{32}$", new_token):
+                try:
+                    new_client = CAVEclientGlobal(
+                        server_address=server_address,
+                        auth_token=new_token.strip(),
+                    )
+                    new_client.info.get_datastacks()
+                    break
+                except HTTPError:
+                    print(
+                        "Token did not work for login — check the token and your internet connectivity and try again!"
+                    )
+            else:
+                print(
+                    "Invalid token format. Please ensure it is a 32-character hexadecimal (0-9, a-f) string."
+                )
+        global_client.auth.save_token(token=new_token.strip(), overwrite=overwrite)
+        complete_message = "You will not need to specify a server address when initializing a client for configured datastacks in the future.\nSetup complete!"
+
+        client = CAVEclientGlobal(server_address=server_address)
+        datastack_names = sorted(client.info.get_datastacks())
+        datastack_name_list = [f"\t{ds}\n" for ds in datastack_names]
+        if len(datastack_names) == 0:
+            print("No datastacks found. Setup complete!")
+            return
+        else:
+            while True:
+                setup_all = input(
+                    "Set all of your datastacks to use this token and server ('Y', recommended), specify individual datastacks ('n'), or finish now ('exit'). (Y/n/exit) "
+                )
+                if setup_all.lower() in ["y", "yes", ""]:
+                    for ds in datastack_names:
+                        _set_up_token(
+                            client,
+                            token=new_token,
+                            datastack_name=ds,
+                            overwrite=overwrite,
+                        )
+                    print("All datastacks are configured to use this server address.")
+                    print(complete_message)
+                    return
+                elif setup_all.lower() in ["n", "no"]:
+                    print(f"Found datastacks:\n{''.join(datastack_name_list)}")
+                    while True:
+                        datastack_name = input(
+                            "Enter the name of a datastack to use this server automatically or 'exit' to finish: "
+                        )
+                        if datastack_name.lower() == "exit":
+                            break
+                        else:
+                            ds = datastack_name.strip()
+                            if ds not in datastack_names:
+                                print(f"Datastack '{ds}' not found.")
+                                continue
+                            else:
+                                _set_up_token(
+                                    client,
+                                    token=new_token,
+                                    datastack_name=ds,
+                                    overwrite=overwrite,
+                                )
+                                print(f"Token set up for datastack: {datastack_name}.")
+                    print(complete_message)
+                    return
+                elif setup_all.lower() in ["exit"]:
+                    print(
+                        f"Finished setting up token for {server_address} with no datasets configured."
+                    )
+                    return
+                else:
+                    print("Invalid input. Please try again.")
 
 
 class CAVEclientGlobal(object):
@@ -598,3 +702,30 @@ class CAVEclientFull(CAVEclientGlobal):
 
     def __repr__(self):
         return f"CAVEclient<datastack_name={self.datastack_name}, server_address={self.server_address}>"
+
+
+def _set_up_token(
+    client: CAVEclientGlobal,
+    token: str,
+    datastack_name: str,
+    overwrite: bool,
+):
+    local_server = client.info.get_datastack_info(datastack_name).get("local_server")
+    handle_server_address(
+        datastack=datastack_name,
+        server_address=client.server_address,
+        write=True,
+        do_log=False,
+    )
+    if local_server:
+        client._auth._local_server = local_server
+        try:
+            client.auth.save_token(
+                token=token,
+                overwrite=overwrite,
+                local_server=True,
+                ignore_readonly=True,
+            )
+        except ValueError as e:
+            print(f"Could not save token for {datastack_name}: {e}")
+    pass
