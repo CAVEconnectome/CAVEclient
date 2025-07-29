@@ -115,10 +115,6 @@ class CAVEclient(object):
                 info_cache=info_cache,
             )
         else:
-            server_address = handle_server_address(
-                datastack_name, server_address, write=write_server_cache
-            )
-
             return CAVEclientFull(
                 datastack_name=datastack_name,
                 server_address=server_address,
@@ -131,6 +127,7 @@ class CAVEclient(object):
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
                 version=version,
+                write_server_cache=write_server_cache,
             )
 
     @staticmethod
@@ -448,6 +445,7 @@ class CAVEclientFull(CAVEclientGlobal):
         desired_resolution=None,
         info_cache=None,
         version: Optional[int] = None,
+        write_server_cache=True,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -512,6 +510,15 @@ class CAVEclientFull(CAVEclientGlobal):
 
         [get_session_defaults](../extended_api/session_config.md/#caveclient.session_config.get_session_defaults)
         """
+
+        old_server_address = server_address
+        server_address = handle_server_address(
+            datastack_name,
+            old_server_address,
+            write=False,
+            do_log=False,
+        )
+
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
             auth_token_file=auth_token_file,
@@ -531,8 +538,25 @@ class CAVEclientFull(CAVEclientGlobal):
         self._skeleton = None
         self._l2cache = None
         self.desired_resolution = desired_resolution
-        self.local_server = self.info.local_server()
+        try:
+            self.local_server = self.info.local_server()
+        except HTTPError as e:
+            if e.response.status_code == 401 or e.response.status_code == 403:
+                msg = f"Access denied to datastack {datastack_name}!\nTo set up your token for server {server_address}, please run:\n\tCAVEclient.setup_token(server_address='{server_address}')\nand follow the instructions there."
+                print(msg)
+                raise e
+            else:
+                raise e
         self.auth.local_server = self.local_server
+
+        # If it worked, actually try to write version.
+        if write_server_cache:
+            handle_server_address(
+                datastack=datastack_name,
+                server_address=old_server_address,
+                write=write_server_cache,
+                do_log=True,
+            )
 
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
