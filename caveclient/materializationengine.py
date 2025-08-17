@@ -48,8 +48,8 @@ def deserialize_query_response(response):
             return pa.deserialize(response.content)
         except NameError:
             (
-                "Deserialization of this request requires an older version of Pyarrow (version 3 works).\
-                Update Materialization Deployment or locally downgrade Pyarrow."
+                "Deserialization of this request requires an older version of Pyarrow (version 3 works)."
+                " Update Materialization Deployment or locally downgrade Pyarrow."
             )
     else:
         raise ValueError(
@@ -2067,8 +2067,8 @@ class MaterializationClient(ClientBase):
         >>>     }
         """
         logging.warning(
-            "Deprecation: this method is to facilitate beta testing of this feature, \
-            it will likely get removed in future versions. "
+            "Deprecation: this method is to facilitate beta testing of this feature,"
+            " it will likely get removed in future versions. "
         )
         timestamp = convert_timestamp(timestamp)
         return_df = True
