@@ -50,6 +50,8 @@ def myclient():
         json_service=True,
         skeleton_service=True,
         l2cache=True,
+        available_materialization_versions=[1],
+        expired_materialization_versions=[2],
         **datastack_dict,
     )
 
@@ -78,7 +80,6 @@ def version_specified_client():
         json_service=True,
         skeleton_service=True,
         l2cache=True,
-        available_materialization_versions=[1, 2, 3],
         set_version=3,
         **server_versions,
     )

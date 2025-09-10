@@ -53,7 +53,7 @@ def deserialize_query_response(response):
             )
     else:
         raise ValueError(
-            f'Unknown response type: {response.headers.get("Content-Type")}'
+            f"Unknown response type: {response.headers.get('Content-Type')}"
         )
 
 
@@ -228,6 +228,42 @@ class MaterializationClient(ClientBase):
         self._tables = None
         self._views = None
 
+    @cached(cache=TTLCache(maxsize=1, ttl=60 * 60 * 1))
+    def available_versions(self, datastack_name=None) -> list[int]:
+        """Get the available versions for this materialization client."""
+        return sorted(self.get_versions(expired=False, datastack_name=datastack_name))
+
+    def _materialization_available(
+        self, materialization_version, datastack_name
+    ) -> bool:
+        "Check if a materialization version is available to query."
+        return materialization_version in self.available_versions(
+            datastack_name=datastack_name
+        )
+
+    def _assign_datastack(self, datastack_name: Optional[str]) -> str:
+        """Assign the datastack name to the client."""
+        if datastack_name is None:
+            return self.datastack_name
+        else:
+            return datastack_name
+
+    def _assign_version(self, version: Optional[int]) -> int:
+        """Assign the version to the client."""
+        if version is None:
+            return self.version
+        else:
+            return int(version)
+
+    def _assign_desired_resolution(
+        self, desired_resolution: Optional[Iterable[float]]
+    ) -> Iterable[float]:
+        """Assign the desired resolution to the client."""
+        if desired_resolution is None:
+            return self.desired_resolution
+        else:
+            return desired_resolution
+
     @property
     def datastack_name(self):
         """The name of the datastack."""
@@ -315,8 +351,7 @@ class MaterializationClient(ClientBase):
         dict
             Dictionary of versions available
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+        datastack_name = self._assign_datastack(datastack_name)
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
@@ -343,10 +378,8 @@ class MaterializationClient(ClientBase):
         list
             List of table names
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if version is None:
-            version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
@@ -357,10 +390,31 @@ class MaterializationClient(ClientBase):
         return response.json()
 
     def get_annotation_count(self, table_name: str, datastack_name=None, version=None):
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if version is None:
-            version = self.version
+        """
+        Get the count of annotations in a table for a given datastack and version
+
+        Parameters
+        ----------
+        table_name : str
+            Name of the table to get the count for
+        datastack_name : str or None, optional
+            Name of the datastack, by default None.
+            If None, uses the one specified in the client.
+        version : int or None, optional
+            The version of the datastack to query. If None, will query the client
+            `version`, which defaults to the most recent version.
+
+        Returns
+        -------
+        int
+            Count of annotations in the table
+        """
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
+        if not self._materialization_available(version, datastack_name=datastack_name):
+            raise ValueError(
+                f"Annotation count must use a materialized version ({self.available_versions(datastack_name)})."
+            )
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
@@ -390,10 +444,8 @@ class MaterializationClient(ClientBase):
         dict
             Dictionary of metadata about the version
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if version is None:
-            version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -406,6 +458,7 @@ class MaterializationClient(ClientBase):
         d["expires_on"] = convert_timestamp(d["expires_on"])
         return d
 
+    @cached(cache=TTLCache(maxsize=50, ttl=60 * 60 * 24))
     def get_timestamp(
         self, version: Optional[int] = None, datastack_name: str = None
     ) -> datetime:
@@ -424,6 +477,8 @@ class MaterializationClient(ClientBase):
         datetime.datetime
             Datetime when the materialization version was frozen.
         """
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
         meta = self.get_version_metadata(version=version, datastack_name=datastack_name)
         return convert_timestamp(meta["time_stamp"])
 
@@ -444,8 +499,7 @@ class MaterializationClient(ClientBase):
             List of metadata dictionaries
         """
 
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+        datastack_name = self._assign_datastack(datastack_name)
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
@@ -485,10 +539,8 @@ class MaterializationClient(ClientBase):
             Metadata dictionary for table
         """
 
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if version is None:
-            version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
@@ -739,8 +791,18 @@ class MaterializationClient(ClientBase):
             A pandas dataframe of results of query
         """
 
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
+        desired_resolution = self._assign_desired_resolution(desired_resolution)
+        datastack_name = self._assign_datastack(datastack_name)
+        materialization_version = self._assign_version(materialization_version)
+        if not self._materialization_available(
+            materialization_version=materialization_version,
+            datastack_name=datastack_name,
+        ):
+            # Treat as timestamp query on the materialization version's timestamp
+            timestamp = self.get_timestamp(
+                version=materialization_version, datastack_name=datastack_name
+            )
+            materialization_version = None
         if timestamp is not None:
             if materialization_version is not None:
                 raise ValueError("cannot specify timestamp and materialization version")
@@ -769,102 +831,107 @@ class MaterializationClient(ClientBase):
                     random_sample=random_sample,
                     log_warning=log_warning,
                 )
-        if materialization_version is None:
-            materialization_version = self.version
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-
-        tables, suffix_map = self._resolve_merge_reference(
-            merge_reference, table, datastack_name, materialization_version
-        )
-
-        url, data, query_args, encoding = self._format_query_components(
-            datastack_name,
-            materialization_version,
-            tables,
-            select_columns,
-            suffix_map,
-            {table: filter_in_dict} if filter_in_dict is not None else None,
-            {table: filter_out_dict} if filter_out_dict is not None else None,
-            {table: filter_equal_dict} if filter_equal_dict is not None else None,
-            {table: filter_greater_dict} if filter_greater_dict is not None else None,
-            {table: filter_less_dict} if filter_less_dict is not None else None,
-            {table: filter_greater_equal_dict}
-            if filter_greater_equal_dict is not None
-            else None,
-            {table: filter_less_equal_dict}
-            if filter_less_equal_dict is not None
-            else None,
-            {table: filter_spatial_dict} if filter_spatial_dict is not None else None,
-            {table: filter_regex_dict} if filter_regex_dict is not None else None,
-            return_df,
-            True,
-            offset,
-            limit,
-            desired_resolution,
-            random_sample=random_sample,
-        )
-        if get_counts:
-            query_args["count"] = True
-
-        response = self.session.post(
-            url,
-            data=json.dumps(data, cls=BaseEncoder),
-            headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
-            params=query_args,
-            stream=~return_df,
-        )
-        self.raise_for_status(response, log_warning=log_warning)
-        if return_df:
-            with warnings.catch_warnings():
-                warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = deserialize_query_response(response)
-                if desired_resolution is not None:
-                    if not response.headers.get("dataframe_resolution", None):
-                        if len(desired_resolution) != 3:
-                            raise ValueError(
-                                "desired resolution needs to be of length 3, for xyz"
-                            )
-                        vox_res = self.get_table_metadata(
-                            table,
-                            datastack_name,
-                            materialization_version,
-                            log_warning=False,
-                        )["voxel_resolution"]
-                        df = convert_position_columns(df, vox_res, desired_resolution)
-            if metadata:
-                attrs = self._assemble_attributes(
-                    tables,
-                    filters={
-                        "inclusive": filter_in_dict,
-                        "exclusive": filter_out_dict,
-                        "equal": filter_equal_dict,
-                        "greater": filter_greater_dict,
-                        "less": filter_less_dict,
-                        "greater_equal": filter_greater_equal_dict,
-                        "less_equal": filter_less_equal_dict,
-                        "spatial": filter_spatial_dict,
-                        "regex": filter_regex_dict,
-                    },
-                    select_columns=select_columns,
-                    offset=offset,
-                    limit=limit,
-                    live_query=timestamp is not None,
-                    timestamp=string_format_timestamp(timestamp),
-                    materialization_version=materialization_version,
-                    desired_resolution=response.headers.get(
-                        "dataframe_resolution", desired_resolution
-                    ),
-                    column_names=response.headers.get("column_names", None),
-                )
-                df.attrs.update(attrs)
-            if split_positions:
-                return df
-            else:
-                return concatenate_position_columns(df, inplace=True)
         else:
-            return response.json()
+            tables, suffix_map = self._resolve_merge_reference(
+                merge_reference, table, datastack_name, materialization_version
+            )
+
+            url, data, query_args, encoding = self._format_query_components(
+                datastack_name,
+                materialization_version,
+                tables,
+                select_columns,
+                suffix_map,
+                {table: filter_in_dict} if filter_in_dict is not None else None,
+                {table: filter_out_dict} if filter_out_dict is not None else None,
+                {table: filter_equal_dict} if filter_equal_dict is not None else None,
+                {table: filter_greater_dict}
+                if filter_greater_dict is not None
+                else None,
+                {table: filter_less_dict} if filter_less_dict is not None else None,
+                {table: filter_greater_equal_dict}
+                if filter_greater_equal_dict is not None
+                else None,
+                {table: filter_less_equal_dict}
+                if filter_less_equal_dict is not None
+                else None,
+                {table: filter_spatial_dict}
+                if filter_spatial_dict is not None
+                else None,
+                {table: filter_regex_dict} if filter_regex_dict is not None else None,
+                return_df,
+                True,
+                offset,
+                limit,
+                desired_resolution,
+                random_sample=random_sample,
+            )
+            if get_counts:
+                query_args["count"] = True
+
+            response = self.session.post(
+                url,
+                data=json.dumps(data, cls=BaseEncoder),
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept-Encoding": encoding,
+                },
+                params=query_args,
+                stream=~return_df,
+            )
+            self.raise_for_status(response, log_warning=log_warning)
+            if return_df:
+                with warnings.catch_warnings():
+                    warnings.simplefilter(action="ignore", category=FutureWarning)
+                    warnings.simplefilter(action="ignore", category=DeprecationWarning)
+                    df = deserialize_query_response(response)
+                    if desired_resolution is not None:
+                        if not response.headers.get("dataframe_resolution", None):
+                            if len(desired_resolution) != 3:
+                                raise ValueError(
+                                    "desired resolution needs to be of length 3, for xyz"
+                                )
+                            vox_res = self.get_table_metadata(
+                                table,
+                                datastack_name,
+                                materialization_version,
+                                log_warning=False,
+                            )["voxel_resolution"]
+                            df = convert_position_columns(
+                                df, vox_res, desired_resolution
+                            )
+                if metadata:
+                    attrs = self._assemble_attributes(
+                        tables,
+                        filters={
+                            "inclusive": filter_in_dict,
+                            "exclusive": filter_out_dict,
+                            "equal": filter_equal_dict,
+                            "greater": filter_greater_dict,
+                            "less": filter_less_dict,
+                            "greater_equal": filter_greater_equal_dict,
+                            "less_equal": filter_less_equal_dict,
+                            "spatial": filter_spatial_dict,
+                            "regex": filter_regex_dict,
+                        },
+                        select_columns=select_columns,
+                        offset=offset,
+                        limit=limit,
+                        live_query=timestamp is not None,
+                        timestamp=string_format_timestamp(timestamp),
+                        materialization_version=materialization_version,
+                        desired_resolution=response.headers.get(
+                            "dataframe_resolution", desired_resolution
+                        ),
+                        column_names=response.headers.get("column_names", None),
+                    )
+                    df.attrs.update(attrs)
+                if split_positions:
+                    return df
+                else:
+                    return concatenate_position_columns(df, inplace=True)
+            else:
+                return response.json()
 
     @_check_version_compatibility(
         kwarg_use_constraints={
@@ -973,12 +1040,15 @@ class MaterializationClient(ClientBase):
             a pandas dataframe of results of query
         """
 
-        if materialization_version is None:
-            materialization_version = self.version
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
+        materialization_version = self._assign_version(materialization_version)
+        datastack_name = self._assign_datastack(datastack_name)
+        desired_resolution = self._assign_desired_resolution(desired_resolution)
+        if not self._materialization_available(
+            materialization_version, datastack_name=datastack_name
+        ):
+            raise ValueError(
+                f"Cannot use `join_query` for a non-materialized version. Please use a materialized version ({self.available_versions(datastack_name)}) or live_live_query."
+            )
         url, data, query_args, encoding = self._format_query_components(
             datastack_name,
             materialization_version,
@@ -1178,7 +1248,7 @@ class MaterializationClient(ClientBase):
                     all_svid_lengths.append(n_svids)
                     logger.info(f"{sv_col} has {n_svids} to update")
                     all_svids = np.append(all_svids, svids[~is_latest_root])
-        logger.info(f"num zero svids: {np.sum(all_svids==0)}")
+        logger.info(f"num zero svids: {np.sum(all_svids == 0)}")
         logger.info(f"all_svids dtype {all_svids.dtype}")
         logger.info(f"all_svid_lengths {all_svid_lengths}")
         with MyTimeIt("get_roots"):
@@ -1224,8 +1294,7 @@ class MaterializationClient(ClientBase):
         dict
             Status code of response from server
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+        datastack_name = self._assign_datastack(datastack_name)
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -1258,8 +1327,7 @@ class MaterializationClient(ClientBase):
         dict
             Status code of response from server
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+        datastack_name = self._assign_datastack(datastack_name)
 
         if annotation_ids is not None:
             data = {"annotation_ids": annotation_ids}
@@ -1386,10 +1454,8 @@ class MaterializationClient(ClientBase):
         if self.cg_client is None:
             raise ValueError("You must have a cg_client to run live_query")
 
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
+        datastack_name = self._assign_datastack(datastack_name)
+        desired_resolution = self._assign_desired_resolution(desired_resolution)
         with MyTimeIt("find_mat_version"):
             # we want to find the most recent materialization
             # in which the timestamp given is in the future
@@ -1882,10 +1948,9 @@ class MaterializationClient(ClientBase):
         :
             Metadata dictionary for table
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if version is None:
-            version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
@@ -2070,10 +2135,11 @@ class MaterializationClient(ClientBase):
             "Deprecation: this method is to facilitate beta testing of this feature, \
             it will likely get removed in future versions. "
         )
+        datastack_name = self._assign_datastack(datastack_name)
+        desired_resolution = self._assign_desired_resolution(desired_resolution)
+
         timestamp = convert_timestamp(timestamp)
         return_df = True
-        if datastack_name is None:
-            datastack_name = self.datastack_name
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -2119,8 +2185,6 @@ class MaterializationClient(ClientBase):
             data["limit"] = limit
         if suffixes is not None:
             data["suffixes"] = suffixes
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
         if Version(str(self.api_version)) >= Version("3"):
             if desired_resolution is not None:
                 data["desired_resolution"] = desired_resolution
@@ -2221,10 +2285,13 @@ class MaterializationClient(ClientBase):
         list
             List of views
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if version is None:
-            version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        version = self._assign_version(version)
+        if not self._materialization_available(version, datastack_name=datastack_name):
+            raise ValueError(
+                f"Materialization version must not be expired for views. "
+                f"Available versions: {self.available_versions(datastack_name)}"
+            )
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
@@ -2258,10 +2325,16 @@ class MaterializationClient(ClientBase):
         dict
             Metadata of view
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if materialization_version is None:
-            materialization_version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        materialization_version = self._assign_version(materialization_version)
+
+        if not self._materialization_available(
+            materialization_version, datastack_name=datastack_name
+        ):
+            raise ValueError(
+                f"Materialization version must not be expired for view metadata query. "
+                f"Available versions: {self.available_versions(datastack_name)}"
+            )
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["view_name"] = view_name
@@ -2298,10 +2371,15 @@ class MaterializationClient(ClientBase):
         dict
             Schema of view.
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if materialization_version is None:
-            materialization_version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        materialization_version = self._assign_version(materialization_version)
+        if not self._materialization_available(
+            materialization_version, datastack_name=datastack_name
+        ):
+            raise ValueError(
+                f"Materialization version must not be expired for view schema query. "
+                f"Available versions: {self.available_versions(datastack_name)}"
+            )
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["view_name"] = view_name
@@ -2334,10 +2412,16 @@ class MaterializationClient(ClientBase):
         dict
             Schema of view.
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
-        if materialization_version is None:
-            materialization_version = self.version
+        datastack_name = self._assign_datastack(datastack_name)
+        materialization_version = self._assign_version(materialization_version)
+
+        if not self._materialization_available(
+            materialization_version, datastack_name=datastack_name
+        ):
+            raise ValueError(
+                f"Materialization version must not be expired for view schema query. "
+                f"Available versions: {self.available_versions(datastack_name)}"
+            )
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
@@ -2446,12 +2530,16 @@ class MaterializationClient(ClientBase):
             A pandas dataframe of results of query
         """
 
-        if desired_resolution is None:
-            desired_resolution = self.desired_resolution
-        if materialization_version is None:
-            materialization_version = self.version
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+        datastack_name = self._assign_datastack(datastack_name)
+        materialization_version = self._assign_version(materialization_version)
+        desired_resolution = self._assign_desired_resolution(desired_resolution)
+        if not self._materialization_available(
+            materialization_version, datastack_name=datastack_name
+        ):
+            raise ValueError(
+                "Materialization version must not be expired for view query. "
+                f"Available versions: {self.available_versions(datastack_name=datastack_name)}"
+            )
 
         url, data, query_args, encoding = self._format_query_components(
             datastack_name,
@@ -2552,8 +2640,7 @@ class MaterializationClient(ClientBase):
         dict[str]
             A dictionary of column names and their unique values
         """
-        if datastack_name is None:
-            datastack_name = self.datastack_name
+        datastack_name = self._assign_datastack(datastack_name)
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name

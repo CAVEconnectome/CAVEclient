@@ -28,6 +28,7 @@ TEST_LOCAL_SERVER = os.environ.get("TEST_LOCAL_SERVER", "https://local.cave.com"
 TEST_IMAGE_SERVER = os.environ.get("TEST_IMAGE_SERVER", "gs://my-test-bucket/images")
 TEST_DATASTACK = os.environ.get("TEST_DATASTACK", "test_stack")
 DEFAULT_MATERIALIZATION_VERSONS = [1, 2]
+DEFAULT_EXPIRED_MATERIALIZATION_VERSONS = [3, 4]
 
 DEFAULT_MATERIALIZATION_VERSION_METADATA = {
     "time_stamp": "2024-06-05T10:10:01.203215",
@@ -256,6 +257,7 @@ def CAVEclientMock(
     materialization_server_version: str = DEFAULT_MATERIALIZATION_SERVER_VERSON,
     materialization_api_versions: Optional[list] = None,
     available_materialization_versions: Optional[list] = None,
+    expired_materialization_versions: Optional[list] = None,
     set_version: Optional[int] = None,
     set_version_metadata: Optional[dict] = None,
     json_service: bool = False,
@@ -302,6 +304,10 @@ def CAVEclientMock(
     available_materialization_versions : list, optional
         List of materialization database versions that the materialization client thinks exists, by default None.
         If None, returns the value in DEFAULT_MATERIALIZATION_VERSONS.
+    expired_materialization_versions : list, optional
+        List of materialization database versions that the materialization client thinks are expired, by default None.
+        If None, returns the value in DEFAULT_EXPIRED_MATERIALIZATION_VERSONS.
+        If the same value is in both available and expired, it is treated as available.
     materialization_api_versions : list, optional
         List of materialization API versions that the materialization client thinks exists, by default None.
         If None, returns the value in MATERIALIZATION_API_VERSIONS.
@@ -398,6 +404,8 @@ def CAVEclientMock(
             info_file = default_info(local_server)
         if available_materialization_versions is None:
             available_materialization_versions = DEFAULT_MATERIALIZATION_VERSONS
+        if expired_materialization_versions is None:
+            expired_materialization_versions = DEFAULT_EXPIRED_MATERIALIZATION_VERSONS
         if set_version_metadata is None:
             set_version_metadata = DEFAULT_MATERIALIZATION_VERSION_METADATA
         if chunkedgraph_api_versions is None:
@@ -406,6 +414,14 @@ def CAVEclientMock(
             materialization_api_versions = MATERIALIZATION_API_VERSIONS
         if schema_api_versions is None:
             schema_api_versions = SCHEMA_API_VERSIONS
+        all_materialization_versions = sorted(
+            list(
+                set(
+                    available_materialization_versions
+                    + expired_materialization_versions
+                )
+            )
+        )
 
     @responses.activate()
     def mockedCAVEclient():
@@ -481,11 +497,17 @@ def CAVEclientMock(
             responses.add(
                 responses.GET,
                 mat_version_list_url,
-                json=available_materialization_versions,
+                json=all_materialization_versions,
                 status=200,
                 match=[query_param_matcher({"expired": True})],
             )
-
+            responses.add(
+                responses.GET,
+                mat_version_list_url,
+                json=available_materialization_versions,
+                status=200,
+                match=[query_param_matcher({"expired": False})],
+            )
             if set_version is not None:
                 mat_mapping["version"] = set_version
                 version_metadata_url = mat_endpoints["version_metadata"].format_map(
@@ -535,6 +557,15 @@ def CAVEclientMock(
             client.chunkedgraph
         if materialization:
             client.materialize
+            responses.add(
+                responses.GET,
+                mat_version_list_url,
+                json=available_materialization_versions,
+                status=200,
+                match=[query_param_matcher({"expired": False})],
+            )
+            client.materialize.available_versions(datastack_name=datastack_name)
+            client.materialize.version
         if json_service:
             client.state
         if skeleton_service:
