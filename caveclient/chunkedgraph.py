@@ -282,7 +282,7 @@ class ChunkedGraphClient(ClientBase):
         response = self.session.get(url, params=query_d)
         return np.int64(handle_response(response, as_json=True)["root_id"])
 
-    @_check_version_compatibility(method_constraint="<3,>=2.18.0")
+    @_check_version_compatibility(method_constraint=["<3,>=2.18.0", "<4,>=3.0.5"])
     def get_minimal_covering_nodes(self, node_ids: IntArrayLike) -> dict:
         """Get the minimal covering nodes for a list of root IDs.
 
@@ -1418,8 +1418,8 @@ class ChunkedGraphClient(ClientBase):
 
     @_check_version_compatibility(
         kwarg_use_constraints={
-            "latest": ["<2,>=1.25.0", "<3,>=2.17.0"],
-            "timestamp": ["<2,>=1.25.0", "<3,>=2.17.0"],
+            "latest": ["<2,>=1.25.0", "<3,>=2.17.0", "<4,>=3.0.4"],
+            "timestamp": ["<2,>=1.25.0", "<3,>=2.17.0", "<4,>=3.0.4"],
         }
     )
     def get_root_timestamps(
