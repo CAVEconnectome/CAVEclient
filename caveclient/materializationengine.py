@@ -825,7 +825,7 @@ class MaterializationClient(ClientBase):
             data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
-            stream=~return_df,
+            stream=not return_df,
         )
         self.raise_for_status(response, log_warning=log_warning)
         if return_df:
@@ -1016,13 +1016,13 @@ class MaterializationClient(ClientBase):
             desired_resolution,
             random_sample=random_sample,
         )
-
+        query_args["direct_sql_pandas"] = True
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
             headers={"Content-Type": "application/json", "Accept-Encoding": encoding},
             params=query_args,
-            stream=~return_df,
+            stream=not return_df,
         )
         self.raise_for_status(response, log_warning=log_warning)
         if return_df:
@@ -1543,7 +1543,7 @@ class MaterializationClient(ClientBase):
                     "Accept-Encoding": encoding,
                 },
                 params=query_args,
-                stream=~return_df,
+                stream=not return_df,
                 verify=self.verify,
             )
             self.raise_for_status(response, log_warning=log_warning)
