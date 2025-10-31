@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+import textwrap
 import responses
 from responses.matchers import json_params_matcher, query_param_matcher
 
@@ -17,7 +18,7 @@ from caveclient.endpoints import (
     materialization_endpoints_v3,
     schema_endpoints_v2,
 )
-
+from caveclient.base import ServerIncompatibilityError
 from .conftest import datastack_dict, test_info
 
 
@@ -446,6 +447,17 @@ class TestMatclient:
         assert isinstance(myclient.materialize.tables._repr_html_(), str)
         myclient.materialize.tables._repr_mimebundle_()
 
+        myclient._materialize = None
+        responses.add(responses.GET, mat_version_url, json="4.13.0", status=200)
+        myclient.materialize
+        with pytest.raises(
+            ServerIncompatibilityError,
+            match=textwrap.fill(materializationengine.direct_sql_error_msg, width=80),
+        ):
+            qry = myclient.materialize.tables.allen_column_mtypes_v2(
+                pt_root_id=[123, 456], target_id=271700
+            )
+            qry.query()
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
