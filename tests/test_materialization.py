@@ -458,6 +458,7 @@ class TestMatclient:
                 pt_root_id=[123, 456], target_id=271700
             )
             qry.query()
+
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
