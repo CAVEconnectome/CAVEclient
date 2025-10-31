@@ -28,4 +28,4 @@ class MyTimeIt:
     def __exit__(self, *args):
         global indent
         indent -= 2
-        logger.debug(f"end {self._message} -- {time()-self._start}")
+        logger.debug(f"end {self._message} -- {time() - self._start}")

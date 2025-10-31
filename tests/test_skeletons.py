@@ -85,12 +85,15 @@ class TestSkeletonsClient:
 
     @responses.activate
     def test_get_refusal_list(self, myclient, mocker):
-        refusal_rows1 = [["datastack", 112233445566778899], ["datastack", 223344556677889900]]
+        refusal_rows1 = [
+            ["datastack", 112233445566778899],
+            ["datastack", 223344556677889900],
+        ]
         refusal_rows2 = [[str(v) for v in row] for row in refusal_rows1]
-        refusal_rows3 = [','.join(row) for row in refusal_rows2]
-        refusal_list_str = '\n'.join(refusal_rows3)
+        refusal_rows3 = [",".join(row) for row in refusal_rows2]
+        refusal_list_str = "\n".join(refusal_rows3)
         refusal_list_compressed = SkeletonClient.compressStringToBytes(refusal_list_str)
-        
+
         metadata_url = self.sk_endpoints.get("get_refusal_list").format_map(sk_mapping)
         responses.add(
             responses.GET, url=metadata_url, body=refusal_list_compressed, status=200
