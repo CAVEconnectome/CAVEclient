@@ -326,7 +326,7 @@ class TestMatclient:
         mat_version_url = materialization_common["get_version"].format_map(
             endpoint_mapping
         )
-        responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
+        responses.add(responses.GET, mat_version_url, json="5.13.0", status=200)
 
         api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
             endpoint_mapping
@@ -411,6 +411,7 @@ class TestMatclient:
             "return_pyarrow": True,
             "arrow_format": True,
             "split_positions": True,
+            "direct_sql_pandas": True,
         }
         query_string = urlencode(query_d)
         qry_url = qry_url + "?" + query_string
@@ -466,6 +467,7 @@ class TestMatclient:
             "return_pyarrow": True,
             "split_positions": True,
             "arrow_format": True,
+            "direct_sql_pandas": True,
         }
         query_string = urlencode(query_d)
         url = url + "?" + query_string
@@ -774,6 +776,7 @@ class TestMatclient:
             "return_pyarrow": True,
             "split_positions": True,
             "arrow_format": True,
+            "direct_sql_pandas": True,
         }
         query_string = urlencode(query_d)
         url = url + "?" + query_string
