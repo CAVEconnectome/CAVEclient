@@ -2,11 +2,11 @@ import itertools
 import json
 import logging
 import re
+import textwrap
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Iterable, Optional, Union
-import textwrap
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,6 @@ from .base import (
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
 from .tools.table_manager import TableManager, ViewManager
-
 
 logger = logging.getLogger(__name__)
 
