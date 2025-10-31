@@ -398,6 +398,8 @@ def _check_version_compatibility(
     kwarg_use_constraints: dict = None,
     method_api_constraint: str = None,
     kwarg_use_api_constraints: dict = None,
+    kwarg_value_api_constraints: dict = None,
+    method_constraint_message: str = None,
 ) -> Callable:
     """
     This decorator is used to check the compatibility of features in the client and
@@ -425,7 +427,8 @@ def _check_version_compatibility(
 
         note you can also pass in a list of constraints to check against,
         if any of the constraints are met.
-
+    method_constraint_message
+        Custom message to display when the method constraint is violated.
     Raises
     ------
     ServerIncompatibilityError
@@ -442,12 +445,15 @@ def _check_version_compatibility(
                     ms_list = [method_constraint]
                 else:
                     ms_list = method_constraint
-                msg = (
-                    f"Use of method `{method.__name__}` is only permitted "
-                    f"for server version {' or '.join(ms_list)}. Your server "
-                    f"version is {self.server_version}. Contact your system "
-                    "administrator to update the server version."
-                )
+                if method_constraint_message is None:
+                    msg = (
+                        f"Use of method `{method.__name__}` is only permitted "
+                        f"for server version {' or '.join(ms_list)}. Your server "
+                        f"version is {self.server_version}. Contact your system "
+                        "administrator to update the server version."
+                    )
+                else:
+                    msg = method_constraint_message
 
                 raise ServerIncompatibilityError(msg)
 

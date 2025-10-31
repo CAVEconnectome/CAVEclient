@@ -6,6 +6,7 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Iterable, Optional, Union
+import textwrap 
 
 import numpy as np
 import pandas as pd
@@ -24,10 +25,12 @@ from .base import (
     _api_endpoints,
     _check_version_compatibility,
     handle_response,
+    ServerIncompatibilityError
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
 from .tools.table_manager import TableManager, ViewManager
+
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +153,14 @@ def _tables_metadata_key(matclient, *args, **kwargs):
         datastack_name = matclient.datastack_name
     return hashkey(datastack_name, version)
 
+
+direct_sql_error_msg= textwrap.dedent("""After CAVEclient v8.0.0 we changed to utilizing a different way
+of returning data from sql which does a better job of preserving types.\n
+This requires a server version >= 5.13.0 to work properly.\n
+You should contact your server administrator to get them to upgrade\n
+but in order to use CAVEclient with this server in its present state\n
+you should install caveclient<8.0.0 until the server can be upgraded\n
+Note: this is a breaking change as the data types returned may be different.""").strip()
 
 class MaterializationClient(ClientBase):
     """Client for interacting with the materialization engine."""
@@ -636,7 +647,9 @@ class MaterializationClient(ClientBase):
             "filter_less_dict": ">=4.34.4",
             "filter_greater_equal_dict": ">=4.34.4",
             "filter_less_equal_dict": ">=4.34.4",
-        }
+        },
+        method_constraint = ">=5.13.0",
+        method_constraint_message = direct_sql_error_msg
     )
     def query_table(
         self,
@@ -663,7 +676,7 @@ class MaterializationClient(ClientBase):
         desired_resolution: Iterable = None,
         get_counts: bool = False,
         random_sample: int = None,
-        log_warning: bool = True,
+        log_warning: bool = True
     ) -> Union[pd.DataFrame, dict]:
         """Generic query on materialization tables
 
@@ -806,7 +819,7 @@ class MaterializationClient(ClientBase):
         )
         if get_counts:
             query_args["count"] = True
-
+        query_args["direct_sql_pandas"] = True
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
@@ -872,7 +885,9 @@ class MaterializationClient(ClientBase):
             "filter_less_dict": ">=4.34.4",
             "filter_greater_equal_dict": ">=4.34.4",
             "filter_less_equal_dict": ">=4.34.4",
-        }
+        },
+        method_constraint = ">=5.13.0",
+        method_constraint_message = direct_sql_error_msg
     )
     def join_query(
         self,
@@ -1285,7 +1300,9 @@ class MaterializationClient(ClientBase):
             "filter_less_dict": ">=4.34.4",
             "filter_greater_equal_dict": ">=4.34.4",
             "filter_less_equal_dict": ">=4.34.4",
-        }
+        },
+        method_constraint = ">=5.13.0",
+        method_constraint_message = direct_sql_error_msg
     )
     def live_query(
         self,
@@ -1912,6 +1929,8 @@ class MaterializationClient(ClientBase):
             "filter_regex_dict": ">=3.0.0",
             "allow_invalid_root_ids": ">=3.0.0",
         },
+        method_constraint = ">=5.13.0",
+        method_constraint_message = direct_sql_error_msg
     )
     def live_live_query(
         self,
@@ -2356,6 +2375,8 @@ class MaterializationClient(ClientBase):
             "filter_greater_equal_dict": ">=4.34.4",
             "filter_less_equal_dict": ">=4.34.4",
         },
+        method_constraint = ">=5.13.0",
+        method_constraint_message = direct_sql_error_msg
     )
     def query_view(
         self,
