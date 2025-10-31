@@ -1534,6 +1534,7 @@ class MaterializationClient(ClientBase):
             logger.debug(f"query_args: {query_args}")
             logger.debug(f"query data: {data}")
         with MyTimeIt("query materialize"):
+            query_args["direct_sql_pandas"] = True
             response = self.session.post(
                 url,
                 data=json.dumps(data, cls=BaseEncoder),
@@ -2103,6 +2104,7 @@ class MaterializationClient(ClientBase):
         query_args["merge_reference"] = False
         query_args["allow_missing_lookups"] = allow_missing_lookups
         query_args["allow_invalid_root_ids"] = allow_invalid_root_ids
+        query_args["direct_sql_pandas"] = True
         if random_sample:
             query_args["random_sample"] = random_sample
         data["table"] = table
@@ -2507,6 +2509,7 @@ class MaterializationClient(ClientBase):
         )
         if get_counts:
             query_args["count"] = True
+        query_args["direct_sql_pandas"] = True
         response = self.session.post(
             url,
             data=json.dumps(data, cls=BaseEncoder),
