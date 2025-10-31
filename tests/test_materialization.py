@@ -1,5 +1,6 @@
 import copy
 import datetime
+import textwrap
 from io import BytesIO
 from urllib.parse import urlencode
 
@@ -7,18 +8,18 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-import textwrap
 import responses
 from responses.matchers import json_params_matcher, query_param_matcher
 
 from caveclient import materializationengine
+from caveclient.base import ServerIncompatibilityError
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     materialization_common,
     materialization_endpoints_v3,
     schema_endpoints_v2,
 )
-from caveclient.base import ServerIncompatibilityError
+
 from .conftest import datastack_dict, test_info
 
 
