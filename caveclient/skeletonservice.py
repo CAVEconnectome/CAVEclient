@@ -315,7 +315,7 @@ class SkeletonClient(ClientBase):
         if datastack_name is None:
             datastack_name = self._datastack_name
         assert datastack_name is not None
-        
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint = "get_refusal_list"
@@ -337,7 +337,7 @@ class SkeletonClient(ClientBase):
             sep=",",
             names=["DATASTACK_NAME", "ROOT_ID"],
         )
-        
+
         return df
 
     @_check_version_compatibility(method_constraint=">=0.5.9")
@@ -580,13 +580,17 @@ class SkeletonClient(ClientBase):
             logging.warning(
                 "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
             )
-        
+
         cv = self.fc.info.segmentation_cloudvolume()
         if cv and cv.meta.decode_layer_id(root_id) != cv.meta.n_layers:
-            raise ValueError(f"Invalid root id: {root_id} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id)")
+            raise ValueError(
+                f"Invalid root id: {root_id} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id)"
+            )
         if not self.fc.chunkedgraph.is_valid_nodes(root_id):
-            raise ValueError(f"Invalid root id: {root_id} (perhaps it doesn't exist; the error is unclear)")
-        
+            raise ValueError(
+                f"Invalid root id: {root_id} (perhaps it doesn't exist; the error is unclear)"
+            )
+
         url = self._build_get_skeleton_endpoint(
             root_id,
             datastack_name,
@@ -639,7 +643,7 @@ class SkeletonClient(ClientBase):
                 sep=" ",
                 names=["id", "type", "x", "y", "z", "radius", "parent"],
             )
-            
+
             return df
 
         raise ValueError(f"Unknown output format: {output_format}")
@@ -699,10 +703,14 @@ class SkeletonClient(ClientBase):
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
-                logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                logging.warning(
+                    f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
+                )
                 continue
             if not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
+                logging.warning(
+                    f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
+                )
                 continue
             valid_rids.append(rid)
         if not valid_rids:
@@ -713,7 +721,9 @@ class SkeletonClient(ClientBase):
         if len(root_ids) > MAX_BULK_SYNCHRONOUS_SKELETONS:
             root_ids = root_ids[:MAX_BULK_SYNCHRONOUS_SKELETONS]
             if verbose_level >= 1:
-                logging.warning(f"Truncating bulk skeleton list to {MAX_BULK_SYNCHRONOUS_SKELETONS}")
+                logging.warning(
+                    f"Truncating bulk skeleton list to {MAX_BULK_SYNCHRONOUS_SKELETONS}"
+                )
 
         url = self._build_bulk_endpoint(
             root_ids,
@@ -797,7 +807,7 @@ class SkeletonClient(ClientBase):
             The estimated time in seconds to generate all skeletons (a comparable message will be output to the console prior to return).
         """
         t0 = default_timer()
-        
+
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
@@ -832,12 +842,16 @@ class SkeletonClient(ClientBase):
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
-                logging.warning(f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed.")
+                logging.warning(
+                    f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
+                )
                 continue
             # The following test is disabled, due to its serialized and time-intensive cost.
             # The same test will be performed by the parallelized skeletonization worker later anyway.
             if False:  # not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed.")
+                logging.warning(
+                    f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
+                )
                 continue
             valid_rids.append(rid)
         if not valid_rids:
@@ -859,11 +873,11 @@ class SkeletonClient(ClientBase):
 
         t3_et = 0
         t4_et = 0
-        
+
         estimated_async_time_secs_upper_bound_sum = 0
         for batch in range(0, len(root_ids), BULK_SKELETONS_BATCH_SIZE):
             t3_0 = default_timer()
-            
+
             rids_one_batch = root_ids[batch : batch + BULK_SKELETONS_BATCH_SIZE]
 
             use_post = self._server_version >= Version("0.8.0")
@@ -877,7 +891,7 @@ class SkeletonClient(ClientBase):
 
             t3 = default_timer()
             t3_et += t3 - t3_0
-            
+
             if self._server_version < Version("0.8.0"):
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)

@@ -1,6 +1,11 @@
 ---
 title: Changelog
 ---
+## 8.0.0 (November 2, 2025)
+- Improved mangling of types from sql queries.  Previously, the server side method to read data from PostGres into pandas was via csv streaming, which was caused pandas to infer types.  There were cases where this inference was wrong or incomplete.  For example if you had a string column, but all your entries for your query happened to be numbers (i.e ["1", "2"]) the result would return those as numbers not strings, but then if your query changed so there was a mix of numbers and strings, those same rows which were numbers would go back to strings (i.e. ["1", "apple"]). Also, boolean columns were being returned as strings "t" or "f". 
+
+ We solved this on the server side by improving the reading to avoid going through csv, but this is a breaking change to the API, since people might have written code which expected the mangled types.  We upgraded the service to require a new optional argument to avoid mangling, so that old clients will still get the old behavior.  8.0.0 and beyond will give the new behavior, but it requires a server side upgrade of Materialization Service to >5.13.0, so users who connect to a server that is not yet upgraded with this version will raise an Exception and be asked to downgrade their CAVEclient installation (and ask their server admin to upgrade).
+
 ## 7.7.4 (April 29, 2025)
 - Added SkeletonService.get_refusal_list(), which requires server-side SkeletonService >= v0.21.0.
 

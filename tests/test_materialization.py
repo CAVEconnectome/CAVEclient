@@ -1,5 +1,6 @@
 import copy
 import datetime
+import textwrap
 from io import BytesIO
 from urllib.parse import urlencode
 
@@ -11,6 +12,7 @@ import responses
 from responses.matchers import json_params_matcher, query_param_matcher
 
 from caveclient import materializationengine
+from caveclient.base import ServerIncompatibilityError
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     materialization_common,
@@ -326,7 +328,7 @@ class TestMatclient:
         mat_version_url = materialization_common["get_version"].format_map(
             endpoint_mapping
         )
-        responses.add(responses.GET, mat_version_url, json="4.30.1", status=200)
+        responses.add(responses.GET, mat_version_url, json="5.13.0", status=200)
 
         api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
             endpoint_mapping
@@ -411,6 +413,7 @@ class TestMatclient:
             "return_pyarrow": True,
             "arrow_format": True,
             "split_positions": True,
+            "direct_sql_pandas": True,
         }
         query_string = urlencode(query_d)
         qry_url = qry_url + "?" + query_string
@@ -445,6 +448,18 @@ class TestMatclient:
         assert isinstance(myclient.materialize.tables._repr_html_(), str)
         myclient.materialize.tables._repr_mimebundle_()
 
+        myclient._materialize = None
+        responses.add(responses.GET, mat_version_url, json="4.13.0", status=200)
+        myclient.materialize
+        with pytest.raises(
+            ServerIncompatibilityError,
+            match=textwrap.fill(materializationengine.direct_sql_error_msg, width=80),
+        ):
+            qry = myclient.materialize.tables.allen_column_mtypes_v2(
+                pt_root_id=[123, 456], target_id=271700
+            )
+            qry.query()
+
     @responses.activate
     def test_matclient(self, myclient, mocker):
         endpoint_mapping = self.default_mapping
@@ -466,6 +481,7 @@ class TestMatclient:
             "return_pyarrow": True,
             "split_positions": True,
             "arrow_format": True,
+            "direct_sql_pandas": True,
         }
         query_string = urlencode(query_d)
         url = url + "?" + query_string
@@ -774,6 +790,7 @@ class TestMatclient:
             "return_pyarrow": True,
             "split_positions": True,
             "arrow_format": True,
+            "direct_sql_pandas": True,
         }
         query_string = urlencode(query_d)
         url = url + "?" + query_string

@@ -217,7 +217,7 @@ class L2CacheClient(ClientBase):
             df = df.join(append)
             df.drop(
                 columns=df.columns.intersection(
-                    ["rep_coord_nm", "pca", "pca_val" "chunk_intersect_count"]
+                    ["rep_coord_nm", "pca", "pca_val", "chunk_intersect_count"]
                 ),
                 inplace=True,
             )
