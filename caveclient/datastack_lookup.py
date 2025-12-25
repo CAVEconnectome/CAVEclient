@@ -59,12 +59,13 @@ def handle_server_address(
 ):
     data = read_map(filename)
     if server_address is not None and datastack is not None:
-        if write and server_address != data.get(datastack):
+        old_address = data.get(datastack)
+        if server_address != old_address and write:
             data[datastack] = server_address
             wrote = write_map(data, filename)
             if wrote and do_log:
                 logger.warning(
-                    f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'"
+                    f"Updated datastack-to-server cache — '{server_address}' will now be used by default for datastack '{datastack}'; previously '{old_address}'"
                 )
         return server_address
     else:
