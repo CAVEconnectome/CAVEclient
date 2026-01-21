@@ -1166,7 +1166,9 @@ class ChunkedGraphClient(ClientBase):
             out_degree_dict = dict(lineage_graph.out_degree)
             nodes = np.array(list(out_degree_dict.keys()))
             out_degrees = np.array(list(out_degree_dict.values()))
-            return nodes[out_degrees == 0]
+            out_degree_nodes = nodes[out_degrees == 0]
+            are_they_current = self.is_latest_roots(out_degree_nodes,timestamp=timestamp)
+            return out_degree_nodes[are_they_current]
         else:
             # then timestamp is in fact in the past
             lineage_graph = self.get_lineage_graph(
@@ -1178,7 +1180,9 @@ class ChunkedGraphClient(ClientBase):
             in_degree_dict = dict(lineage_graph.in_degree)
             nodes = np.array(list(in_degree_dict.keys()))
             in_degrees = np.array(list(in_degree_dict.values()))
-            return nodes[in_degrees == 0]
+            in_degree_nodes = nodes[in_degrees == 0]
+            are_they_current = self.is_latest_roots(in_degree_nodes,timestamp=timestamp)
+            return in_degree_nodes[are_they_current]
 
     def get_original_roots(
         self, root_id: int, timestamp_past: Optional[datetime.datetime] = None
