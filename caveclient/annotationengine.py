@@ -813,7 +813,7 @@ class AnnotationClient(ClientBase):
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
         batch_size : int, optional
-            If the number of annotations exceeds this batch size, the upload will be split into multiple requests, by default 5000.
+            If the number of annotations exceeds this batch size, the upload will be split into multiple requests, by default 10,000.
 
         Returns
         -------
@@ -828,21 +828,24 @@ class AnnotationClient(ClientBase):
         num_batches = len(staged_annos.annotation_list_nonuploaded) // batch_size + 1
         ids_all = []
         for n_batch in range(num_batches):
-            batch = staged_annos.annotation_batch(n_batch, batch_size)
-            if staged_annos.is_update:
-                batch_ids = self.update_annotation(
-                    staged_annos.table_name,
-                    [staged_annos._process_annotation(a, flat=False, pop_is_uploaded=True) for a in batch],
-                    aligned_volume_name=aligned_volume_name,
-                )
-            else:
-                batch_ids = self.post_annotation(
-                    staged_annos.table_name,
-                    [staged_annos._process_annotation(a, flat=False, pop_is_uploaded=True) for a in batch],
-                    aligned_volume_name=aligned_volume_name,
+            try:
+                batch = staged_annos.annotation_batch(n_batch, batch_size)
+                if staged_annos.is_update:
+                    batch_ids = self.update_annotation(
+                        staged_annos.table_name,
+                        [staged_annos._process_annotation(a) for a in batch],
+                        aligned_volume_name=aligned_volume_name,
                     )
-            for a, new_id in zip(batch, batch_ids):
-                setattr(a, staged_annos.UPLOADED_ID_FIELD, new_id)
-                setattr(a, staged_annos.IS_UPLOADED_FIELD, True)
-            ids_all.extend(batch_ids)
+                else:
+                    batch_ids = self.post_annotation(
+                        staged_annos.table_name,
+                        [staged_annos._process_annotation(a) for a in batch],
+                        aligned_volume_name=aligned_volume_name,
+                    )
+                for a, new_id in zip(batch, batch_ids):
+                    setattr(a, staged_annos.UPLOADED_ID_FIELD, new_id)
+                    setattr(a, staged_annos.IS_UPLOADED_FIELD, True)
+                ids_all.extend(batch_ids)
+            except Exception as e:
+                print(f"Uploading failed after {len(ids_all)} annotations were successfully uploaded. Uploaded annotations are marked and will not be uploaded again if you re-run with the same object.\n\nError message: {e}")
         return ids_all

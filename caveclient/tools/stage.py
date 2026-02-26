@@ -11,8 +11,8 @@ ADD_FUNC_DOCSTSRING = (
 
 
 class StagedAnnotations(object):
-    IS_UPLOADED_FIELD = "_is_uploaded"
-    UPLOADED_ID_FIELD = "_uploaded_id"
+    IS_UPLOADED_FIELD = "_IS_UPLOADED_"
+    UPLOADED_ID_FIELD = "_UPLOADED_ID_"
     
     def __init__(
         self,
@@ -34,7 +34,16 @@ class StagedAnnotations(object):
         name : _type_, optional
            _description_, by default None
         id_field : bool, optional
-            _description_, by default False
+            Name of the id field, by default False
+        update : bool, optional
+            Whether these annotations are intended to update existing annotations (True) or create new annotations (False). If True, an "id" field will be added to the annotation class, by default False
+        table_resolution : list, optional
+            Resolution of the table that these annotations will be uploaded to, in units of nm/px
+        annotation_resolution : list, optional
+            Resolution of the annotations being added, in units of nm/px. If table_resolution is also provided, annotation coordinates will be automatically scaled to match table resolution. If not provided, coordinates will
+            be added as-is, and it is the user's responsibility to ensure they are in the correct units.
+        table_name : str, optional
+            Name of the table that these annotations will be uploaded to. If not provided, it is the user's responsibility to ensure that the schema provided matches the table they intend to upload to and that it is uploaded to the correct table.
         """
         self._schema = schema
         if update:
@@ -87,7 +96,7 @@ class StagedAnnotations(object):
         )
         self.add.__doc__ = ADD_FUNC_DOCSTSRING
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self._update:
             update = "updated"
         else:
@@ -99,10 +108,10 @@ class StagedAnnotations(object):
             table_text = f"schema '{self._ref_class}' with no table"
         return f"Staged annotations for {table_text} ({len(self)} {update} annotations)"
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._anno_list)
 
-    def add_dataframe(self, df):
+    def add_dataframe(self, df) -> None:
         """Add multiple annotations via a dataframe. Note that dataframe columns must exactly match fields in the schema (see the "fields" property to check)
 
         Parameters
@@ -136,44 +145,55 @@ class StagedAnnotations(object):
             self.add(**anno)
 
     @property
-    def table_name(self):
+    def table_name(self) -> str:
         return self._table_name
 
     @table_name.setter
-    def table_name(self, x):
+    def table_name(self, x: str) -> None:
         self._table_name = x
 
     @property
-    def is_update(self):
+    def is_update(self) -> bool:
         return self._update
 
     @property
-    def fields(self):
+    def fields(self) -> list:
         if self._id_field:
             return ["id"] + self._prop_names
         else:
             return self._prop_names
 
     @property
-    def fields_required(self):
+    def fields_required(self) -> list:
         if self._id_field:
             return ["id"] + self._name_positions_required()
         else:
             return self._name_positions_required()
 
     @property
-    def annotation_list(self):
+    def annotation_list(self) -> list:
         return [self._process_annotation(a, flat=False) for a in self._anno_list]
 
     @property
-    def annotation_list_nonuploaded(self):
+    def annotation_list_nonuploaded(self) -> list:
         return [
             self._process_annotation(a, flat=False)
             for a in self._anno_list
             if not getattr(a, self.IS_UPLOADED_FIELD, False)
         ]
     
-    def annotation_batch(self, batch_number: int, batch_size: int, nonuploaded_only: bool = True):
+    def annotation_batch(self, batch_number: int, batch_size: int = 5000, nonuploaded_only: bool = True) -> list:
+        """Get a batch of annotations, optionally only those that have not been uploaded yet.
+        
+        Parameters
+        ----------
+        batch_number : int
+            The batch number to retrieve, starting from 0.
+        batch_size : int
+            The number of annotations to include in each batch. Default is 5000.
+        nonuploaded_only : bool
+            Whether to include only annotations that have not been uploaded yet.
+        """
         if nonuploaded_only:
             annos = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
         else:
@@ -183,30 +203,44 @@ class StagedAnnotations(object):
         return annos[start_idx:end_idx]
     
     @property
-    def annotation_dataframe(self):
-        return pd.DataFrame.from_records(self.annotation_list) 
+    def annotation_dataframe(self) -> pd.DataFrame:
+        """Get a dataframe of all annotations, including those that have been uploaded and those that have not."""
+        df = pd.DataFrame.from_records([self._process_annotation(a, pop_uploaded_id=False) for a in self._anno_list]) 
+        df[self.UPLOADED_ID_FIELD] = df[self.UPLOADED_ID_FIELD].astype('Int64')
+        return df
     
     @property
-    def annotation_dataframe_nonuploaded(self):
-        return pd.DataFrame.from_records(self.annotation_list_nonuploaded)
+    def annotation_dataframe_nonuploaded(self) -> pd.DataFrame:
+        """Get a dataframe of annotations that have not been uploaded yet."""
+        df = pd.DataFrame.from_records([self._process_annotation(a, pop_uploaded_id=False) for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)])
+        df[self.UPLOADED_ID_FIELD] = df[self.UPLOADED_ID_FIELD].astype('Int64')
+        return df
 
-    def clear_annotations(self):
+    def clear_annotations(self) -> None:
+        """
+        Clear all annotations from the internal annotation list. Use with caution, as this cannot be undone.
+        """
         self._anno_list = []
     
-    def purge_uploaded_annotations(self):
+    def purge_uploaded_annotations(self) -> None:
+        """
+        Remove annotations that have been uploaded from the internal annotation list.
+        """
         self._anno_list = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
 
-    def _process_annotation(self, anno, flat=False, pop_is_uploaded=True):
+    def _process_annotation(self, anno, flat=False, pop_is_uploaded=True, pop_uploaded_id=True) -> dict:
         dflat = attrs.asdict(anno, filter=lambda a, v: v is not None)
         if pop_is_uploaded:
             dflat.pop(self.IS_UPLOADED_FIELD, None)
+        if pop_uploaded_id:
+            dflat.pop(self.UPLOADED_ID_FIELD, None)
         dflat = self._process_spatial(dflat)
         if flat:
             return dflat
         else:
             return self._unflatten_spatial_points(dflat)
 
-    def _build_mixin(self):
+    def _build_mixin(self) -> type:
         class AddAndValidate(object):
             def __attrs_post_init__(inner_self):
                 d = self._process_annotation(inner_self)
@@ -217,10 +251,8 @@ class StagedAnnotations(object):
 
         return AddAndValidate
 
-    def _make_anno_func(self, id_field=False, mixin=()):
+    def _make_anno_func(self, id_field=False, mixin=()) -> callable:
         cdict = {}
-        cdict[self.IS_UPLOADED_FIELD] = attrs.field(default=False)
-        cdict[self.UPLOADED_ID_FIELD] = attrs.field(type=int, default=None)
         
         if id_field:
             cdict["id"] = attrs.field()
@@ -231,20 +263,23 @@ class StagedAnnotations(object):
             if prop not in self._required_props:
                 cdict[prop_name] = attrs.field(default=None)
 
+        cdict[self.IS_UPLOADED_FIELD] = attrs.field(default=False)
+        cdict[self.UPLOADED_ID_FIELD] = attrs.field(type=int, default=None)
+
         return attrs.make_class(self.name, cdict, bases=mixin)
 
-    def _name_positions(self):
+    def _name_positions(self) -> list:
         return [
             x if x not in self._spatial_pts else f"{x}_position" for x in self._props
         ]
 
-    def _name_positions_required(self):
+    def _name_positions_required(self) -> list:
         return [
             x if x not in self._spatial_pts else f"{x}_position"
             for x in self._required_props
         ]
 
-    def _process_spatial(self, d):
+    def _process_spatial(self, d) -> dict:
         dout = {}
         for k, v in d.items():
             if isinstance(v, np.ndarray):
@@ -255,13 +290,13 @@ class StagedAnnotations(object):
                 dout[k] = v
         return dout
 
-    def _process_spatial_point(self, v):
+    def _process_spatial_point(self, v) -> list:
         if self._anno_scaling is None:
             return v
         else:
             return [x * y for x, y in zip(v, self._anno_scaling)]
 
-    def _unflatten_spatial_points(self, d):
+    def _unflatten_spatial_points(self, d) -> dict:
         dout = {}
         for k, v in d.items():
             if k in self._convert_pts:
