@@ -11,6 +11,9 @@ ADD_FUNC_DOCSTSRING = (
 
 
 class StagedAnnotations(object):
+    IS_UPLOADED_FIELD = "_is_uploaded"
+    UPLOADED_ID_FIELD = "_uploaded_id"
+    
     def __init__(
         self,
         schema,
@@ -163,16 +166,40 @@ class StagedAnnotations(object):
         return [self._process_annotation(a, flat=False) for a in self._anno_list]
 
     @property
+    def annotation_list_nonuploaded(self):
+        return [
+            self._process_annotation(a, flat=False)
+            for a in self._anno_list
+            if not getattr(a, self.IS_UPLOADED_FIELD, False)
+        ]
+    
+    def annotation_batch(self, batch_number: int, batch_size: int, nonuploaded_only: bool = True):
+        if nonuploaded_only:
+            annos = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
+        else:
+            annos = self._anno_list
+        start_idx = batch_number * batch_size
+        end_idx = start_idx + batch_size
+        return annos[start_idx:end_idx]
+    
+    @property
     def annotation_dataframe(self):
-        return pd.DataFrame.from_records(
-            [self._process_annotation(a, flat=True) for a in self._anno_list],
-        )
+        return pd.DataFrame.from_records(self.annotation_list) 
+    
+    @property
+    def annotation_dataframe_nonuploaded(self):
+        return pd.DataFrame.from_records(self.annotation_list_nonuploaded)
 
     def clear_annotations(self):
         self._anno_list = []
+    
+    def purge_uploaded_annotations(self):
+        self._anno_list = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
 
-    def _process_annotation(self, anno, flat=False):
+    def _process_annotation(self, anno, flat=False, pop_is_uploaded=True):
         dflat = attrs.asdict(anno, filter=lambda a, v: v is not None)
+        if pop_is_uploaded:
+            dflat.pop(self.IS_UPLOADED_FIELD, None)
         dflat = self._process_spatial(dflat)
         if flat:
             return dflat
@@ -192,7 +219,9 @@ class StagedAnnotations(object):
 
     def _make_anno_func(self, id_field=False, mixin=()):
         cdict = {}
-
+        cdict[self.IS_UPLOADED_FIELD] = attrs.field(default=False)
+        cdict[self.UPLOADED_ID_FIELD] = attrs.field(type=int, default=None)
+        
         if id_field:
             cdict["id"] = attrs.field()
         for prop, prop_name in zip(self._props, self._prop_names):
