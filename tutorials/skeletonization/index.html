@@ -1119,7 +1119,7 @@
 <span class="p">)</span>
 </code></pre></div>
 <h3 id="the-root-id-refusal-list">The root id refusal list<a class="headerlink" href="#the-root-id-refusal-list" title="Permanent link">&para;</a></h3>
-<p>Some root ids are consistently problematic and should not be subject to repeated skeletonization attempts. Examples include enormous objects (like volume-spanning blood vessel networks). To prevent such root ids from continually blocking resources that could be better applied to skeletonizing other root ids, the skeleton service utilizes a <em>refusal list</em>. Any root id added to, and subsequently found in, the refusal list will not be processed. Since a user might find it helpful to understand that certain root ids will not work for this reason, the service provides a function that lets one see the entire refusal list:</p>
+<p>Some root ids are consistently problematic and should not be subjected to repeated skeletonization attempts. Examples include enormous objects (like volume-spanning blood vessel networks). To prevent such root ids from continually blocking resources that could be better applied to skeletonizing other root ids, the skeleton service utilizes a <em>refusal list</em>. Any root id added to, and subsequently found in, the refusal list will not be processed. Since a user might find it helpful to understand that certain root ids will not work for this reason, the service provides a function that lets one see the entire refusal list:</p>
 <div class="highlight"><pre><span></span><code><span class="n">get_refusal_list</span><span class="p">(</span>
     <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
 <span class="p">)</span>
