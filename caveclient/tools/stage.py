@@ -182,25 +182,22 @@ class StagedAnnotations(object):
             if not getattr(a, self.IS_UPLOADED_FIELD, False)
         ]
     
-    def annotation_batch(self, batch_number: int, batch_size: int = 5000, nonuploaded_only: bool = True) -> list:
-        """Get a batch of annotations, optionally only those that have not been uploaded yet.
+    def _annotation_batches(self, batch_size) -> list:
+        """Get a batches of non-uploaded annotations of .
         
         Parameters
         ----------
-        batch_number : int
-            The batch number to retrieve, starting from 0.
         batch_size : int
-            The number of annotations to include in each batch. Default is 5000.
-        nonuploaded_only : bool
-            Whether to include only annotations that have not been uploaded yet.
+            The number of annotations to include in each batch.
+        
+        Returns
+        -------
+        list
+            A list of batches, where each batch is a list of annotations that have not been uploaded yet.
         """
-        if nonuploaded_only:
-            annos = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
-        else:
-            annos = self._anno_list
-        start_idx = batch_number * batch_size
-        end_idx = start_idx + batch_size
-        return annos[start_idx:end_idx]
+        nonuploaded = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
+        return [nonuploaded[i : i + batch_size] for i in range(0, len(nonuploaded), batch_size)]
+
     
     @property
     def annotation_dataframe(self) -> pd.DataFrame:
