@@ -4,7 +4,11 @@ from typing import Dict, Iterable, List, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
-import tqdm
+
+try:
+    import tqdm
+except ImportError:
+    tqdm = None
 
 from .auth import AuthClient
 from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
@@ -842,7 +846,10 @@ class AnnotationClient(ClientBase):
 
         batches = staged_annos._annotation_batches(batch_size)
         
-        progress_ = tqdm.tqdm(batches, desc="Annotation Batches") if progress else batches
+        if tqdm is not None:
+            progress_ = tqdm.tqdm(batches, desc="Annotation Batches") if progress else batches
+        else:
+            progress_ = batches
         for batch in progress_:
             attempts = 0
             while attempts < retries:
@@ -852,7 +859,8 @@ class AnnotationClient(ClientBase):
                         [staged_annos._process_annotation(a) for a in batch],
                         aligned_volume_name=aligned_volume_name,
                     )
-                    for a, new_id in zip(batch, batch_ids):
+                    new_ids = batch_ids.values() if staged_annos.is_update else batch_ids
+                    for a, new_id in zip(batch, new_ids):
                         setattr(a, staged_annos.UPLOADED_ID_FIELD, new_id)
                         setattr(a, staged_annos.IS_UPLOADED_FIELD, True)
                     if staged_annos.is_update:
