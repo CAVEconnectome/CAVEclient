@@ -591,3 +591,261 @@ class TestSkeletonsClient:
                     e.args[0]
                     == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
                 )
+
+    @responses.activate
+    def test_get_cached_skeletons_bulk__dict(self, myclient, mocker):
+        sk = {
+            "meta": {"root_id": 0, "skeleton_version": 4},
+            "edges": [[1, 0]],
+            "mesh_to_skel_map": [0, 1],
+            "root": 0,
+            "vertices": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        }
+
+        json_content = {
+            "skeletons": {
+                "0": binascii.hexlify(
+                    SkeletonClient.compressDictToBytes(sk)
+                ).decode("ascii"),
+            },
+            "missing": [1],
+            "async_queued": [],
+        }
+
+        bulk_mapping = copy.deepcopy(sk_mapping)
+        bulk_mapping["output_format"] = "flatdict"
+        metadata_url = self.sk_endpoints.get(
+            "get_cached_skeletons_bulk_as_post"
+        ).format_map(bulk_mapping)
+        responses.add(responses.POST, url=metadata_url, json=json_content, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_cached_skeletons_bulk([0, 1])
+        assert "0" in result["skeletons"]
+        assert result["missing"] == [1]
+        assert result["async_queued"] == []
+
+    @responses.activate
+    def test_get_cached_skeletons_bulk__swc(self, myclient, mocker):
+        sk_df = pd.DataFrame(
+            [[0, 0, 0, 0, 0, 1, -1]],
+            columns=["id", "type", "x", "y", "z", "radius", "parent"],
+        )
+        sk_csv_str = sk_df.to_csv(index=False, header=False, sep=" ")
+        encoded = binascii.hexlify(sk_csv_str.encode()).decode("ascii")
+
+        json_content = {
+            "skeletons": {"0": encoded},
+            "missing": [],
+            "async_queued": [],
+        }
+
+        bulk_mapping = copy.deepcopy(sk_mapping)
+        bulk_mapping["output_format"] = "swccompressed"
+        metadata_url = self.sk_endpoints.get(
+            "get_cached_skeletons_bulk_as_post"
+        ).format_map(bulk_mapping)
+        responses.add(responses.POST, url=metadata_url, json=json_content, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_cached_skeletons_bulk(
+            [0], output_format="swc"
+        )
+        assert "0" in result["skeletons"]
+        assert isinstance(result["skeletons"]["0"], pd.DataFrame)
+
+    @responses.activate
+    def test_get_cached_skeletons_bulk__truncation(self, myclient, mocker):
+        json_content = {
+            "skeletons": {},
+            "missing": [],
+            "async_queued": [],
+        }
+
+        bulk_mapping = copy.deepcopy(sk_mapping)
+        bulk_mapping["output_format"] = "flatdict"
+        metadata_url = self.sk_endpoints.get(
+            "get_cached_skeletons_bulk_as_post"
+        ).format_map(bulk_mapping)
+        responses.add(responses.POST, url=metadata_url, json=json_content, status=200)
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        # Should not raise, just truncate silently (with a warning)
+        result = myclient.skeleton.get_cached_skeletons_bulk(list(range(600)))
+        assert result == {"skeletons": {}, "missing": [], "async_queued": []}
+
+    @responses.activate
+    def test_get_cached_skeletons_bulk__invalid_output_format(self, myclient, mocker):
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for output_format in ["", "asdf", "flatdict", "json"]:
+            try:
+                myclient.skeleton.get_cached_skeletons_bulk(
+                    [0], output_format=output_format
+                )
+                assert False
+            except ValueError as e:
+                assert "output_format must be 'dict' or 'swc'" in e.args[0]
+
+    @responses.activate
+    def test_get_cached_skeletons_bulk__invalid_skeleton_version(
+        self, myclient, mocker
+    ):
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                myclient.skeleton.get_cached_skeletons_bulk(
+                    [0], skeleton_version=skeleton_version
+                )
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+                )
+
+    @responses.activate
+    def test_get_skeleton_access_token(self, myclient, mocker):
+        token_mapping = copy.deepcopy(sk_mapping)
+        metadata_url = self.sk_endpoints.get(
+            "get_skeleton_token_as_post"
+        ).format_map(token_mapping)
+
+        token_response = {
+            "token": "ya29.test_token",
+            "token_type": "Bearer",
+            "expiry": "2026-03-14T13:00:00Z",
+            "bucket": "test-bucket",
+            "object_paths": {"0": "skeletons/v4/0.h5"},
+            "missing": [1],
+        }
+        responses.add(
+            responses.POST, url=metadata_url, json=token_response, status=200
+        )
+
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        result = myclient.skeleton.get_skeleton_access_token([0, 1])
+        assert result["token"] == "ya29.test_token"
+        assert result["bucket"] == "test-bucket"
+        assert result["missing"] == [1]
+        assert "0" in result["object_paths"]
+
+    @responses.activate
+    def test_get_skeleton_access_token__invalid_skeleton_version(
+        self, myclient, mocker
+    ):
+        metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
+        responses.add(
+            responses.GET, url=metadata_url, json=[-1, 0, 1, 2, 3, 4], status=200
+        )
+
+        for skeleton_version in [-2, 999]:
+            try:
+                myclient.skeleton.get_skeleton_access_token(
+                    [0], skeleton_version=skeleton_version
+                )
+                assert False
+            except ValueError as e:
+                assert (
+                    e.args[0]
+                    == f"Unknown skeleton version: {skeleton_version}. Valid options: [-1, 0, 1, 2, 3, 4]"
+                )
+
+    @responses.activate
+    def test_download_skeletons_with_token(self, myclient, mocker):
+        import gzip
+        import io
+
+        import h5py
+
+        # Create a minimal gzip-compressed H5 file in memory
+        h5_buf = io.BytesIO()
+        with h5py.File(h5_buf, "w") as f:
+            f.create_dataset("vertices", data=np.array([[1.0, 2.0, 3.0]]))
+            f.create_dataset("edges", data=np.array([[0, 0]]))
+        h5_bytes = h5_buf.getvalue()
+        gz_bytes = gzip.compress(h5_bytes)
+
+        bucket = "test-bucket"
+        obj_path = "skeletons/v4/0.h5"
+        encoded_path = "skeletons%2Fv4%2F0.h5"
+        gcs_url = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded_path}?alt=media"
+
+        responses.add(responses.GET, url=gcs_url, body=gz_bytes, status=200)
+
+        token_response = {
+            "token": "ya29.test_token",
+            "bucket": bucket,
+            "object_paths": {"0": obj_path},
+        }
+
+        result = myclient.skeleton.download_skeletons_with_token(token_response)
+        assert "0" in result
+        assert "vertices" in result["0"]
+        assert "edges" in result["0"]
+        assert np.array_equal(result["0"]["vertices"], np.array([[1.0, 2.0, 3.0]]))
+
+    @responses.activate
+    def test_download_skeletons_with_token__error_handling(self, myclient, mocker):
+        """Test that a failed download for one skeleton doesn't prevent others."""
+        import gzip
+        import io
+
+        import h5py
+
+        # Create a valid gzip-compressed H5 file
+        h5_buf = io.BytesIO()
+        with h5py.File(h5_buf, "w") as f:
+            f.create_dataset("vertices", data=np.array([[1.0, 2.0, 3.0]]))
+            f.create_dataset("edges", data=np.array([[0, 0]]))
+        h5_bytes = h5_buf.getvalue()
+        gz_bytes = gzip.compress(h5_bytes)
+
+        bucket = "test-bucket"
+
+        # First skeleton will fail (404)
+        obj_path_0 = "skeletons/v4/0.h5"
+        encoded_path_0 = "skeletons%2Fv4%2F0.h5"
+        gcs_url_0 = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded_path_0}?alt=media"
+        responses.add(responses.GET, url=gcs_url_0, status=404)
+
+        # Second skeleton will succeed
+        obj_path_1 = "skeletons/v4/1.h5"
+        encoded_path_1 = "skeletons%2Fv4%2F1.h5"
+        gcs_url_1 = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded_path_1}?alt=media"
+        responses.add(responses.GET, url=gcs_url_1, body=gz_bytes, status=200)
+
+        token_response = {
+            "token": "ya29.test_token",
+            "bucket": bucket,
+            "object_paths": {"0": obj_path_0, "1": obj_path_1},
+        }
+
+        result = myclient.skeleton.download_skeletons_with_token(token_response)
+        # Skeleton 0 should be missing (failed), skeleton 1 should succeed
+        assert "0" not in result
+        assert "1" in result
+        assert np.array_equal(result["1"]["vertices"], np.array([[1.0, 2.0, 3.0]]))

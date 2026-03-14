@@ -959,6 +959,7 @@ class SkeletonClient(ClientBase):
 
         return estimated_async_time_secs_upper_bound_sum
 
+    @_check_version_compatibility(method_constraint=">=0.22.51")
     def get_cached_skeletons_bulk(
         self,
         root_ids: List,
@@ -1003,6 +1004,12 @@ class SkeletonClient(ClientBase):
         assert datastack_name is not None
         assert skeleton_version is not None
 
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
+            )
+
         if len(root_ids) > MAX_BULK_CACHED_SKELETONS:
             logging.warning(
                 f"The number of root_ids exceeds MAX_BULK_CACHED_SKELETONS ({MAX_BULK_CACHED_SKELETONS}). "
@@ -1022,7 +1029,6 @@ class SkeletonClient(ClientBase):
         endpoint_mapping["skeleton_version"] = skeleton_version
         endpoint_mapping["output_format"] = server_format
         url = self._endpoints["get_cached_skeletons_bulk_as_post"].format_map(endpoint_mapping)
-        url += f"?verbose_level={verbose_level}"
 
         data = {
             "root_ids": root_ids,
@@ -1055,6 +1061,7 @@ class SkeletonClient(ClientBase):
 
         return {"skeletons": skeletons, "missing": missing, "async_queued": async_queued}
 
+    @_check_version_compatibility(method_constraint=">=0.22.51")
     def get_skeleton_access_token(
         self,
         root_ids: List,
@@ -1109,15 +1116,21 @@ class SkeletonClient(ClientBase):
         assert datastack_name is not None
         assert skeleton_version is not None
 
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
+            )
+
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["skeleton_version"] = skeleton_version
         url = self._endpoints["get_skeleton_token_as_post"].format_map(endpoint_mapping)
-        url += f"?verbose_level={verbose_level}"
 
         data = {
             "root_ids": root_ids,
             "expiration_minutes": expiration_minutes,
+            "verbose_level": verbose_level,
         }
         response = self.session.post(url, json=data)
         return handle_response(response)
@@ -1156,33 +1169,36 @@ class SkeletonClient(ClientBase):
         skeletons = {}
 
         for rid, obj_path in object_paths.items():
-            encoded_path = urllib.parse.quote(obj_path, safe="")
-            url = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded_path}?alt=media"
+            try:
+                encoded_path = urllib.parse.quote(obj_path, safe="")
+                url = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded_path}?alt=media"
 
-            # Use a direct get with the GCS token (overrides any session auth headers)
-            resp = self.session.get(url, headers=gcs_headers)
-            resp.raise_for_status()
+                # Use a direct get with the GCS token (overrides any session auth headers)
+                resp = self.session.get(url, headers=gcs_headers)
+                resp.raise_for_status()
 
-            # Stored files are gzip-compressed H5
-            h5_bytes = gzip.decompress(resp.content)
+                # Stored files are gzip-compressed H5
+                h5_bytes = gzip.decompress(resp.content)
 
-            with h5py.File(io.BytesIO(h5_bytes), "r") as f:
-                sk = {
-                    "vertices": np.array(f["vertices"][()]),
-                    "edges": np.array(f["edges"][()]),
-                }
-                if "mesh_to_skel_map" in f:
-                    sk["mesh_to_skel_map"] = np.array(f["mesh_to_skel_map"][()])
-                if "lvl2_ids" in f:
-                    sk["lvl2_ids"] = np.array(f["lvl2_ids"][()])
-                if "vertex_properties" in f:
-                    for vp_key in f["vertex_properties"].keys():
-                        sk[vp_key] = np.array(
-                            json.loads(f["vertex_properties"][vp_key][()])
-                        )
-                if "meta" in f:
-                    sk["meta"] = json.loads(f["meta"][()].tobytes())
+                with h5py.File(io.BytesIO(h5_bytes), "r") as f:
+                    sk = {
+                        "vertices": np.array(f["vertices"][()]),
+                        "edges": np.array(f["edges"][()]),
+                    }
+                    if "mesh_to_skel_map" in f:
+                        sk["mesh_to_skel_map"] = np.array(f["mesh_to_skel_map"][()])
+                    if "lvl2_ids" in f:
+                        sk["lvl2_ids"] = np.array(f["lvl2_ids"][()])
+                    if "vertex_properties" in f:
+                        for vp_key in f["vertex_properties"].keys():
+                            sk[vp_key] = np.array(
+                                json.loads(f["vertex_properties"][vp_key][()])
+                            )
+                    if "meta" in f:
+                        sk["meta"] = json.loads(f["meta"][()].tobytes())
 
-            skeletons[rid] = sk
+                skeletons[rid] = sk
+            except Exception as e:
+                logging.error(f"Error downloading skeleton for root_id {rid}: {e}")
 
         return skeletons
