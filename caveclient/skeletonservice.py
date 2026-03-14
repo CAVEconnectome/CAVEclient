@@ -5,6 +5,7 @@ import gzip
 import io
 import json
 import logging
+import urllib.parse
 from io import BytesIO, StringIO
 from timeit import default_timer
 from typing import List, Literal, Optional, Union
@@ -27,6 +28,7 @@ SERVER_KEY = "skeleton_server_address"
 
 MAX_SKELETONS_EXISTS_QUERY_SIZE = 1000
 MAX_BULK_SYNCHRONOUS_SKELETONS = 10
+MAX_BULK_CACHED_SKELETONS = 500  # mirrors server-side MAX_BULK_CACHED_SKELETONS
 MAX_BULK_ASYNCHRONOUS_SKELETONS = 10000
 BULK_SKELETONS_BATCH_SIZE = 1000
 
@@ -956,3 +958,231 @@ class SkeletonClient(ClientBase):
         )
 
         return estimated_async_time_secs_upper_bound_sum
+
+    def get_cached_skeletons_bulk(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 4,
+        output_format: Literal["dict", "swc"] = "dict",
+        generate_missing_skeletons: bool = False,
+        verbose_level: Optional[int] = 0,
+    ) -> dict:
+        """Retrieve already-cached skeletons in bulk, up to MAX_BULK_CACHED_SKELETONS at a time.
+
+        Unlike get_bulk_skeletons(), this endpoint:
+        - Accepts up to 500 root IDs per call (vs the 10-skeleton limit of get_bulk_skeletons)
+        - Skips per-RID CAVEclient validation, so it never blocks on chunkedgraph network calls
+        - Never triggers skeleton generation inline; only returns what is already cached
+
+        Parameters
+        ----------
+        root_ids : List
+            Root IDs to retrieve skeletons for. Truncated to MAX_BULK_CACHED_SKELETONS if longer.
+        datastack_name : str, optional
+            Datastack name. Defaults to the client's configured datastack.
+        skeleton_version : int, optional
+            Skeleton version to retrieve. Default is 4 (latest).
+        output_format : "dict" or "swc"
+            Output format for skeleton data. Default is "dict".
+        generate_missing_skeletons : bool
+            If True, RIDs not found in the cache are queued for async generation and
+            returned under the "async_queued" key. Default False.
+        verbose_level : int, optional
+            Verbosity level for server-side logging.
+
+        Returns
+        -------
+        dict with keys:
+            "skeletons"   : dict mapping root_id (str) -> decoded skeleton object
+            "missing"     : list of root IDs not found in cache (and not queued)
+            "async_queued": list of root IDs not in cache that were queued for generation
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+        assert skeleton_version is not None
+
+        if len(root_ids) > MAX_BULK_CACHED_SKELETONS:
+            logging.warning(
+                f"The number of root_ids exceeds MAX_BULK_CACHED_SKELETONS ({MAX_BULK_CACHED_SKELETONS}). "
+                f"Only the first {MAX_BULK_CACHED_SKELETONS} will be requested."
+            )
+            root_ids = root_ids[:MAX_BULK_CACHED_SKELETONS]
+
+        if output_format == "dict":
+            server_format = "flatdict"
+        elif output_format == "swc":
+            server_format = "swccompressed"
+        else:
+            raise ValueError(f"output_format must be 'dict' or 'swc', got '{output_format}'")
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        endpoint_mapping["output_format"] = server_format
+        url = self._endpoints["get_cached_skeletons_bulk_as_post"].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
+
+        data = {
+            "root_ids": root_ids,
+            "generate_missing": generate_missing_skeletons,
+            "verbose_level": verbose_level,
+        }
+        response = self.session.post(url, json=data)
+        response = handle_response(response)
+
+        raw_skeletons = response.get("skeletons", {})
+        missing = response.get("missing", [])
+        async_queued = response.get("async_queued", [])
+
+        skeletons = {}
+        for rid, encoded in raw_skeletons.items():
+            try:
+                if output_format == "dict":
+                    skeletons[rid] = SkeletonClient.decompressBytesToDict(
+                        io.BytesIO(binascii.unhexlify(encoded)).getvalue()
+                    )
+                elif output_format == "swc":
+                    sk_csv = io.BytesIO(binascii.unhexlify(encoded)).getvalue().decode()
+                    skeletons[rid] = pd.read_csv(
+                        StringIO(sk_csv),
+                        sep=" ",
+                        names=["id", "type", "x", "y", "z", "radius", "parent"],
+                    )
+            except Exception as e:
+                logging.error(f"Error decoding skeleton for root_id {rid}: {e}")
+
+        return {"skeletons": skeletons, "missing": missing, "async_queued": async_queued}
+
+    def get_skeleton_access_token(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 4,
+        expiration_minutes: int = 60,
+        verbose_level: Optional[int] = 0,
+    ) -> dict:
+        """Get a short-lived GCS access token to download skeleton files directly from the bucket.
+
+        The token is a downscoped OAuth2 Bearer token, valid for up to one hour, that
+        authorizes read-only access to the skeleton bucket prefix for the given datastack
+        and skeleton version. The response also includes the GCS object path for each
+        requested root ID that exists in the cache.
+
+        Clients can use the token to download skeleton H5 files directly from GCS without
+        routing through this service, which is significantly faster for bulk downloads:
+
+            import requests, urllib.parse
+            token_resp = client.skeleton.get_skeleton_access_token([rid1, rid2])
+            bucket = token_resp["bucket"]
+            for rid, obj_path in token_resp["object_paths"].items():
+                encoded = urllib.parse.quote(obj_path, safe="")
+                url = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded}?alt=media"
+                h5_bytes = requests.get(url, headers={"Authorization": f"Bearer {token_resp['token']}"}).content
+
+        Parameters
+        ----------
+        root_ids : List
+            Root IDs to check and generate download paths for.
+        datastack_name : str, optional
+            Datastack name. Defaults to the client's configured datastack.
+        skeleton_version : int, optional
+            Skeleton version. Default is 4 (latest).
+        expiration_minutes : int
+            Token lifetime in minutes. Maximum is 60 (GCP IAM limit). Default is 60.
+        verbose_level : int, optional
+            Verbosity level for server-side logging.
+
+        Returns
+        -------
+        dict with keys:
+            "token"        : str — short-lived Bearer token
+            "token_type"   : "Bearer"
+            "expiry"       : str — ISO-8601 expiry datetime
+            "bucket"       : str — GCS bucket name (no gs:// prefix)
+            "object_paths" : dict mapping root_id (str) -> GCS object path within the bucket
+            "missing"      : list of root IDs not found in the cache
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+        assert skeleton_version is not None
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        url = self._endpoints["get_skeleton_token_as_post"].format_map(endpoint_mapping)
+        url += f"?verbose_level={verbose_level}"
+
+        data = {
+            "root_ids": root_ids,
+            "expiration_minutes": expiration_minutes,
+        }
+        response = self.session.post(url, json=data)
+        return handle_response(response)
+
+    def download_skeletons_with_token(
+        self,
+        token_response: dict,
+    ) -> dict:
+        """Download and parse skeleton H5 files directly from GCS using a token.
+
+        Takes the response from :meth:`get_skeleton_access_token` and downloads
+        each skeleton file directly from GCS, bypassing the SkeletonService for
+        the data transfer. Returns skeletons in the same dict format as
+        :meth:`get_skeleton` with ``output_format="dict"``.
+
+        Parameters
+        ----------
+        token_response : dict
+            The dict returned by :meth:`get_skeleton_access_token`, containing
+            ``"token"``, ``"bucket"``, and ``"object_paths"`` keys.
+
+        Returns
+        -------
+        dict
+            Mapping of root_id (str) to skeleton dict with numpy-array fields:
+            ``vertices``, ``edges``, and optionally ``mesh_to_skel_map``,
+            ``lvl2_ids``, ``radius``, ``compartment``, and ``meta``.
+        """
+        import h5py
+
+        token = token_response["token"]
+        bucket = token_response["bucket"]
+        object_paths = token_response["object_paths"]
+
+        gcs_headers = {"Authorization": f"Bearer {token}"}
+        skeletons = {}
+
+        for rid, obj_path in object_paths.items():
+            encoded_path = urllib.parse.quote(obj_path, safe="")
+            url = f"https://storage.googleapis.com/download/storage/v1/b/{bucket}/o/{encoded_path}?alt=media"
+
+            # Use a direct get with the GCS token (overrides any session auth headers)
+            resp = self.session.get(url, headers=gcs_headers)
+            resp.raise_for_status()
+
+            # Stored files are gzip-compressed H5
+            h5_bytes = gzip.decompress(resp.content)
+
+            with h5py.File(io.BytesIO(h5_bytes), "r") as f:
+                sk = {
+                    "vertices": np.array(f["vertices"][()]),
+                    "edges": np.array(f["edges"][()]),
+                }
+                if "mesh_to_skel_map" in f:
+                    sk["mesh_to_skel_map"] = np.array(f["mesh_to_skel_map"][()])
+                if "lvl2_ids" in f:
+                    sk["lvl2_ids"] = np.array(f["lvl2_ids"][()])
+                if "vertex_properties" in f:
+                    for vp_key in f["vertex_properties"].keys():
+                        sk[vp_key] = np.array(
+                            json.loads(f["vertex_properties"][vp_key][()])
+                        )
+                if "meta" in f:
+                    sk["meta"] = json.loads(f["meta"][()].tobytes())
+
+            skeletons[rid] = sk
+
+        return skeletons
