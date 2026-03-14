@@ -335,5 +335,9 @@ skeletonservice_endpoints_v1 = {
     + "/{datastack_name}/bulk/gen_skeletons/{skeleton_version}/{root_ids}",
     "gen_bulk_skeletons_via_skvn_rids_as_post": skeleton_v1
     + "/{datastack_name}/bulk/gen_skeletons",
+    "get_cached_skeletons_bulk_as_post": skeleton_v1
+    + "/{datastack_name}/bulk/get_cached_skeletons/{skeleton_version}/{output_format}",
+    "get_skeleton_token_as_post": skeleton_v1
+    + "/{datastack_name}/bulk/get_skeleton_token/{skeleton_version}",
 }
 skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}
