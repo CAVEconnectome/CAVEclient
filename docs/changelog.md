@@ -2,10 +2,11 @@
 title: Changelog
 ---
 ## 8.1.0 (March 13, 2026)
-- Added `get_cached_skeletons_bulk()`: bulk retrieval of already-cached skeletons with a 500 root ID limit (vs. the 10-skeleton limit of `get_bulk_skeletons()`). Skips per-RID chunkedgraph validation for faster response. Requires server-side SkeletonService >= v0.22.51.
-- Added `get_skeleton_access_token()`: returns a short-lived, downscoped GCS Bearer token and object paths so clients can download skeleton H5 files directly from the storage bucket, bypassing the service for data transfer. Requires server-side SkeletonService >= v0.22.51.
-- Added `download_skeletons_with_token()`: convenience method that takes the response from `get_skeleton_access_token()` and downloads and parses all skeleton H5 files directly from GCS, returning them in the same dict format as `get_skeleton()`.
-- Added `h5py` as a required dependency (needed for H5 parsing in `download_skeletons_with_token()`).
+- Added `fetch_skeletons()`: unified bulk retrieval of already-cached skeletons with a 500 root ID limit (vs. the 10-skeleton limit of `get_bulk_skeletons()`). Returns a plain `{root_id: skeleton}` dict; missing root IDs are simply absent. Requires server-side SkeletonService >= v0.22.51.
+  - `method="server"` (default): root IDs are POSTed to the server, which decodes and returns skeletons. Supports both `"dict"` and `"swc"` output formats.
+  - `method="gcs"`: the client obtains a short-lived downscoped GCS access token (cached client-side, auto-refreshed) and downloads skeleton H5 files directly from the storage bucket, bypassing the service for data transfer. Supports `"dict"` output only. Significantly faster for large batches.
+  - `generate_missing_skeletons=True`: in either mode, root IDs absent from the cache are queued for asynchronous background generation.
+- Added `h5py` as a required dependency (needed for H5 parsing in `method="gcs"`).
 
 ## 8.0.0 (November 2, 2025)
 - Improved mangling of types from sql queries.  Previously, the server side method to read data from PostGres into pandas was via csv streaming, which was caused pandas to infer types.  There were cases where this inference was wrong or incomplete.  For example if you had a string column, but all your entries for your query happened to be numbers (i.e ["1", "2"]) the result would return those as numbers not strings, but then if your query changed so there was a mix of numbers and strings, those same rows which were numbers would go back to strings (i.e. ["1", "apple"]). Also, boolean columns were being returned as strings "t" or "f". 

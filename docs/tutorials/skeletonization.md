@@ -208,35 +208,62 @@ get_bulk_skeletons(
 )
 ```
 
-## Retrieving large numbers of already-cached skeletons
+## Retrieving large numbers of skeletons with `fetch_skeletons()`
 
-`get_bulk_skeletons()` has a hard limit of 10 root IDs per call because it may need to generate missing skeletons inline, which is a slow synchronous operation. If you already know your skeletons are in the cache, use `get_cached_skeletons_bulk()` instead, which accepts up to 500 root IDs per call and skips per-RID validation:
+`get_bulk_skeletons()` has a hard limit of 10 root IDs because it may need to generate missing skeletons inline. For larger batches of already-cached skeletons, use `fetch_skeletons()`, which accepts up to 500 root IDs per call and returns a plain dict of `{root_id: skeleton}`. Root IDs not found in the cache are simply absent from the result.
 
 ```python
-result = client.skeleton.get_cached_skeletons_bulk(
+skeletons = client.skeleton.fetch_skeletons(
     root_ids=[<root_id>, <root_id>, ...],
 )
-skeletons = result["skeletons"]   # dict of {root_id: skeleton}
-missing   = result["missing"]     # list of root IDs not found in the cache
 ```
 
-The return value is a dict with three keys:
+### Server-side decoding (default)
 
-| Key | Description |
-|---|---|
-| `"skeletons"` | Dict mapping root ID (str) → skeleton object |
-| `"missing"` | List of root IDs not found in the cache |
-| `"async_queued"` | List of root IDs queued for async generation (if `generate_missing_skeletons=True`) |
-
-The same optional parameters apply as in `get_bulk_skeletons()`:
+By default (`method="server"`), root IDs are sent to the server, which retrieves and decodes skeletons before returning them:
 
 ```python
-result = client.skeleton.get_cached_skeletons_bulk(
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    output_format="dict",   # or "swc"
+)
+```
+
+### Direct GCS download
+
+For maximum throughput when retrieving many skeletons, use `method="gcs"`. The client obtains a short-lived downscoped GCS access token (cached client-side and auto-refreshed) and downloads H5 files directly from the storage bucket, bypassing the service for data transfer:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    method="gcs",
+)
+```
+
+!!! note
+    `method="gcs"` only supports `output_format="dict"` (the default). Use `method="server"` if you need SWC output.
+
+### Queuing missing skeletons
+
+In either mode, passing `generate_missing_skeletons=True` will queue any root IDs that are not in the cache for asynchronous background generation. They will still be absent from the returned dict until they are generated:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    generate_missing_skeletons=True,
+)
+```
+
+The same optional parameters apply:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
     root_ids=[<root_id>, <root_id>, ...],
     datastack_name=<datastack_name>,
     skeleton_version=<sk_version>,
     output_format=<"dict"|"swc">,
-    generate_missing_skeletons=True,  # queue missing ones for async generation
+    method=<"server"|"gcs">,
+    generate_missing_skeletons=True,
 )
 ```
 
@@ -276,69 +303,6 @@ while True:
         break
     sleep(10)  # Pause for ten seconds and check again
 
-# Retrieve all skeletons at once — get_cached_skeletons_bulk() supports up to 500 at a time
-result = client.skeleton.get_cached_skeletons_bulk(root_ids)
-skeletons = result["skeletons"]
-```
-
-## Downloading skeletons directly from storage
-
-For maximum throughput — especially when retrieving hundreds of skeletons — you can obtain a short-lived access token and have your machine download skeleton files directly from the storage bucket, bypassing the SkeletonService entirely for the data transfer.
-
-### Step 1: Get an access token
-
-```python
-token_resp = client.skeleton.get_skeleton_access_token(
-    root_ids=[<root_id>, <root_id>, ...],
-    skeleton_version=4,
-    expiration_minutes=60,  # maximum is 60 (GCP limit)
-)
-```
-
-The response is a dict with the following keys:
-
-| Key | Description |
-|---|---|
-| `"token"` | Short-lived Bearer token (valid up to 60 minutes) |
-| `"token_type"` | `"Bearer"` |
-| `"expiry"` | ISO-8601 expiry datetime string |
-| `"bucket"` | GCS bucket name (no `gs://` prefix) |
-| `"object_paths"` | Dict mapping root ID (str) → GCS object path within the bucket |
-| `"missing"` | List of root IDs not found in the cache |
-
-The token grants read-only access to the skeleton prefix for the requested datastack and version. Root IDs not in the cache appear in `"missing"` and have no entry in `"object_paths"`.
-
-### Step 2: Download and parse skeletons
-
-The simplest approach uses the built-in convenience method, which downloads and parses all skeletons into the same dict format as `get_skeleton()`:
-
-```python
-skeletons = client.skeleton.download_skeletons_with_token(token_resp)
-# {"123456789": {"vertices": np.array(...), "edges": np.array(...), ...}, ...}
-```
-
-!!! note
-    `download_skeletons_with_token()` requires `h5py`, which is included as a dependency of `caveclient`.
-
-### Manual download (for custom parallelism)
-
-If you prefer to manage downloads yourself — for example, using `asyncio` or a thread pool for parallel fetching — the token and object paths from the response are all you need:
-
-```python
-import requests
-import urllib.parse
-
-token  = token_resp["token"]
-bucket = token_resp["bucket"]
-
-for rid, obj_path in token_resp["object_paths"].items():
-    encoded = urllib.parse.quote(obj_path, safe="")
-    url = (
-        f"https://storage.googleapis.com/download/storage/v1/b/"
-        f"{bucket}/o/{encoded}?alt=media"
-    )
-    h5_gz_bytes = requests.get(
-        url, headers={"Authorization": f"Bearer {token}"}
-    ).content
-    # h5_gz_bytes is a gzip-compressed HDF5 file
+# Retrieve all skeletons at once — fetch_skeletons() supports up to 500 at a time
+skeletons = client.skeleton.fetch_skeletons(root_ids)
 ```
