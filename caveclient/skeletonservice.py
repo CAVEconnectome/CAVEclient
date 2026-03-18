@@ -1016,7 +1016,14 @@ class SkeletonClient(ClientBase):
         if datastack_name is None:
             datastack_name = self._datastack_name
         assert datastack_name is not None
-        assert skeleton_version is not None
+
+        versions = self.get_versions(datastack_name=datastack_name)
+        supported_versions = versions.get("supported", [])
+        if skeleton_version not in supported_versions:
+            raise ValueError(
+                f"skeleton_version {skeleton_version} is not supported; "
+                f"supported versions are {supported_versions}"
+            )
 
         skeleton_versions = self.get_versions()
         if skeleton_version not in skeleton_versions:
