@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 
 from .auth import AuthClient
-from .base import BaseEncoder, ClientBase, _api_endpoints, handle_response
+from .base import BaseEncoder, ClientBase, _api_endpoints, _check_version_compatibility, handle_response
 from .endpoints import annotation_api_versions, annotation_common
 from .tools import stage
+from datetime import datetime
 
 SERVER_KEY = "ae_server_address"
 
@@ -96,7 +97,12 @@ class AnnotationClient(ClientBase):
     def aligned_volume_name(self) -> str:
         return self._aligned_volume_name
 
-    def get_tables(self, aligned_volume_name: Optional[str] = None) -> list[str]:
+    @_check_version_compatibility(
+        kwarg_use_constraints={
+            "timestamp": ">=4.33.0",
+        }
+    )
+    def get_tables(self, aligned_volume_name: Optional[str] = None, timestamp: Optional[datetime] = None) -> list[str]:
         """Gets a list of table names for a aligned_volume_name
 
         Parameters
@@ -105,6 +111,9 @@ class AnnotationClient(ClientBase):
             Name of the aligned_volume, by default None.
             If None, uses the one specified in the client.
             Will be set correctly if you are using the framework_client
+        timestamp: datetime.datetime or None, optional
+            If set, gets the tables as of that timestamp. By default None.
+            If None, gets the current tables as of now.
 
         Returns
         -------
@@ -116,7 +125,10 @@ class AnnotationClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["aligned_volume_name"] = aligned_volume_name
         url = self._endpoints["tables"].format_map(endpoint_mapping)
-        response = self.session.get(url)
+        query_d = {}
+        if timestamp is not None:
+            query_d["timestamp"] = datetime.strftime(timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        response = self.session.get(url, params = query_d)
         return handle_response(response)
 
     def get_annotation_count(
