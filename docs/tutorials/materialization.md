@@ -185,7 +185,7 @@ voxel_resolution of the table (which can be obtained from
 
 ```python
 bounding_box = [[min_x, min_y, min_z], [max_x, max_y, max_z]]
-synapse_table = client.info.get_datastack_info('synapse_table')
+synapse_table = client.info.get_datastack_info()['synapse_table']
 df=client.materialize.query_table(synapse_table,
                                   filter_equal_dict = {'post_pt_root_id': MYID},
                                   filter_spatial_dict = {'post_pt_position': bounding_box})
