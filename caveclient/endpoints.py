@@ -59,6 +59,7 @@ materialization_endpoints_v2 = {
     "live_live_query": mat_v3_api + "/datastack/{datastack_name}/query",
     "lookup_supervoxel_ids": mat_v2_api
     + "/materialize/run/lookup_svid/datastack/{datastack_name}/{table_name}",
+    "precomputed_source": mat_v3_api + "datastack/{datastack_name}/table/{table_name}/precomputed"
 }
 materialization_endpoints_v3 = {
     "get_api_versions": "{me_server_address}/api/versions",
