@@ -337,3 +337,21 @@ skeletonservice_endpoints_v1 = {
     + "/{datastack_name}/bulk/gen_skeletons",
 }
 skeletonservice_api_versions = {1: skeletonservice_endpoints_v1}
+
+# -------------------------------
+# ------ Catalog endpoints
+# -------------------------------
+
+catalogservice_common = {}
+
+catalog_v1 = "{catalog_server_address}/api/v1"
+catalogservice_endpoints_v1 = {
+    "register": catalog_v1 + "/assets/register",
+    "validate": catalog_v1 + "/assets/validate",
+    "list_assets": catalog_v1 + "/assets/",
+    "get_asset": catalog_v1 + "/assets/{asset_id}",
+    "delete_asset": catalog_v1 + "/assets/{asset_id}",
+    "access": catalog_v1 + "/assets/{asset_id}/access",
+    "resolve": catalog_v1 + "/assets/{asset_id}/resolve",
+}
+catalogservice_api_versions = {1: catalogservice_endpoints_v1}

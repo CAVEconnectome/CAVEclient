@@ -7,6 +7,7 @@ from requests.exceptions import HTTPError
 
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
+from .catalogservice import CatalogClient
 from .chunkedgraph import ChunkedGraphClient
 from .datastack_lookup import handle_server_address
 from .emannotationschemas import SchemaClient
@@ -530,6 +531,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._materialize = None
         self._skeleton = None
         self._l2cache = None
+        self._catalog = None
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
         self.auth.local_server = self.local_server
@@ -578,6 +580,7 @@ class CAVEclientFull(CAVEclientGlobal):
         self._materialize = None
         self._skeleton = None
         self._l2cache = None
+        self._catalog = None
 
     @property
     def datastack_name(self) -> str:
@@ -699,6 +702,24 @@ class CAVEclientFull(CAVEclientGlobal):
                 over_client=self,
             )
         return self._l2cache
+
+    @property
+    def catalog(self) -> CatalogClient:
+        """
+        A client for the catalog service. See [client.catalog](../api/catalog.md)
+        for more information.
+        """
+        if self._catalog is None:
+            self._catalog = CatalogClient(
+                server_address=self.local_server,
+                auth_client=self.auth,
+                datastack_name=self._datastack_name,
+                max_retries=self._max_retries,
+                pool_maxsize=self._pool_maxsize,
+                pool_block=self._pool_block,
+                over_client=self,
+            )
+        return self._catalog
 
     def __repr__(self):
         return f"CAVEclient<datastack_name={self.datastack_name}, server_address={self.server_address}>"
