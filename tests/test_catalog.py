@@ -255,3 +255,116 @@ def test_delete_asset_returns_none():
     )
     result = client.delete_asset(ASSET_ID)
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# get_access (task 5.1)
+# ---------------------------------------------------------------------------
+
+
+def _access_response(**overrides) -> dict:
+    base = {
+        "uri": "gs://bucket/minnie65/synapses/",
+        "format": "delta",
+        "token": "ya29.fake-downscoped-token",
+        "token_type": "Bearer",
+        "expires_in": 3600,
+        "storage_provider": "gcs",
+        "is_managed": True,
+    }
+    base.update(overrides)
+    return base
+
+
+@responses.activate
+def test_get_access_managed_returns_token():
+    responses.add(
+        responses.POST,
+        url=_url("access", asset_id=ASSET_ID),
+        json=_access_response(),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.get_access(ASSET_ID)
+
+    assert result["token"] == "ya29.fake-downscoped-token"
+    assert result["token_type"] == "Bearer"
+    assert result["expires_in"] == 3600
+    assert result["storage_provider"] == "gcs"
+    assert result["uri"] == "gs://bucket/minnie65/synapses/"
+    assert result["format"] == "delta"
+
+
+@responses.activate
+def test_get_access_unmanaged_returns_passthrough():
+    responses.add(
+        responses.POST,
+        url=_url("access", asset_id=ASSET_ID),
+        json=_access_response(
+            uri="gs://publicbucket/path/",
+            token=None,
+            token_type=None,
+            expires_in=None,
+            storage_provider=None,
+            is_managed=False,
+        ),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.get_access(ASSET_ID)
+
+    assert result["token"] is None
+    assert result["is_managed"] is False
+    assert result["uri"] == "gs://publicbucket/path/"
+
+
+@responses.activate
+def test_get_access_missing_asset_raises():
+    responses.add(
+        responses.POST,
+        url=_url("access", asset_id=ASSET_ID),
+        json={"detail": "Asset not found"},
+        status=404,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    with pytest.raises(Exception):
+        client.get_access(ASSET_ID)
+
+
+@responses.activate
+def test_get_access_unauthorized_raises():
+    responses.add(
+        responses.POST,
+        url=_url("access", asset_id=ASSET_ID),
+        json={"detail": "Access denied"},
+        status=403,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    with pytest.raises(Exception):
+        client.get_access(ASSET_ID)
+
+
+@responses.activate
+def test_get_access_posts_to_correct_url():
+    responses.add(
+        responses.POST,
+        url=_url("access", asset_id=ASSET_ID),
+        json=_access_response(),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    client.get_access(ASSET_ID)
+
+    assert len(responses.calls) == 1
+    req = responses.calls[0].request
+    assert f"/assets/{ASSET_ID}/access" in req.url
