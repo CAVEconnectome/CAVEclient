@@ -1854,24 +1854,27 @@ class MaterializationClient(ClientBase):
     @property
     def views(self) -> ViewManager:
         """The view manager for the materialization engine."""
-        if self.fc is not None and self.fc._materialize is not None:
-            if Version(str(self.api_version)) < Version("3"):
-                views = ViewManager(self.fc)
-            else:
-                metadata = []
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    metadata.append(
-                        executor.submit(
-                            self.get_views,
+        if self._views is None:
+            if self.fc is not None and self.fc._materialize is not None:
+                if Version(str(self.api_version)) < Version("3"):
+                    views = ViewManager(self.fc)
+                else:
+                    metadata = []
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        metadata.append(
+                            executor.submit(
+                                self.get_views,
+                            )
                         )
+                        metadata.append(executor.submit(self.get_view_schemas))
+
+                    views = ViewManager(
+                        self.fc, metadata[0].result(), metadata[1].result()
                     )
-                    metadata.append(executor.submit(self.get_view_schemas))
 
-                views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
-
-            self._views = views
-        else:
-            raise ValueError("No full CAVEclient specified")
+                self._views = views
+            else:
+                raise ValueError("No full CAVEclient specified")
         return self._views
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
