@@ -368,3 +368,288 @@ def test_get_access_posts_to_correct_url():
     assert len(responses.calls) == 1
     req = responses.calls[0].request
     assert f"/assets/{ASSET_ID}/access" in req.url
+
+
+# ---------------------------------------------------------------------------
+# Phase 6: Table-specific methods
+# ---------------------------------------------------------------------------
+
+TABLE_ID = str(uuid.uuid4())
+
+
+def _table_record(**overrides) -> dict:
+    base = {
+        "id": TABLE_ID,
+        "datastack": TEST_DATASTACK,
+        "name": "my_table",
+        "mat_version": 943,
+        "revision": 0,
+        "uri": "gs://bucket/tables/my_table/",
+        "format": "delta",
+        "asset_type": "table",
+        "owner": 1,
+        "is_managed": True,
+        "mutability": "static",
+        "maturity": "stable",
+        "properties": {},
+        "access_group": None,
+        "created_at": "2026-04-01T00:00:00Z",
+        "expires_at": None,
+        "source": "user",
+        "cached_metadata": {
+            "n_rows": 100,
+            "n_columns": 2,
+            "n_bytes": 5000,
+            "columns": [
+                {"name": "a", "dtype": "int64"},
+                {"name": "b", "dtype": "string"},
+            ],
+            "partition_columns": [],
+        },
+        "metadata_cached_at": "2026-04-01T00:00:00Z",
+        "column_annotations": [],
+        "columns": [
+            {"name": "a", "dtype": "int64", "description": None, "links": []},
+            {"name": "b", "dtype": "string", "description": None, "links": []},
+        ],
+    }
+    base.update(overrides)
+    return base
+
+
+# --- preview_table ---
+
+
+@responses.activate
+def test_preview_table_returns_metadata():
+    preview = {
+        "metadata": {
+            "n_rows": 100,
+            "n_columns": 2,
+            "n_bytes": 5000,
+            "columns": [
+                {"name": "a", "dtype": "int64"},
+                {"name": "b", "dtype": "string"},
+            ],
+            "partition_columns": [],
+        }
+    }
+    responses.add(
+        responses.POST,
+        url=_url("preview_table"),
+        json=preview,
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.preview_table(uri="gs://bucket/tables/my_table/", format="delta")
+    assert result["metadata"]["n_rows"] == 100
+    assert len(result["metadata"]["columns"]) == 2
+
+
+@responses.activate
+def test_preview_table_sends_correct_body():
+    responses.add(
+        responses.POST,
+        url=_url("preview_table"),
+        json={"metadata": {}},
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    client.preview_table(uri="gs://bucket/path/", format="parquet")
+
+    import json
+
+    req = responses.calls[0].request
+    body = json.loads(req.body)
+    assert body["uri"] == "gs://bucket/path/"
+    assert body["format"] == "parquet"
+    assert body["datastack"] == TEST_DATASTACK
+
+
+# --- register_table ---
+
+
+@responses.activate
+def test_register_table_returns_record():
+    responses.add(
+        responses.POST,
+        url=_url("register_table"),
+        json=_table_record(),
+        status=201,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.register_table(
+        name="my_table",
+        uri="gs://bucket/tables/my_table/",
+        format="delta",
+        is_managed=True,
+        mat_version=943,
+    )
+    assert result["id"] == TABLE_ID
+    assert result["asset_type"] == "table"
+    assert result["cached_metadata"]["n_rows"] == 100
+
+
+@responses.activate
+def test_register_table_sends_correct_body():
+    responses.add(
+        responses.POST,
+        url=_url("register_table"),
+        json=_table_record(),
+        status=201,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    annotations = [{"column_name": "a", "description": "ID column", "links": []}]
+    client.register_table(
+        name="my_table",
+        uri="gs://bucket/tables/my_table/",
+        format="delta",
+        is_managed=True,
+        mat_version=943,
+        source="materialization",
+        column_annotations=annotations,
+    )
+
+    import json
+
+    req = responses.calls[0].request
+    body = json.loads(req.body)
+    assert body["datastack"] == TEST_DATASTACK
+    assert body["name"] == "my_table"
+    assert body["asset_type"] == "table"
+    assert body["format"] == "delta"
+    assert body["source"] == "materialization"
+    assert len(body["column_annotations"]) == 1
+    assert body["column_annotations"][0]["column_name"] == "a"
+
+
+# --- list_tables ---
+
+
+@responses.activate
+def test_list_tables_returns_records():
+    records = [_table_record()]
+    responses.add(
+        responses.GET,
+        url=_url("list_tables"),
+        json=records,
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.list_tables()
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert result[0]["asset_type"] == "table"
+    assert result[0]["cached_metadata"]["n_rows"] == 100
+
+
+@responses.activate
+def test_list_tables_passes_filters():
+    responses.add(
+        responses.GET,
+        url=_url("list_tables"),
+        json=[],
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    client.list_tables(name="my_table", format="delta", source="user")
+    req = responses.calls[0].request
+    assert "name=my_table" in req.url
+    assert "format=delta" in req.url
+    assert "source=user" in req.url
+
+
+# --- update_annotations ---
+
+
+@responses.activate
+def test_update_annotations_returns_record():
+    responses.add(
+        responses.PATCH,
+        url=_url("update_annotations", table_id=TABLE_ID),
+        json=_table_record(
+            column_annotations=[
+                {"column_name": "a", "description": "ID column", "links": []}
+            ]
+        ),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.update_annotations(
+        TABLE_ID,
+        column_annotations=[
+            {"column_name": "a", "description": "ID column", "links": []}
+        ],
+    )
+    assert result["column_annotations"][0]["column_name"] == "a"
+
+
+@responses.activate
+def test_update_annotations_sends_patch():
+    responses.add(
+        responses.PATCH,
+        url=_url("update_annotations", table_id=TABLE_ID),
+        json=_table_record(),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    client.update_annotations(TABLE_ID, column_annotations=[])
+
+    import json
+
+    req = responses.calls[0].request
+    assert req.method == "PATCH"
+    body = json.loads(req.body)
+    assert body["column_annotations"] == []
+
+
+# --- refresh_metadata ---
+
+
+@responses.activate
+def test_refresh_metadata_returns_record():
+    responses.add(
+        responses.POST,
+        url=_url("refresh_metadata", table_id=TABLE_ID),
+        json=_table_record(),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.refresh_metadata(TABLE_ID)
+    assert result["id"] == TABLE_ID
+    assert result["cached_metadata"] is not None
+
+
+@responses.activate
+def test_refresh_metadata_posts_to_correct_url():
+    responses.add(
+        responses.POST,
+        url=_url("refresh_metadata", table_id=TABLE_ID),
+        json=_table_record(),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    client.refresh_metadata(TABLE_ID)
+
+    req = responses.calls[0].request
+    assert f"/tables/{TABLE_ID}/refresh" in req.url

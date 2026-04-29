@@ -353,5 +353,10 @@ catalogservice_endpoints_v1 = {
     "delete_asset": catalog_v1 + "/assets/{asset_id}",
     "access": catalog_v1 + "/assets/{asset_id}/access",
     "resolve": catalog_v1 + "/assets/{asset_id}/resolve",
+    "preview_table": catalog_v1 + "/tables/preview",
+    "register_table": catalog_v1 + "/tables/register",
+    "list_tables": catalog_v1 + "/tables/",
+    "update_annotations": catalog_v1 + "/tables/{table_id}/annotations",
+    "refresh_metadata": catalog_v1 + "/tables/{table_id}/refresh",
 }
 catalogservice_api_versions = {1: catalogservice_endpoints_v1}

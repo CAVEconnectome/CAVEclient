@@ -280,6 +280,211 @@ class CatalogClient(ClientBase):
         response = self.session.post(url)
         return handle_response(response)
 
+    # ------------------------------------------------------------------
+    # Table-specific methods
+    # ------------------------------------------------------------------
+
+    def preview_table(
+        self,
+        uri: str,
+        format: str,
+    ) -> dict:
+        """Preview metadata for a table without registering it.
+
+        Parameters
+        ----------
+        uri : str
+            Cloud storage URI (e.g. ``gs://bucket/path/``).
+        format : str
+            Data format (``"delta"`` or ``"parquet"``).
+
+        Returns
+        -------
+        dict
+            Contains ``metadata`` with ``n_rows``, ``n_columns``, ``n_bytes``,
+            ``columns``, and ``partition_columns``.
+        """
+        url = self._build_url("preview_table")
+        body = {
+            "uri": uri,
+            "format": format,
+            "datastack": self._datastack_name,
+        }
+        response = self.session.post(url, json=body)
+        return handle_response(response)
+
+    def register_table(
+        self,
+        name: str,
+        uri: str,
+        format: str,
+        is_managed: bool,
+        mat_version: int | None = None,
+        revision: int = 0,
+        mutability: str = "static",
+        maturity: str = "stable",
+        properties: dict[str, Any] | None = None,
+        access_group: str | None = None,
+        expires_at: str | None = None,
+        source: str = "user",
+        column_annotations: list[dict] | None = None,
+    ) -> dict:
+        """Register a new table asset in the catalog.
+
+        Parameters
+        ----------
+        name : str
+            Table name.
+        uri : str
+            Cloud storage URI (e.g. ``gs://bucket/path/``).
+        format : str
+            Data format (``"delta"`` or ``"parquet"``).
+        is_managed : bool
+            Whether credentials are managed by the catalog.
+        mat_version : int or None
+            CAVE materialization version, if applicable.
+        revision : int
+            Table revision (default 0).
+        mutability : str
+            ``"static"`` or ``"mutable"``.
+        maturity : str
+            ``"stable"``, ``"draft"``, or ``"deprecated"``.
+        properties : dict or None
+            Arbitrary metadata.
+        access_group : str or None
+            Optional access control group.
+        expires_at : str or None
+            ISO-8601 expiry timestamp.
+        source : str
+            Table source (default ``"user"``).
+        column_annotations : list[dict] or None
+            Column annotations with descriptions and links.
+
+        Returns
+        -------
+        dict
+            The created table record including cached metadata and merged columns.
+        """
+        url = self._build_url("register_table")
+        body = {
+            "datastack": self._datastack_name,
+            "name": name,
+            "mat_version": mat_version,
+            "revision": revision,
+            "uri": uri,
+            "format": format,
+            "asset_type": "table",
+            "is_managed": is_managed,
+            "mutability": mutability,
+            "maturity": maturity,
+            "properties": properties or {},
+            "source": source,
+            "column_annotations": column_annotations or [],
+        }
+        if access_group is not None:
+            body["access_group"] = access_group
+        if expires_at is not None:
+            body["expires_at"] = expires_at
+        response = self.session.post(url, json=body)
+        return handle_response(response)
+
+    def list_tables(
+        self,
+        name: str | None = None,
+        mat_version: int | None = None,
+        revision: int | None = None,
+        format: str | None = None,
+        source: str | None = None,
+        mutability: str | None = None,
+        maturity: str | None = None,
+    ) -> list[dict]:
+        """List table assets for the configured datastack.
+
+        Parameters
+        ----------
+        name : str, optional
+            Filter by table name.
+        mat_version : int, optional
+            Filter by materialization version.
+        revision : int, optional
+            Filter by revision.
+        format : str, optional
+            Filter by format (e.g. ``"delta"``, ``"parquet"``).
+        source : str, optional
+            Filter by source (e.g. ``"user"``, ``"materialization"``).
+        mutability : str, optional
+            Filter by mutability.
+        maturity : str, optional
+            Filter by maturity.
+
+        Returns
+        -------
+        list[dict]
+            List of table records with cached metadata and merged columns.
+        """
+        url = self._build_url("list_tables")
+        params = {"datastack": self._datastack_name}
+        if name is not None:
+            params["name"] = name
+        if mat_version is not None:
+            params["mat_version"] = mat_version
+        if revision is not None:
+            params["revision"] = revision
+        if format is not None:
+            params["format"] = format
+        if source is not None:
+            params["source"] = source
+        if mutability is not None:
+            params["mutability"] = mutability
+        if maturity is not None:
+            params["maturity"] = maturity
+        response = self.session.get(url, params=params)
+        return handle_response(response)
+
+    def update_annotations(
+        self,
+        table_id: str,
+        column_annotations: list[dict],
+    ) -> dict:
+        """Update column annotations for a table asset.
+
+        Uses replace semantics — the provided annotations replace all existing ones.
+
+        Parameters
+        ----------
+        table_id : str
+            UUID of the table asset.
+        column_annotations : list[dict]
+            Complete set of column annotations. Each dict should have
+            ``column_name``, optional ``description``, and optional ``links``.
+
+        Returns
+        -------
+        dict
+            The updated table record with merged columns.
+        """
+        url = self._build_url("update_annotations", table_id=table_id)
+        body = {"column_annotations": column_annotations}
+        response = self.session.patch(url, json=body)
+        return handle_response(response)
+
+    def refresh_metadata(self, table_id: str) -> dict:
+        """Re-extract metadata for a table asset from the source files.
+
+        Parameters
+        ----------
+        table_id : str
+            UUID of the table asset.
+
+        Returns
+        -------
+        dict
+            The updated table record with fresh cached metadata and merged columns.
+        """
+        url = self._build_url("refresh_metadata", table_id=table_id)
+        response = self.session.post(url)
+        return handle_response(response)
+
     def resolve_view(self, asset_id: str) -> dict:
         """Resolve a view asset's SQL template.
 
