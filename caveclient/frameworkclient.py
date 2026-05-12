@@ -710,8 +710,10 @@ class CAVEclientFull(CAVEclientGlobal):
         for more information.
         """
         if self._catalog is None:
+            ds_info = self.info.get_datastack_info()
+            catalog_server = ds_info.get("catalog_url") or self.local_server
             self._catalog = CatalogClient(
-                server_address=self.local_server,
+                server_address=catalog_server,
                 auth_client=self.auth,
                 datastack_name=self._datastack_name,
                 max_retries=self._max_retries,
