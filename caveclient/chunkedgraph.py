@@ -1287,58 +1287,45 @@ class ChunkedGraphClient(ClientBase):
         return_fraction_overlap : bool, optional
             If True, return all fractions sorted by most overlap to least, by default
             False. If False, only the top value is returned.
+        
+        Returns
+        -------
+        latest_root: int or np.ndarray,
+            Valid root id (or root ids) at the timestamp.
+            If not return_all, the cell with the most overlap with the requested root id.
+            If return_all, cells with overlap with the requested root id, ordered in decreasing order with fraction of overlap
+        
+        fraction_output: float or np.ndarray,
+            Fraction of chunks at the stop layer within the requested ID that are also in the new ID.
+            Ordered same as ids, if all ids are returned.
         """
-        curr_ids = self.get_latest_roots(root_id, timestamp=timestamp)
 
-        if root_id in curr_ids:
-            if return_all:
-                if return_fraction_overlap:
-                    return [root_id], [1]
-                else:
-                    return [root_id]
-            else:
-                if return_fraction_overlap:
-                    return root_id, 1
-                else:
-                    return root_id
-
-        delta_layers = 4
+        DELTA_LAYERS = 4  # Empirical value, revisit if this is no long within a typical neuron.
         if stop_layer is None:
             stop_layer = (
                 self.segmentation_info.get("graph", {}).get("n_layers", 6)
-                - delta_layers
+                - DELTA_LAYERS
             )
         stop_layer = max(1, stop_layer)
-
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
-        while len(chunks_orig) == 0:
-            stop_layer -= 1
-            if stop_layer == 1:
-                raise ValueError(
-                    f"There were no children for root_id={root_id} at level 2, something is wrong with the chunkedgraph"
-                )
-            chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
+        
+        curr_chunks = self.get_roots(chunks_orig, timestamp=timestamp)
+        curr_rids, num_chunks = np.unique(curr_chunks, return_counts=True)
+        sort_ord = np.argsort(num_chunks)[::-1]
+        curr_rids = curr_rids[sort_ord]
+        num_chunks = num_chunks[sort_ord] / len(chunks_orig)
 
-        chunk_list = np.array(
-            [
-                len(
-                    np.intersect1d(
-                        chunks_orig,
-                        self.get_leaves(oid, stop_layer=stop_layer),
-                        assume_unique=True,
-                    )
-                )
-                / len(chunks_orig)
-                for oid in curr_ids
-            ]
-        )
-        order = np.argsort(chunk_list)[::-1]
-        if not return_all:
-            order = order[0]
         if return_fraction_overlap:
-            return curr_ids[order], chunk_list[order]
+            if return_all:
+                return curr_rids, num_chunks
+            else:
+                return int(curr_rids[0]), float(num_chunks[0]),
         else:
-            return curr_ids[order]
+            if return_all:
+                return curr_rids
+            else:
+                return int(curr_rids[0])
+
 
     def is_valid_nodes(
         self,
