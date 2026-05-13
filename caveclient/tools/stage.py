@@ -1,3 +1,5 @@
+import warnings
+
 import attrs
 import jsonschema
 import numpy as np
@@ -5,7 +7,7 @@ import pandas as pd
 
 SPATIAL_POINT_CLASSES = ["SpatialPoint", "BoundSpatialPoint"]
 
-ADD_FUNC_DOCSTSRING = (
+ADD_FUNC_DOCSTRING = (
     "Add annotation to a local collection. Note that this does not upload annotations."
 )
 
@@ -62,7 +64,7 @@ class StagedAnnotations(object):
                 for x, y in zip(self._table_resolution, self._annotation_resolution)
             ]
         elif self._annotation_resolution:
-            raise Warning(
+            warnings.warn(
                 "No table resolution set. Coordinates cannot be scaled automatically."
             )
 
@@ -94,7 +96,7 @@ class StagedAnnotations(object):
         self.add = self._make_anno_func(
             id_field=self._id_field, mixin=(self._build_mixin(),)
         )
-        self.add.__doc__ = ADD_FUNC_DOCSTSRING
+        self.add.__doc__ = ADD_FUNC_DOCSTRING
 
     def __repr__(self) -> str:
         if self._update:
@@ -106,7 +108,14 @@ class StagedAnnotations(object):
             table_text = f"table '{self.table_name}'"
         else:
             table_text = f"schema '{self._ref_class}' with no table"
-        return f"Staged annotations for {table_text} ({len(self)} {update} annotations)"
+        n_total = len(self)
+        n_uploaded = sum(
+            1 for a in self._anno_list if getattr(a, self.IS_UPLOADED_FIELD, False)
+        )
+        return (
+            f"Staged annotations for {table_text} "
+            f"({n_total} {update} annotations, {n_uploaded} uploaded)"
+        )
 
     def __len__(self) -> int:
         return len(self._anno_list)
@@ -183,34 +192,59 @@ class StagedAnnotations(object):
         ]
     
     def _annotation_batches(self, batch_size) -> list:
-        """Get a batches of non-uploaded annotations of .
-        
+        """Split the non-uploaded annotations into batches.
+
         Parameters
         ----------
         batch_size : int
             The number of annotations to include in each batch.
-        
+
         Returns
         -------
         list
-            A list of batches, where each batch is a list of annotations that have not been uploaded yet.
+            A list of batches, where each batch is a list of annotations that
+            have not yet been uploaded.
         """
         nonuploaded = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
         return [nonuploaded[i : i + batch_size] for i in range(0, len(nonuploaded), batch_size)]
 
-    
-    @property
-    def annotation_dataframe(self) -> pd.DataFrame:
-        """Get a dataframe of all annotations, including those that have been uploaded and those that have not."""
-        df = pd.DataFrame.from_records([self._process_annotation(a, pop_uploaded_id=False) for a in self._anno_list]) 
-        df[self.UPLOADED_ID_FIELD] = df[self.UPLOADED_ID_FIELD].astype('Int64')
-        return df
-    
-    @property
-    def annotation_dataframe_nonuploaded(self) -> pd.DataFrame:
-        """Get a dataframe of annotations that have not been uploaded yet."""
-        df = pd.DataFrame.from_records([self._process_annotation(a, pop_uploaded_id=False) for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)])
-        df[self.UPLOADED_ID_FIELD] = df[self.UPLOADED_ID_FIELD].astype('Int64')
+    def annotation_dataframe(
+        self,
+        only_nonuploaded: bool = False,
+        include_tracking: bool = False,
+    ) -> pd.DataFrame:
+        """Get a dataframe of staged annotations.
+
+        Parameters
+        ----------
+        only_nonuploaded : bool, optional
+            If True, only include annotations that have not been uploaded yet.
+            By default False.
+        include_tracking : bool, optional
+            If True, include the internal upload-tracking columns
+            (`IS_UPLOADED_FIELD` and `UPLOADED_ID_FIELD`). By default False.
+
+        Returns
+        -------
+        pd.DataFrame
+            One row per annotation, with spatial point fields flattened into
+            `<name>_position` columns.
+        """
+        annos = self._anno_list
+        if only_nonuploaded:
+            annos = [a for a in annos if not getattr(a, self.IS_UPLOADED_FIELD, False)]
+        records = [
+            self._process_annotation(
+                a,
+                flat=True,
+                pop_is_uploaded=not include_tracking,
+                pop_uploaded_id=not include_tracking,
+            )
+            for a in annos
+        ]
+        df = pd.DataFrame.from_records(records)
+        if include_tracking and self.UPLOADED_ID_FIELD in df.columns:
+            df[self.UPLOADED_ID_FIELD] = df[self.UPLOADED_ID_FIELD].astype("Int64")
         return df
 
     def clear_annotations(self) -> None:

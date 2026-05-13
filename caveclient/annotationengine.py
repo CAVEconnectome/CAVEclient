@@ -859,18 +859,24 @@ class AnnotationClient(ClientBase):
                         [staged_annos._process_annotation(a) for a in batch],
                         aligned_volume_name=aligned_volume_name,
                     )
-                    new_ids = batch_ids.values() if staged_annos.is_update else batch_ids
-                    for a, new_id in zip(batch, new_ids):
-                        setattr(a, staged_annos.UPLOADED_ID_FIELD, new_id)
-                        setattr(a, staged_annos.IS_UPLOADED_FIELD, True)
                     if staged_annos.is_update:
+                        for a in batch:
+                            new_id = batch_ids[str(a.id)]
+                            setattr(a, staged_annos.UPLOADED_ID_FIELD, new_id)
+                            setattr(a, staged_annos.IS_UPLOADED_FIELD, True)
                         ids_all.update(batch_ids)  # type: ignore
                     else:
+                        assert len(batch_ids) == len(batch), (
+                            f"Server returned {len(batch_ids)} ids for batch of size {len(batch)}"
+                        )
+                        for a, new_id in zip(batch, batch_ids):
+                            setattr(a, staged_annos.UPLOADED_ID_FIELD, new_id)
+                            setattr(a, staged_annos.IS_UPLOADED_FIELD, True)
                         ids_all.extend(batch_ids)
                     break
                 except Exception as e:
                     attempts += 1
-                    time.sleep(2 ** attempts)  # Exponential backoff
                     if attempts >= retries:
                         raise e
+                    time.sleep(2 ** attempts)  # Exponential backoff
         return ids_all
