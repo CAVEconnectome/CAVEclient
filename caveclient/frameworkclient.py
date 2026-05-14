@@ -1,4 +1,6 @@
 import getpass
+import logging
+import os
 import re
 from datetime import datetime
 from typing import Optional
@@ -8,7 +10,12 @@ from requests.exceptions import HTTPError
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient
-from .datastack_lookup import handle_server_address
+from .datastack_lookup import (
+    DEFAULT_DATASTACK_FILE,
+    DEFAULT_LOCATION,
+    handle_server_address,
+    is_writable,
+)
 from .emannotationschemas import SchemaClient
 from .endpoints import default_global_server_address
 from .infoservice import InfoServiceClient
@@ -16,6 +23,8 @@ from .jsonservice import JSONService
 from .l2cache import L2CacheClient
 from .materializationengine import MaterializationClient
 from .skeletonservice import SkeletonClient
+
+logger = logging.getLogger(__name__)
 
 
 class GlobalClientError(Exception):
@@ -511,6 +520,11 @@ class CAVEclientFull(CAVEclientGlobal):
         [get_session_defaults](../extended_api/session_config.md/#caveclient.session_config.get_session_defaults)
         """
 
+        if write_server_cache and not is_writable(
+            os.path.join(DEFAULT_LOCATION, DEFAULT_DATASTACK_FILE)
+        ):
+            write_server_cache = False
+
         old_server_address = server_address
         server_address = handle_server_address(
             datastack_name,
@@ -541,20 +555,20 @@ class CAVEclientFull(CAVEclientGlobal):
         try:
             self.local_server = self.info.local_server()
         except HTTPError as e:
-            if e.response.status_code == 401 or e.response.status_code == 403:
-                msg = f"Access denied to datastack {datastack_name}!\nTo set up your token for server {server_address}, please run:\n\tCAVEclient.setup_token(server_address='{server_address}')\nand follow the instructions there."
-                print(msg)
-                raise e
-            else:
-                raise e
+            if e.response.status_code in (401, 403):
+                logger.warning(
+                    f"Access denied to datastack {datastack_name}. "
+                    f"To set up a token for server {server_address}, run "
+                    f"CAVEclient.setup_token(server_address='{server_address}')."
+                )
+            raise
         self.auth.local_server = self.local_server
 
-        # If it worked, actually try to write version.
         if write_server_cache:
             handle_server_address(
                 datastack=datastack_name,
                 server_address=old_server_address,
-                write=write_server_cache,
+                write=True,
                 do_log=True,
             )
 
