@@ -15,6 +15,8 @@ ADD_FUNC_DOCSTRING = (
 class StagedAnnotations(object):
     IS_UPLOADED_FIELD = "_IS_UPLOADED_"
     UPLOADED_ID_FIELD = "_UPLOADED_ID_"
+    IS_UPLOADED_COLUMN = "is_uploaded"
+    NEW_ID_COLUMN = "new_id"
     
     def __init__(
         self,
@@ -208,6 +210,27 @@ class StagedAnnotations(object):
         nonuploaded = [a for a in self._anno_list if not getattr(a, self.IS_UPLOADED_FIELD, False)]
         return [nonuploaded[i : i + batch_size] for i in range(0, len(nonuploaded), batch_size)]
 
+    def _apply_upload_result(self, batch, batch_ids) -> None:
+        """Stamp a batch of annotations with the server's response.
+
+        For update stages, ``batch_ids`` is a ``{old_id: new_id}`` mapping with
+        string-keyed old ids (as returned over JSON); each annotation's new id
+        is looked up by ``str(a.id)``. For new-annotation stages, ``batch_ids``
+        is a list of server-assigned ids in batch order.
+        """
+        if self.is_update:
+            for a in batch:
+                new_id = batch_ids[str(a.id)]
+                setattr(a, self.UPLOADED_ID_FIELD, new_id)
+                setattr(a, self.IS_UPLOADED_FIELD, True)
+        else:
+            assert len(batch_ids) == len(batch), (
+                f"Server returned {len(batch_ids)} ids for batch of size {len(batch)}"
+            )
+            for a, new_id in zip(batch, batch_ids):
+                setattr(a, self.UPLOADED_ID_FIELD, new_id)
+                setattr(a, self.IS_UPLOADED_FIELD, True)
+
     def annotation_dataframe(
         self,
         only_nonuploaded: bool = False,
@@ -221,14 +244,17 @@ class StagedAnnotations(object):
             If True, only include annotations that have not been uploaded yet.
             By default False.
         include_tracking : bool, optional
-            If True, include the internal upload-tracking columns
-            (`IS_UPLOADED_FIELD` and `UPLOADED_ID_FIELD`). By default False.
+            If True, include two extra upload-tracking columns: ``is_uploaded``
+            (bool) and ``new_id`` (nullable Int64, the id assigned by the
+            server). For update-mode stages this preserves the old→new id
+            mapping: the ``id`` column holds the original id, ``new_id`` holds
+            the id returned by the server. By default False.
 
         Returns
         -------
         pd.DataFrame
             One row per annotation, with spatial point fields flattened into
-            `<name>_position` columns.
+            ``<name>_position`` columns.
         """
         annos = self._anno_list
         if only_nonuploaded:
@@ -243,8 +269,15 @@ class StagedAnnotations(object):
             for a in annos
         ]
         df = pd.DataFrame.from_records(records)
-        if include_tracking and self.UPLOADED_ID_FIELD in df.columns:
-            df[self.UPLOADED_ID_FIELD] = df[self.UPLOADED_ID_FIELD].astype("Int64")
+        if include_tracking:
+            df = df.rename(
+                columns={
+                    self.IS_UPLOADED_FIELD: self.IS_UPLOADED_COLUMN,
+                    self.UPLOADED_ID_FIELD: self.NEW_ID_COLUMN,
+                }
+            )
+            if self.NEW_ID_COLUMN in df.columns:
+                df[self.NEW_ID_COLUMN] = df[self.NEW_ID_COLUMN].astype("Int64")
         return df
 
     def clear_annotations(self) -> None:
