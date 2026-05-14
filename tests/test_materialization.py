@@ -20,7 +20,11 @@ from caveclient.endpoints import (
     schema_endpoints_v2,
 )
 
-from .conftest import datastack_dict, test_info
+from .conftest import (
+    datastack_dict,
+    test_info,
+    version_specified_client,  # noqa: F401
+)
 
 
 def test_info_d(myclient):
@@ -926,3 +930,118 @@ def test_get_unique_string_values(myclient):
     assert "column2" in result
     assert result["column1"] == ["value1", "value2"]
     assert result["column2"] == ["value3", "value4"]
+
+
+def test_neuroglancer_annotation_path(myclient):
+    table_name = "test_table"
+    datastack_name = "explicit_datastack"
+
+    base = (
+        f"{datastack_dict['local_server']}/materialize/api/v3"
+        f"/datastack/{datastack_name}/table/{table_name}/precomputed"
+    )
+
+    ng_url = myclient.materialize.neuroglancer_annotation_path(
+        table_name, datastack_name=datastack_name
+    )
+    assert ng_url == "precomputed://middleauth+" + base
+
+    raw_url = myclient.materialize.neuroglancer_annotation_path(
+        table_name, datastack_name=datastack_name, for_neuroglancer=False
+    )
+    assert raw_url == base
+
+
+def test_neuroglancer_annotation_path_default_datastack(myclient):
+    table_name = "test_table"
+    default_ds = datastack_dict["datastack_name"]
+
+    expected = (
+        "precomputed://middleauth+"
+        f"{datastack_dict['local_server']}/materialize/api/v3"
+        f"/datastack/{default_ds}/table/{table_name}/precomputed"
+    )
+    assert myclient.materialize.neuroglancer_annotation_path(table_name) == expected
+
+
+@responses.activate
+def test_neuroglancer_annotation_info(myclient):
+    table_name = "test_table"
+    datastack_name = "test_datastack"
+
+    info_url = (
+        f"{datastack_dict['local_server']}/materialize/api/v3"
+        f"/datastack/{datastack_name}/table/{table_name}/precomputed/info"
+    )
+    mock_response = {"@type": "neuroglancer_annotations_v1", "dimensions": {}}
+    responses.add(responses.GET, url=info_url, json=mock_response, status=200)
+
+    result = myclient.materialize.neuroglancer_annotation_info(
+        table_name, datastack_name=datastack_name
+    )
+    assert result == mock_response
+
+
+def test_neuroglancer_segprop_path(version_specified_client):  # noqa: F811
+    client = version_specified_client
+    table_name = "test_table"
+    datastack_name = "explicit_datastack"
+    materialization_version = 7
+
+    base = (
+        f"{datastack_dict['local_server']}/materialize/api/v3"
+        f"/datastack/{datastack_name}/version/{materialization_version}"
+        f"/table/{table_name}"
+    )
+
+    ng_url = client.materialize.neuroglancer_segprop_path(
+        table_name,
+        datastack_name=datastack_name,
+        materialization_version=materialization_version,
+    )
+    assert ng_url == "precomputed://middleauth+" + base
+
+    raw_url = client.materialize.neuroglancer_segprop_path(
+        table_name,
+        datastack_name=datastack_name,
+        materialization_version=materialization_version,
+        for_neuroglancer=False,
+    )
+    assert raw_url == base
+
+
+def test_neuroglancer_segprop_path_defaults(version_specified_client):  # noqa: F811
+    client = version_specified_client
+    table_name = "test_table"
+    default_ds = datastack_dict["datastack_name"]
+    default_version = client.materialize.version
+
+    expected = (
+        "precomputed://middleauth+"
+        f"{datastack_dict['local_server']}/materialize/api/v3"
+        f"/datastack/{default_ds}/version/{default_version}/table/{table_name}"
+    )
+    assert client.materialize.neuroglancer_segprop_path(table_name) == expected
+
+
+@responses.activate
+def test_neuroglancer_segprop_info(version_specified_client):  # noqa: F811
+    client = version_specified_client
+    table_name = "test_table"
+    datastack_name = "test_datastack"
+    materialization_version = 7
+
+    info_url = (
+        f"{datastack_dict['local_server']}/materialize/api/v3"
+        f"/datastack/{datastack_name}/version/{materialization_version}"
+        f"/table/{table_name}/info"
+    )
+    mock_response = {"@type": "neuroglancer_segment_properties", "inline": {}}
+    responses.add(responses.GET, url=info_url, json=mock_response, status=200)
+
+    result = client.materialize.neuroglancer_segprop_info(
+        table_name,
+        datastack_name=datastack_name,
+        materialization_version=materialization_version,
+    )
+    assert result == mock_response

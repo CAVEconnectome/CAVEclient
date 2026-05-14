@@ -1256,7 +1256,6 @@ class MaterializationClient(ClientBase):
     ) -> dict:
         """Trigger supervoxel lookups of new annotations in a table.
 
-
         Parameters
         ----------
         table_name : str
@@ -2584,5 +2583,77 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["unique_string_values"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
+        self.raise_for_status(response)
+        return response.json()
+
+    def neuroglancer_annotation_path(
+        self,
+        table_name: str,
+        datastack_name: Optional[str] = None,
+        for_neuroglancer: bool = True,
+    ) -> str:
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(endpoint_mapping)
+        
+        if for_neuroglancer:
+            anno_url = "precomputed://middleauth+" + anno_url
+        return anno_url
+
+    def neuroglancer_annotation_info(
+        self,
+        table_name: str,
+        datastack_name: Optional[str] = None,
+    ) -> dict:
+        url = self.neuroglancer_annotation_path(
+            table_name=table_name,
+            datastack_name=datastack_name,
+            for_neuroglancer=False,
+        )
+        info_url = url + "/info"
+        response = self.session.get(info_url, verify=self.verify)
+        self.raise_for_status(response)
+        return response.json()
+    
+    def neuroglancer_segprop_path(
+        self,
+        table_name: str,
+        datastack_name: Optional[str] = None,
+        materialization_version: Optional[int] = None,
+        for_neuroglancer: bool = True,
+    ) -> str:
+        if datastack_name is None:
+            datastack_name = self.datastack_name
+        if materialization_version is None:
+            materialization_version = self.version
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["table_name"] = table_name
+        endpoint_mapping["version"] = materialization_version
+        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(endpoint_mapping)
+        
+        if for_neuroglancer:
+            segprop_url = "precomputed://middleauth+" + segprop_url
+        return segprop_url
+
+    def neuroglancer_segprop_info(
+        self,
+        table_name: str,
+        datastack_name: Optional[str] = None,
+        materialization_version: Optional[int] = None,
+    ) -> dict:
+        url = self.neuroglancer_segprop_path(
+            table_name=table_name,
+            datastack_name=datastack_name,
+            materialization_version=materialization_version,
+            for_neuroglancer=False,
+        )
+        info_url = url + "/info"
+        response = self.session.get(info_url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
