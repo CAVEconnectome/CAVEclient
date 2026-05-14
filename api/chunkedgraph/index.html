@@ -4579,6 +4579,42 @@ False. If False, only the top value is returned.</p>
     </table>
 
 
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>latest_root</code></td>            <td>
+                  <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a> or <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>,)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Valid root id (or root ids) at the timestamp.
+If not return_all, the cell with the most overlap with the requested root id.
+If return_all, cells with overlap with the requested root id, ordered in decreasing order with fraction of overlap</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+<td><code>fraction_output</code></td>            <td>
+                  <code>(<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a> or <a class="autorefs autorefs-external" title="numpy.ndarray" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray">ndarray</a>,)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fraction of chunks at the stop layer within the requested ID that are also in the new ID.
+Ordered same as ids, if all ids are returned.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
     </div>
 
 </div>
