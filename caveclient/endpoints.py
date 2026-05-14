@@ -93,6 +93,8 @@ materialization_endpoints_v3 = {
     + "/datastack/{datastack_name}/version/{version}/views/schemas",
     "unique_string_values": mat_v3_api
     + "/datastack/{datastack_name}/table/{table_name}/unique_string_values",
+    "neuroglancer_annotation_path": mat_v3_api + "/datastack/{datastack_name}/table/{table_name}/precomputed",
+    "neuroglancer_segprop_path": mat_v3_api + "/datastack/{datastack_name}/version/{version}/table/{table_name}"
 }
 
 materialization_api_versions = {
