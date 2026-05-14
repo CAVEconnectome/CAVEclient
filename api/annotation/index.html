@@ -1383,7 +1383,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="upload_staged_annotations(staged_annos, aligned_volume_name=None) (caveclient.annotationengine.AnnotationClient.upload_staged_annotations)" href="#caveclient.annotationengine.AnnotationClient.upload_staged_annotations">upload_staged_annotations</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="upload_staged_annotations(staged_annos, aligned_volume_name=None, batch_size=10000, progress=True, retries=3) (caveclient.annotationengine.AnnotationClient.upload_staged_annotations)" href="#caveclient.annotationengine.AnnotationClient.upload_staged_annotations">upload_staged_annotations</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Upload annotations directly from an Annotation Guide object.</p>
@@ -3201,7 +3201,7 @@ Defaults to the None type, in which case no change will be made to this metadata
 
 
 <h2 id="caveclient.annotationengine.AnnotationClient.upload_staged_annotations" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">upload_staged_annotations</span><span class="p">(</span><span class="n">staged_annos</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">upload_staged_annotations</span><span class="p">(</span><span class="n">staged_annos</span><span class="p">,</span> <span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span></code>
 
 <a href="#caveclient.annotationengine.AnnotationClient.upload_staged_annotations" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -3253,6 +3253,54 @@ This method uses the options specified in the object, including table name and i
             </td>
             <td>
                   <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>batch_size</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the number of annotations exceeds this batch size, the upload will be split into multiple requests, by default 10,000.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10000</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>progress</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to show a progress bar during upload, by default True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>retries</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of times to retry a batch if it fails, by default 3. Will sleep for 2^n seconds between retries, where n is the number of attempts so far.</p>
+              </div>
+            </td>
+            <td>
+                  <code>3</code>
             </td>
           </tr>
       </tbody>
