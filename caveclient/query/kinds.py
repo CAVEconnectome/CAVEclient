@@ -59,8 +59,18 @@ class FilterOp(enum.Enum):
 
     @property
     def payload_key(self) -> str:
-        """The key this operation uses in the server request payload."""
+        """The key this operation uses in the server request payload (wire name)."""
         return _PAYLOAD_KEYS[self]
+
+    @property
+    def kwarg_key(self) -> str:
+        """The keyword-argument name the existing client methods use.
+
+        Identical to ``payload_key`` except that ``NOT_IN`` is ``filter_out_dict``
+        as a method argument but ``filter_notin_dict`` on the wire — the methods
+        rename it when building the request.
+        """
+        return _KWARG_KEYS[self]
 
 
 _PAYLOAD_KEYS = {
@@ -74,6 +84,8 @@ _PAYLOAD_KEYS = {
     FilterOp.REGEX: "filter_regex_dict",
     FilterOp.SPATIAL: "filter_spatial_dict",
 }
+
+_KWARG_KEYS = {**_PAYLOAD_KEYS, FilterOp.NOT_IN: "filter_out_dict"}
 
 _ORDERED_OPS = frozenset(
     {

@@ -47,11 +47,46 @@ def filters_to_payload(
         ``{table: {column: value}}`` dict. Only keys with at least one filter
         are present, so the result can be merged directly into a request body.
     """
-    payload: dict[str, dict[str, dict[str, Any]]] = {}
+    return _group_filters(filters, default_table, key=lambda op: op.payload_key)
+
+
+def filters_to_method_kwargs(
+    filters: Iterable[Filter],
+    default_table: str,
+    nested: bool,
+) -> dict[str, Any]:
+    """Group typed filters into keyword arguments for the existing query methods.
+
+    Like :func:`filters_to_payload` but keyed by the methods' argument names
+    (``filter_out_dict`` rather than the wire's ``filter_notin_dict``), and with
+    a choice of nesting:
+
+    * ``nested=True`` → ``{table: {column: value}}`` (for ``join_query`` /
+      ``live_live_query``, which take nested filter dicts).
+    * ``nested=False`` → ``{column: value}`` (for ``query_table`` /
+      ``query_view``, which take flat dicts for a single table). Raises if the
+      filters span more than one table.
+    """
+    grouped = _group_filters(filters, default_table, key=lambda op: op.kwarg_key)
+    if nested:
+        return grouped
+    flat: dict[str, Any] = {}
+    for kwarg, by_table in grouped.items():
+        if len(by_table) > 1:
+            raise ValueError(
+                f"flat filter kwargs require a single table, but `{kwarg}` spans "
+                f"{sorted(by_table)}"
+            )
+        ((_only_table, columns),) = by_table.items()
+        flat[kwarg] = columns
+    return flat
+
+
+def _group_filters(filters, default_table, key):
+    grouped: dict[str, dict[str, dict[str, Any]]] = {}
     for f in filters:
         table = f.column.table or default_table
-        key = f.op.payload_key
-        by_table = payload.setdefault(key, {})
+        by_table = grouped.setdefault(key(f.op), {})
         by_column = by_table.setdefault(table, {})
         if f.column.name in by_column:
             raise ValueError(
@@ -59,4 +94,4 @@ def filters_to_payload(
                 f"`{table}.{f.column.name}`"
             )
         by_column[f.column.name] = _serialize_value(f)
-    return payload
+    return grouped
