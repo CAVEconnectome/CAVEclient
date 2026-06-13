@@ -27,6 +27,12 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
+from .query import Capabilities, QuerySpec, Switchboard
+from .query.spec import (
+    FILTER_KWARG_NAMES,
+    build_query_spec,
+    resolve_version_fallback,
+)
 from .timestamps import to_utc
 from .tools.table_manager import TableManager, ViewManager
 
@@ -625,6 +631,145 @@ class MaterializationClient(ClientBase):
 
             suffix_map = None
         return tables, suffix_map
+
+    def _query_capabilities(self) -> Capabilities:
+        """Snapshot what the server and client support, for query routing."""
+        # Avoid forcing construction of a chunkedgraph client just to probe; an
+        # over_client (framework client) means one can be built on demand.
+        has_cg = self._cg_client is not None or self.fc is not None
+        return Capabilities(
+            server_version=self.server_version,
+            has_chunkedgraph=has_cg,
+            # Phase 1: the server's per-view live flag is inert; Phase 3 reads it.
+            source_live_compatible=False,
+            deltalake_available=False,
+        )
+
+    def _resolve_source_kind(self, name: str, datastack_name=None) -> str:
+        """Resolve an ``auto`` source to ``"view"`` or ``"table"`` via metadata.
+
+        Defaults to ``"table"`` if views cannot be listed (e.g. an older server
+        without the views endpoint).
+        """
+        try:
+            views = self.get_views(datastack_name=datastack_name)
+        except Exception:
+            return "table"
+        return "view" if name in views else "table"
+
+    def query(
+        self,
+        source=None,
+        *,
+        version: Optional[int] = None,
+        timestamp: Optional[datetime] = None,
+        kind: str = "auto",
+        select_columns=None,
+        offset: int = None,
+        limit: int = None,
+        random_sample: int = None,
+        get_counts: bool = False,
+        split_positions: bool = False,
+        desired_resolution: Iterable = None,
+        metadata: bool = True,
+        allow_version_fallback: bool = True,
+        datastack_name: str = None,
+        **filter_kwargs,
+    ):
+        """Unified query entry point that routes to the right backend.
+
+        A single call covers versioned table queries, live (timestamp) queries,
+        and view queries. The temporal address selects the backend: pass
+        ``version=`` for a frozen materialization, ``timestamp=`` for a live
+        query, or neither to use the client's default version. The source kind
+        (table vs view) is resolved from metadata unless given explicitly via
+        ``kind``.
+
+        Filters use the familiar ``filter_in_dict={column: value}`` style passed
+        as keyword arguments (``filter_in_dict``, ``filter_out_dict``,
+        ``filter_equal_dict``, ``filter_greater_dict``, ``filter_less_dict``,
+        ``filter_greater_equal_dict``, ``filter_less_equal_dict``,
+        ``filter_spatial_dict``, ``filter_regex_dict``). Both flat
+        ``{column: value}`` and nested ``{table: {column: value}}`` shapes are
+        accepted.
+
+        Parameters
+        ----------
+        source :
+            Table or view name, or a pre-built
+            :class:`~caveclient.query.QuerySpec` (in which case the other
+            keyword arguments must not be supplied).
+        version :
+            Materialization version to query (frozen). Mutually exclusive with
+            ``timestamp``.
+        timestamp :
+            Timestamp to query at (live). Mutually exclusive with ``version``.
+        kind :
+            ``"auto"`` (default, resolved from metadata), ``"table"``,
+            ``"view"``, or ``"dataset"``.
+        allow_version_fallback :
+            If True (default) and a pinned ``version`` no longer exists, fall
+            back to a live query at that version's timestamp instead of failing.
+        select_columns, offset, limit, random_sample, get_counts, split_positions, desired_resolution, metadata, datastack_name :
+            As for :meth:`query_table`.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The query result, as produced by the routed backend.
+        """
+        if isinstance(source, QuerySpec):
+            if filter_kwargs or version is not None or timestamp is not None:
+                raise ValueError(
+                    "when passing a QuerySpec, do not also pass query keyword arguments"
+                )
+            spec = source
+        else:
+            if source is None:
+                raise ValueError("a source table/view name (or QuerySpec) is required")
+            unknown = set(filter_kwargs) - set(FILTER_KWARG_NAMES)
+            if unknown:
+                raise TypeError(
+                    f"unexpected keyword argument(s): {', '.join(sorted(unknown))}"
+                )
+            if kind == "auto":
+                kind = self._resolve_source_kind(source, datastack_name=datastack_name)
+            spec = build_query_spec(
+                source,
+                kind=kind,
+                version=version,
+                timestamp=timestamp,
+                filters_by_kwarg=filter_kwargs,
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                random_sample=random_sample,
+                get_counts=get_counts,
+                split_positions=split_positions,
+                desired_resolution=desired_resolution,
+                metadata=metadata,
+            )
+
+        if allow_version_fallback and spec.at.version is not None:
+            spec, fell_back = resolve_version_fallback(
+                spec,
+                self.get_versions(expired=False, datastack_name=datastack_name),
+                lambda v: self._safe_timestamp(v, datastack_name),
+            )
+            if fell_back:
+                logger.warning(
+                    f"Materialization version is no longer available; falling back "
+                    f"to a live query at its timestamp ({spec.at.timestamp})."
+                )
+
+        caps = self._query_capabilities()
+        return Switchboard().execute(spec, caps, self)
+
+    def _safe_timestamp(self, version, datastack_name=None):
+        try:
+            return self.get_timestamp(version=version, datastack_name=datastack_name)
+        except Exception:
+            return None
 
     @_check_version_compatibility(
         kwarg_use_constraints={
@@ -2580,8 +2725,10 @@ class MaterializationClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
-        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(endpoint_mapping)
-        
+        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(
+            endpoint_mapping
+        )
+
         if for_neuroglancer:
             anno_url = "precomputed://middleauth+" + anno_url
         return anno_url
@@ -2599,7 +2746,7 @@ class MaterializationClient(ClientBase):
         info_url = url + "/info"
         response = self.session.get(info_url, verify=self.verify)
         return handle_response(response)
-    
+
     def neuroglancer_segprop_path(
         self,
         table_name: str,
@@ -2616,8 +2763,10 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["version"] = materialization_version
-        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(endpoint_mapping)
-        
+        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(
+            endpoint_mapping
+        )
+
         if for_neuroglancer:
             segprop_url = "precomputed://middleauth+" + segprop_url
         return segprop_url

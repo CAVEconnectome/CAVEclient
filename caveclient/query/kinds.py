@@ -38,6 +38,8 @@ class FilterKind(enum.Enum):
     BOOLEAN = "boolean"
     ID = "id"  # root_id / supervoxel_id: an equatable integer, but never ordered
     POSITION = "position"  # the x/y/z of a spatial point; bounding-box filterable
+    UNTYPED = "untyped"  # kind unknown (raw-dict kwargs path): any op permitted,
+    # but value shape is still validated per operation
 
 
 class FilterOp(enum.Enum):
@@ -107,6 +109,9 @@ LEGAL_OPS: dict[FilterKind, frozenset[FilterOp]] = {
     FilterKind.BOOLEAN: _EQUATABLE_OPS,
     FilterKind.ID: _EQUATABLE_OPS,
     FilterKind.POSITION: frozenset({FilterOp.SPATIAL}),
+    # UNTYPED permits every operation; the user chose the op by picking the
+    # filter dict, and per-op value-shape validation still applies.
+    FilterKind.UNTYPED: frozenset(FilterOp),
 }
 
 

@@ -12,8 +12,11 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from .filters import Filter
-from .kinds import FilterOp
+from .filters import ColumnHandle, Filter
+from .kinds import FilterKind, FilterOp
+
+# Reverse of FilterOp.kwarg_key: the argument names the existing methods accept.
+_KWARG_TO_OP = {op.kwarg_key: op for op in FilterOp}
 
 
 def _serialize_value(f: Filter) -> Any:
@@ -80,6 +83,43 @@ def filters_to_method_kwargs(
         ((_only_table, columns),) = by_table.items()
         flat[kwarg] = columns
     return flat
+
+
+def filters_from_kwargs(by_kwarg: dict, default_table: str) -> tuple:
+    """Build typed filters from the familiar filter-dict keyword arguments.
+
+    The inverse of :func:`filters_to_method_kwargs`: given a mapping of method
+    argument name (``"filter_in_dict"`` etc.) to its dict, produce a tuple of
+    :class:`~caveclient.query.filters.Filter`. Columns get the ``UNTYPED`` kind
+    (the user picked the operation by choosing the dict; per-op value-shape
+    validation still runs).
+
+    Both shapes are accepted, distinguished unambiguously because filter values
+    are never dicts:
+
+    * flat ``{column: value}`` → columns belong to ``default_table``;
+    * nested ``{table: {column: value}}`` → columns belong to the named table.
+    """
+    filters = []
+    for kwarg, d in by_kwarg.items():
+        if d is None:
+            continue
+        op = _KWARG_TO_OP[kwarg]
+        is_nested = bool(d) and all(isinstance(v, dict) for v in d.values())
+        if is_nested:
+            for table, columns in d.items():
+                for col, value in columns.items():
+                    filters.append(
+                        Filter(
+                            ColumnHandle(col, FilterKind.UNTYPED, table=table),
+                            op,
+                            value,
+                        )
+                    )
+        else:
+            for col, value in d.items():
+                filters.append(Filter(ColumnHandle(col, FilterKind.UNTYPED), op, value))
+    return tuple(filters)
 
 
 def _group_filters(filters, default_table, key):

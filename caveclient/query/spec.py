@@ -19,7 +19,20 @@ from datetime import datetime
 from typing import Literal, Optional, Sequence
 
 from .filters import Filter
-from .serialize import filters_to_payload
+from .serialize import filters_from_kwargs, filters_to_payload
+
+# The familiar filter-dict argument names accepted by query(), in payload order.
+FILTER_KWARG_NAMES = (
+    "filter_in_dict",
+    "filter_out_dict",
+    "filter_equal_dict",
+    "filter_greater_dict",
+    "filter_less_dict",
+    "filter_greater_equal_dict",
+    "filter_less_equal_dict",
+    "filter_spatial_dict",
+    "filter_regex_dict",
+)
 
 SourceKind = Literal["table", "view", "dataset", "auto"]
 
@@ -163,6 +176,49 @@ class QuerySpec:
                     f"filter treats it as `{f.column.kind.value}`"
                 )
         return problems
+
+
+def build_query_spec(
+    source: str,
+    *,
+    kind: SourceKind = "auto",
+    version: Optional[int] = None,
+    timestamp: Optional[datetime] = None,
+    filters_by_kwarg: Optional[dict] = None,
+    select_columns=None,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+    random_sample: Optional[int] = None,
+    get_counts: bool = False,
+    split_positions: bool = False,
+    desired_resolution: Optional[Sequence[float]] = None,
+    metadata: bool = True,
+    joins: Optional[list] = None,
+    suffixes: Optional[dict] = None,
+) -> QuerySpec:
+    """Build a :class:`QuerySpec` from the familiar filter-dict keyword style.
+
+    ``filters_by_kwarg`` maps argument names (``"filter_in_dict"`` etc.) to their
+    dicts; they are converted to typed filters (see
+    :func:`~caveclient.query.serialize.filters_from_kwargs`). Structural
+    validation runs as the spec and its filters are constructed.
+    """
+    filters = filters_from_kwargs(filters_by_kwarg or {}, source)
+    return QuerySpec(
+        source=Source(source, kind=kind, joins=joins, suffixes=suffixes),
+        at=At(version=version, timestamp=timestamp),
+        filters=filters,
+        select_columns=select_columns,
+        offset=offset,
+        limit=limit,
+        random_sample=random_sample,
+        get_counts=get_counts,
+        output=OutputOptions(
+            split_positions=split_positions,
+            desired_resolution=desired_resolution,
+            metadata=metadata,
+        ),
+    )
 
 
 def resolve_version_fallback(
