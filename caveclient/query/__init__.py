@@ -9,13 +9,19 @@ server's request payload. It underpins the unified query switchboard (see
 from .filters import ColumnHandle, Filter, InvalidFilterError
 from .kinds import FilterKind, FilterOp, legal_ops
 from .serialize import filters_to_payload
+from .spec import At, InvalidQueryError, OutputOptions, QuerySpec, Source
 
 __all__ = [
+    "At",
     "ColumnHandle",
     "Filter",
     "FilterKind",
     "FilterOp",
     "InvalidFilterError",
+    "InvalidQueryError",
+    "OutputOptions",
+    "QuerySpec",
+    "Source",
     "filters_to_payload",
     "legal_ops",
 ]
