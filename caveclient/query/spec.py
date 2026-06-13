@@ -13,7 +13,8 @@ dispatch — see ``validate_against_schema``.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Callable, Collection
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Literal, Optional, Sequence
 
@@ -162,3 +163,45 @@ class QuerySpec:
                     f"filter treats it as `{f.column.kind.value}`"
                 )
         return problems
+
+
+def resolve_version_fallback(
+    spec: QuerySpec,
+    available_versions: Collection[int],
+    timestamp_lookup: Callable[[int], Optional[datetime]],
+) -> tuple[QuerySpec, bool]:
+    """Fall a stale version-pinned query back to an equivalent timestamp query.
+
+    Materialization versions churn: a pinned ``version=N`` may name a version
+    whose database has since been deleted, even though its metadata row (and
+    thus its timestamp) survives. Because a live query at a version's exact
+    timestamp reconstructs equivalent data from the nearest surviving version,
+    we can silently degrade rather than fail.
+
+    Parameters
+    ----------
+    spec :
+        The query, possibly addressed by version.
+    available_versions :
+        Versions whose materialized databases currently exist and are queryable
+        (e.g. ``client.materialize.get_versions(expired=False)``).
+    timestamp_lookup :
+        Resolves a version to its frozen timestamp, working even for expired
+        versions (``client.materialize.get_timestamp``). Should return ``None``
+        if the version is wholly unknown (no metadata row), in which case no
+        fallback is possible and the original spec is returned unchanged so the
+        natural error surfaces downstream.
+
+    Returns
+    -------
+    (QuerySpec, bool)
+        The spec to dispatch (with ``At`` rewritten to a timestamp if a fallback
+        occurred) and whether a fallback occurred (so the caller can warn).
+    """
+    at = spec.at
+    if at.version is None or at.version in available_versions:
+        return spec, False
+    ts = timestamp_lookup(at.version)
+    if ts is None:
+        return spec, False
+    return replace(spec, at=At(timestamp=ts)), True

@@ -321,7 +321,35 @@ encode the identical underlying fact, so `can_handle` reads as one coherent
 check. When the server flips a view's flag to true (Phase 2), the client unlocks
 it with no code change beyond the gate already described.
 
-## 7. Open decisions
+## 7. Graceful degradation: stale version fallback
+
+Materialization versions churn — a pinned `version=N` may name a version whose
+`{datastack}__mat{N}` database has since been deleted, even though its
+`AnalysisVersion` metadata row (and therefore its timestamp) survives.
+`client.materialize.get_timestamp(version=N)` resolves that timestamp even for
+expired versions, because it reads `get_version_metadata` (the persistent
+metadata row), not the deleted database.
+
+Because a live query at a version's *exact* timestamp reconstructs equivalent
+data — the server short-circuits a timestamp that matches a version's frozen
+time, and otherwise rolls root IDs forward from the nearest surviving version —
+a stale version query can silently degrade instead of failing.
+
+The switchboard does this as a dispatch-time normalization, implemented as the
+pure `resolve_version_fallback(spec, available_versions, timestamp_lookup)`:
+
+- If the spec pins a version that is **not** in the currently-available set but
+  `get_timestamp` resolves it, rewrite `At(version=N)` → `At(timestamp=ts)` (so
+  the query routes to the live backend) and emit a warning.
+- If the version is wholly unknown (no metadata row, `get_timestamp` yields
+  nothing), leave the spec untouched so the natural "version not found" error
+  surfaces.
+
+This is a behavior toggle on `query()` (default on). It is silent in the sense
+of not raising, but it logs a warning and records the fallback in `df.attrs` so
+the substitution is observable.
+
+## 8. Open decisions
 
 1. **Taxonomy home** — proposed: `caveclient/query/` is the single definition,
    `table_manager` imports it. (Leaning yes.)
@@ -334,7 +362,7 @@ it with no code change beyond the gate already described.
    server-side read/redirect endpoint. The advertise + cloudpath model is usable
    today but bundles lake-reading and its credential story into the client.
 
-## 8. Testing strategy
+## 9. Testing strategy
 
 - Serializers are pure → exhaustive unit tests over `(kind, op)` pairs and the
   payload-key quirks; arrow-expression tests for deltalake.
