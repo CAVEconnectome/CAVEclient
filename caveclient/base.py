@@ -59,7 +59,10 @@ def _raise_for_status(r, log_warning=True):
         )
         json_data = None
         if r.headers.get("content-type") == "application/json":
-            json_data = r.json()
+            try:
+                json_data = r.json()
+            except ValueError:
+                json_data = None
 
         if r.status_code == 403:
             if json_data:
@@ -94,7 +97,15 @@ def handle_response(response, as_json=True, log_warning=True):
     _raise_for_status(response, log_warning=log_warning)
     _check_authorization_redirect(response)
     if as_json:
-        return response.json()
+        try:
+            return response.json()
+        except ValueError as e:
+            raise requests.HTTPError(
+                f"Response from {response.url} was not valid JSON despite a "
+                f"{response.status_code} status code. "
+                f"Content begins: {response.content[:200]!r}",
+                response=response,
+            ) from e
     else:
         return response
 
@@ -155,7 +166,11 @@ def _api_endpoints(
                 verify=verify,
             )
             avail_vs_server = set(avail_vs_server)
-        except:  # noqa: E722
+        except (requests.RequestException, ValueError, TypeError) as e:
+            logger.debug(
+                f"Could not get API versions from {server_name} at "
+                f"{server_address}, falling back to client default: {e}"
+            )
             avail_vs_server = None
 
         avail_vs_client = set(endpoint_versions.keys())

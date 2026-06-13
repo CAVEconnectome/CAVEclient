@@ -5,13 +5,12 @@ import re
 import textwrap
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import pytz
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from IPython.display import HTML
@@ -28,6 +27,7 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
+from .timestamps import to_utc
 from .tools.table_manager import TableManager, ViewManager
 
 logger = logging.getLogger(__name__)
@@ -47,11 +47,11 @@ def deserialize_query_response(response):
     elif content_type == "x-application/pyarrow":
         try:
             return pa.deserialize(response.content)
-        except NameError:
-            (
+        except AttributeError as e:
+            raise ImportError(
                 "Deserialization of this request requires an older version of Pyarrow (version 3 works)."
                 " Update Materialization Deployment or locally downgrade Pyarrow."
-            )
+            ) from e
     else:
         raise ValueError(
             f"Unknown response type: {response.headers.get('Content-Type')}"
@@ -116,21 +116,10 @@ def concatenate_position_columns(df, inplace=False):
     return df2
 
 
-def convert_timestamp(ts: datetime) -> datetime:
-    if ts == "now":
-        ts = datetime.now(timezone.utc)
-
-    if isinstance(ts, datetime):
-        if ts.tzinfo is None:
-            return pytz.UTC.localize(dt=ts)
-        else:
-            return ts.astimezone(timezone.utc)
-    elif isinstance(ts, float):
-        return datetime.fromtimestamp(ts)
-    elif ts is None:
+def convert_timestamp(ts: Union[datetime, int, float, str, None]) -> datetime:
+    if ts is None:
         return pd.Timestamp.max.to_pydatetime()
-    dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
-    return dt.replace(tzinfo=timezone.utc)
+    return to_utc(ts)
 
 
 def string_format_timestamp(ts):
@@ -332,8 +321,7 @@ class MaterializationClient(ClientBase):
         url = self._endpoints["versions"].format_map(endpoint_mapping)
         query_args = {"expired": expired}
         response = self.session.get(url, params=query_args)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def get_tables(self, datastack_name=None, version: Optional[int] = None) -> list:
         """Gets a list of table names for a datastack
@@ -363,8 +351,7 @@ class MaterializationClient(ClientBase):
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def get_annotation_count(self, table_name: str, datastack_name=None, version=None):
         if datastack_name is None:
@@ -379,8 +366,7 @@ class MaterializationClient(ClientBase):
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def get_version_metadata(
         self, version: Optional[int] = None, datastack_name: str = None
@@ -826,7 +812,7 @@ class MaterializationClient(ClientBase):
             params=query_args,
             stream=not return_df,
         )
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -1023,44 +1009,45 @@ class MaterializationClient(ClientBase):
             params=query_args,
             stream=not return_df,
         )
-        self.raise_for_status(response, log_warning=log_warning)
-        if return_df:
-            with warnings.catch_warnings():
-                warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = deserialize_query_response(response)
+        handle_response(response, as_json=False, log_warning=log_warning)
+        if not return_df:
+            return response.json()
+        with warnings.catch_warnings():
+            warnings.simplefilter(action="ignore", category=FutureWarning)
+            warnings.simplefilter(action="ignore", category=DeprecationWarning)
+            df = deserialize_query_response(response)
 
-            if metadata:
-                attrs = self._assemble_attributes(
-                    tables,
-                    suffixes=suffixes,
-                    desired_resolution=response.headers.get(
-                        "dataframe_resolution", desired_resolution
-                    ),
-                    filters={
-                        "inclusive": filter_in_dict,
-                        "exclusive": filter_out_dict,
-                        "equal": filter_equal_dict,
-                        "greater": filter_greater_dict,
-                        "less": filter_less_dict,
-                        "greater_equal": filter_greater_equal_dict,
-                        "less_equal": filter_less_equal_dict,
-                        "spatial": filter_spatial_dict,
-                        "regex": filter_regex_dict,
-                    },
-                    select_columns=select_columns,
-                    offset=offset,
-                    limit=limit,
-                    live_query=False,
-                    timestamp=None,
-                    materialization_version=materialization_version,
-                    column_names=response.headers.get("column_names", None),
-                )
-                df.attrs.update(attrs)
-            if split_positions:
-                return df
-            else:
-                return concatenate_position_columns(df, inplace=True)
+        if metadata:
+            attrs = self._assemble_attributes(
+                tables,
+                suffixes=suffixes,
+                desired_resolution=response.headers.get(
+                    "dataframe_resolution", desired_resolution
+                ),
+                filters={
+                    "inclusive": filter_in_dict,
+                    "exclusive": filter_out_dict,
+                    "equal": filter_equal_dict,
+                    "greater": filter_greater_dict,
+                    "less": filter_less_dict,
+                    "greater_equal": filter_greater_equal_dict,
+                    "less_equal": filter_less_equal_dict,
+                    "spatial": filter_spatial_dict,
+                    "regex": filter_regex_dict,
+                },
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                live_query=False,
+                timestamp=None,
+                materialization_version=materialization_version,
+                column_names=response.headers.get("column_names", None),
+            )
+            df.attrs.update(attrs)
+        if split_positions:
+            return df
+        else:
+            return concatenate_position_columns(df, inplace=True)
 
     def map_filters(self, filters, timestamp, timestamp_past):
         """Translate a list of filter dictionaries from a point in the
@@ -1544,7 +1531,7 @@ class MaterializationClient(ClientBase):
                 stream=not return_df,
                 verify=self.verify,
             )
-            self.raise_for_status(response, log_warning=log_warning)
+            handle_response(response, as_json=False, log_warning=log_warning)
 
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
@@ -2153,10 +2140,10 @@ class MaterializationClient(ClientBase):
                 "Accept-Encoding": encoding,
             },
             params=query_args,
-            stream=~return_df,
+            stream=not return_df,
             verify=self.verify,
         )
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
 
         with MyTimeIt("deserialize"):
             with warnings.catch_warnings():
@@ -2214,10 +2201,10 @@ class MaterializationClient(ClientBase):
                 )
                 df.attrs.update(attrs)
             except HTTPError as e:
-                raise Exception(
-                    e.message
-                    + " Metadata could not be loaded, try with metadata=False if not needed"
-                )
+                raise HTTPError(
+                    f"{e} Metadata could not be loaded, try with metadata=False if not needed",
+                    response=e.response,
+                ) from e
         return df
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
@@ -2249,8 +2236,7 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["version"] = version
         url = self._endpoints["get_views"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_metadata(
@@ -2289,8 +2275,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["get_view_metadata"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response, log_warning=log_warning)
-        return response.json()
+        return handle_response(response, log_warning=log_warning)
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_schema(
@@ -2329,8 +2314,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["view_schema"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response, log_warning=log_warning)
-        return response.json()
+        return handle_response(response, log_warning=log_warning)
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_schemas(
@@ -2364,8 +2348,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["view_schemas"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response, log_warning=log_warning)
-        return response.json()
+        return handle_response(response, log_warning=log_warning)
 
     @_check_version_compatibility(
         method_api_constraint=">=3.0.0",
@@ -2515,7 +2498,7 @@ class MaterializationClient(ClientBase):
             params=query_args,
             stream=not return_df,
         )
-        self.raise_for_status(response)
+        handle_response(response, as_json=False)
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -2583,8 +2566,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["unique_string_values"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def neuroglancer_annotation_path(
         self,
@@ -2616,8 +2598,7 @@ class MaterializationClient(ClientBase):
         )
         info_url = url + "/info"
         response = self.session.get(info_url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
     
     def neuroglancer_segprop_path(
         self,
@@ -2655,5 +2636,4 @@ class MaterializationClient(ClientBase):
         )
         info_url = url + "/info"
         response = self.session.get(info_url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
