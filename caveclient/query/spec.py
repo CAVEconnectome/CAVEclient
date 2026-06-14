@@ -22,19 +22,6 @@ from .filters import ColumnHandle, Filter
 from .kinds import FilterKind, FilterOp
 from .serialize import filters_from_kwargs, filters_to_payload
 
-# The familiar filter-dict argument names accepted by query(), in payload order.
-FILTER_KWARG_NAMES = (
-    "filter_in_dict",
-    "filter_out_dict",
-    "filter_equal_dict",
-    "filter_greater_dict",
-    "filter_less_dict",
-    "filter_greater_equal_dict",
-    "filter_less_equal_dict",
-    "filter_spatial_dict",
-    "filter_regex_dict",
-)
-
 SourceKind = Literal["table", "view", "dataset", "auto"]
 
 

@@ -31,8 +31,8 @@ def test_frozen_table_delegates_to_query_table(myclient, mocker):  # noqa: F811
         "synapses",
         version=3,
         kind="table",
-        filter_in_dict={"pre_pt_root_id": [500]},
-        filter_out_dict={"post_pt_root_id": [501]},
+        filter_in={"pre_pt_root_id": [500]},
+        filter_out={"post_pt_root_id": [501]},
         limit=10,
         allow_version_fallback=False,
     )
@@ -41,7 +41,7 @@ def test_frozen_table_delegates_to_query_table(myclient, mocker):  # noqa: F811
     assert spy.call_args.args[0] == "synapses"
     assert kw["materialization_version"] == 3
     assert kw["limit"] == 10
-    # flat single-table filters, NOT_IN mapped to the filter_out_dict argument
+    # delegated query_table still receives the _dict argument names
     assert kw["filter_in_dict"] == {"pre_pt_root_id": [500]}
     assert kw["filter_out_dict"] == {"post_pt_root_id": [501]}
 
@@ -60,7 +60,7 @@ def test_live_table_delegates_to_live_live_query(myclient, mocker):  # noqa: F81
         "synapses",
         timestamp=NOW,
         kind="table",
-        filter_in_dict={"pre_pt_root_id": [500]},
+        filter_in={"pre_pt_root_id": [500]},
     )
     assert out == "DF"
     _, kw = spy.call_args
@@ -129,7 +129,7 @@ def test_passing_a_queryspec_dispatches_it(myclient, mocker):  # noqa: F811
 def test_queryspec_plus_kwargs_is_rejected(myclient):  # noqa: F811
     spec = QuerySpec(source=Source("synapses", kind="table"), at=At(version=2))
     try:
-        myclient.materialize.query(spec, filter_in_dict={"x": [1]})
+        myclient.materialize.query(spec, filter_in={"x": [1]})
     except ValueError as e:
         assert "QuerySpec" in str(e)
     else:
@@ -178,7 +178,7 @@ def test_string_and_table_forms_are_equivalent_for_single_table(myclient, mocker
     myclient.materialize.query(
         "synapses",
         version=3,
-        filter_greater_dict={"size": 100},
+        filter_greater={"size": 100},
         allow_version_fallback=False,
     )
     myclient.materialize.query(
@@ -193,7 +193,7 @@ def test_string_and_table_forms_are_equivalent_for_single_table(myclient, mocker
 def test_table_objects_plus_kwargs_is_rejected(myclient):  # noqa: F811
     try:
         myclient.materialize.query(
-            [Table("a", "x"), Table("b", "y")], filter_in_dict={"c": [1]}
+            [Table("a", "x"), Table("b", "y")], filter_in={"c": [1]}
         )
     except ValueError as e:
         assert "Table objects" in str(e)

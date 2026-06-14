@@ -29,7 +29,6 @@ from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
 from .query import Capabilities, Join, QuerySpec, Switchboard, Table
 from .query.spec import (
-    FILTER_KWARG_NAMES,
     build_query_spec,
     build_query_spec_from_tables,
     resolve_version_fallback,
@@ -701,6 +700,15 @@ class MaterializationClient(ClientBase):
         version: Optional[int] = None,
         timestamp: Optional[datetime] = None,
         kind: str = "auto",
+        filter_in: dict = None,
+        filter_out: dict = None,
+        filter_equal: dict = None,
+        filter_greater: dict = None,
+        filter_less: dict = None,
+        filter_greater_equal: dict = None,
+        filter_less_equal: dict = None,
+        filter_spatial: dict = None,
+        filter_regex: dict = None,
         select_columns=None,
         offset: int = None,
         limit: int = None,
@@ -713,7 +721,6 @@ class MaterializationClient(ClientBase):
         allow_invalid_root_ids: bool = False,
         allow_version_fallback: bool = True,
         datastack_name: str = None,
-        **filter_kwargs,
     ):
         """Unified query entry point that routes to the right backend.
 
@@ -725,15 +732,13 @@ class MaterializationClient(ClientBase):
         ``kind``.
 
         For the common single-source case, pass the table or view name as a
-        string with the familiar ``filter_in_dict={column: value}`` keyword
-        arguments (``filter_in_dict``, ``filter_out_dict``, ``filter_equal_dict``,
-        ``filter_greater_dict``, ``filter_less_dict``,
-        ``filter_greater_equal_dict``, ``filter_less_equal_dict``,
-        ``filter_spatial_dict``, ``filter_regex_dict``; flat or nested shapes
-        accepted). For joins, pass a list of :class:`~caveclient.query.Table`
-        objects, each carrying its own join column, suffix, and filters — so a
-        table name is written once. A single ``Table`` is equivalent to the
-        string form.
+        string with ``filter_*={column: value}`` keyword arguments
+        (``filter_in``, ``filter_out``, ``filter_equal``, ``filter_greater``,
+        ``filter_less``, ``filter_greater_equal``, ``filter_less_equal``,
+        ``filter_spatial``, ``filter_regex``; flat or nested shapes accepted).
+        For joins, pass a list of :class:`~caveclient.query.Table` objects, each
+        carrying its own join column, suffix, and filters — so a table name is
+        written once. A single ``Table`` is equivalent to the string form.
 
         Parameters
         ----------
@@ -767,11 +772,33 @@ class MaterializationClient(ClientBase):
             As for :meth:`query_table`. (For ``Table`` inputs, ``select`` lives
             on each ``Table`` instead of ``select_columns``.)
 
+        filter_in, filter_out, filter_equal, filter_greater, filter_less, filter_greater_equal, filter_less_equal, filter_spatial, filter_regex :
+            Filters on the source, as ``{column: value}`` (flat) or
+            ``{table: {column: value}}`` (nested). With ``Table`` objects, filters
+            live on each ``Table`` instead.
+
         Returns
         -------
         pandas.DataFrame
             The query result, as produced by the routed backend.
         """
+        # Public kwargs drop the redundant `_dict`; the internal pipeline and the
+        # delegated methods still use the `_dict` argument names.
+        filter_kwargs = {
+            name: value
+            for name, value in {
+                "filter_in_dict": filter_in,
+                "filter_out_dict": filter_out,
+                "filter_equal_dict": filter_equal,
+                "filter_greater_dict": filter_greater,
+                "filter_less_dict": filter_less,
+                "filter_greater_equal_dict": filter_greater_equal,
+                "filter_less_equal_dict": filter_less_equal,
+                "filter_spatial_dict": filter_spatial,
+                "filter_regex_dict": filter_regex,
+            }.items()
+            if value is not None
+        }
         is_table_objs = isinstance(source, Table) or (
             isinstance(source, (list, tuple))
             and len(source) > 0
@@ -807,11 +834,6 @@ class MaterializationClient(ClientBase):
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")
-            unknown = set(filter_kwargs) - set(FILTER_KWARG_NAMES)
-            if unknown:
-                raise TypeError(
-                    f"unexpected keyword argument(s): {', '.join(sorted(unknown))}"
-                )
             if kind == "auto":
                 kind = self._resolve_source_kind(source, datastack_name=datastack_name)
             spec = build_query_spec(
