@@ -341,10 +341,17 @@ lake, view did not yet exist), the join is unroutable — the same
 `UnroutableQueryError`, assembled from per-source reasons. Nothing to reconcile.
 
 **Status: implemented for table↔view (frozen), `caveclient/query/merge.py`.** A
-join is detected as heterogeneous when a participant resolves to a view;
-`query()` then runs each source as an ordinary single-source sub-query (so the
-switchboard routes each on its own) and the pure `local_merge_query` planner does
-the semi-join pushdown and the inner merge with `_x`/`_y` suffixing. Because the
+join is detected as heterogeneous when a participant resolves to a view. The
+planner partitions the chain into **engine runs** (`plan_segments`): consecutive
+CAVE tables are grouped into a single server-side join (so a reference table —
+itself an annotation+reference merge — joined to a view is *one* `query_table`
+plus *one* `query_view`), while each view stands alone (a view is one query,
+always). Each run is an ordinary `query()` call (so the switchboard routes it on
+its own), and the pure `local_merge_query` planner does the semi-join pushdown
+across run boundaries and the inner merge. A run's boundary key may come back
+suffixed by the server's intra-run `_x`/`_y` disambiguation, so the planner
+resolves it by probing the returned frame (`_resolve_key`); cross-*run* collisions
+are suffixed by the planner. Because the
 planner passes the requested `At` straight through, **live table↔view joins come
 for free the moment the server makes views live-queryable** (Phase 2 flips the
 view backend's timestamp gate) — no planner change; today a live table+view join

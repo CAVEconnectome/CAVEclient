@@ -393,6 +393,30 @@ def test_frozen_table_view_local_merge(mat):
     assert (out["target_id"] == out["id_y"]).all()
 
 
+def test_grouped_cave_run_then_view_local_merge(mat):
+    # Two CAVE tables are grouped into ONE server-side join (suffixed _x/_y), then
+    # merged locally with the view (suffixed _z): mtypes_v2 ⋈ mtypes_v1 (shared
+    # target_id) ⋈ view on id.
+    out = mat.query(
+        [
+            Table("allen_column_mtypes_v2", join_on=CONFIG["ref_join_col"]),
+            Table("allen_column_mtypes_v1", join_on=CONFIG["ref_join_col"]),
+            Table(CONFIG["view"], join_on="id", kind="view"),
+        ],
+        version=V,
+        limit=8,
+    )
+    assert 0 < len(out) <= 8
+    # the two cave tables were joined server-side -> _x / _y
+    assert "cell_type_x" in out.columns and "cell_type_y" in out.columns
+    # the view's columns collide with the cave run and take the third suffix _z;
+    # its unique columns stay bare
+    assert "pt_root_id_z" in out.columns
+    assert "orig_root_id" in out.columns
+    # the cross-segment join held: the cave run's boundary key == the view's id
+    assert (out["target_id_y"] == out["id"]).all()
+
+
 def test_live_table_view_join_refused_until_views_go_live(mat):
     # The planner passes timestamp= straight through to each sub-query, so a live
     # table+view join will work for free once the server makes views live-

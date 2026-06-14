@@ -37,7 +37,7 @@ from .query import (
     Table,
     UnroutableQueryError,
 )
-from .query.merge import default_suffixes, local_merge_query
+from .query.merge import default_suffixes, local_merge_query, plan_segments
 from .query.spec import (
     build_query_spec,
     build_query_spec_from_tables,
@@ -761,71 +761,121 @@ class MaterializationClient(ClientBase):
         get_counts=False,
         datastack_name=None,
     ):
-        """Execute a heterogeneous join (a view joined to another source) the only
-        way the server allows: query each source independently and merge locally.
+        """Execute a heterogeneous join the only way the server allows: split it
+        along engine boundaries, run each piece where it can be served, and merge
+        locally.
 
-        Each source's sub-query is an ordinary single-source :meth:`query`, so it
-        routes through the switchboard on its own (a view to ``query_view``, a
-        table to ``query_table``/``live_live_query``). The pure planner in
+        Consecutive CAVE tables are grouped into one server-side join (so a
+        reference table -- itself an annotation+reference merge -- joined to a view
+        is one ``query_table`` plus one ``query_view``); each view is its own
+        sub-query. Every sub-query is an ordinary :meth:`query`, so it routes
+        through the switchboard on its own. The pure planner in
         :mod:`caveclient.query.merge` orchestrates the semi-join key pushdown and
-        the local merge; this method only supplies the per-source executor.
+        the merge; this method only supplies the per-segment executor.
         """
         if get_counts:
             raise ValueError(
                 "get_counts is not supported for joins that merge a view locally"
             )
-        primary = tables[0].name
-        kind_by_name = {t.name: k for t, k in zip(tables, kinds)}
+        suffixes = default_suffixes(tables)
+        segments = plan_segments(tables, kinds, suffixes)
+        primary_name = tables[0].name
 
-        def run_source(t, extra_filter_in):
-            # this table's own filters, as query() filter_* kwargs
-            fkw = {
-                op.kwarg_key[: -len("_dict")]: dict(d)
-                for op, d in t._filter_dicts().items()
-            }
-            if extra_filter_in:
-                fin = fkw.setdefault("filter_in", {})
-                for col, vals in extra_filter_in.items():
-                    fin[col] = (
-                        list(set(fin[col]) & set(vals)) if col in fin else list(vals)
-                    )
-            # make sure the join key is returned even if the caller narrowed select
-            sel = list(t.select) if t.select else None
-            if sel is not None and t.join_on and t.join_on not in sel:
-                sel = sel + [t.join_on]
+        def run_segment(seg, extra_filter_in):
+            is_driving = seg.tables[0].name == primary_name
+            rs = random_sample if is_driving else None
             try:
-                return self.query(
-                    t.name,
+                if seg.kind == "view":
+                    return self._run_view_segment(
+                        seg,
+                        extra_filter_in,
+                        version=version,
+                        timestamp=timestamp,
+                        random_sample=rs,
+                        split_positions=split_positions,
+                        desired_resolution=desired_resolution,
+                        metadata=metadata,
+                        allow_missing_lookups=allow_missing_lookups,
+                        allow_invalid_root_ids=allow_invalid_root_ids,
+                        allow_version_fallback=allow_version_fallback,
+                        datastack_name=datastack_name,
+                    )
+                return self._run_cave_segment(
+                    seg,
+                    extra_filter_in,
+                    suffixes,
                     version=version,
                     timestamp=timestamp,
-                    kind=kind_by_name[t.name],
-                    select_columns=sel,
+                    random_sample=rs,
                     split_positions=split_positions,
                     desired_resolution=desired_resolution,
                     metadata=metadata,
                     allow_missing_lookups=allow_missing_lookups,
                     allow_invalid_root_ids=allow_invalid_root_ids,
-                    # random_sample drives the primary (driving) source only
-                    random_sample=random_sample if t.name == primary else None,
                     allow_version_fallback=allow_version_fallback,
                     datastack_name=datastack_name,
-                    **fkw,
                 )
             except UnroutableQueryError as e:
-                names = ", ".join(repr(t.name) for t in tables)
+                joined = ", ".join(repr(t.name) for t in tables)
+                culprit = ", ".join(f"`{t.name}`" for t in seg.tables)
                 raise UnroutableQueryError(
-                    f"This join ({names}) is run as a local merge of separate "
-                    f"sub-queries, and the sub-query for `{t.name}` ({kind_by_name[t.name]}) "
+                    f"This join ({joined}) is run as a local merge of separate "
+                    f"sub-queries, and the sub-query for {culprit} ({seg.kind}) "
                     f"could not be served:\n{e}"
                 ) from e
 
         return local_merge_query(
-            tables,
-            run_source,
-            suffixes=default_suffixes(tables),
-            offset=offset,
-            limit=limit,
+            segments, run_segment, offset=offset, limit=limit
         )
+
+    def _run_view_segment(self, seg, extra_filter_in, **opts):
+        """Run a one-view segment as a single ``query_view`` (via :meth:`query`)."""
+        t = seg.tables[0]
+        fkw = {
+            op.kwarg_key[: -len("_dict")]: dict(d) for op, d in t._filter_dicts().items()
+        }
+        self._fold_pushdown(fkw, extra_filter_in)
+        sel = list(t.select) if t.select else None
+        if sel is not None:
+            for key in (seg.left_key, seg.right_key):
+                if key and key not in sel:
+                    sel.append(key)
+        return self.query(t.name, kind="view", select_columns=sel, **opts, **fkw)
+
+    def _run_cave_segment(self, seg, extra_filter_in, suffixes, **opts):
+        """Run a run of consecutive CAVE tables as one server-side join.
+
+        Rebuilds the run's tables with their global suffixes and folds the
+        semi-join pushdown into the first table; a single-table run (e.g. a
+        reference table, which merges its reference itself) is just that one
+        ``Table``.
+        """
+        run_tables = []
+        for k, t in enumerate(seg.tables):
+            fin = dict(t.filter_in or {})
+            if k == 0 and extra_filter_in:
+                for col, vals in extra_filter_in.items():
+                    fin[col] = (
+                        list(set(fin[col]) & set(vals)) if col in fin else list(vals)
+                    )
+            sel = list(t.select) if t.select else None
+            if sel is not None and t.join_on and t.join_on not in sel:
+                sel = sel + [t.join_on]
+            run_tables.append(
+                replace(t, filter_in=(fin or None), suffix=suffixes[t.name], select=sel)
+            )
+        source = run_tables if len(run_tables) > 1 else run_tables[0]
+        return self.query(source, **opts)
+
+    @staticmethod
+    def _fold_pushdown(filter_kwargs, extra_filter_in):
+        """Merge a semi-join key-set pushdown into a filter_in kwarg, intersecting
+        with any existing filter on that column."""
+        if not extra_filter_in:
+            return
+        fin = filter_kwargs.setdefault("filter_in", {})
+        for col, vals in extra_filter_in.items():
+            fin[col] = list(set(fin[col]) & set(vals)) if col in fin else list(vals)
 
     def query(
         self,
