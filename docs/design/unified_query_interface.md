@@ -398,6 +398,36 @@ positionally. (A self-join — the *same* table as two distinct result nodes wit
 different suffixes — is therefore not expressible yet; it needs aliasing, and the
 repeat-must-be-bare rule refuses it cleanly.)
 
+### Join type (inner / left) — anticipated
+
+Today every join is **inner**. The one other mode anticipated is **left** (keep
+all rows of the left/driving side, null the joined side). It is a **per-edge**
+property — each join independently inner or left — modeled cleanest as a
+`how="inner"|"left"` field on the *joined* (right) `Table`: in a tree, each node
+is the right side of exactly one edge (its parent edge), so "how is this table
+attached to its parent" is unambiguous. Default `inner`. It propagates down the
+tree (a child left-joined keeps its parent-subtree rows and nulls its own
+columns). Touch points when it lands:
+
+- **Cross-engine (local merge):** nearly free — `_merge_tree` threads the edge's
+  `how` into the pandas `merge(how=...)` (currently hardcoded `"inner"`).
+- **Server-side (within a CAVE run):** the gating dependency — a left join
+  between two CAVE tables in one `live_live_query` needs the **server's** join
+  endpoint to support left/outer. Until then a left join *within* a CAVE run
+  isn't expressible; a left join *across* runs (the local-merge seam) would be.
+- **Two correctness notes.** (1) The semi-join pushdown stays valid for left:
+  restricting the child query to the parent's keys still only fetches child rows
+  that could match, and non-matching parent rows survive as nulls — no change
+  needed. (2) The empty/short-circuit *does* change: today "parent yields no keys
+  → whole result empty" is an inner-only shortcut; under a left join no child keys
+  means *all parent rows with nulls*, so that `break` (`graph_merge_query`) must be
+  conditioned on `how`. That is the single spot where left isn't a drop-in.
+
+Deliberately not half-built: a left join that worked across runs but not within a
+CAVE run would be exactly the "fails for an obscure reason" inconsistency this
+design avoids, so it lands once the server's CAVE-side left is settled and both
+paths behave identically.
+
 **Why this matters for the cross-engine future:** the edge list is the planner's
 native input. Cross-engine joins are graphs, not chains (a deltalake table joined
 to two server tables on different columns), and an edge that *crosses* an engine
