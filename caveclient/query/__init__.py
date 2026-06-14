@@ -23,6 +23,7 @@ from .spec import (
     OutputOptions,
     QuerySpec,
     Source,
+    Table,
     resolve_version_fallback,
 )
 
@@ -42,6 +43,7 @@ __all__ = [
     "QuerySpec",
     "Source",
     "Switchboard",
+    "Table",
     "UnroutableQueryError",
     "filters_to_method_kwargs",
     "filters_to_payload",

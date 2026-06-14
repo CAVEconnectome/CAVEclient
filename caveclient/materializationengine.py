@@ -27,10 +27,11 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
-from .query import Capabilities, QuerySpec, Switchboard
+from .query import Capabilities, QuerySpec, Switchboard, Table
 from .query.spec import (
     FILTER_KWARG_NAMES,
     build_query_spec,
+    build_query_spec_from_tables,
     resolve_version_fallback,
 )
 from .timestamps import to_utc
@@ -684,8 +685,6 @@ class MaterializationClient(ClientBase):
         split_positions: bool = False,
         desired_resolution: Iterable = None,
         metadata: bool = True,
-        joins: list = None,
-        suffixes: dict = None,
         allow_version_fallback: bool = True,
         datastack_name: str = None,
         **filter_kwargs,
@@ -699,20 +698,26 @@ class MaterializationClient(ClientBase):
         (table vs view) is resolved from metadata unless given explicitly via
         ``kind``.
 
-        Filters use the familiar ``filter_in_dict={column: value}`` style passed
-        as keyword arguments (``filter_in_dict``, ``filter_out_dict``,
-        ``filter_equal_dict``, ``filter_greater_dict``, ``filter_less_dict``,
+        For the common single-source case, pass the table or view name as a
+        string with the familiar ``filter_in_dict={column: value}`` keyword
+        arguments (``filter_in_dict``, ``filter_out_dict``, ``filter_equal_dict``,
+        ``filter_greater_dict``, ``filter_less_dict``,
         ``filter_greater_equal_dict``, ``filter_less_equal_dict``,
-        ``filter_spatial_dict``, ``filter_regex_dict``). Both flat
-        ``{column: value}`` and nested ``{table: {column: value}}`` shapes are
-        accepted.
+        ``filter_spatial_dict``, ``filter_regex_dict``; flat or nested shapes
+        accepted). For joins, pass a list of :class:`~caveclient.query.Table`
+        objects, each carrying its own join column, suffix, and filters — so a
+        table name is written once. A single ``Table`` is equivalent to the
+        string form.
 
         Parameters
         ----------
         source :
-            Table or view name, or a pre-built
-            :class:`~caveclient.query.QuerySpec` (in which case the other
-            keyword arguments must not be supplied).
+            One of: a table/view name (string); a
+            :class:`~caveclient.query.Table` or list of them (for joins, with
+            filters/suffixes attached per table); or a pre-built
+            :class:`~caveclient.query.QuerySpec`. With ``Table`` objects or a
+            ``QuerySpec``, the filter/join/suffix keyword arguments must not be
+            supplied.
         version :
             Materialization version to query (frozen). Mutually exclusive with
             ``timestamp``.
@@ -732,12 +737,36 @@ class MaterializationClient(ClientBase):
         pandas.DataFrame
             The query result, as produced by the routed backend.
         """
+        is_table_objs = isinstance(source, Table) or (
+            isinstance(source, (list, tuple))
+            and len(source) > 0
+            and all(isinstance(t, Table) for t in source)
+        )
         if isinstance(source, QuerySpec):
             if filter_kwargs or version is not None or timestamp is not None:
                 raise ValueError(
                     "when passing a QuerySpec, do not also pass query keyword arguments"
                 )
             spec = source
+        elif is_table_objs:
+            if filter_kwargs or select_columns is not None:
+                raise ValueError(
+                    "when passing Table objects, filters/suffixes/select live on the "
+                    "Table objects, not as query() keyword arguments"
+                )
+            tables = [source] if isinstance(source, Table) else list(source)
+            spec = build_query_spec_from_tables(
+                tables,
+                version=version,
+                timestamp=timestamp,
+                offset=offset,
+                limit=limit,
+                random_sample=random_sample,
+                get_counts=get_counts,
+                split_positions=split_positions,
+                desired_resolution=desired_resolution,
+                metadata=metadata,
+            )
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")
@@ -762,8 +791,6 @@ class MaterializationClient(ClientBase):
                 split_positions=split_positions,
                 desired_resolution=desired_resolution,
                 metadata=metadata,
-                joins=joins,
-                suffixes=suffixes,
             )
 
         if allow_version_fallback and spec.at.version is not None:

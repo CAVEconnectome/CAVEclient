@@ -12,9 +12,9 @@ from packaging.version import Version
 from caveclient.query import (
     At,
     Capabilities,
-    Join,
     QuerySpec,
     Source,
+    Table,
 )
 
 from .conftest import myclient  # noqa: F401
@@ -130,20 +130,69 @@ def test_queryspec_plus_kwargs_is_rejected(myclient):  # noqa: F811
         raise AssertionError("expected ValueError")
 
 
-def test_join_kwarg_delegates_to_join_query(myclient, mocker):  # noqa: F811
+def test_table_objects_join_delegates_to_join_query(myclient, mocker):  # noqa: F811
     spy = mocker.patch.object(myclient.materialize, "join_query", return_value="DF")
     out = myclient.materialize.query(
-        "syn",
+        [
+            Table(
+                "synapses", "post_pt_root_id", suffix="", filter_greater={"size": 100}
+            ),
+            Table("nuclei", "pt_root_id", suffix="_nuc"),
+        ],
         version=3,
-        kind="table",
-        joins=[Join("syn", "post_pt_root_id", "nuc", "pt_root_id")],
-        suffixes={"syn": "", "nuc": "_nuc"},
         allow_version_fallback=False,
     )
     assert out == "DF"
     args, kwargs = spy.call_args
-    assert args[0] == [["syn", "post_pt_root_id"], ["nuc", "pt_root_id"]]
-    assert kwargs["suffixes"] == {"syn": "", "nuc": "_nuc"}
+    assert args[0] == [["synapses", "post_pt_root_id"], ["nuclei", "pt_root_id"]]
+    assert kwargs["suffixes"] == {"synapses": "", "nuclei": "_nuc"}
+    assert kwargs["filter_greater_dict"] == {"synapses": {"size": 100}}
+
+
+def test_single_table_object_delegates_to_query_table(myclient, mocker):  # noqa: F811
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    out = myclient.materialize.query(
+        Table("synapses", filter_greater={"size": 100}),
+        version=3,
+        allow_version_fallback=False,
+    )
+    assert out == "DF"
+    _, kwargs = spy.call_args
+    # single table -> flat filters, same as the string form
+    assert kwargs["filter_greater_dict"] == {"size": 100}
+
+
+def test_string_and_table_forms_are_equivalent_for_single_table(myclient, mocker):  # noqa: F811
+    calls = []
+    mocker.patch.object(
+        myclient.materialize,
+        "query_table",
+        side_effect=lambda *a, **k: calls.append((a, k)) or "DF",
+    )
+    myclient.materialize.query(
+        "synapses",
+        version=3,
+        filter_greater_dict={"size": 100},
+        allow_version_fallback=False,
+    )
+    myclient.materialize.query(
+        Table("synapses", filter_greater={"size": 100}),
+        version=3,
+        allow_version_fallback=False,
+    )
+    # both produce the same delegated filter kwargs
+    assert calls[0][1]["filter_greater_dict"] == calls[1][1]["filter_greater_dict"]
+
+
+def test_table_objects_plus_kwargs_is_rejected(myclient):  # noqa: F811
+    try:
+        myclient.materialize.query(
+            [Table("a", "x"), Table("b", "y")], filter_in_dict={"c": [1]}
+        )
+    except ValueError as e:
+        assert "Table objects" in str(e)
+    else:
+        raise AssertionError("expected ValueError")
 
 
 def test_available_version_set_is_cached(myclient, mocker):  # noqa: F811

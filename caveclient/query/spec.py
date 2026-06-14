@@ -18,7 +18,8 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Literal, Optional, Sequence
 
-from .filters import Filter
+from .filters import ColumnHandle, Filter
+from .kinds import FilterKind, FilterOp
 from .serialize import filters_from_kwargs, filters_to_payload
 
 # The familiar filter-dict argument names accepted by query(), in payload order.
@@ -79,6 +80,65 @@ class Join:
     left_column: str
     right_table: str
     right_column: str
+
+
+@dataclass(frozen=True)
+class Table:
+    """A table's participation in a query: its join column, suffix, and filters.
+
+    The ergonomic way to express a (possibly multi-table) query, gathering
+    everything about one table into a single object so its name is written once.
+    Pass one ``Table``, or a list of them to ``query()``; adjacent tables in the
+    list are joined on their respective ``join_on`` columns.
+
+    Examples
+    --------
+    >>> client.materialize.query([
+    ...     Table("synapses", "post_pt_root_id", suffix="", filter_greater={"size": 100}),
+    ...     Table("nuclei", "pt_root_id", suffix="_nuc"),
+    ... ])
+
+    Parameters
+    ----------
+    name :
+        Table name.
+    join_on :
+        Column on this table used to join to the adjacent table(s) in the query.
+        Required for every table when more than one is given.
+    suffix :
+        Suffix appended to this table's columns to disambiguate joins.
+    select :
+        Columns to return from this table (defaults to all).
+    filter_in, filter_out, filter_equal, filter_greater, filter_less, filter_greater_equal, filter_less_equal, filter_spatial, filter_regex :
+        Flat ``{column: value}`` filter dicts scoped to this table.
+    """
+
+    name: str
+    join_on: Optional[str] = None
+    suffix: Optional[str] = None
+    select: Optional[Sequence[str]] = None
+    filter_in: Optional[dict] = None
+    filter_out: Optional[dict] = None
+    filter_equal: Optional[dict] = None
+    filter_greater: Optional[dict] = None
+    filter_less: Optional[dict] = None
+    filter_greater_equal: Optional[dict] = None
+    filter_less_equal: Optional[dict] = None
+    filter_spatial: Optional[dict] = None
+    filter_regex: Optional[dict] = None
+
+    def _filter_dicts(self) -> dict:
+        """Map this table's set filter dicts to their FilterOp."""
+        return {
+            op: getattr(self, attr)
+            for attr, op in _TABLE_FILTER_FIELDS.items()
+            if getattr(self, attr)
+        }
+
+
+# Table filter-field name -> FilterOp. The field names are the query() kwarg
+# names without the redundant `_dict` suffix (it is implied on a table object).
+_TABLE_FILTER_FIELDS = {op.kwarg_key[: -len("_dict")]: op for op in FilterOp}
 
 
 @dataclass(frozen=True)
@@ -230,6 +290,74 @@ def build_query_spec(
         at=At(version=version, timestamp=timestamp),
         filters=filters,
         select_columns=select_columns,
+        offset=offset,
+        limit=limit,
+        random_sample=random_sample,
+        get_counts=get_counts,
+        output=OutputOptions(
+            split_positions=split_positions,
+            desired_resolution=desired_resolution,
+            metadata=metadata,
+        ),
+    )
+
+
+def build_query_spec_from_tables(
+    tables,
+    *,
+    version: Optional[int] = None,
+    timestamp: Optional[datetime] = None,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+    random_sample: Optional[int] = None,
+    get_counts: bool = False,
+    split_positions: bool = False,
+    desired_resolution: Optional[Sequence[float]] = None,
+    metadata: bool = True,
+) -> QuerySpec:
+    """Build a :class:`QuerySpec` from one or more :class:`Table` objects.
+
+    The first table is the primary source. Adjacent tables are joined on their
+    ``join_on`` columns; per-table suffixes, selected columns, and filters are
+    gathered into the spec's joins/suffixes/filters/select_columns.
+    """
+    tables = list(tables)
+    if not tables:
+        raise InvalidQueryError("at least one Table is required")
+    if len(tables) > 1 and any(t.join_on is None for t in tables):
+        missing = [t.name for t in tables if t.join_on is None]
+        raise InvalidQueryError(
+            f"every table in a multi-table query must set join_on; missing on: {missing}"
+        )
+
+    joins = tuple(
+        Join(
+            tables[i].name, tables[i].join_on, tables[i + 1].name, tables[i + 1].join_on
+        )
+        for i in range(len(tables) - 1)
+    )
+    suffixes = {t.name: t.suffix for t in tables if t.suffix is not None}
+    select_columns = {t.name: list(t.select) for t in tables if t.select}
+    filters = []
+    for t in tables:
+        for op, d in t._filter_dicts().items():
+            for col, value in d.items():
+                filters.append(
+                    Filter(
+                        ColumnHandle(col, FilterKind.UNTYPED, table=t.name), op, value
+                    )
+                )
+
+    return QuerySpec(
+        source=Source(
+            tables[0].name,
+            kind="table",
+            joins=joins or None,
+            suffixes=suffixes or None,
+        ),
+        at=At(version=version, timestamp=timestamp),
+        filters=tuple(filters),
+        select_columns=select_columns or None,
         offset=offset,
         limit=limit,
         random_sample=random_sample,
