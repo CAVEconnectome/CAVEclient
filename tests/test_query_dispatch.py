@@ -220,6 +220,35 @@ def test_edge_list_star_join_via_live(myclient, mocker):  # noqa: F811
     assert kwargs["filter_equal_dict"] == {"table_a": {"cell_type": "L2a"}}
 
 
+def test_flat_pair_equals_single_edge(myclient, mocker):  # noqa: F811
+    # a flat pair [A, B] is sugar for the single-edge graph [[A, B]]
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    myclient.materialize.query(
+        [Table("a", "x"), Table("b", "y")], version=3, allow_version_fallback=False
+    )
+    flat_joins = spy.call_args.kwargs["joins"]
+    spy.reset_mock()
+    myclient.materialize.query(
+        [[Table("a", "x"), Table("b", "y")]], version=3, allow_version_fallback=False
+    )
+    edge_joins = spy.call_args.kwargs["joins"]
+    assert flat_joins == edge_joins == [["a", "x", "b", "y"]]
+
+
+def test_flat_three_tables_is_refused(myclient):  # noqa: F811
+    # no implicit chain: a flat list past two tables points at the edge-list form
+    with pytest.raises(ValueError, match="single two-table join"):
+        myclient.materialize.query(
+            [Table("a", "x"), Table("b", "y"), Table("c", "z")], version=3
+        )
+
+
 def test_edge_list_with_view_does_local_merge(myclient, mocker):  # noqa: F811
     # a view in an edge graph is now split off and merged locally (no longer
     # refused): the CAVE side runs as a server query, the view as query_view

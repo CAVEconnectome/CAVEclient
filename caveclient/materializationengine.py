@@ -944,19 +944,23 @@ class MaterializationClient(ClientBase):
         (``filter_in``, ``filter_out``, ``filter_equal``, ``filter_greater``,
         ``filter_less``, ``filter_greater_equal``, ``filter_less_equal``,
         ``filter_spatial``, ``filter_regex``; flat or nested shapes accepted).
-        For joins, pass a list of :class:`~caveclient.query.Table` objects, each
-        carrying its own join column, suffix, and filters — so a table name is
-        written once. A single ``Table`` is equivalent to the string form.
+
+        Joins follow one rule: **a join is an edge** ``[left, right]`` of
+        :class:`~caveclient.query.Table` objects (each carrying its own join
+        column, suffix, and filters). A single join can be written as a flat pair
+        ``[Table(a, join_on=...), Table(b, join_on=...)]``; more than one join is a
+        list of such edges, ``[[a, b], [b, c], ...]`` (a general join graph, e.g.
+        a star where one table joins two others on different columns).
 
         Parameters
         ----------
         source :
-            One of: a table/view name (string); a
-            :class:`~caveclient.query.Table` or list of them (for joins, with
-            filters/suffixes attached per table); or a pre-built
-            :class:`~caveclient.query.QuerySpec`. With ``Table`` objects or a
-            ``QuerySpec``, the filter/join/suffix keyword arguments must not be
-            supplied.
+            One of: a table/view name (string); a single
+            :class:`~caveclient.query.Table`; a flat pair of ``Table`` objects (a
+            single join); a list of ``[left, right]`` edges (a join graph); or a
+            pre-built :class:`~caveclient.query.QuerySpec`. With ``Table`` objects
+            or a ``QuerySpec``, the filter/join/suffix keyword arguments must not
+            be supplied.
         version :
             Materialization version to query (frozen). Mutually exclusive with
             ``timestamp``.
@@ -1031,27 +1035,25 @@ class MaterializationClient(ClientBase):
                     "when passing Table objects, filters/suffixes/select live on the "
                     "Table objects, not as query() keyword arguments"
                 )
-            # Both forms build the same normalized spec; the edge list yields a
-            # general join graph, the flat list a chain.
+            # One coherent rule: a join is an edge `[left, right]`, given as a list
+            # of edges. A flat list of Tables is sugar -- one table is a single
+            # source, a pair [A, B] is the single-edge graph [[A, B]]. More than
+            # one join must be written as an explicit edge list.
             if is_edge_list:
-                spec, by_name = build_query_spec_from_edges(
-                    source,
-                    version=version,
-                    timestamp=timestamp,
-                    offset=offset,
-                    limit=limit,
-                    random_sample=random_sample,
-                    get_counts=get_counts,
-                    split_positions=split_positions,
-                    desired_resolution=desired_resolution,
-                    metadata=metadata,
-                    allow_missing_lookups=allow_missing_lookups,
-                    allow_invalid_root_ids=allow_invalid_root_ids,
-                )
+                edges = [list(e) for e in source]
             else:
-                tables = [source] if isinstance(source, Table) else list(source)
+                flat = [source] if isinstance(source, Table) else list(source)
+                if len(flat) > 2:
+                    raise ValueError(
+                        "a flat list of Tables is a single two-table join; for more "
+                        "than one join pass a list of [left, right] edges, e.g. "
+                        "[[Table('a', join_on='x'), Table('b', join_on='y')], "
+                        "[Table('b', join_on='y'), Table('c', join_on='z')]]"
+                    )
+                edges = [flat] if len(flat) == 2 else None  # None -> single source
+            if edges is None:
                 spec = build_query_spec_from_tables(
-                    tables,
+                    flat,
                     version=version,
                     timestamp=timestamp,
                     offset=offset,
@@ -1064,34 +1066,51 @@ class MaterializationClient(ClientBase):
                     allow_missing_lookups=allow_missing_lookups,
                     allow_invalid_root_ids=allow_invalid_root_ids,
                 )
-                by_name = {t.name: t for t in tables}
-            kinds = {
-                n: self._participant_kind(t, datastack_name) for n, t in by_name.items()
-            }
-            # A join that includes a view can't be a single server call (views have
-            # no joinable SQL), so split the graph, run each piece, and merge
-            # locally -- this is what lets a view be joined at all.
-            if spec.source.is_join and any(k == "view" for k in kinds.values()):
-                return self._local_merge_query(
-                    by_name,
-                    spec.source.joins,
-                    kinds,
-                    spec.source.suffixes or default_suffixes(list(by_name.values())),
+                want_merge = [t.name for t in flat if t.merge_reference]
+            else:
+                spec, by_name = build_query_spec_from_edges(
+                    edges,
                     version=version,
                     timestamp=timestamp,
                     offset=offset,
                     limit=limit,
                     random_sample=random_sample,
+                    get_counts=get_counts,
                     split_positions=split_positions,
                     desired_resolution=desired_resolution,
                     metadata=metadata,
                     allow_missing_lookups=allow_missing_lookups,
                     allow_invalid_root_ids=allow_invalid_root_ids,
-                    allow_version_fallback=allow_version_fallback,
-                    get_counts=get_counts,
-                    datastack_name=datastack_name,
                 )
-            want_merge = [n for n, t in by_name.items() if t.merge_reference]
+                kinds = {
+                    n: self._participant_kind(t, datastack_name)
+                    for n, t in by_name.items()
+                }
+                # A join that includes a view can't be a single server call (views
+                # have no joinable SQL), so split the graph, run each piece, and
+                # merge locally -- this is what lets a view be joined at all.
+                if spec.source.is_join and any(k == "view" for k in kinds.values()):
+                    return self._local_merge_query(
+                        by_name,
+                        spec.source.joins,
+                        kinds,
+                        spec.source.suffixes
+                        or default_suffixes(list(by_name.values())),
+                        version=version,
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        random_sample=random_sample,
+                        split_positions=split_positions,
+                        desired_resolution=desired_resolution,
+                        metadata=metadata,
+                        allow_missing_lookups=allow_missing_lookups,
+                        allow_invalid_root_ids=allow_invalid_root_ids,
+                        allow_version_fallback=allow_version_fallback,
+                        get_counts=get_counts,
+                        datastack_name=datastack_name,
+                    )
+                want_merge = [n for n, t in by_name.items() if t.merge_reference]
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")

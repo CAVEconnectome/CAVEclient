@@ -396,12 +396,14 @@ def test_frozen_table_view_local_merge(mat):
 def test_grouped_cave_run_then_view_local_merge(mat):
     # Two CAVE tables are grouped into ONE server-side join (suffixed _x/_y), then
     # merged locally with the view (suffixed _z): mtypes_v2 ⋈ mtypes_v1 (shared
-    # target_id) ⋈ view on id.
+    # target_id) ⋈ view on id. Written as an edge list; mtypes_v1 repeats bare.
+    jc = CONFIG["ref_join_col"]
     out = mat.query(
         [
-            Table("allen_column_mtypes_v2", join_on=CONFIG["ref_join_col"]),
-            Table("allen_column_mtypes_v1", join_on=CONFIG["ref_join_col"]),
-            Table(CONFIG["view"], join_on="id", kind="view"),
+            [Table("allen_column_mtypes_v2", join_on=jc),
+             Table("allen_column_mtypes_v1", join_on=jc)],
+            [Table("allen_column_mtypes_v1", join_on=jc),
+             Table(CONFIG["view"], join_on="id", kind="view")],
         ],
         version=V,
         limit=8,
