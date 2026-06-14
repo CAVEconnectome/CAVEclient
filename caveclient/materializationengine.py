@@ -37,7 +37,12 @@ from .query import (
     Table,
     UnroutableQueryError,
 )
-from .query.merge import default_suffixes, local_merge_query, plan_segments
+from .query.merge import (
+    build_run_tree,
+    default_suffixes,
+    graph_merge_query,
+    plan_runs,
+)
 from .query.spec import (
     build_query_spec,
     build_query_spec_from_edges,
@@ -757,8 +762,10 @@ class MaterializationClient(ClientBase):
 
     def _local_merge_query(
         self,
-        tables,
+        tables_by_name,
+        joins,
         kinds,
+        suffixes,
         *,
         version=None,
         timestamp=None,
@@ -774,104 +781,111 @@ class MaterializationClient(ClientBase):
         get_counts=False,
         datastack_name=None,
     ):
-        """Execute a heterogeneous join the only way the server allows: split it
-        along engine boundaries, run each piece where it can be served, and merge
-        locally.
+        """Execute a heterogeneous join the only way the server allows: split the
+        join *graph* along engine boundaries, run each piece where it can be
+        served, and merge locally.
 
-        Consecutive CAVE tables are grouped into one server-side join (so a
-        reference table -- itself an annotation+reference merge -- joined to a view
-        is one ``query_table`` plus one ``query_view``); each view is its own
-        sub-query. Every sub-query is an ordinary :meth:`query`, so it routes
-        through the switchboard on its own. The pure planner in
-        :mod:`caveclient.query.merge` orchestrates the semi-join key pushdown and
-        the merge; this method only supplies the per-segment executor.
+        Connected CAVE tables become one server-side join (so a reference table --
+        itself an annotation+reference merge -- joined to a view is one
+        ``query_table`` plus one ``query_view``); each view is its own sub-query.
+        The cross-run edges must form a single connected tree (the pure planner in
+        :mod:`caveclient.query.merge` refuses cycles/disconnected graphs). Every
+        sub-query is an ordinary :meth:`query`, so it routes through the switchboard
+        on its own; this method only supplies the per-run executor.
         """
         if get_counts:
             raise ValueError(
                 "get_counts is not supported for joins that merge a view locally"
             )
-        suffixes = default_suffixes(tables)
-        segments = plan_segments(tables, kinds, suffixes)
-        primary_name = tables[0].name
+        table_order = list(tables_by_name)
+        runs, run_of = plan_runs(table_order, joins, kinds, suffixes)
+        order, edges = build_run_tree(runs, run_of, joins, suffixes)
+        primary = table_order[0]
 
-        def run_segment(seg, extra_filter_in):
-            is_driving = seg.tables[0].name == primary_name
-            rs = random_sample if is_driving else None
+        # (table, column) pairs that are boundary keys on each run, so a narrowed
+        # `select` still returns the columns the local merge joins on
+        boundary: dict = {}
+        for child_idx, e in edges.items():
+            boundary.setdefault(e.parent, set()).add((e.parent_table, e.parent_column))
+            boundary.setdefault(child_idx, set()).add((e.child_table, e.child_column))
+        boundary_by_run = {runs[i].tables[0]: cols for i, cols in boundary.items()}
+
+        opts = dict(
+            version=version,
+            timestamp=timestamp,
+            split_positions=split_positions,
+            desired_resolution=desired_resolution,
+            metadata=metadata,
+            allow_missing_lookups=allow_missing_lookups,
+            allow_invalid_root_ids=allow_invalid_root_ids,
+            allow_version_fallback=allow_version_fallback,
+            datastack_name=datastack_name,
+        )
+
+        def run_executor(run, incoming):
+            rs = random_sample if primary in run.tables else None
+            bcols = boundary_by_run.get(run.tables[0], set())
             try:
-                if seg.kind == "view":
-                    return self._run_view_segment(
-                        seg,
-                        extra_filter_in,
-                        version=version,
-                        timestamp=timestamp,
-                        random_sample=rs,
-                        split_positions=split_positions,
-                        desired_resolution=desired_resolution,
-                        metadata=metadata,
-                        allow_missing_lookups=allow_missing_lookups,
-                        allow_invalid_root_ids=allow_invalid_root_ids,
-                        allow_version_fallback=allow_version_fallback,
-                        datastack_name=datastack_name,
+                if run.kind == "view":
+                    return self._run_view_node(
+                        run, tables_by_name, incoming, bcols, random_sample=rs, **opts
                     )
-                return self._run_cave_segment(
-                    seg,
-                    extra_filter_in,
-                    suffixes,
-                    version=version,
-                    timestamp=timestamp,
-                    random_sample=rs,
-                    split_positions=split_positions,
-                    desired_resolution=desired_resolution,
-                    metadata=metadata,
-                    allow_missing_lookups=allow_missing_lookups,
-                    allow_invalid_root_ids=allow_invalid_root_ids,
-                    allow_version_fallback=allow_version_fallback,
-                    datastack_name=datastack_name,
+                return self._run_cave_node(
+                    run, tables_by_name, suffixes, incoming, bcols,
+                    random_sample=rs, **opts,
                 )
             except UnroutableQueryError as e:
-                joined = ", ".join(repr(t.name) for t in tables)
-                culprit = ", ".join(f"`{t.name}`" for t in seg.tables)
+                joined = ", ".join(f"`{n}`" for n in table_order)
+                culprit = ", ".join(f"`{n}`" for n in run.tables)
                 raise UnroutableQueryError(
                     f"This join ({joined}) is run as a local merge of separate "
-                    f"sub-queries, and the sub-query for {culprit} ({seg.kind}) "
+                    f"sub-queries, and the sub-query for {culprit} ({run.kind}) "
                     f"could not be served:\n{e}"
                 ) from e
 
-        return local_merge_query(
-            segments, run_segment, offset=offset, limit=limit
+        return graph_merge_query(
+            runs, order, edges, run_executor, offset=offset, limit=limit
         )
 
-    def _run_view_segment(self, seg, extra_filter_in, **opts):
-        """Run a one-view segment as a single ``query_view`` (via :meth:`query`)."""
-        t = seg.tables[0]
+    def _run_view_node(self, run, tables_by_name, incoming, bcols, **opts):
+        """Run a one-view run as a single ``query_view`` (via :meth:`query`)."""
+        name = run.tables[0]
+        t = tables_by_name[name]
         fkw = {op.field_key: dict(d) for op, d in t._filter_dicts().items()}
-        if extra_filter_in:
-            self._fold_pushdown(fkw.setdefault("filter_in", {}), extra_filter_in)
+        if incoming:
+            _, col, vals = incoming
+            self._fold_pushdown(fkw.setdefault("filter_in", {}), {col: vals})
         sel = list(t.select) if t.select else None
         if sel is not None:
-            for key in (seg.left_key, seg.right_key):
-                if key and key not in sel:
-                    sel.append(key)
-        return self.query(t.name, kind="view", select_columns=sel, **opts, **fkw)
+            for _, col in bcols:
+                if col not in sel:
+                    sel.append(col)
+        return self.query(name, kind="view", select_columns=sel, **opts, **fkw)
 
-    def _run_cave_segment(self, seg, extra_filter_in, suffixes, **opts):
-        """Run a run of consecutive CAVE tables as one server-side join.
+    def _run_cave_node(self, run, tables_by_name, suffixes, incoming, bcols, **opts):
+        """Run a connected group of CAVE tables as one server-side join.
 
-        Rebuilds the run's tables with their global suffixes and folds the
-        semi-join pushdown into the first table; a single-table run (e.g. a
-        reference table, which merges its reference itself) is just that one
-        ``Table``.
+        Rebuilds the run's tables with their global suffixes, folds the semi-join
+        pushdown into the table that owns the incoming boundary column, and keeps
+        join/boundary keys in any narrowed ``select``. A single-table run (e.g. a
+        reference table, which merges its reference itself) is just that one Table.
         """
+        target = incoming[0] if incoming else None
         run_tables = []
-        for k, t in enumerate(seg.tables):
+        for name in run.tables:
+            t = tables_by_name[name]
             fin = dict(t.filter_in or {})
-            if k == 0:
-                self._fold_pushdown(fin, extra_filter_in)
+            if incoming and name == target:
+                _, col, vals = incoming
+                self._fold_pushdown(fin, {col: vals})
             sel = list(t.select) if t.select else None
-            if sel is not None and t.join_on and t.join_on not in sel:
-                sel = sel + [t.join_on]
+            if sel is not None:
+                keep = {t.join_on} | {c for (tb, c) in bcols if tb == name}
+                for c in keep:
+                    if c and c not in sel:
+                        sel.append(c)
             run_tables.append(
-                replace(t, filter_in=(fin or None), suffix=suffixes[t.name], select=sel)
+                replace(t, filter_in=(fin or None), suffix=suffixes[name], select=sel)
             )
         source = run_tables if len(run_tables) > 1 else run_tables[0]
         return self.query(source, **opts)
@@ -1011,21 +1025,58 @@ class MaterializationClient(ClientBase):
                 )
             spec = source
             want_merge = [spec.source.name] if spec.merge_reference else []
-        elif is_table_objs:
+        elif is_table_objs or is_edge_list:
             if filter_kwargs or select_columns is not None:
                 raise ValueError(
                     "when passing Table objects, filters/suffixes/select live on the "
                     "Table objects, not as query() keyword arguments"
                 )
-            tables = [source] if isinstance(source, Table) else list(source)
-            # A join that includes a view can't be a single server call (views
-            # have no joinable SQL), so query each source separately and merge
-            # locally -- this is what lets a view be joined at all.
-            kinds = [self._participant_kind(t, datastack_name) for t in tables]
-            if len(tables) > 1 and any(k == "view" for k in kinds):
-                return self._local_merge_query(
+            # Both forms build the same normalized spec; the edge list yields a
+            # general join graph, the flat list a chain.
+            if is_edge_list:
+                spec, by_name = build_query_spec_from_edges(
+                    source,
+                    version=version,
+                    timestamp=timestamp,
+                    offset=offset,
+                    limit=limit,
+                    random_sample=random_sample,
+                    get_counts=get_counts,
+                    split_positions=split_positions,
+                    desired_resolution=desired_resolution,
+                    metadata=metadata,
+                    allow_missing_lookups=allow_missing_lookups,
+                    allow_invalid_root_ids=allow_invalid_root_ids,
+                )
+            else:
+                tables = [source] if isinstance(source, Table) else list(source)
+                spec = build_query_spec_from_tables(
                     tables,
+                    version=version,
+                    timestamp=timestamp,
+                    offset=offset,
+                    limit=limit,
+                    random_sample=random_sample,
+                    get_counts=get_counts,
+                    split_positions=split_positions,
+                    desired_resolution=desired_resolution,
+                    metadata=metadata,
+                    allow_missing_lookups=allow_missing_lookups,
+                    allow_invalid_root_ids=allow_invalid_root_ids,
+                )
+                by_name = {t.name: t for t in tables}
+            kinds = {
+                n: self._participant_kind(t, datastack_name) for n, t in by_name.items()
+            }
+            # A join that includes a view can't be a single server call (views have
+            # no joinable SQL), so split the graph, run each piece, and merge
+            # locally -- this is what lets a view be joined at all.
+            if spec.source.is_join and any(k == "view" for k in kinds.values()):
+                return self._local_merge_query(
+                    by_name,
+                    spec.source.joins,
                     kinds,
+                    spec.source.suffixes or default_suffixes(list(by_name.values())),
                     version=version,
                     timestamp=timestamp,
                     offset=offset,
@@ -1040,55 +1091,7 @@ class MaterializationClient(ClientBase):
                     get_counts=get_counts,
                     datastack_name=datastack_name,
                 )
-            spec = build_query_spec_from_tables(
-                tables,
-                version=version,
-                timestamp=timestamp,
-                offset=offset,
-                limit=limit,
-                random_sample=random_sample,
-                get_counts=get_counts,
-                split_positions=split_positions,
-                desired_resolution=desired_resolution,
-                metadata=metadata,
-                allow_missing_lookups=allow_missing_lookups,
-                allow_invalid_root_ids=allow_invalid_root_ids,
-            )
-            want_merge = [t.name for t in tables if t.merge_reference]
-        elif is_edge_list:
-            if filter_kwargs or select_columns is not None:
-                raise ValueError(
-                    "when passing a join edge list, filters/suffixes/select live on "
-                    "the Table objects, not as query() keyword arguments"
-                )
-            spec, first_tables = build_query_spec_from_edges(
-                source,
-                version=version,
-                timestamp=timestamp,
-                offset=offset,
-                limit=limit,
-                random_sample=random_sample,
-                get_counts=get_counts,
-                split_positions=split_positions,
-                desired_resolution=desired_resolution,
-                metadata=metadata,
-                allow_missing_lookups=allow_missing_lookups,
-                allow_invalid_root_ids=allow_invalid_root_ids,
-            )
-            # The local-merge planner is chain-only, so a view can't participate in
-            # an explicit join graph yet -- refuse clearly rather than fail late.
-            view_tables = [
-                n
-                for n, t in first_tables.items()
-                if self._participant_kind(t, datastack_name) == "view"
-            ]
-            if view_tables:
-                raise ValueError(
-                    f"views cannot participate in an explicit join graph yet: "
-                    f"{view_tables}. Join a view via a simple chain (a flat list of "
-                    f"Tables) so the local-merge planner can handle it."
-                )
-            want_merge = [n for n, t in first_tables.items() if t.merge_reference]
+            want_merge = [n for n, t in by_name.items() if t.merge_reference]
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")

@@ -11,12 +11,14 @@ not used.
 
 import datetime
 
+import pandas as pd
 import pytest
 from packaging.version import Version
 
 from caveclient.query import (
     At,
     Capabilities,
+    InvalidQueryError,
     QuerySpec,
     Source,
     Table,
@@ -218,15 +220,42 @@ def test_edge_list_star_join_via_live(myclient, mocker):  # noqa: F811
     assert kwargs["filter_equal_dict"] == {"table_a": {"cell_type": "L2a"}}
 
 
-def test_edge_list_with_view_is_refused(myclient, mocker):  # noqa: F811
+def test_edge_list_with_view_does_local_merge(myclient, mocker):  # noqa: F811
+    # a view in an edge graph is now split off and merged locally (no longer
+    # refused): the CAVE side runs as a server query, the view as query_view
     mocker.patch.object(myclient.materialize, "get_views", return_value=["v"])
-    with pytest.raises(ValueError, match="cannot participate in an explicit join graph"):
+    mocker.patch.object(
+        myclient.materialize,
+        "query_table",
+        return_value=pd.DataFrame({"k": [1, 2], "xa": [10, 20]}),
+    )
+    mocker.patch.object(
+        myclient.materialize,
+        "query_view",
+        return_value=pd.DataFrame({"k": [2, 3], "xv": ["p", "q"]}),
+    )
+    out = myclient.materialize.query(
+        [[Table("A", "k"), Table("v", "k")]],
+        version=3,
+        allow_version_fallback=False,
+    )
+    # A (query_table) inner-joined to v (query_view) on k -> only k == 2
+    assert set(out["k_x"]) == {2}
+    assert {"k_x", "k_y", "xa", "xv"} <= set(out.columns)
+
+
+def test_cyclic_edge_graph_with_view_refused(myclient, mocker):  # noqa: F811
+    # A, v1, v2 pairwise joined -> a cycle across engine runs -> refused
+    mocker.patch.object(myclient.materialize, "get_views", return_value=["v1", "v2"])
+    with pytest.raises(InvalidQueryError, match="cycle"):
         myclient.materialize.query(
             [
-                [Table("table_a", "column_a"), Table("alpha", "id")],
-                [Table("table_a", "column_b"), Table("v", "id")],
+                [Table("A", "a"), Table("v1", "k")],
+                [Table("A", "b"), Table("v2", "m")],
+                [Table("v1", "p"), Table("v2", "q")],
             ],
             version=3,
+            allow_version_fallback=False,
         )
 
 
