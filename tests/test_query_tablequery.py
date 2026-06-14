@@ -151,6 +151,61 @@ class TestTableQueryJoin:
         assert tables["nuclei"].filter_less == {"size": 9}
 
 
+REF_SCHEMA = {
+    "$ref": "#/definitions/CellTypeReference",
+    "definitions": {
+        "CellTypeReference": {
+            "properties": {
+                "cell_type": {"type": "string"},
+                "target_id": {"type": "integer"},
+            }
+        }
+    },
+}
+
+
+def make_reference_tq(client=None):
+    # an annotation table whose reference table is "nuc" (synapse-like schema)
+    ref_kinds = classify_table_schema(SYNAPSE_SCHEMA)
+    part = _Part(
+        name="mtypes",
+        kind="table",
+        column_kinds=classify_table_schema(REF_SCHEMA),
+        merge_reference=True,
+        reference=("nuc", ref_kinds),
+    )
+    return TableQuery(client or MagicMock(), part, description="ref table")
+
+
+class TestReferenceColumns:
+    def test_reference_columns_are_filterable(self):
+        tq = make_reference_tq()
+        # own columns and the reference table's columns are both exposed
+        assert tq.columns["cell_type"] is FilterKind.STRING  # own
+        assert tq.columns["pre_pt_root_id"] is FilterKind.ID  # from reference
+
+    def test_primary_only_filter_stays_single_table(self):
+        client = MagicMock()
+        make_reference_tq(client)(cell_type="L2a").query(version=3)
+        tables = client.query.call_args.args[0]
+        # no reference column filtered -> single table, query_table merges the ref
+        assert [t.name for t in tables] == ["mtypes"]
+        assert tables[0].merge_reference is True
+
+    def test_reference_column_filter_builds_join(self):
+        client = MagicMock()
+        # filter a reference-table column -> auto-join the reference
+        make_reference_tq(client)(pre_pt_root_id=[1, 2]).query(version=3)
+        tables = {t.name: t for t in client.query.call_args.args[0]}
+        assert set(tables) == {"mtypes", "nuc"}
+        assert tables["mtypes"].join_on == "target_id"
+        assert tables["nuc"].join_on == "id"
+        assert tables["nuc"].suffix == "_ref"
+        # the filter routed to the reference table; primary no longer auto-merges
+        assert tables["nuc"].filter_in == {"pre_pt_root_id": [1, 2]}
+        assert tables["mtypes"].merge_reference is False
+
+
 class TestTableQueryIntrospection:
     def test_columns_and_handles(self):
         syn = make_tq()

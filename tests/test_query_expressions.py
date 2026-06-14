@@ -100,3 +100,29 @@ class TestParseFilterKwargs:
     def test_numpy_sequence_is_in(self):
         (f,) = parse_filter_kwargs(KINDS, {"pre_pt_root_id": np.array([1, 2])})
         assert f.op is FilterOp.IN
+
+    def test_legacy_wrapper_dicts(self):
+        # back-compat with the original interface's {"<": v} style
+        for wrapper, op in [
+            ({"<": 100}, FilterOp.LESS),
+            ({">": 100}, FilterOp.GREATER),
+            ({"<=": 100}, FilterOp.LESS_EQUAL),
+            ({">=": 100}, FilterOp.GREATER_EQUAL),
+        ]:
+            (f,) = parse_filter_kwargs(KINDS, {"size": wrapper})
+            assert f.op is op and f.value == 100
+
+    def test_legacy_bbox_column_name(self):
+        # back-compat with the original interface's pt_position_bbox=[[...],[...]]
+        (f,) = parse_filter_kwargs(KINDS, {"pt_position_bbox": [[0, 0, 0], [1, 1, 1]]})
+        assert f.op is FilterOp.SPATIAL
+        assert f.column.name == "pt_position"
+
+    def test_column_tables_routes_owner(self):
+        (f,) = parse_filter_kwargs(
+            {"x": FilterKind.NUMERIC},
+            {"x": 1},
+            table="primary",
+            column_tables={"x": "other"},
+        )
+        assert f.column.table == "other"

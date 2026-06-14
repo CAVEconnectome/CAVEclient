@@ -92,6 +92,26 @@ class _Part:
     select: Optional[tuple] = None
     merge_reference: bool = True
     join_on: Optional[str] = None
+    # for a table with a reference table: (reference_name, {column: FilterKind}),
+    # so the reference's columns are filterable directly off this table
+    reference: Optional[tuple] = None
+
+    @property
+    def all_kinds(self) -> dict:
+        """Own columns plus the reference table's (own columns win on collision)."""
+        merged = dict(self.column_kinds)
+        if self.reference:
+            for col, kind in self.reference[1].items():
+                merged.setdefault(col, kind)
+        return merged
+
+    def column_tables(self) -> dict:
+        """Map each filterable column to its owning table."""
+        owners = {col: self.name for col in self.column_kinds}
+        if self.reference:
+            for col in self.reference[1]:
+                owners.setdefault(col, self.reference[0])
+        return owners
 
 
 class TableQuery:
@@ -141,29 +161,30 @@ class TableQuery:
 
     @property
     def columns(self) -> dict:
-        """Mapping of column name to its filter kind."""
-        return dict(self._primary.column_kinds)
+        """Mapping of column name to its filter kind (including reference columns)."""
+        return self._primary.all_kinds
 
     def __getattr__(self, item):
         # column handles; only consulted for names not found normally
-        kinds = object.__getattribute__(self, "_parts")[0].column_kinds
+        part = object.__getattribute__(self, "_parts")[0]
+        kinds = part.all_kinds
         if item in kinds:
-            return Column(item, kinds[item], table=self._parts[0].name)
+            return Column(item, kinds[item], table=part.column_tables()[item])
         raise AttributeError(
-            f"{self._parts[0].name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
+            f"{part.name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
         )
 
     def __getitem__(self, item) -> Column:
         # column handle by item access (for dynamic / non-identifier names)
-        kinds = self._primary.column_kinds
+        kinds = self._primary.all_kinds
         if item in kinds:
-            return Column(item, kinds[item], table=self._primary.name)
+            return Column(item, kinds[item], table=self._primary.column_tables()[item])
         raise KeyError(
             f"{self._primary.name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
         )
 
     def __dir__(self):
-        return list(super().__dir__()) + list(self._primary.column_kinds)
+        return list(super().__dir__()) + list(self._primary.all_kinds)
 
     def __repr__(self):
         joined = "+".join(p.name for p in self._parts)
@@ -172,9 +193,13 @@ class TableQuery:
     # -- filtering -----------------------------------------------------------
 
     def __call__(self, **kwargs) -> "TableQuery":
-        """Add keyword filters (``col=``, ``col__gt=``, ...) to the primary table."""
+        """Add keyword filters (``col=``, ``col__gt=``, ...). Reference-table
+        columns are accepted and routed to the reference table."""
         new = parse_filter_kwargs(
-            self._primary.column_kinds, kwargs, table=self._primary.name
+            self._primary.all_kinds,
+            kwargs,
+            table=self._primary.name,
+            column_tables=self._primary.column_tables(),
         )
         return self._with(filters=self._filters + new)
 
@@ -207,8 +232,27 @@ class TableQuery:
             by_table.setdefault(tbl, {}).setdefault(field_name, {})[f.column.name] = (
                 _serialize_value(f)
             )
+        parts = self._parts
+        primary = self._primary
+        # If a reference-table column was filtered, make the reference an explicit
+        # join (annotation.target_id == reference.id). Otherwise a lone table with
+        # a reference still merges it (query_table, frozen) so its columns appear
+        # in the result -- the reference columns just aren't filtered there.
+        if primary.reference and len(parts) == 1 and primary.reference[0] in by_table:
+            ref_name, ref_kinds = primary.reference
+            parts = (
+                replace(primary, join_on="target_id", merge_reference=False),
+                _Part(
+                    name=ref_name,
+                    kind="table",
+                    column_kinds=ref_kinds,
+                    suffix="_ref",
+                    join_on="id",
+                    merge_reference=False,
+                ),
+            )
         tables = []
-        for part in self._parts:
+        for part in parts:
             tables.append(
                 Table(
                     part.name,
@@ -254,11 +298,13 @@ class _Accessor:
 
     _kind = "table"
 
-    def __init__(self, client, descriptions: dict, column_kinds: dict):
+    def __init__(self, client, descriptions: dict, column_kinds: dict, references=None):
         # client is the framework (full) client; queries go via client.materialize
         self._client = client
         self._descriptions = descriptions  # name -> description text
         self._column_kinds = column_kinds  # name -> {column: FilterKind}
+        # name -> (reference_table_name, {column: FilterKind}) for reference tables
+        self._references = references or {}
 
     @property
     def names(self) -> list:
@@ -291,6 +337,7 @@ class _Accessor:
             kind=self._kind,
             column_kinds=self._column_kinds[name],
             merge_reference=(self._kind == "table"),
+            reference=self._references.get(name),
         )
         return TableQuery(
             self._client.materialize, part, description=self._descriptions.get(name)
@@ -326,19 +373,28 @@ class TableManager(_Accessor):
             if isinstance(tables_metadata, dict)
             else tables_metadata
         )
-        descriptions, column_kinds = {}, {}
+        items = list(items)
+        descriptions, column_kinds, ref_table = {}, {}, {}
         for meta in items:
             name = meta.get("table_name") or meta.get("table")
             if not name:
                 continue
             descriptions[name] = meta.get("description")
+            ref_table[name] = meta.get("reference_table") or None
             schema = schemas.get(meta.get("schema_type") or meta.get("schema"))
             if schema:
                 try:
                     column_kinds[name] = classify_table_schema(schema)
                 except (KeyError, TypeError):
                     continue
-        return cls(client, descriptions, column_kinds)
+        # for a table whose reference table we also have, expose the reference's
+        # columns for filtering (auto-joined when one is used)
+        references = {
+            name: (ref_table[name], column_kinds[ref_table[name]])
+            for name in column_kinds
+            if ref_table.get(name) and ref_table[name] in column_kinds
+        }
+        return cls(client, descriptions, column_kinds, references)
 
 
 class ViewManager(_Accessor):

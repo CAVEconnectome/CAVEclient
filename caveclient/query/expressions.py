@@ -96,6 +96,24 @@ class Column:
         return f"Column({self.name!r}, {self.kind.value})"
 
 
+# Legacy inequality wrapper dicts: ``col={"<": 100}`` (back-compat with the
+# original table interface).
+_WRAPPER_OPS = {
+    "<": FilterOp.LESS,
+    ">": FilterOp.GREATER,
+    "<=": FilterOp.LESS_EQUAL,
+    ">=": FilterOp.GREATER_EQUAL,
+}
+
+
+def _is_wrapper_dict(value) -> bool:
+    return (
+        isinstance(value, dict)
+        and len(value) == 1
+        and next(iter(value)) in _WRAPPER_OPS
+    )
+
+
 # Keyword-filter operator suffixes (col__<suffix>=value).
 _SUFFIX_OPS = {
     "in": FilterOp.IN,
@@ -118,6 +136,7 @@ def parse_filter_kwargs(
     column_kinds: dict,
     kwargs: dict,
     table: Optional[str] = None,
+    column_tables: Optional[dict] = None,
 ) -> tuple:
     """Turn ``col=``/``col__op=`` keyword filters into typed ``Filter`` objects.
 
@@ -127,12 +146,19 @@ def parse_filter_kwargs(
         Mapping of column name to ``FilterKind`` for the table/view.
     kwargs :
         The filter keyword arguments. A bare ``col=value`` is an ``in`` filter for
-        a sequence value, otherwise ``equal``. A ``col__suffix=value`` uses the
-        named operator (``gt``, ``lt``, ``ge``/``gte``, ``le``/``lte``, ``in``,
-        ``not_in``, ``eq``, ``regex``, ``bbox``/``within``).
+        a sequence value, an inequality for a wrapper dict (``col={"<": 100}``,
+        back-compatible with the original interface), otherwise ``equal``. A
+        ``col__suffix=value`` uses the named operator (``gt``, ``lt``, ``ge``/
+        ``gte``, ``le``/``lte``, ``in``, ``not_in``, ``eq``, ``regex``,
+        ``bbox``/``within``). The legacy ``<col>_bbox=[[...],[...]]`` spatial form
+        is also accepted.
     table :
-        Table name to stamp on each column handle (for joins).
+        Default table name stamped on each column handle.
+    column_tables :
+        Optional ``{column: owning_table}`` overriding ``table`` per column (so a
+        filter on a merged reference-table column routes to the reference table).
     """
+    column_tables = column_tables or {}
     filters = []
     for key, value in kwargs.items():
         col, _, suffix = key.partition("__")
@@ -143,6 +169,16 @@ def parse_filter_kwargs(
                     f"unknown filter operator `__{suffix}` in `{key}`; valid: "
                     f"{', '.join(sorted(_SUFFIX_OPS))}"
                 )
+        elif _is_wrapper_dict(value):
+            op_key, value = next(iter(value.items()))
+            op = _WRAPPER_OPS[op_key]
+        elif (
+            col not in column_kinds
+            and col.endswith("_bbox")
+            and column_kinds.get(col[: -len("_bbox")]) is FilterKind.POSITION
+        ):
+            # legacy spatial form: pt_position_bbox=[[...],[...]]
+            col, op = col[: -len("_bbox")], FilterOp.SPATIAL
         else:
             op = FilterOp.IN if _is_sequence(value) else FilterOp.EQUAL
         kind = column_kinds.get(col)
@@ -158,5 +194,6 @@ def parse_filter_kwargs(
                 + (f" of `{table}`" if table else "")
                 + hint
             )
-        filters.append(Filter(ColumnHandle(col, kind, table), op, value))
+        owning = column_tables.get(col, table)
+        filters.append(Filter(ColumnHandle(col, kind, owning), op, value))
     return tuple(filters)
