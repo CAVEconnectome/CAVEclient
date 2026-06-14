@@ -24,6 +24,11 @@ from .serialize import filters_from_kwargs, filters_to_payload
 
 SourceKind = Literal["table", "view", "dataset", "auto"]
 
+# Default per-table suffixes for joined tables when the caller doesn't set one,
+# applied positionally. Underscore-prefixed to read like pandas merge defaults
+# (``_x``/``_y``); the server's own fallback list omits the underscore.
+DEFAULT_JOIN_SUFFIXES = ("_x", "_y", "_z", "_xx", "_yy", "_zz", "_xxx", "_yyy", "_zzz")
+
 
 class InvalidQueryError(ValueError):
     """Raised when a query spec is structurally invalid."""
@@ -334,7 +339,16 @@ def build_query_spec_from_tables(
         )
         for i in range(len(tables) - 1)
     )
-    suffixes = {t.name: t.suffix for t in tables if t.suffix is not None}
+    if len(tables) > 1:
+        # joined tables get a suffix so duplicate columns don't collide; default
+        # to pandas-style _x/_y/... so the server's underscore-less fallback
+        # ("x"/"y") is never reached.
+        suffixes = {
+            t.name: t.suffix if t.suffix is not None else DEFAULT_JOIN_SUFFIXES[i]
+            for i, t in enumerate(tables)
+        }
+    else:
+        suffixes = {t.name: t.suffix for t in tables if t.suffix is not None}
     select_columns = {t.name: list(t.select) for t in tables if t.select}
     filters = []
     for t in tables:

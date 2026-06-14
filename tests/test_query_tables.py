@@ -41,6 +41,22 @@ class TestTableDecomposition:
         flat = filters_to_method_kwargs(spec.filters, spec.source.name, nested=False)
         assert flat["filter_greater_dict"] == {"size": 5}
 
+    def test_join_without_suffixes_defaults_to_pandas_style(self):
+        # no explicit suffixes -> positional _x/_y (not the server's x/y)
+        spec = build_query_spec_from_tables([Table("a", "id"), Table("b", "a_id")])
+        assert spec.source.suffixes == {"a": "_x", "b": "_y"}
+
+    def test_explicit_suffixes_win_over_defaults(self):
+        spec = build_query_spec_from_tables(
+            [Table("a", "id", suffix=""), Table("b", "a_id")]
+        )
+        # a keeps its explicit "", b falls back to the positional default
+        assert spec.source.suffixes == {"a": "", "b": "_y"}
+
+    def test_single_table_has_no_suffix(self):
+        spec = build_query_spec_from_tables([Table("a")])
+        assert not spec.source.suffixes
+
     def test_select_columns_gathered_per_table(self):
         spec = build_query_spec_from_tables(
             [
