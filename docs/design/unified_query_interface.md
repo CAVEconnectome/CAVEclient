@@ -300,6 +300,46 @@ Once the server ships Phase 2:
 - Optionally retire `LiveEmulationBackend` once the minimum supported server
   version has the live endpoint.
 
+### Phase 3 — cross-engine local merge (heterogeneous joins)
+
+Some joins can never be a single server call: a table joined to a view (no
+shared SQL), or — the case that actually motivates this — a deltalake archive
+joined to a live server table. The decomposition unit is therefore not "table
+vs view" but the **execution engine**. The switchboard graduates from "route the
+whole spec to one backend" to "**partition** the spec into maximal single-engine
+sub-specs, execute each natively, and **merge locally**." The merge planner never
+learns whether a frame arrived over HTTP or from a parquet read; table+view is
+just the trivial in-process instance of the deltalake-vs-server mechanism.
+
+This rests on a small **backend contract** — three capabilities, after which the
+planner is engine-agnostic:
+
+1. **Advertise** — `can_handle(sub_spec, At) -> True | reason` (the existing
+   gate, evaluated per sub-spec instead of per whole spec).
+2. **Execute** — `(sub_spec, At) -> DataFrame`.
+3. **Key-set pushdown** — accept `join_key ∈ {…}` as a filter. This is the only
+   new requirement and it is what makes the merge tractable: run the selective
+   side, harvest its join-key values, push them into the other engine's sub-spec,
+   then merge. Without it both sides are fetched whole — does not scale.
+
+Given those, the **planner is purely structural**: partition by engine → order by
+selectivity → semi-join key pushdown → pandas merge, the client owning the
+`_x`/`_y`/`_ref` suffixing so the output frame is identical to a server-side join.
+It always prefers a single-backend route when one covers the whole spec (the
+switchboard already does); local merge is strictly the **fallback**, never an
+optimizer, because a local join forfeits the server's set operations.
+
+**Temporal alignment is not a planner concern.** Versions and timestamps are a
+*global* clock in CAVE: a materialization version denotes one fixed instant, and
+a deltalake export is a dump *of* such a version, so every engine resolves the
+same `At` to the same data by construction. The planner stamps every sub-spec
+with the one requested `At` and hands it down; each backend resolves it natively
+(temporal resolution and view partial-liveness both live *inside* the backend,
+invisible to the planner). The only residual is **coverage, not time**: if no
+engine can serve some source at the requested `At` (version not dumped to the
+lake, view did not yet exist), the join is unroutable — the same
+`UnroutableQueryError`, assembled from per-source reasons. Nothing to reconcile.
+
 ## 6. Liveability as a capability gate (not a hardcoded rule)
 
 Liveability is a property of **supervoxel availability at row granularity**, not
