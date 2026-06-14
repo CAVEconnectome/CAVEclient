@@ -417,6 +417,31 @@ def test_grouped_cave_run_then_view_local_merge(mat):
     assert (out["target_id_y"] == out["id"]).all()
 
 
+def test_edge_list_matches_flat_chain(mat):
+    # a single edge expressed as a list-of-lists is equivalent to the flat
+    # two-Table chain form (the edge list is the general graph spelling)
+    edge = mat.query(
+        [
+            [
+                Table(CONFIG["ref_tables"][0], join_on=CONFIG["ref_join_col"]),
+                Table(CONFIG["ref_base"], join_on="id"),
+            ]
+        ],
+        version=V,
+        limit=20,
+    )
+    flat = mat.query(
+        [
+            Table(CONFIG["ref_tables"][0], join_on=CONFIG["ref_join_col"]),
+            Table(CONFIG["ref_base"], join_on="id"),
+        ],
+        version=V,
+        limit=20,
+    )
+    assert isinstance(edge, pd.DataFrame) and len(edge) > 0
+    assert set(edge.columns) == set(flat.columns)
+
+
 def test_live_table_view_join_refused_until_views_go_live(mat):
     # The planner passes timestamp= straight through to each sub-query, so a live
     # table+view join will work for free once the server makes views live-

@@ -389,6 +389,115 @@ def build_query_spec_from_tables(
     )
 
 
+def build_query_spec_from_edges(
+    edges,
+    *,
+    version: Optional[int] = None,
+    timestamp: Optional[datetime] = None,
+    offset: Optional[int] = None,
+    limit: Optional[int] = None,
+    random_sample: Optional[int] = None,
+    get_counts: bool = False,
+    split_positions: bool = False,
+    desired_resolution: Optional[Sequence[float]] = None,
+    metadata: bool = True,
+    allow_missing_lookups: bool = False,
+    allow_invalid_root_ids: bool = False,
+) -> tuple["QuerySpec", dict]:
+    """Build a :class:`QuerySpec` for a general join **graph** from an edge list.
+
+    Each edge is a ``[left, right]`` pair of :class:`Table` objects denoting one
+    pairwise join ``left.join_on == right.join_on``. A table may appear in several
+    edges (with a different ``join_on`` each time) to express a star or any
+    non-chain topology. ``join_on`` is per-edge; a table's filters/``select``/
+    ``suffix`` are per-table identity and must be set on its **first** appearance
+    — a later appearance may set only ``join_on``, else this raises.
+
+    Returns the spec and the ``{name: Table}`` of first appearances (for the
+    caller's reference-merge / source-kind handling).
+    """
+    edges = [list(e) for e in edges]
+    if not edges:
+        raise InvalidQueryError("at least one join edge is required")
+
+    first_seen: dict = {}
+    joins = []
+    for i, edge in enumerate(edges):
+        if len(edge) != 2:
+            raise InvalidQueryError(
+                f"each join edge must be a [left, right] pair of Tables; "
+                f"edge {i} has {len(edge)}"
+            )
+        left, right = edge
+        for t in (left, right):
+            if not isinstance(t, Table):
+                raise InvalidQueryError(
+                    f"join edges must contain Table objects; edge {i} has a "
+                    f"{type(t).__name__}"
+                )
+            if t.join_on is None:
+                raise InvalidQueryError(
+                    f"every table in a join edge must set join_on; '{t.name}' "
+                    f"in edge {i} does not"
+                )
+        joins.append(Join(left.name, left.join_on, right.name, right.join_on))
+        for t in (left, right):
+            if t.name not in first_seen:
+                first_seen[t.name] = t
+            elif t._filter_dicts() or t.select is not None or t.suffix is not None:
+                # a table is one node; its attributes belong on its first edge
+                raise InvalidQueryError(
+                    f"table '{t.name}' appears more than once in the join list; set "
+                    f"its filters/select/suffix on its first appearance only — a "
+                    f"later appearance may set only join_on"
+                )
+
+    distinct = list(first_seen)
+    suffixes = {
+        name: (
+            first_seen[name].suffix
+            if first_seen[name].suffix is not None
+            else DEFAULT_JOIN_SUFFIXES[i]
+        )
+        for i, name in enumerate(distinct)
+    }
+    select_columns = {
+        name: list(t.select) for name, t in first_seen.items() if t.select
+    }
+    filters = []
+    for name, t in first_seen.items():
+        for op, d in t._filter_dicts().items():
+            for col, value in d.items():
+                filters.append(
+                    Filter(ColumnHandle(col, FilterKind.UNTYPED, table=name), op, value)
+                )
+
+    anchor = edges[0][0]
+    spec = QuerySpec(
+        source=Source(
+            anchor.name,
+            kind=anchor.kind,
+            joins=tuple(joins),
+            suffixes=suffixes or None,
+        ),
+        at=At(version=version, timestamp=timestamp),
+        filters=tuple(filters),
+        select_columns=select_columns or None,
+        offset=offset,
+        limit=limit,
+        random_sample=random_sample,
+        get_counts=get_counts,
+        allow_missing_lookups=allow_missing_lookups,
+        allow_invalid_root_ids=allow_invalid_root_ids,
+        output=OutputOptions(
+            split_positions=split_positions,
+            desired_resolution=desired_resolution,
+            metadata=metadata,
+        ),
+    )
+    return spec, first_seen
+
+
 def resolve_version_fallback(
     spec: QuerySpec,
     available_versions: Collection[int],

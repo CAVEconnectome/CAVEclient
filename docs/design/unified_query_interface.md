@@ -363,6 +363,52 @@ client doing it gives up no join the server could actually have done better.
 Caveat: the driving (first) source should be bounded by its own filters — `limit`
 applies to the merged result, so an unfiltered driving source is fetched whole.
 
+### The join model: chain (flat list) vs graph (edge list)
+
+The atomic join is **pairwise** — `Join(left_table, left_col, right_table,
+right_col)` — and a query holds a tuple of them on `Source.joins`. There are two
+ergonomic front doors that both compile to that tuple:
+
+- **Flat `Table` list** — `query([Table(A, join_on=a), Table(B, join_on=b),
+  Table(C, join_on=c)])` — a **linear chain**: adjacent tables are zipped into
+  pairwise joins, and each table contributes one `join_on` used for both
+  neighbors. The common case; can't express anything but a path.
+- **Edge list** — `query([[Table(A, join_on=a), Table(alpha, join_on=x)],
+  [Table(A, join_on=b), Table(beta, join_on=y)]])` — a **general join graph**.
+  Each inner pair is one pairwise edge (`left.join_on == right.join_on`); a table
+  may appear in several edges, with a *different* `join_on` per edge. This is what
+  expresses a star (one anchor joined to two tables on different columns) or any
+  non-path topology. The flat list is the degenerate case where consecutive edges
+  share a table.
+
+Per-edge vs per-table is the crux: **`join_on` is per-edge** (which is why
+repeating a table with a different `join_on` is correct), while **filters /
+`select` / `suffix` are per-table identity** — a table is one node in the result
+regardless of how many edges touch it. So the rule is: a table's
+filters/select/suffix go on its **first** appearance; a later appearance may set
+only `join_on`, and setting filters/select/suffix on a repeat is a hard error
+(`build_query_spec_from_edges`). Suffixes are assigned per *distinct* table,
+positionally. (A self-join — the *same* table as two distinct result nodes with
+different suffixes — is therefore not expressible yet; it needs aliasing, and the
+repeat-must-be-bare rule refuses it cleanly.)
+
+**Why this matters for the cross-engine future:** the edge list is the planner's
+native input. Cross-engine joins are graphs, not chains (a deltalake table joined
+to two server tables on different columns), and an edge that *crosses* an engine
+boundary is exactly a local-merge seam whose two columns are the semi-join
+pushdown keys. So the edge list hands the planner its cut points directly. The
+staging:
+
+- **Phase 1 (implemented):** edge-list input for all-CAVE graphs — the server's
+  `live_live_query` already executes an arbitrary join list, so this is a typed
+  front door to an existing capability. A view appearing in an edge-list graph is
+  **refused with a clear reason** (the local-merge planner is chain-only, so it
+  can't split a graph yet).
+- **Phase 3:** make the local-merge planner **graph-aware** — partition the edge
+  graph into per-engine connected subgraphs and build a merge tree from the cut
+  edges. This is `plan_segments` generalized from "walk a path" to "partition a
+  graph"; the edge-list input is what makes it possible.
+
 ## 6. Liveability as a capability gate (not a hardcoded rule)
 
 Liveability is a property of **supervoxel availability at row granularity**, not

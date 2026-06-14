@@ -189,6 +189,47 @@ def test_table_join_runs_live_at_version_timestamp(myclient, mocker):  # noqa: F
     assert kwargs["filter_greater_dict"] == {"synapses": {"size": 100}}
 
 
+def test_edge_list_star_join_via_live(myclient, mocker):  # noqa: F811
+    # a list of [left, right] edges expresses a graph: table_a joined to alpha on
+    # column_a AND to beta on column_b (a star the flat chain can't express)
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    out = myclient.materialize.query(
+        [
+            [Table("table_a", "column_a", filter_equal={"cell_type": "L2a"}),
+             Table("alpha", "id")],
+            [Table("table_a", "column_b"), Table("beta", "id")],
+        ],
+        version=3,
+        allow_version_fallback=False,
+    )
+    assert out == "DF"
+    _, kwargs = spy.call_args
+    assert kwargs["joins"] == [
+        ["table_a", "column_a", "alpha", "id"],
+        ["table_a", "column_b", "beta", "id"],
+    ]
+    # filter stated on table_a's first appearance is routed to table_a
+    assert kwargs["filter_equal_dict"] == {"table_a": {"cell_type": "L2a"}}
+
+
+def test_edge_list_with_view_is_refused(myclient, mocker):  # noqa: F811
+    mocker.patch.object(myclient.materialize, "get_views", return_value=["v"])
+    with pytest.raises(ValueError, match="cannot participate in an explicit join graph"):
+        myclient.materialize.query(
+            [
+                [Table("table_a", "column_a"), Table("alpha", "id")],
+                [Table("table_a", "column_b"), Table("v", "id")],
+            ],
+            version=3,
+        )
+
+
 def test_single_table_object_delegates_to_query_table(myclient, mocker):  # noqa: F811
     spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
     out = myclient.materialize.query(

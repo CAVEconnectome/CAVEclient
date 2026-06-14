@@ -40,6 +40,7 @@ from .query import (
 from .query.merge import default_suffixes, local_merge_query, plan_segments
 from .query.spec import (
     build_query_spec,
+    build_query_spec_from_edges,
     build_query_spec_from_tables,
     resolve_version_fallback,
 )
@@ -997,6 +998,12 @@ class MaterializationClient(ClientBase):
             and len(source) > 0
             and all(isinstance(t, Table) for t in source)
         )
+        # a join *graph*: a list of [left, right] edges (each a pair of Tables)
+        is_edge_list = (
+            isinstance(source, (list, tuple))
+            and len(source) > 0
+            and all(isinstance(e, (list, tuple)) for e in source)
+        )
         if isinstance(source, QuerySpec):
             if filter_kwargs or version is not None or timestamp is not None:
                 raise ValueError(
@@ -1048,6 +1055,40 @@ class MaterializationClient(ClientBase):
                 allow_invalid_root_ids=allow_invalid_root_ids,
             )
             want_merge = [t.name for t in tables if t.merge_reference]
+        elif is_edge_list:
+            if filter_kwargs or select_columns is not None:
+                raise ValueError(
+                    "when passing a join edge list, filters/suffixes/select live on "
+                    "the Table objects, not as query() keyword arguments"
+                )
+            spec, first_tables = build_query_spec_from_edges(
+                source,
+                version=version,
+                timestamp=timestamp,
+                offset=offset,
+                limit=limit,
+                random_sample=random_sample,
+                get_counts=get_counts,
+                split_positions=split_positions,
+                desired_resolution=desired_resolution,
+                metadata=metadata,
+                allow_missing_lookups=allow_missing_lookups,
+                allow_invalid_root_ids=allow_invalid_root_ids,
+            )
+            # The local-merge planner is chain-only, so a view can't participate in
+            # an explicit join graph yet -- refuse clearly rather than fail late.
+            view_tables = [
+                n
+                for n, t in first_tables.items()
+                if self._participant_kind(t, datastack_name) == "view"
+            ]
+            if view_tables:
+                raise ValueError(
+                    f"views cannot participate in an explicit join graph yet: "
+                    f"{view_tables}. Join a view via a simple chain (a flat list of "
+                    f"Tables) so the local-merge planner can handle it."
+                )
+            want_merge = [n for n, t in first_tables.items() if t.merge_reference]
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")
