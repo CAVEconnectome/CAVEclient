@@ -178,6 +178,13 @@ class TableQuery:
         )
         return self._with(filters=self._filters + new)
 
+    def select(self, *columns) -> "TableQuery":
+        """Return only these columns from this table. Each joined table keeps its
+        own ``select``, so ``a.select(...).join(b.select(...), ...)`` selects
+        per-table."""
+        primary = replace(self._primary, select=tuple(columns) or None)
+        return self._with(parts=(primary, *self._parts[1:]))
+
     def join(self, other: "TableQuery", on) -> "TableQuery":
         """Join another table. ``on`` is ``(my_column, other_column)`` or a single
         column name shared by both."""

@@ -100,6 +100,17 @@ class TestTableQueryFiltering:
         t = client.query.call_args.args[0][0]
         assert t.select == ["size", "pre_pt_root_id"]
 
+    def test_select_method_is_per_table_in_joins(self):
+        client = MagicMock()
+        syn = make_tq(client, name="synapses")
+        nuc = make_tq(client, name="nuclei")
+        syn.select("size").join(nuc.select("tag"), on="post_pt_root_id").query(
+            version=3
+        )
+        tables = {t.name: t for t in client.query.call_args.args[0]}
+        assert tables["synapses"].select == ["size"]
+        assert tables["nuclei"].select == ["tag"]
+
     def test_query_options_passed_through(self):
         client = MagicMock()
         make_tq(client).query(version=3, limit=10, split_positions=True)
