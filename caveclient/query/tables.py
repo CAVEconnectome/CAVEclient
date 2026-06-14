@@ -263,7 +263,7 @@ class TableQuery:
         by_table = {}
         for f in self._filters:
             tbl = f.column.table or self._primary.name
-            field_name = f.op.kwarg_key[: -len("_dict")]  # filter_in_dict -> filter_in
+            field_name = f.op.field_key  # filter_in_dict -> filter_in
             by_table.setdefault(tbl, {}).setdefault(field_name, {})[f.column.name] = (
                 _serialize_value(f)
             )

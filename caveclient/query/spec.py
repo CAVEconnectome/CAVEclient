@@ -138,7 +138,7 @@ class Table:
 
 # Table filter-field name -> FilterOp. The field names are the query() kwarg
 # names without the redundant `_dict` suffix (it is implied on a table object).
-_TABLE_FILTER_FIELDS = {op.kwarg_key[: -len("_dict")]: op for op in FilterOp}
+_TABLE_FILTER_FIELDS = {op.field_key: op for op in FilterOp}
 
 
 @dataclass(frozen=True)

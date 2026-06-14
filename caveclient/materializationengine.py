@@ -723,6 +723,18 @@ class MaterializationClient(ClientBase):
             ),
         )
 
+    @cached(cache=TTLCache(maxsize=128, ttl=300))
+    def _view_name_set(self, datastack_name=None) -> frozenset:
+        """View names, cached briefly, for source-kind resolution in ``query()``.
+
+        Kind resolution happens once per join participant and again for each
+        local-merge sub-query, so an un-cached ``get_views`` would mean several
+        round-trips per query; a short TTL keeps a freshly-created view from
+        staying invisible for long. Lookup failures are left to raise (and so are
+        not cached) — :meth:`_resolve_source_kind` treats them as "not a view".
+        """
+        return frozenset(self.get_views(datastack_name=datastack_name))
+
     def _resolve_source_kind(self, name: str, datastack_name=None) -> str:
         """Resolve an ``auto`` source to ``"view"`` or ``"table"`` via metadata.
 
@@ -730,7 +742,7 @@ class MaterializationClient(ClientBase):
         without the views endpoint).
         """
         try:
-            views = self.get_views(datastack_name=datastack_name)
+            views = self._view_name_set(datastack_name)
         except Exception:
             return "table"
         return "view" if name in views else "table"
@@ -831,10 +843,9 @@ class MaterializationClient(ClientBase):
     def _run_view_segment(self, seg, extra_filter_in, **opts):
         """Run a one-view segment as a single ``query_view`` (via :meth:`query`)."""
         t = seg.tables[0]
-        fkw = {
-            op.kwarg_key[: -len("_dict")]: dict(d) for op, d in t._filter_dicts().items()
-        }
-        self._fold_pushdown(fkw, extra_filter_in)
+        fkw = {op.field_key: dict(d) for op, d in t._filter_dicts().items()}
+        if extra_filter_in:
+            self._fold_pushdown(fkw.setdefault("filter_in", {}), extra_filter_in)
         sel = list(t.select) if t.select else None
         if sel is not None:
             for key in (seg.left_key, seg.right_key):
@@ -853,11 +864,8 @@ class MaterializationClient(ClientBase):
         run_tables = []
         for k, t in enumerate(seg.tables):
             fin = dict(t.filter_in or {})
-            if k == 0 and extra_filter_in:
-                for col, vals in extra_filter_in.items():
-                    fin[col] = (
-                        list(set(fin[col]) & set(vals)) if col in fin else list(vals)
-                    )
+            if k == 0:
+                self._fold_pushdown(fin, extra_filter_in)
             sel = list(t.select) if t.select else None
             if sel is not None and t.join_on and t.join_on not in sel:
                 sel = sel + [t.join_on]
@@ -868,14 +876,15 @@ class MaterializationClient(ClientBase):
         return self.query(source, **opts)
 
     @staticmethod
-    def _fold_pushdown(filter_kwargs, extra_filter_in):
-        """Merge a semi-join key-set pushdown into a filter_in kwarg, intersecting
-        with any existing filter on that column."""
-        if not extra_filter_in:
-            return
-        fin = filter_kwargs.setdefault("filter_in", {})
-        for col, vals in extra_filter_in.items():
-            fin[col] = list(set(fin[col]) & set(vals)) if col in fin else list(vals)
+    def _fold_pushdown(filter_in, extra_filter_in):
+        """Merge a semi-join key-set pushdown into a ``filter_in`` dict, intersecting
+        with any existing filter on the pushed column. Mutates ``filter_in``."""
+        for col, vals in (extra_filter_in or {}).items():
+            filter_in[col] = (
+                list(set(filter_in[col]) & set(vals))
+                if col in filter_in
+                else list(vals)
+            )
 
     def query(
         self,

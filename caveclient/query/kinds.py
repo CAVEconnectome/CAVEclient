@@ -74,6 +74,15 @@ class FilterOp(enum.Enum):
         """
         return _KWARG_KEYS[self]
 
+    @property
+    def field_key(self) -> str:
+        """The ``kwarg_key`` without the redundant ``_dict`` suffix.
+
+        The name used on a :class:`~caveclient.query.spec.Table` field and as the
+        public ``query()`` filter keyword (e.g. ``filter_in``, ``filter_out``).
+        """
+        return _KWARG_KEYS[self][: -len("_dict")]
+
 
 _PAYLOAD_KEYS = {
     FilterOp.IN: "filter_in_dict",
