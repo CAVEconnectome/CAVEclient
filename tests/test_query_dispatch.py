@@ -241,6 +241,15 @@ def test_flat_pair_equals_single_edge(myclient, mocker):  # noqa: F811
     assert flat_joins == edge_joins == [["a", "x", "b", "y"]]
 
 
+def test_short_string_is_single_source_not_a_join(myclient, mocker):  # noqa: F811
+    # a str is not a list/tuple, so a (short) string name never gets split into
+    # characters and mistaken for a flat pair of tables
+    mocker.patch.object(myclient.materialize, "get_views", return_value=[])
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    myclient.materialize.query("xy", version=3, allow_version_fallback=False)
+    assert spy.call_args.args[0] == "xy"
+
+
 def test_flat_three_tables_is_refused(myclient):  # noqa: F811
     # no implicit chain: a flat list past two tables points at the edge-list form
     with pytest.raises(ValueError, match="single two-table join"):
