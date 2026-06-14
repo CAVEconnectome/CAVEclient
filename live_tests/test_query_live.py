@@ -309,3 +309,58 @@ def test_bad_filter_value_rejected_client_side(mat):
     with pytest.raises(InvalidFilterError):
         # regex on a column the spec treats as numeric, or a non-numeric inequality
         Filter(ColumnHandle("size", FilterKind.NUMERIC), FilterOp.REGEX, "x")
+
+
+# ---------------------------------------------------------------------------
+# Tier 2: the rebuilt tables/views accessor
+# ---------------------------------------------------------------------------
+
+
+def test_accessor_discovery_and_introspection(client):
+    tbls = client.materialize.tables
+    assert len(tbls) > 0
+    assert CONFIG["synapse_table"] in tbls
+    assert CONFIG["synapse_table"] in tbls.find("synap")
+    syn = tbls[CONFIG["synapse_table"]]
+    # bound spatial points expanded into typed columns
+    assert syn.columns[CONFIG["root_col"]].value == "id"
+    assert syn.columns[CONFIG["position_col"]].value == "position"
+    assert syn.columns[CONFIG["size_col"]].value == "numeric"
+
+
+def test_accessor_kwargs_match_query_table(client, sample_root):
+    tbls = client.materialize.tables
+    a = tbls[CONFIG["synapse_table"]](**{CONFIG["root_col"]: [sample_root]}).query(
+        version=V, allow_version_fallback=False
+    )
+    b = client.materialize.query_table(
+        CONFIG["synapse_table"],
+        materialization_version=V,
+        filter_in_dict={CONFIG["root_col"]: [sample_root]},
+    )
+    assert ids(a) == ids(b)
+
+
+def test_accessor_column_handle_expression(client, sample_root):
+    syn = client.materialize.tables[CONFIG["synapse_table"]]
+    df = syn.query(
+        syn[CONFIG["root_col"]].isin([sample_root]),
+        syn[CONFIG["size_col"]] > 1,
+        version=V,
+        limit=5,
+        allow_version_fallback=False,
+    )
+    assert isinstance(df, pd.DataFrame)
+
+
+def test_accessor_typos_error_locally(client):
+    tbls = client.materialize.tables
+    with pytest.raises(AttributeError, match="did you mean"):
+        tbls.synapses_pni_3  # table-name typo
+    with pytest.raises(KeyError, match="did you mean"):
+        tbls[CONFIG["synapse_table"]](pre_pt_root_idd=[1])  # column-name typo
+
+
+def test_view_accessor_query(client):
+    df = client.materialize.views[CONFIG["view"]].query(version=V, limit=3)
+    assert len(df) > 0

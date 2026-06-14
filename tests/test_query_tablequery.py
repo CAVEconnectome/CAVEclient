@@ -152,6 +152,12 @@ class TestTableQueryIntrospection:
         with pytest.raises(AttributeError):
             make_tq().nonexistent_column
 
+    def test_column_handle_by_item(self):
+        syn = make_tq()
+        assert syn["size"].kind is FilterKind.NUMERIC
+        with pytest.raises(KeyError, match="has no column"):
+            syn["nope"]
+
 
 def make_table_manager(client=None):
     # get_tables_metadata returns a list of dicts, each with table_name

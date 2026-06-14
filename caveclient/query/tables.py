@@ -153,6 +153,15 @@ class TableQuery:
             f"{self._parts[0].name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
         )
 
+    def __getitem__(self, item) -> Column:
+        # column handle by item access (for dynamic / non-identifier names)
+        kinds = self._primary.column_kinds
+        if item in kinds:
+            return Column(item, kinds[item], table=self._primary.name)
+        raise KeyError(
+            f"{self._primary.name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
+        )
+
     def __dir__(self):
         return list(super().__dir__()) + list(self._primary.column_kinds)
 
