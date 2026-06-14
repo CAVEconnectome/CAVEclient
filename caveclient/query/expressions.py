@@ -23,6 +23,7 @@ Because both build ``Filter`` objects, an illegal operator for a column's kind
 
 from __future__ import annotations
 
+import difflib
 from typing import Any, Optional
 
 from .filters import ColumnHandle, Filter, _is_sequence
@@ -146,9 +147,16 @@ def parse_filter_kwargs(
             op = FilterOp.IN if _is_sequence(value) else FilterOp.EQUAL
         kind = column_kinds.get(col)
         if kind is None:
+            close = difflib.get_close_matches(col, list(column_kinds), n=3)
+            hint = (
+                f"; did you mean {' or '.join(repr(c) for c in close)}?"
+                if close
+                else ""
+            )
             raise KeyError(
                 f"`{col}` is not a filterable column"
                 + (f" of `{table}`" if table else "")
+                + hint
             )
         filters.append(Filter(ColumnHandle(col, kind, table), op, value))
     return tuple(filters)

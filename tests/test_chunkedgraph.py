@@ -649,9 +649,7 @@ class TestChunkedgraph:
             json={"leaf_ids": chunk_ids.tolist()},
         )
 
-        roots_url = chunkedgraph_endpoints_v1["get_roots"].format_map(
-            endpoint_mapping
-        )
+        roots_url = chunkedgraph_endpoints_v1["get_roots"].format_map(endpoint_mapping)
         roots_qurl = roots_url + "?" + urlencode(package_timestamp(now))
         responses.add(
             responses.POST,

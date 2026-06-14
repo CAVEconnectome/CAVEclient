@@ -13,6 +13,7 @@ from .backends import (
     Switchboard,
     UnroutableQueryError,
 )
+from .expressions import Column, parse_filter_kwargs
 from .filters import ColumnHandle, Filter, InvalidFilterError
 from .kinds import FilterKind, FilterOp, legal_ops
 from .serialize import filters_to_method_kwargs, filters_to_payload
@@ -26,10 +27,12 @@ from .spec import (
     Table,
     resolve_version_fallback,
 )
+from .tables import TableManager, TableQuery, ViewManager
 
 __all__ = [
     "At",
     "Capabilities",
+    "Column",
     "ColumnHandle",
     "DEFAULT_BACKENDS",
     "Filter",
@@ -44,9 +47,13 @@ __all__ = [
     "Source",
     "Switchboard",
     "Table",
+    "TableManager",
+    "TableQuery",
     "UnroutableQueryError",
+    "ViewManager",
     "filters_to_method_kwargs",
     "filters_to_payload",
     "legal_ops",
+    "parse_filter_kwargs",
     "resolve_version_fallback",
 ]

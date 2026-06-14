@@ -34,8 +34,8 @@ from .query.spec import (
     build_query_spec_from_tables,
     resolve_version_fallback,
 )
+from .query.tables import TableManager, ViewManager
 from .timestamps import to_utc
-from .tools.table_manager import TableManager, ViewManager
 
 logger = logging.getLogger(__name__)
 
@@ -2115,58 +2115,32 @@ class MaterializationClient(ClientBase):
 
     @property
     def tables(self) -> TableManager:
-        """The table manager for the materialization engine."""
+        """The table manager: query annotation tables by name (``.tables.<name>``)."""
         if self._tables is None:
-            if self.fc is not None and self.fc._materialize is not None:
-                if Version(str(self.api_version)) < Version("3"):
-                    tables = TableManager(self.fc)
-                else:
-                    metadata = []
-                    with ThreadPoolExecutor(max_workers=2) as executor:
-                        metadata.append(
-                            executor.submit(
-                                self.get_tables_metadata,
-                            )
-                        )
-                        metadata.append(
-                            executor.submit(self.fc.schema.schema_definition_all)
-                        )
-                    if (
-                        metadata[0].result() is not None
-                        and metadata[1].result() is not None
-                    ):
-                        tables = TableManager(
-                            self.fc, metadata[0].result(), metadata[1].result()
-                        )
-                    else:
-                        logger.warning("Warning: Metadata for tables not available.")
-                        tables = TableManager(self.fc)
-                self._tables = tables
-            else:
+            if self.fc is None or self.fc._materialize is None:
                 raise ValueError("No full CAVEclient specified")
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                metadata = executor.submit(self.get_tables_metadata)
+                schemas = executor.submit(self.fc.schema.schema_definition_all)
+                metadata, schemas = metadata.result(), schemas.result()
+            if metadata is None or schemas is None:
+                raise ValueError(
+                    "Table metadata/schemas are unavailable from this server"
+                )
+            self._tables = TableManager.build(self.fc, metadata, schemas)
         return self._tables
 
     @property
     def views(self) -> ViewManager:
-        """The view manager for the materialization engine."""
-        if self.fc is not None and self.fc._materialize is not None:
-            if Version(str(self.api_version)) < Version("3"):
-                views = ViewManager(self.fc)
-            else:
-                metadata = []
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    metadata.append(
-                        executor.submit(
-                            self.get_views,
-                        )
-                    )
-                    metadata.append(executor.submit(self.get_view_schemas))
-
-                views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
-
-            self._views = views
-        else:
-            raise ValueError("No full CAVEclient specified")
+        """The view manager: query views by name (``.views.<name>``)."""
+        if self._views is None:
+            if self.fc is None or self.fc._materialize is None:
+                raise ValueError("No full CAVEclient specified")
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                metadata = executor.submit(self.get_views)
+                schemas = executor.submit(self.get_view_schemas)
+                metadata, schemas = metadata.result(), schemas.result()
+            self._views = ViewManager.build(self.fc, metadata, schemas)
         return self._views
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")

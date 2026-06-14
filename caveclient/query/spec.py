@@ -114,6 +114,9 @@ class Table:
     suffix: Optional[str] = None
     select: Optional[Sequence[str]] = None
     merge_reference: bool = True
+    kind: str = (
+        "table"  # "table" or "view"; the primary table's kind sets the source kind
+    )
     filter_in: Optional[dict] = None
     filter_out: Optional[dict] = None
     filter_equal: Optional[dict] = None
@@ -363,7 +366,7 @@ def build_query_spec_from_tables(
     return QuerySpec(
         source=Source(
             tables[0].name,
-            kind="table",
+            kind=tables[0].kind,
             joins=joins or None,
             suffixes=suffixes or None,
         ),

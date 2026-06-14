@@ -1,6 +1,5 @@
 import copy
 import datetime
-import textwrap
 from io import BytesIO
 from urllib.parse import urlencode
 
@@ -12,7 +11,6 @@ import responses
 from responses.matchers import json_params_matcher, query_param_matcher
 
 from caveclient import materializationengine
-from caveclient.base import ServerIncompatibilityError
 from caveclient.endpoints import (
     chunkedgraph_endpoints_common,
     materialization_common,
@@ -391,78 +389,54 @@ class TestMatclient:
         responses.add(
             responses.GET, url=get_views_schema_url, json=self.views_schema, status=200
         )
-        print(len(myclient.materialize.tables))
-        assert len(myclient.materialize.tables) == 2
+        tables = myclient.materialize.tables
+        # accessor surface: len / iter / contains / find / getitem / reprs
+        assert len(tables) == 2
+        assert set(tables) == set(tables.names) and len(list(tables)) == 2
+        assert "allen_column_mtypes_v2" in tables
+        assert tables.find("column")[0] == "allen_column_mtypes_v2"
+        assert isinstance(repr(tables), str)
+        assert isinstance(tables._repr_html_(), str)
 
-        assert myclient.materialize.tables.find("column")[0] == "allen_column_mtypes_v2"
+        # column kinds derived from the schema (reference columns are not exposed;
+        # filter the reference via an explicit .join() instead)
+        tq = tables["allen_column_mtypes_v2"]
+        assert tq.columns["cell_type"].value == "string"
+        assert tq.columns["target_id"].value == "numeric"
+        assert "pt_root_id" not in tq.columns
 
-        qry = myclient.materialize.tables.allen_column_mtypes_v2(
-            pt_root_id=[123, 456], target_id=271700
+        # early, local typo error with a suggestion
+        with pytest.raises(KeyError, match="did you mean"):
+            tables.allen_column_mtypes_v2(targt_id=1)
+
+        # delegation: a single reference table, frozen -> query_table merges the
+        # reference itself; filters on the primary table's columns
+        spy = mocker.patch.object(
+            myclient.materialize, "query_table", return_value="DF"
         )
-        params = qry.filter_kwargs_live
-        assert "allen_column_mtypes_v2" in params.get("filter_equal_dict")
-        assert "nucleus_detection_v0" in params.get("filter_in_dict")
-        assert "allen_column_mtypes_v2" == qry.joins_kwargs.get("joins")[0][0]
-
-        assert "single_neurons" in myclient.materialize.views
-        assert myclient.materialize.views.find("single")[0] == "single_neurons"
-
-        vqry = myclient.materialize.views.single_neurons(pt_root_id=[123, 456])
-        assert 123 in vqry.filter_kwargs_mat.get("filter_in_dict").get("pt_root_id")
-
-        qry_url = materialization_endpoints_v3["join_query"].format_map(
-            endpoint_mapping
+        tables.allen_column_mtypes_v2(target_id=271700).query(
+            version=1, allow_version_fallback=False
         )
-        query_d = {
-            "return_pyarrow": True,
-            "arrow_format": True,
-            "split_positions": True,
-            "direct_sql_pandas": True,
-        }
-        query_string = urlencode(query_d)
-        qry_url = qry_url + "?" + query_string
-        correct_query_data = {
-            "filter_in_dict": {"nucleus_detection_v0": {"pt_root_id": [123, 456]}},
-            "filter_equal_dict": {"allen_column_mtypes_v2": {"target_id": 271700}},
-            "suffix_map": {
-                "allen_column_mtypes_v2": "_ref",
-                "nucleus_detection_v0": "",
-            },
-            "tables": [
-                ["allen_column_mtypes_v2", "target_id"],
-                ["nucleus_detection_v0", "id"],
-            ],
-        }
-        responses.add(
-            responses.POST,
-            qry_url,
-            body=serialize_dataframe(pd.DataFrame()),
-            content_type="data.arrow",
-            match=[json_params_matcher(correct_query_data)],
+        assert spy.call_args.args[0] == "allen_column_mtypes_v2"
+        assert spy.call_args.kwargs["materialization_version"] == 1
+        assert spy.call_args.kwargs["merge_reference"] is True
+        assert spy.call_args.kwargs["filter_equal_dict"] == {"target_id": 271700}
+
+        # the same query via a column-handle expression
+        spy.reset_mock()
+        v2 = tables.allen_column_mtypes_v2
+        v2.query(v2.cell_type == "L2a", version=1, allow_version_fallback=False)
+        assert spy.call_args.kwargs["filter_equal_dict"] == {"cell_type": "L2a"}
+
+        # views: same accessor surface; delegates to query_view
+        views = myclient.materialize.views
+        assert "single_neurons" in views
+        assert views.find("single")[0] == "single_neurons"
+        vspy = mocker.patch.object(
+            myclient.materialize, "query_view", return_value="DF"
         )
-        qry.query(metadata=False)
-
-        # test that __getitem__ works
-        myclient.materialize.tables["allen_column_mtypes_v2"]
-
-        # test that __repr__ works
-        assert isinstance(myclient.materialize.tables.__repr__(), str)
-
-        # test that _repr_html_ works
-        assert isinstance(myclient.materialize.tables._repr_html_(), str)
-        myclient.materialize.tables._repr_mimebundle_()
-
-        myclient._materialize = None
-        responses.add(responses.GET, mat_version_url, json="4.13.0", status=200)
-        myclient.materialize
-        with pytest.raises(
-            ServerIncompatibilityError,
-            match=textwrap.fill(materializationengine.direct_sql_error_msg, width=80),
-        ):
-            qry = myclient.materialize.tables.allen_column_mtypes_v2(
-                pt_root_id=[123, 456], target_id=271700
-            )
-            qry.query()
+        views.single_neurons.query(version=1, allow_version_fallback=False)
+        assert vspy.call_args.args[0] == "single_neurons"
 
     @responses.activate
     def test_matclient(self, myclient, mocker):

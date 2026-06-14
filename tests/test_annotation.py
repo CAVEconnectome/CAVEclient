@@ -218,7 +218,15 @@ class TestAnnoClinet:
             headers={"content-type": "application/json"},
             match=[
                 responses.matchers.json_params_matcher(
-                    {"annotations": [{"cell_type": "BC", "classification_system": "Exc", "pt": {"position": [1, 2, 3]}}]}
+                    {
+                        "annotations": [
+                            {
+                                "cell_type": "BC",
+                                "classification_system": "Exc",
+                                "pt": {"position": [1, 2, 3]},
+                            }
+                        ]
+                    }
                 )
             ],
         )
@@ -230,7 +238,15 @@ class TestAnnoClinet:
             headers={"content-type": "application/json"},
             match=[
                 responses.matchers.json_params_matcher(
-                    {"annotations": [{"cell_type": "IN", "classification_system": "Inh", "pt": {"position": [4, 5, 6]}}]}
+                    {
+                        "annotations": [
+                            {
+                                "cell_type": "IN",
+                                "classification_system": "Inh",
+                                "pt": {"position": [4, 5, 6]},
+                            }
+                        ]
+                    }
                 )
             ],
         )
