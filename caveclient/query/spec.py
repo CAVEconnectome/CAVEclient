@@ -327,10 +327,6 @@ def build_query_spec_from_tables(
         raise InvalidQueryError(
             f"every table in a multi-table query must set join_on; missing on: {missing}"
         )
-    # merge_reference is a primary-table concern; it only applies when there is
-    # no explicit join (explicit joins go through join_query, which has no
-    # auto-reference behavior). Honor the primary table's flag.
-    merge_reference = tables[0].merge_reference if len(tables) == 1 else False
 
     joins = tuple(
         Join(
@@ -364,7 +360,8 @@ def build_query_spec_from_tables(
         limit=limit,
         random_sample=random_sample,
         get_counts=get_counts,
-        merge_reference=merge_reference,
+        # per-table merge_reference is honored by query() (which resolves
+        # references into deduped joins), not via this spec-level flag.
         allow_missing_lookups=allow_missing_lookups,
         allow_invalid_root_ids=allow_invalid_root_ids,
         output=OutputOptions(

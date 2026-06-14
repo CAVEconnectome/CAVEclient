@@ -3,10 +3,15 @@
 These exercise the wiring (kwargs -> QuerySpec -> route -> delegate) by spying on
 the delegated methods, rather than re-mocking the HTTP layer that the existing
 query_table / live_live_query tests already cover.
+
+Only two server methods are ever delegated to: query_table (single-table frozen)
+and live_live_query (everything live or joined). join_query and live_query are
+not used.
 """
 
 import datetime
 
+import pytest
 from packaging.version import Version
 
 from caveclient.query import (
@@ -25,7 +30,37 @@ NOW = datetime.datetime(2024, 6, 1, tzinfo=UTC)
 MODERN = Capabilities(server_version=Version("5.20.0"), has_chunkedgraph=True)
 
 
-def test_frozen_table_delegates_to_query_table(myclient, mocker):  # noqa: F811
+@pytest.fixture(autouse=True)
+def _no_reference_by_default(myclient, mocker):  # noqa: F811
+    # Default: tables have no reference table, so merge_reference is a no-op.
+    # Reference-specific tests override this.
+    mocker.patch.object(
+        myclient.materialize,
+        "_resolve_merge_reference",
+        side_effect=lambda mr, table, ds=None, v=None: ([table], None),
+    )
+
+
+def _reference(ref_table, suffix="_ref"):
+    """side_effect: report `ref_table` as the reference for any annotation table."""
+
+    def resolve(mr, table, ds=None, v=None):
+        if table == ref_table:
+            return ([table], None)
+        return (
+            [[table, "target_id"], [ref_table, "id"]],
+            {table: "", ref_table: suffix},
+        )
+
+    return resolve
+
+
+# ---------------------------------------------------------------------------
+# Routing to the right delegated method
+# ---------------------------------------------------------------------------
+
+
+def test_frozen_single_table_delegates_to_query_table(myclient, mocker):  # noqa: F811
     spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
     out = myclient.materialize.query(
         "synapses",
@@ -41,30 +76,27 @@ def test_frozen_table_delegates_to_query_table(myclient, mocker):  # noqa: F811
     assert spy.call_args.args[0] == "synapses"
     assert kw["materialization_version"] == 3
     assert kw["limit"] == 10
-    # delegated query_table still receives the _dict argument names
+    # delegated query_table receives the _dict argument names
     assert kw["filter_in_dict"] == {"pre_pt_root_id": [500]}
     assert kw["filter_out_dict"] == {"post_pt_root_id": [501]}
+    # references are resolved upstream into joins, never via query_table
+    assert kw["merge_reference"] is False
 
 
 def test_live_table_delegates_to_live_live_query(myclient, mocker):  # noqa: F811
     mocker.patch.object(
         myclient.materialize, "_query_capabilities", return_value=MODERN
     )
-    mocker.patch.object(
-        myclient.materialize, "_reference_join_for", return_value=(None, None)
-    )
     spy = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
     )
     out = myclient.materialize.query(
-        "synapses",
-        timestamp=NOW,
-        kind="table",
-        filter_in={"pre_pt_root_id": [500]},
+        "synapses", timestamp=NOW, kind="table", filter_in={"pre_pt_root_id": [500]}
     )
     assert out == "DF"
     _, kw = spy.call_args
     assert kw["timestamp"] == NOW
+    assert kw["joins"] is None
     # nested {table: {col: val}} for the live endpoint
     assert kw["filter_in_dict"] == {"synapses": {"pre_pt_root_id": [500]}}
 
@@ -81,9 +113,7 @@ def test_view_delegates_to_query_view(myclient, mocker):  # noqa: F811
 def test_auto_kind_resolves_view_via_get_views(myclient, mocker):  # noqa: F811
     mocker.patch.object(myclient.materialize, "get_views", return_value=["my_view"])
     spy = mocker.patch.object(myclient.materialize, "query_view", return_value="DF")
-    myclient.materialize.query(
-        "my_view", version=3, allow_version_fallback=False
-    )  # kind="auto"
+    myclient.materialize.query("my_view", version=3, allow_version_fallback=False)
     spy.assert_called_once()
 
 
@@ -92,9 +122,7 @@ def test_auto_kind_defaults_to_table_when_views_unavailable(myclient, mocker):  
         myclient.materialize, "get_views", side_effect=RuntimeError("no v3")
     )
     spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
-    myclient.materialize.query(
-        "synapses", version=3, allow_version_fallback=False
-    )  # kind="auto"
+    myclient.materialize.query("synapses", version=3, allow_version_fallback=False)
     spy.assert_called_once()
 
 
@@ -104,9 +132,6 @@ def test_stale_version_falls_back_to_live(myclient, mocker):  # noqa: F811
     )
     mocker.patch.object(myclient.materialize, "get_versions", return_value=[943, 944])
     mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
-    mocker.patch.object(
-        myclient.materialize, "_reference_join_for", return_value=(None, None)
-    )
     live = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
     )
@@ -128,16 +153,23 @@ def test_passing_a_queryspec_dispatches_it(myclient, mocker):  # noqa: F811
 
 def test_queryspec_plus_kwargs_is_rejected(myclient):  # noqa: F811
     spec = QuerySpec(source=Source("synapses", kind="table"), at=At(version=2))
-    try:
+    with pytest.raises(ValueError, match="QuerySpec"):
         myclient.materialize.query(spec, filter_in={"x": [1]})
-    except ValueError as e:
-        assert "QuerySpec" in str(e)
-    else:
-        raise AssertionError("expected ValueError")
 
 
-def test_table_objects_join_delegates_to_join_query(myclient, mocker):  # noqa: F811
-    spy = mocker.patch.object(myclient.materialize, "join_query", return_value="DF")
+# ---------------------------------------------------------------------------
+# Joins (always via live_live_query; frozen joins run at the version timestamp)
+# ---------------------------------------------------------------------------
+
+
+def test_table_join_runs_live_at_version_timestamp(myclient, mocker):  # noqa: F811
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
     out = myclient.materialize.query(
         [
             Table(
@@ -149,8 +181,10 @@ def test_table_objects_join_delegates_to_join_query(myclient, mocker):  # noqa: 
         allow_version_fallback=False,
     )
     assert out == "DF"
-    args, kwargs = spy.call_args
-    assert args[0] == [["synapses", "post_pt_root_id"], ["nuclei", "pt_root_id"]]
+    _, kwargs = spy.call_args
+    # frozen join converted to a live query at the version's timestamp
+    assert kwargs["timestamp"] == NOW
+    assert kwargs["joins"] == [["synapses", "post_pt_root_id", "nuclei", "pt_root_id"]]
     assert kwargs["suffixes"] == {"synapses": "", "nuclei": "_nuc"}
     assert kwargs["filter_greater_dict"] == {"synapses": {"size": 100}}
 
@@ -163,9 +197,7 @@ def test_single_table_object_delegates_to_query_table(myclient, mocker):  # noqa
         allow_version_fallback=False,
     )
     assert out == "DF"
-    _, kwargs = spy.call_args
-    # single table -> flat filters, same as the string form
-    assert kwargs["filter_greater_dict"] == {"size": 100}
+    assert spy.call_args.kwargs["filter_greater_dict"] == {"size": 100}
 
 
 def test_string_and_table_forms_are_equivalent_for_single_table(myclient, mocker):  # noqa: F811
@@ -186,27 +218,24 @@ def test_string_and_table_forms_are_equivalent_for_single_table(myclient, mocker
         version=3,
         allow_version_fallback=False,
     )
-    # both produce the same delegated filter kwargs
     assert calls[0][1]["filter_greater_dict"] == calls[1][1]["filter_greater_dict"]
 
 
 def test_table_objects_plus_kwargs_is_rejected(myclient):  # noqa: F811
-    try:
+    with pytest.raises(ValueError, match="Table objects"):
         myclient.materialize.query(
             [Table("a", "x"), Table("b", "y")], filter_in={"c": [1]}
         )
-    except ValueError as e:
-        assert "Table objects" in str(e)
-    else:
-        raise AssertionError("expected ValueError")
 
 
-def test_live_flags_passed_through_to_live_query(myclient, mocker):  # noqa: F811
+# ---------------------------------------------------------------------------
+# Live-only behavior flags
+# ---------------------------------------------------------------------------
+
+
+def test_live_flags_passed_through(myclient, mocker):  # noqa: F811
     mocker.patch.object(
         myclient.materialize, "_query_capabilities", return_value=MODERN
-    )
-    mocker.patch.object(
-        myclient.materialize, "_reference_join_for", return_value=(None, None)
     )
     spy = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
@@ -233,80 +262,110 @@ def test_live_flags_are_noops_for_frozen_query(myclient, mocker):  # noqa: F811
         allow_invalid_root_ids=True,
         allow_version_fallback=False,
     )
-    # frozen path delegates to query_table, which has no such kwargs
     _, kwargs = spy.call_args
     assert "allow_missing_lookups" not in kwargs
     assert "allow_invalid_root_ids" not in kwargs
 
 
-def test_merge_reference_default_true_passed_to_query_table(myclient, mocker):  # noqa: F811
+# ---------------------------------------------------------------------------
+# merge_reference: resolved into deduped reference joins (never via join_query)
+# ---------------------------------------------------------------------------
+
+
+def test_reference_resolves_into_a_live_join(myclient, mocker):  # noqa: F811
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
+    mocker.patch.object(
+        myclient.materialize,
+        "_resolve_merge_reference",
+        side_effect=_reference("nuc"),
+    )
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    # a versioned query whose table has a reference becomes a live join at the
+    # version timestamp (join_query is never used)
+    myclient.materialize.query("syn", version=3, kind="table")
+    _, kwargs = spy.call_args
+    assert kwargs["timestamp"] == NOW
+    assert kwargs["joins"] == [["syn", "target_id", "nuc", "id"]]
+    assert kwargs["suffixes"] == {"nuc": "_ref"}
+
+
+def test_shared_reference_is_merged_once(myclient, mocker):  # noqa: F811
+    # Two reference tables joined together, both referencing the same base table:
+    # the shared reference must be merged exactly once.
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
+
+    def resolve(mr, table, ds=None, v=None):
+        if table in ("mtypes_v1", "mtypes_v2"):
+            return (
+                [[table, "target_id"], ["nucleus_detection_v0", "id"]],
+                {table: "", "nucleus_detection_v0": "_ref"},
+            )
+        return ([table], None)
+
+    mocker.patch.object(
+        myclient.materialize, "_resolve_merge_reference", side_effect=resolve
+    )
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    myclient.materialize.query(
+        [
+            Table(
+                "mtypes_v2",
+                "target_id",
+                suffix="_v2",
+                filter_equal={"cell_type": "L2a"},
+            ),
+            Table("mtypes_v1", "target_id", suffix="_v1"),
+        ],
+        version=943,
+        allow_version_fallback=False,
+    )
+    joins = spy.call_args.kwargs["joins"]
+    assert joins == [
+        ["mtypes_v2", "target_id", "mtypes_v1", "target_id"],  # explicit join
+        ["mtypes_v2", "target_id", "nucleus_detection_v0", "id"],  # one ref, deduped
+    ]
+    assert sum(1 for j in joins if j[2] == "nucleus_detection_v0") == 1
+
+
+def test_query_table_never_merges_references(myclient, mocker):  # noqa: F811
+    # merge_reference handling moved upstream; query_table always gets False
     spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
     myclient.materialize.query(
         "synapses", version=3, kind="table", allow_version_fallback=False
     )
-    assert spy.call_args.kwargs["merge_reference"] is True
+    assert spy.call_args.kwargs["merge_reference"] is False
 
 
-def test_table_merge_reference_false_passed_through(myclient, mocker):  # noqa: F811
+def test_merge_reference_false_skips_resolution(myclient, mocker):  # noqa: F811
+    resolve = mocker.patch.object(
+        myclient.materialize,
+        "_resolve_merge_reference",
+        side_effect=lambda *a, **k: ([a[1]], None),
+    )
     spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
     myclient.materialize.query(
         Table("synapses", merge_reference=False),
         version=3,
         allow_version_fallback=False,
     )
-    assert spy.call_args.kwargs["merge_reference"] is False
-
-
-def test_live_merge_reference_injects_reference_join(myclient, mocker):  # noqa: F811
-    # live_live_query doesn't auto-merge; the backend injects the reference join,
-    # reusing the cached _resolve_merge_reference (mocked here to report a ref).
-    mocker.patch.object(
-        myclient.materialize, "_query_capabilities", return_value=MODERN
-    )
-    mocker.patch.object(
-        myclient.materialize,
-        "_resolve_merge_reference",
-        return_value=(
-            [["syn", "target_id"], ["nuc", "id"]],
-            {"syn": "", "nuc": "_ref"},
-        ),
-    )
-    spy = mocker.patch.object(
-        myclient.materialize, "live_live_query", return_value="DF"
-    )
-    myclient.materialize.query("syn", timestamp=NOW, kind="table")
-    _, kwargs = spy.call_args
-    # mirrors the server's own reference-join pattern (quad encoding) + _ref suffix
-    assert kwargs["joins"] == [["syn", "target_id", "nuc", "id"]]
-    assert kwargs["suffixes"] == {"syn": "", "nuc": "_ref"}
-
-
-def test_live_merge_reference_false_injects_nothing(myclient, mocker):  # noqa: F811
-    mocker.patch.object(
-        myclient.materialize, "_query_capabilities", return_value=MODERN
-    )
-    resolve = mocker.patch.object(myclient.materialize, "_resolve_merge_reference")
-    spy = mocker.patch.object(
-        myclient.materialize, "live_live_query", return_value="DF"
-    )
-    myclient.materialize.query(Table("syn", merge_reference=False), timestamp=NOW)
-    assert spy.call_args.kwargs["joins"] is None
+    # no reference resolution attempted, stays a single-table query_table call
     resolve.assert_not_called()
+    spy.assert_called_once()
 
 
-def test_live_no_reference_table_no_join(myclient, mocker):  # noqa: F811
-    mocker.patch.object(
-        myclient.materialize, "_query_capabilities", return_value=MODERN
-    )
-    # _resolve_merge_reference returns a single-table list when there's no reference
-    mocker.patch.object(
-        myclient.materialize, "_resolve_merge_reference", return_value=(["syn"], None)
-    )
-    spy = mocker.patch.object(
-        myclient.materialize, "live_live_query", return_value="DF"
-    )
-    myclient.materialize.query("syn", timestamp=NOW, kind="table")
-    assert spy.call_args.kwargs["joins"] is None
+# ---------------------------------------------------------------------------
+# misc
+# ---------------------------------------------------------------------------
 
 
 def test_available_version_set_is_cached(myclient, mocker):  # noqa: F811
@@ -316,16 +375,9 @@ def test_available_version_set_is_cached(myclient, mocker):  # noqa: F811
     a = myclient.materialize._available_version_set()
     b = myclient.materialize._available_version_set()
     assert a == b == frozenset({1, 2, 3})
-    # second call served from the short-TTL cache, not a second round-trip
     assert spy.call_count == 1
 
 
 def test_unknown_filter_kwarg_is_rejected(myclient):  # noqa: F811
-    try:
-        myclient.materialize.query(
-            "synapses", kind="table", filter_bogus_dict={"x": [1]}
-        )
-    except TypeError as e:
-        assert "filter_bogus_dict" in str(e)
-    else:
-        raise AssertionError("expected TypeError")
+    with pytest.raises(TypeError, match="filter_bogus"):
+        myclient.materialize.query("synapses", kind="table", filter_bogus={"x": [1]})

@@ -21,7 +21,7 @@ from typing import Optional, Union
 
 from packaging.version import Version
 
-from .serialize import filters_to_method_kwargs, joins_to_pairs, joins_to_quads
+from .serialize import filters_to_method_kwargs, joins_to_quads
 from .spec import QuerySpec
 
 # live_live_query carries @_check_version_compatibility(method_constraint=">=5.13.0")
@@ -74,7 +74,12 @@ class QueryBackend(abc.ABC):
 
 
 class MaterializedBackend(QueryBackend):
-    """Versioned (frozen) queries on a table, via ``query_table``."""
+    """Versioned (frozen) single-table queries, via ``query_table``.
+
+    The fast path. Joins (including reference merges) are resolved upstream into
+    explicit joins and routed to the live backend, so this backend only ever sees
+    single-table, join-free queries.
+    """
 
     name = "materialized"
 
@@ -83,28 +88,11 @@ class MaterializedBackend(QueryBackend):
             return "materialized backend serves versioned queries, not timestamps"
         if spec.source.kind not in ("table", "auto"):
             return f"materialized backend serves tables, not {spec.source.kind}s"
-        if spec.source.joins and len(spec.source.joins) > 1:
-            return (
-                "frozen queries support a single explicit join; use a live query "
-                "for multi-table joins"
-            )
+        if spec.source.is_join:
+            return "joins are served by the live backend"
         return True
 
     def execute(self, spec, client):
-        if spec.source.is_join:
-            return client.join_query(
-                joins_to_pairs(spec.source.joins),
-                materialization_version=spec.at.version,
-                select_columns=spec.select_columns,
-                offset=spec.offset,
-                limit=spec.limit,
-                split_positions=spec.output.split_positions,
-                desired_resolution=spec.output.desired_resolution,
-                metadata=spec.output.metadata,
-                suffixes=spec.source.suffixes,
-                random_sample=spec.random_sample,
-                **filters_to_method_kwargs(spec.filters, spec.source.name, nested=True),
-            )
         return client.query_table(
             spec.source.name,
             materialization_version=spec.at.version,
@@ -116,7 +104,9 @@ class MaterializedBackend(QueryBackend):
             metadata=spec.output.metadata,
             get_counts=spec.get_counts,
             random_sample=spec.random_sample,
-            merge_reference=spec.merge_reference,
+            # references are resolved upstream into joins (which route live), so
+            # there is never a reference to merge here.
+            merge_reference=False,
             **filters_to_method_kwargs(spec.filters, spec.source.name, nested=False),
         )
 
@@ -150,86 +140,47 @@ class ViewBackend(QueryBackend):
 
 
 class LiveBackend(QueryBackend):
-    """Server-side live queries at a timestamp, via ``live_live_query``."""
+    """Live and joined queries, via ``live_live_query``.
+
+    Serves every timestamp query and every joined query. Versioned joins reach
+    here already converted to the version's timestamp (which reproduces the
+    frozen result), so this backend always runs against a timestamp. Joins —
+    including reference merges — are resolved upstream into ``spec.source.joins``.
+    """
 
     name = "live"
 
     def can_handle(self, spec, caps):
         if not spec.is_live:
             return "live backend serves timestamp queries only"
-        if spec.source.kind == "view":
+        if spec.source.kind == "view" and not caps.source_live_compatible:
             # Phase 2 (server) will flip this on via source_live_compatible.
-            if not caps.source_live_compatible:
-                return "this view does not support timestamp queries on this server"
+            return "this view does not support timestamp queries on this server"
         if not caps.supports_live_endpoint():
             return (
                 f"live queries require server >= {LIVE_QUERY_MIN_VERSION}, "
                 f"server is {caps.server_version}"
             )
+        if not caps.has_chunkedgraph:
+            return "live queries require a chunkedgraph client"
         return True
 
     def execute(self, spec, client):
-        joins = spec.source.joins
-        suffixes = spec.source.suffixes
-        # live_live_query does not auto-merge references; mirror the server's own
-        # pattern by injecting the reference join explicitly. Reuses the client's
-        # cached _resolve_merge_reference rather than re-resolving metadata here.
-        if spec.merge_reference and not spec.source.is_join:
-            ref_join, ref_suffixes = client._reference_join_for(spec.source.name)
-            if ref_join is not None:
-                joins = (ref_join,)
-                suffixes = ref_suffixes
         return client.live_live_query(
             spec.source.name,
             timestamp=spec.at.timestamp,
-            joins=joins_to_quads(joins) if joins else None,
+            joins=joins_to_quads(spec.source.joins) if spec.source.joins else None,
             select_columns=spec.select_columns,
             offset=spec.offset,
             limit=spec.limit,
             split_positions=spec.output.split_positions,
             desired_resolution=spec.output.desired_resolution,
             metadata=spec.output.metadata,
-            suffixes=suffixes,
+            suffixes=spec.source.suffixes,
             random_sample=spec.random_sample,
             allow_missing_lookups=spec.allow_missing_lookups,
             allow_invalid_root_ids=spec.allow_invalid_root_ids,
             **filters_to_method_kwargs(spec.filters, spec.source.name, nested=True),
-        )
-
-
-class LiveEmulationBackend(QueryBackend):
-    """Client-side live query fallback for older servers, via ``live_query``.
-
-    Finds the nearest materialized version, remaps filters into the past, and
-    post-filters — all client-side. Requires a chunkedgraph client.
-    """
-
-    name = "live_emulation"
-
-    def can_handle(self, spec, caps):
-        if not spec.is_live:
-            return "live-emulation backend serves timestamp queries only"
-        if spec.source.kind == "view":
-            return "client-side live emulation does not support views"
-        if not caps.has_chunkedgraph:
-            return "client-side live query requires a chunkedgraph client"
-        return True
-
-    def execute(self, spec, client):
-        # live_query does its own reference merge internally; pass the flag
-        # through rather than injecting a join (it has no joins argument).
-        return client.live_query(
-            spec.source.name,
-            timestamp=spec.at.timestamp,
-            select_columns=_flat_select(spec),
-            offset=spec.offset,
-            limit=spec.limit,
-            split_positions=spec.output.split_positions,
-            desired_resolution=spec.output.desired_resolution,
-            metadata=spec.output.metadata,
-            merge_reference=spec.merge_reference,
-            random_sample=spec.random_sample,
-            **filters_to_method_kwargs(spec.filters, spec.source.name, nested=False),
         )
 
 
@@ -251,13 +202,11 @@ class UnroutableQueryError(Exception):
     """Raised when no backend can serve a query; carries each backend's reason."""
 
 
-# Default routing order. The first backend whose can_handle passes wins, so
-# the server-side live path is preferred over the client-side emulation.
+# Default routing order. The first backend whose can_handle passes wins.
 DEFAULT_BACKENDS: tuple[QueryBackend, ...] = (
     MaterializedBackend(),
     ViewBackend(),
     LiveBackend(),
-    LiveEmulationBackend(),
     DeltalakeBackend(),
 )
 

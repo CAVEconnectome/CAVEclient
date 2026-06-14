@@ -5,6 +5,7 @@ import re
 import textwrap
 import warnings
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from datetime import datetime
 from typing import Iterable, Optional, Union
 
@@ -27,7 +28,7 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
-from .query import Capabilities, Join, QuerySpec, Switchboard, Table
+from .query import At, Capabilities, Join, QuerySpec, Switchboard, Table
 from .query.spec import (
     build_query_spec,
     build_query_spec_from_tables,
@@ -661,25 +662,57 @@ class MaterializationClient(ClientBase):
         """Resolve a table's reference join, if any, as a typed ``Join``.
 
         Reuses :meth:`_resolve_merge_reference` (backed by the cached
-        ``get_table_metadata``) so the live path merges references exactly as the
-        versioned path does, rather than re-implementing the lookup.
+        ``get_table_metadata``) rather than re-implementing the lookup.
 
         Returns
         -------
-        (Join | None, dict | None)
-            The reference join and per-table suffixes, or ``(None, None)`` if the
-            table has no reference table.
+        (Join | None, dict)
+            The reference join and the reference table's suffix
+            (``{reference_table: "_ref"}``), or ``(None, {})`` if the table has no
+            reference table.
         """
         tables, suffix_map = self._resolve_merge_reference(
             True, table, datastack_name, None
         )
         if len(tables) < 2:
-            return None, None
+            return None, {}
         (left, left_col), (right, right_col) = tables[0], tables[1]
-        suffixes = (
-            suffix_map if isinstance(suffix_map, dict) else {left: "", right: "_ref"}
+        ref_suffix = (
+            suffix_map.get(right, "_ref") if isinstance(suffix_map, dict) else "_ref"
         )
-        return Join(left, left_col, right, right_col), suffixes
+        return Join(left, left_col, right, right_col), {right: ref_suffix}
+
+    def _inject_reference_joins(self, spec, want_merge, datastack_name=None):
+        """Add deduped reference joins for the named tables to ``spec``.
+
+        For each table that requested ``merge_reference``, resolve its reference
+        table and add a reference join — but only once per reference table, and
+        never for a table already present in the query, so two tables sharing a
+        reference merge it a single time.
+        """
+        if not want_merge:
+            return spec
+        present = {spec.source.name}
+        for j in spec.source.joins or ():
+            present.add(j.left_table)
+            present.add(j.right_table)
+        new_joins = list(spec.source.joins or ())
+        new_suffixes = dict(spec.source.suffixes or {})
+        for table in want_merge:
+            ref_join, ref_suffix = self._reference_join_for(table, datastack_name)
+            if ref_join is None or ref_join.right_table in present:
+                continue
+            present.add(ref_join.right_table)
+            new_joins.append(ref_join)
+            new_suffixes.update(ref_suffix)
+        if len(new_joins) == len(spec.source.joins or ()):
+            return spec
+        return replace(
+            spec,
+            source=replace(
+                spec.source, joins=tuple(new_joins), suffixes=new_suffixes or None
+            ),
+        )
 
     def _resolve_source_kind(self, name: str, datastack_name=None) -> str:
         """Resolve an ``auto`` source to ``"view"`` or ``"table"`` via metadata.
@@ -810,6 +843,7 @@ class MaterializationClient(ClientBase):
                     "when passing a QuerySpec, do not also pass query keyword arguments"
                 )
             spec = source
+            want_merge = [spec.source.name] if spec.merge_reference else []
         elif is_table_objs:
             if filter_kwargs or select_columns is not None:
                 raise ValueError(
@@ -831,6 +865,7 @@ class MaterializationClient(ClientBase):
                 allow_missing_lookups=allow_missing_lookups,
                 allow_invalid_root_ids=allow_invalid_root_ids,
             )
+            want_merge = [t.name for t in tables if t.merge_reference]
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")
@@ -853,7 +888,26 @@ class MaterializationClient(ClientBase):
                 allow_missing_lookups=allow_missing_lookups,
                 allow_invalid_root_ids=allow_invalid_root_ids,
             )
+            # views have no reference table to merge
+            want_merge = [source] if spec.merge_reference and kind != "view" else []
 
+        # Resolve merge_reference into explicit, deduped reference joins. join_query
+        # is never used, so a reference (like any join) is served by live_live_query;
+        # references are resolved here, client-side, reusing cached metadata.
+        spec = self._inject_reference_joins(spec, want_merge, datastack_name)
+
+        # Any join is served only by live_live_query. A versioned join runs at the
+        # version's timestamp, which reproduces the frozen result.
+        if spec.source.is_join and not spec.is_live:
+            ref_version = (
+                spec.at.version if spec.at.version is not None else self.version
+            )
+            spec = replace(
+                spec, at=At(timestamp=self.get_timestamp(ref_version, datastack_name))
+            )
+
+        # Stale versioned (non-join) queries fall back to a live query at the
+        # version's timestamp instead of failing.
         if allow_version_fallback and spec.at.version is not None:
             spec, fell_back = resolve_version_fallback(
                 spec,

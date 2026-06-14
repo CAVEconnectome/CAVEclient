@@ -18,7 +18,6 @@ from caveclient.query.backends import (
     Capabilities,
     DeltalakeBackend,
     LiveBackend,
-    LiveEmulationBackend,
     MaterializedBackend,
     Switchboard,
     UnroutableQueryError,
@@ -26,7 +25,6 @@ from caveclient.query.backends import (
 )
 from caveclient.query.serialize import (
     filters_to_method_kwargs,
-    joins_to_pairs,
     joins_to_quads,
 )
 
@@ -59,9 +57,11 @@ class TestRouting:
         caps = Capabilities(server_version=Version("5.20.0"), has_chunkedgraph=True)
         assert self.sb.route(live_table(), caps).name == "live"
 
-    def test_live_table_old_server_falls_back_to_emulation(self):
+    def test_live_table_old_server_is_unroutable(self):
+        # no client-side emulation fallback; an old server simply can't serve it
         caps = Capabilities(server_version=Version("5.0.0"), has_chunkedgraph=True)
-        assert self.sb.route(live_table(), caps).name == "live_emulation"
+        with pytest.raises(UnroutableQueryError, match="5.13.0"):
+            self.sb.route(live_table(), caps)
 
     def test_live_view_unroutable_in_phase1(self):
         spec = QuerySpec(source=Source("v", kind="view"), at=At(timestamp=NOW))
@@ -79,13 +79,10 @@ class TestRouting:
         )
         assert self.sb.route(spec, caps).name == "live"
 
-    def test_live_table_no_chunkedgraph_old_server_is_unroutable(self):
-        caps = Capabilities(server_version=Version("5.0.0"), has_chunkedgraph=False)
-        with pytest.raises(UnroutableQueryError) as exc:
+    def test_live_table_no_chunkedgraph_is_unroutable(self):
+        caps = Capabilities(server_version=Version("5.20.0"), has_chunkedgraph=False)
+        with pytest.raises(UnroutableQueryError, match="chunkedgraph"):
             self.sb.route(live_table(), caps)
-        # message names each backend's reason
-        assert "live:" in str(exc.value)
-        assert "live_emulation:" in str(exc.value)
 
     def test_dataset_source_is_unroutable_until_phase3(self):
         spec = QuerySpec(source=Source("d", kind="dataset"), at=At(version=1))
@@ -108,10 +105,18 @@ class TestCanHandleReasons:
         reason = ViewBackend().can_handle(frozen_table(), Capabilities())
         assert isinstance(reason, str) and "views only" in reason
 
-    def test_emulation_requires_chunkedgraph(self):
-        caps = Capabilities(has_chunkedgraph=False)
-        reason = LiveEmulationBackend().can_handle(live_table(), caps)
+    def test_live_requires_chunkedgraph(self):
+        caps = Capabilities(server_version=Version("5.20.0"), has_chunkedgraph=False)
+        reason = LiveBackend().can_handle(live_table(), caps)
         assert isinstance(reason, str) and "chunkedgraph" in reason
+
+    def test_materialized_declines_joins(self):
+        spec = QuerySpec(
+            source=Source("t", kind="table", joins=(Join("t", "a", "u", "b"),)),
+            at=At(version=3),
+        )
+        reason = MaterializedBackend().can_handle(spec, Capabilities())
+        assert isinstance(reason, str) and "live backend" in reason
 
     def test_deltalake_always_declines(self):
         spec = QuerySpec(source=Source("d", kind="dataset"), at=At(version=1))
@@ -142,7 +147,6 @@ class TestExecutionDelegation:
 
     def test_live_calls_live_live_query_with_nested_filters(self):
         client = MagicMock()
-        client._reference_join_for.return_value = (None, None)
         spec = live_table(
             filters=(
                 Filter(ColumnHandle("pre_pt_root_id", FilterKind.ID), FilterOp.IN, [1]),
@@ -176,44 +180,30 @@ class TestExecutionDelegation:
 class TestJoins:
     J = Join("syn", "post_pt_root_id", "nuc", "pt_root_id")
 
-    def test_pairs_encoding_single_join(self):
-        assert joins_to_pairs([self.J]) == [
-            ["syn", "post_pt_root_id"],
-            ["nuc", "pt_root_id"],
-        ]
-
-    def test_pairs_encoding_rejects_multiple(self):
-        with pytest.raises(ValueError, match="single explicit join"):
-            joins_to_pairs([self.J, self.J])
-
     def test_quads_encoding_handles_multiple(self):
         assert joins_to_quads([self.J, self.J]) == [
             ["syn", "post_pt_root_id", "nuc", "pt_root_id"],
             ["syn", "post_pt_root_id", "nuc", "pt_root_id"],
         ]
 
-    def test_frozen_single_join_routes_to_materialized(self):
+    def test_live_join_routes_to_live(self):
         spec = QuerySpec(
-            source=Source("syn", kind="table", joins=(self.J,)), at=At(version=3)
+            source=Source("syn", kind="table", joins=(self.J,)),
+            at=At(timestamp=NOW),
         )
-        backend = Switchboard().route(
-            spec, Capabilities(server_version=Version("5.20.0"))
-        )
-        assert backend.name == "materialized"
+        caps = Capabilities(server_version=Version("5.20.0"), has_chunkedgraph=True)
+        assert Switchboard().route(spec, caps).name == "live"
 
-    def test_frozen_multi_join_is_refused(self):
-        spec = QuerySpec(
-            source=Source("syn", kind="table", joins=(self.J, self.J)),
-            at=At(version=3),
-        )
-        with pytest.raises(UnroutableQueryError, match="single explicit join"):
-            Switchboard().route(spec, Capabilities(server_version=Version("5.20.0")))
-
-    def test_frozen_join_delegates_to_join_query_with_pairs(self):
+    def test_live_join_delegates_to_live_live_query_with_quads(self):
         client = MagicMock()
         spec = QuerySpec(
-            source=Source("syn", kind="table", joins=(self.J,), suffixes={"syn": ""}),
-            at=At(version=3),
+            source=Source(
+                "syn",
+                kind="table",
+                joins=(self.J,),
+                suffixes={"syn": "", "nuc": "_nuc"},
+            ),
+            at=At(timestamp=NOW),
             filters=(
                 Filter(
                     ColumnHandle("size", FilterKind.NUMERIC, table="syn"),
@@ -222,23 +212,12 @@ class TestJoins:
                 ),
             ),
         )
-        MaterializedBackend().execute(spec, client)
-        client.join_query.assert_called_once()
-        args, kwargs = client.join_query.call_args
-        assert args[0] == [["syn", "post_pt_root_id"], ["nuc", "pt_root_id"]]
-        assert kwargs["suffixes"] == {"syn": ""}
-        # join filters are nested by table
-        assert kwargs["filter_greater_dict"] == {"syn": {"size": 100}}
-
-    def test_live_join_delegates_to_live_live_query_with_quads(self):
-        client = MagicMock()
-        spec = QuerySpec(
-            source=Source("syn", kind="table", joins=(self.J,)),
-            at=At(timestamp=NOW),
-        )
         LiveBackend().execute(spec, client)
         _, kwargs = client.live_live_query.call_args
         assert kwargs["joins"] == [["syn", "post_pt_root_id", "nuc", "pt_root_id"]]
+        assert kwargs["suffixes"] == {"syn": "", "nuc": "_nuc"}
+        # join filters are nested by table
+        assert kwargs["filter_greater_dict"] == {"syn": {"size": 100}}
 
 
 class TestFlatVsNestedKwargs:

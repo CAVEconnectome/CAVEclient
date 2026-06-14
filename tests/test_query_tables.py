@@ -3,7 +3,7 @@ import pytest
 from caveclient.query import InvalidQueryError, Table
 from caveclient.query.serialize import (
     filters_to_method_kwargs,
-    joins_to_pairs,
+    joins_to_quads,
 )
 from caveclient.query.spec import build_query_spec_from_tables
 
@@ -24,9 +24,8 @@ class TestTableDecomposition:
         )
         assert spec.source.name == "synapses"
         assert spec.source.is_join
-        assert joins_to_pairs(spec.source.joins) == [
-            ["synapses", "post_pt_root_id"],
-            ["nuclei", "pt_root_id"],
+        assert joins_to_quads(spec.source.joins) == [
+            ["synapses", "post_pt_root_id", "nuclei", "pt_root_id"],
         ]
         assert spec.source.suffixes == {"synapses": "", "nuclei": "_nuc"}
         nested = filters_to_method_kwargs(spec.filters, spec.source.name, nested=True)

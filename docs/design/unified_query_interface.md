@@ -351,17 +351,33 @@ the substitution is observable. The available-version set is cached
 (`_available_version_set`, short TTL) so the fallback check does not add a
 `get_versions` round-trip to every pinned query.
 
-### Joins
+### Only two server methods; joins and references via the live path
 
-Joins are expressed with a typed `Join(left_table, left_column, right_table,
-right_column)` rather than either of the server's two divergent encodings.
-`caveclient.query.serialize` renders it to whichever form the target needs —
-`join_query`'s `[[table, column], ...]` pairs or `live_live_query`'s
-`[[t1, c1, t2, c2], ...]` quads. A single join works on both frozen and live
-paths; multi-table joins go through the live path (the quad encoding handles N
-joins cleanly) while frozen multi-join is declined with a reason. Reference-
-table joins are unaffected — they remain `query_table`'s automatic
-`merge_reference` behavior, a separate path from explicit joins.
+The client delegates to exactly two server methods: **`query_table`** for
+single-table frozen queries (the fast `simple_query` path) and
+**`live_live_query`** for everything live or joined. `join_query` is never used
+(its frozen endpoint only joins two tables — `common.py:485` — and is otherwise
+subsumed) and `live_query` is never used (its client-side emulation updates root
+IDs but not the row set, so it silently diverges when tables are edited).
+
+Because `live_live_query` at a version's exact timestamp reproduces that frozen
+version, **any joined query — frozen or live — runs through `live_live_query`**;
+a versioned join is converted to a query at `get_timestamp(version)` before
+dispatch. Joins are typed `Join(left_table, left_column, right_table,
+right_column)` serialized to the live endpoint's `[[t1, c1, t2, c2], ...]` form,
+which handles N joins. (Consequence: any join, including a reference merge,
+requires a chunkedgraph client and the live endpoint; pure single-table queries
+keep the fast `query_table` path.)
+
+### Reference merges as deduped joins
+
+`merge_reference` (per-`Table`, default True) is resolved in `query()` — not in
+any backend — into explicit reference `Join`s (`table.target_id ==
+reference_table.id`, reference columns suffixed `_ref`), reusing the cached
+`_resolve_merge_reference`. References are **deduped**: if several tables in a
+join reference the same base table, it is merged exactly once (and never if it
+is already an explicit table in the query). Since a reference is just another
+join, it flows through the same live path as explicit joins.
 
 ## 8. Open decisions
 
