@@ -195,6 +195,59 @@ def test_table_objects_plus_kwargs_is_rejected(myclient):  # noqa: F811
         raise AssertionError("expected ValueError")
 
 
+def test_live_flags_passed_through_to_live_query(myclient, mocker):  # noqa: F811
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    myclient.materialize.query(
+        "synapses",
+        timestamp=NOW,
+        kind="table",
+        allow_missing_lookups=True,
+        allow_invalid_root_ids=True,
+    )
+    _, kwargs = spy.call_args
+    assert kwargs["allow_missing_lookups"] is True
+    assert kwargs["allow_invalid_root_ids"] is True
+
+
+def test_live_flags_are_noops_for_frozen_query(myclient, mocker):  # noqa: F811
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    myclient.materialize.query(
+        "synapses",
+        version=3,
+        kind="table",
+        allow_missing_lookups=True,
+        allow_invalid_root_ids=True,
+        allow_version_fallback=False,
+    )
+    # frozen path delegates to query_table, which has no such kwargs
+    _, kwargs = spy.call_args
+    assert "allow_missing_lookups" not in kwargs
+    assert "allow_invalid_root_ids" not in kwargs
+
+
+def test_merge_reference_default_true_passed_to_query_table(myclient, mocker):  # noqa: F811
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    myclient.materialize.query(
+        "synapses", version=3, kind="table", allow_version_fallback=False
+    )
+    assert spy.call_args.kwargs["merge_reference"] is True
+
+
+def test_table_merge_reference_false_passed_through(myclient, mocker):  # noqa: F811
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    myclient.materialize.query(
+        Table("synapses", merge_reference=False),
+        version=3,
+        allow_version_fallback=False,
+    )
+    assert spy.call_args.kwargs["merge_reference"] is False
+
+
 def test_available_version_set_is_cached(myclient, mocker):  # noqa: F811
     spy = mocker.patch.object(
         myclient.materialize, "get_versions", return_value=[1, 2, 3]

@@ -685,6 +685,8 @@ class MaterializationClient(ClientBase):
         split_positions: bool = False,
         desired_resolution: Iterable = None,
         metadata: bool = True,
+        allow_missing_lookups: bool = False,
+        allow_invalid_root_ids: bool = False,
         allow_version_fallback: bool = True,
         datastack_name: str = None,
         **filter_kwargs,
@@ -726,11 +728,20 @@ class MaterializationClient(ClientBase):
         kind :
             ``"auto"`` (default, resolved from metadata), ``"table"``,
             ``"view"``, or ``"dataset"``.
+        allow_missing_lookups, allow_invalid_root_ids :
+            Live-query behavior, passed through for timestamp queries and ignored
+            (no-op) for versioned queries. ``allow_missing_lookups`` returns
+            results even if some supervoxels are not yet resolved;
+            ``allow_invalid_root_ids`` ignores root IDs not valid at the timestamp.
         allow_version_fallback :
             If True (default) and a pinned ``version`` no longer exists, fall
             back to a live query at that version's timestamp instead of failing.
-        select_columns, offset, limit, random_sample, get_counts, split_positions, desired_resolution, metadata, datastack_name :
-            As for :meth:`query_table`.
+        random_sample :
+            If set, draw roughly this many rows by sampling the primary
+            (driving) table before any join — not a sample of the joined result.
+        select_columns, offset, limit, get_counts, split_positions, desired_resolution, metadata, datastack_name :
+            As for :meth:`query_table`. (For ``Table`` inputs, ``select`` lives
+            on each ``Table`` instead of ``select_columns``.)
 
         Returns
         -------
@@ -766,6 +777,8 @@ class MaterializationClient(ClientBase):
                 split_positions=split_positions,
                 desired_resolution=desired_resolution,
                 metadata=metadata,
+                allow_missing_lookups=allow_missing_lookups,
+                allow_invalid_root_ids=allow_invalid_root_ids,
             )
         else:
             if source is None:
@@ -791,6 +804,8 @@ class MaterializationClient(ClientBase):
                 split_positions=split_positions,
                 desired_resolution=desired_resolution,
                 metadata=metadata,
+                allow_missing_lookups=allow_missing_lookups,
+                allow_invalid_root_ids=allow_invalid_root_ids,
             )
 
         if allow_version_fallback and spec.at.version is not None:

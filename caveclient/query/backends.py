@@ -116,6 +116,7 @@ class MaterializedBackend(QueryBackend):
             metadata=spec.output.metadata,
             get_counts=spec.get_counts,
             random_sample=spec.random_sample,
+            merge_reference=spec.merge_reference,
             **filters_to_method_kwargs(spec.filters, spec.source.name, nested=False),
         )
 
@@ -181,6 +182,8 @@ class LiveBackend(QueryBackend):
             metadata=spec.output.metadata,
             suffixes=spec.source.suffixes,
             random_sample=spec.random_sample,
+            allow_missing_lookups=spec.allow_missing_lookups,
+            allow_invalid_root_ids=spec.allow_invalid_root_ids,
             **filters_to_method_kwargs(spec.filters, spec.source.name, nested=True),
         )
 

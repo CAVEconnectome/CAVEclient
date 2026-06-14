@@ -109,6 +109,10 @@ class Table:
         Suffix appended to this table's columns to disambiguate joins.
     select :
         Columns to return from this table (defaults to all).
+    merge_reference :
+        If True (default) and this is a single-table query, auto-join this
+        table's reference table; its columns appear suffixed with ``_ref``. Has
+        no effect when explicit joins are given (a multi-table query).
     filter_in, filter_out, filter_equal, filter_greater, filter_less, filter_greater_equal, filter_less_equal, filter_spatial, filter_regex :
         Flat ``{column: value}`` filter dicts scoped to this table.
     """
@@ -117,6 +121,7 @@ class Table:
     join_on: Optional[str] = None
     suffix: Optional[str] = None
     select: Optional[Sequence[str]] = None
+    merge_reference: bool = True
     filter_in: Optional[dict] = None
     filter_out: Optional[dict] = None
     filter_equal: Optional[dict] = None
@@ -195,6 +200,11 @@ class QuerySpec:
     limit: Optional[int] = None
     random_sample: Optional[int] = None
     get_counts: bool = False
+    # auto-join the primary table's reference table (table-query behavior)
+    merge_reference: bool = True
+    # live-query behavior; no-ops for versioned (frozen) queries
+    allow_missing_lookups: bool = False
+    allow_invalid_root_ids: bool = False
     output: OutputOptions = field(default_factory=OutputOptions)
 
     def __post_init__(self) -> None:
@@ -269,8 +279,9 @@ def build_query_spec(
     split_positions: bool = False,
     desired_resolution: Optional[Sequence[float]] = None,
     metadata: bool = True,
-    joins: Optional[list] = None,
-    suffixes: Optional[dict] = None,
+    merge_reference: bool = True,
+    allow_missing_lookups: bool = False,
+    allow_invalid_root_ids: bool = False,
 ) -> QuerySpec:
     """Build a :class:`QuerySpec` from the familiar filter-dict keyword style.
 
@@ -281,12 +292,7 @@ def build_query_spec(
     """
     filters = filters_from_kwargs(filters_by_kwarg or {}, source)
     return QuerySpec(
-        source=Source(
-            source,
-            kind=kind,
-            joins=tuple(joins) if joins else None,
-            suffixes=suffixes,
-        ),
+        source=Source(source, kind=kind),
         at=At(version=version, timestamp=timestamp),
         filters=filters,
         select_columns=select_columns,
@@ -294,6 +300,9 @@ def build_query_spec(
         limit=limit,
         random_sample=random_sample,
         get_counts=get_counts,
+        merge_reference=merge_reference,
+        allow_missing_lookups=allow_missing_lookups,
+        allow_invalid_root_ids=allow_invalid_root_ids,
         output=OutputOptions(
             split_positions=split_positions,
             desired_resolution=desired_resolution,
@@ -314,12 +323,14 @@ def build_query_spec_from_tables(
     split_positions: bool = False,
     desired_resolution: Optional[Sequence[float]] = None,
     metadata: bool = True,
+    allow_missing_lookups: bool = False,
+    allow_invalid_root_ids: bool = False,
 ) -> QuerySpec:
     """Build a :class:`QuerySpec` from one or more :class:`Table` objects.
 
     The first table is the primary source. Adjacent tables are joined on their
-    ``join_on`` columns; per-table suffixes, selected columns, and filters are
-    gathered into the spec's joins/suffixes/filters/select_columns.
+    ``join_on`` columns; per-table suffixes, selected columns, filters, and the
+    ``merge_reference`` flag are gathered into the spec.
     """
     tables = list(tables)
     if not tables:
@@ -329,6 +340,10 @@ def build_query_spec_from_tables(
         raise InvalidQueryError(
             f"every table in a multi-table query must set join_on; missing on: {missing}"
         )
+    # merge_reference is a primary-table concern; it only applies when there is
+    # no explicit join (explicit joins go through join_query, which has no
+    # auto-reference behavior). Honor the primary table's flag.
+    merge_reference = tables[0].merge_reference if len(tables) == 1 else False
 
     joins = tuple(
         Join(
@@ -362,6 +377,9 @@ def build_query_spec_from_tables(
         limit=limit,
         random_sample=random_sample,
         get_counts=get_counts,
+        merge_reference=merge_reference,
+        allow_missing_lookups=allow_missing_lookups,
+        allow_invalid_root_ids=allow_invalid_root_ids,
         output=OutputOptions(
             split_positions=split_positions,
             desired_resolution=desired_resolution,
