@@ -2297,7 +2297,14 @@ class MaterializationClient(ClientBase):
 
     @property
     def tables(self) -> TableManager:
-        """The table manager: query annotation tables by name (``.tables.<name>``)."""
+        """The table manager: query annotation tables by name (``.tables.<name>``).
+
+        Tip: for tab-completion of table names, bind it to a variable first
+        (``tbls = client.materialize.tables``) and complete ``tbls.<TAB>``.
+        IPython won't run a property getter during completion, so completing the
+        full ``client.materialize.tables.<TAB>`` chain directly requires
+        ``%config IPCompleter.evaluation = 'unsafe'``.
+        """
         if self._tables is None:
             if self.fc is None or self.fc._materialize is None:
                 raise ValueError("No full CAVEclient specified")
@@ -2314,7 +2321,12 @@ class MaterializationClient(ClientBase):
 
     @property
     def views(self) -> ViewManager:
-        """The view manager: query views by name (``.views.<name>``)."""
+        """The view manager: query views by name (``.views.<name>``).
+
+        Tip: for tab-completion of view names, bind it to a variable first
+        (``vws = client.materialize.views``) and complete ``vws.<TAB>`` — IPython
+        won't run a property getter during completion.
+        """
         if self._views is None:
             if self.fc is None or self.fc._materialize is None:
                 raise ValueError("No full CAVEclient specified")

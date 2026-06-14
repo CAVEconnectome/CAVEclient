@@ -10,6 +10,7 @@ frozen-join-via-live, default suffixes, and validation for free.
 from __future__ import annotations
 
 import difflib
+import inspect
 from dataclasses import dataclass, replace
 from typing import Optional
 
@@ -219,6 +220,28 @@ class TableQuery:
 
     def __dir__(self):
         return list(super().__dir__()) + list(self._primary.all_kinds)
+
+    @property
+    def __signature__(self):
+        """Surface the filterable columns as the call signature.
+
+        So ``tables.<name>(`` under shift-tab / ``help()`` / ``?`` shows the real
+        columns (each keyword-only, annotated with its filter kind) instead of an
+        opaque ``**kwargs``. The trailing ``**kwargs`` flags that ``col__op=``
+        forms (``size__gt=``, ``tag__regex=``, ...) are also accepted.
+        """
+        params = [
+            inspect.Parameter(
+                name,
+                inspect.Parameter.KEYWORD_ONLY,
+                default=None,
+                annotation=kind.value,
+            )
+            for name, kind in self._primary.all_kinds.items()
+            if name.isidentifier()
+        ]
+        params.append(inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD))
+        return inspect.Signature(params)
 
     def __repr__(self):
         joined = "+".join(p.name for p in self._parts)

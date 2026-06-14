@@ -248,6 +248,20 @@ class TestTableQueryIntrospection:
         with pytest.raises(KeyError, match="has no column"):
             syn["nope"]
 
+    def test_signature_exposes_columns(self):
+        # shift-tab / help() should show the columns, not an opaque **kwargs
+        import inspect
+
+        sig = inspect.signature(make_tq())
+        assert sig.parameters["size"].kind is inspect.Parameter.KEYWORD_ONLY
+        assert sig.parameters["size"].annotation == "numeric"
+        assert sig.parameters["size"].default is None
+        assert sig.parameters["pre_pt_root_id"].annotation == "id"
+        # trailing **kwargs signals col__op= forms are also accepted
+        assert any(
+            p.kind is inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        )
+
 
 def make_table_manager(client=None):
     # get_tables_metadata returns a list of dicts, each with table_name
