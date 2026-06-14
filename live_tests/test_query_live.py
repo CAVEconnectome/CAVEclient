@@ -364,3 +364,48 @@ def test_accessor_typos_error_locally(client):
 def test_view_accessor_query(client):
     df = client.materialize.views[CONFIG["view"]].query(version=V, limit=3)
     assert len(df) > 0
+
+
+# ---------------------------------------------------------------------------
+# Tier 2: cross-engine local merge (a table joined to a view)
+# ---------------------------------------------------------------------------
+
+
+def test_frozen_table_view_local_merge(mat):
+    # A table joined to a view can't be a single server call; query() queries
+    # each source separately and merges locally. allen_column_mtypes_v2.target_id
+    # == nucleus_detection_lookup_v1.id.
+    out = mat.query(
+        [
+            Table(CONFIG["ref_tables"][0], join_on=CONFIG["ref_join_col"]),
+            Table(CONFIG["view"], join_on="id", kind="view"),
+        ],
+        version=V,
+        limit=10,
+    )
+    assert 0 < len(out) <= 10
+    # columns from both sources; collisions suffixed _x (table) / _y (view)
+    assert "cell_type" in out.columns  # table-only column, bare
+    assert "orig_root_id" in out.columns  # view-only column, bare
+    assert any(c.endswith("_x") for c in out.columns)
+    assert any(c.endswith("_y") for c in out.columns)
+    # the join held: the table's join column (target_id) matches the view's id
+    assert (out["target_id"] == out["id_y"]).all()
+
+
+def test_live_table_view_join_refused_until_views_go_live(mat):
+    # The planner passes timestamp= straight through to each sub-query, so a live
+    # table+view join will work for free once the server makes views live-
+    # queryable (Phase 2/3 flips the view backend's gate). Until then the view
+    # sub-query refuses cleanly rather than returning a frozen-vs-live mismatch.
+    from caveclient.query import UnroutableQueryError
+
+    with pytest.raises(UnroutableQueryError):
+        mat.query(
+            [
+                Table(CONFIG["ref_tables"][0], join_on=CONFIG["ref_join_col"]),
+                Table(CONFIG["view"], join_on="id", kind="view"),
+            ],
+            timestamp=mat.get_timestamp(V),
+            limit=10,
+        )

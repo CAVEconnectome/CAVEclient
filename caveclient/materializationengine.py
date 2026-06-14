@@ -29,6 +29,7 @@ from .base import (
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
 from .query import At, Capabilities, Join, QuerySpec, Switchboard, Table
+from .query.merge import default_suffixes, local_merge_query
 from .query.spec import (
     build_query_spec,
     build_query_spec_from_tables,
@@ -726,6 +727,90 @@ class MaterializationClient(ClientBase):
             return "table"
         return "view" if name in views else "table"
 
+    def _participant_kind(self, table: Table, datastack_name=None) -> str:
+        """Kind of one ``Table`` in a join: honor an explicit non-table kind,
+        otherwise resolve table-vs-view from metadata."""
+        if table.kind in ("view", "dataset"):
+            return table.kind
+        return self._resolve_source_kind(table.name, datastack_name=datastack_name)
+
+    def _local_merge_query(
+        self,
+        tables,
+        kinds,
+        *,
+        version=None,
+        timestamp=None,
+        offset=None,
+        limit=None,
+        random_sample=None,
+        split_positions=False,
+        desired_resolution=None,
+        metadata=True,
+        allow_missing_lookups=False,
+        allow_invalid_root_ids=False,
+        allow_version_fallback=True,
+        get_counts=False,
+        datastack_name=None,
+    ):
+        """Execute a heterogeneous join (a view joined to another source) the only
+        way the server allows: query each source independently and merge locally.
+
+        Each source's sub-query is an ordinary single-source :meth:`query`, so it
+        routes through the switchboard on its own (a view to ``query_view``, a
+        table to ``query_table``/``live_live_query``). The pure planner in
+        :mod:`caveclient.query.merge` orchestrates the semi-join key pushdown and
+        the local merge; this method only supplies the per-source executor.
+        """
+        if get_counts:
+            raise ValueError(
+                "get_counts is not supported for joins that merge a view locally"
+            )
+        primary = tables[0].name
+        kind_by_name = {t.name: k for t, k in zip(tables, kinds)}
+
+        def run_source(t, extra_filter_in):
+            # this table's own filters, as query() filter_* kwargs
+            fkw = {
+                op.kwarg_key[: -len("_dict")]: dict(d)
+                for op, d in t._filter_dicts().items()
+            }
+            if extra_filter_in:
+                fin = fkw.setdefault("filter_in", {})
+                for col, vals in extra_filter_in.items():
+                    fin[col] = (
+                        list(set(fin[col]) & set(vals)) if col in fin else list(vals)
+                    )
+            # make sure the join key is returned even if the caller narrowed select
+            sel = list(t.select) if t.select else None
+            if sel is not None and t.join_on and t.join_on not in sel:
+                sel = sel + [t.join_on]
+            return self.query(
+                t.name,
+                version=version,
+                timestamp=timestamp,
+                kind=kind_by_name[t.name],
+                select_columns=sel,
+                split_positions=split_positions,
+                desired_resolution=desired_resolution,
+                metadata=metadata,
+                allow_missing_lookups=allow_missing_lookups,
+                allow_invalid_root_ids=allow_invalid_root_ids,
+                # random_sample drives the primary (driving) source only
+                random_sample=random_sample if t.name == primary else None,
+                allow_version_fallback=allow_version_fallback,
+                datastack_name=datastack_name,
+                **fkw,
+            )
+
+        return local_merge_query(
+            tables,
+            run_source,
+            suffixes=default_suffixes(tables),
+            offset=offset,
+            limit=limit,
+        )
+
     def query(
         self,
         source=None,
@@ -851,6 +936,28 @@ class MaterializationClient(ClientBase):
                     "Table objects, not as query() keyword arguments"
                 )
             tables = [source] if isinstance(source, Table) else list(source)
+            # A join that includes a view can't be a single server call (views
+            # have no joinable SQL), so query each source separately and merge
+            # locally -- this is what lets a view be joined at all.
+            kinds = [self._participant_kind(t, datastack_name) for t in tables]
+            if len(tables) > 1 and any(k == "view" for k in kinds):
+                return self._local_merge_query(
+                    tables,
+                    kinds,
+                    version=version,
+                    timestamp=timestamp,
+                    offset=offset,
+                    limit=limit,
+                    random_sample=random_sample,
+                    split_positions=split_positions,
+                    desired_resolution=desired_resolution,
+                    metadata=metadata,
+                    allow_missing_lookups=allow_missing_lookups,
+                    allow_invalid_root_ids=allow_invalid_root_ids,
+                    allow_version_fallback=allow_version_fallback,
+                    get_counts=get_counts,
+                    datastack_name=datastack_name,
+                )
             spec = build_query_spec_from_tables(
                 tables,
                 version=version,

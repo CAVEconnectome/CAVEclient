@@ -340,6 +340,22 @@ engine can serve some source at the requested `At` (version not dumped to the
 lake, view did not yet exist), the join is unroutable — the same
 `UnroutableQueryError`, assembled from per-source reasons. Nothing to reconcile.
 
+**Status: implemented for table↔view (frozen), `caveclient/query/merge.py`.** A
+join is detected as heterogeneous when a participant resolves to a view;
+`query()` then runs each source as an ordinary single-source sub-query (so the
+switchboard routes each on its own) and the pure `local_merge_query` planner does
+the semi-join pushdown and the inner merge with `_x`/`_y` suffixing. Because the
+planner passes the requested `At` straight through, **live table↔view joins come
+for free the moment the server makes views live-queryable** (Phase 2 flips the
+view backend's timestamp gate) — no planner change; today a live table+view join
+refuses cleanly at the view sub-query. This is *morally equivalent* to a
+server-side version anyway: a view is fully-formed SQL the join planner can't see
+into, so even server-side the join can't be pushed into the view — the server
+would also evaluate each side and stitch them (the partial-liveness recipe). The
+client doing it gives up no join the server could actually have done better.
+Caveat: the driving (first) source should be bounded by its own filters — `limit`
+applies to the merged result, so an unfiltered driving source is fetched whole.
+
 ## 6. Liveability as a capability gate (not a hardcoded rule)
 
 Liveability is a property of **supervoxel availability at row granularity**, not
