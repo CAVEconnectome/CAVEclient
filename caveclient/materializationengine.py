@@ -28,7 +28,15 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
-from .query import At, Capabilities, Join, QuerySpec, Switchboard, Table
+from .query import (
+    At,
+    Capabilities,
+    Join,
+    QuerySpec,
+    Switchboard,
+    Table,
+    UnroutableQueryError,
+)
 from .query.merge import default_suffixes, local_merge_query
 from .query.spec import (
     build_query_spec,
@@ -785,23 +793,31 @@ class MaterializationClient(ClientBase):
             sel = list(t.select) if t.select else None
             if sel is not None and t.join_on and t.join_on not in sel:
                 sel = sel + [t.join_on]
-            return self.query(
-                t.name,
-                version=version,
-                timestamp=timestamp,
-                kind=kind_by_name[t.name],
-                select_columns=sel,
-                split_positions=split_positions,
-                desired_resolution=desired_resolution,
-                metadata=metadata,
-                allow_missing_lookups=allow_missing_lookups,
-                allow_invalid_root_ids=allow_invalid_root_ids,
-                # random_sample drives the primary (driving) source only
-                random_sample=random_sample if t.name == primary else None,
-                allow_version_fallback=allow_version_fallback,
-                datastack_name=datastack_name,
-                **fkw,
-            )
+            try:
+                return self.query(
+                    t.name,
+                    version=version,
+                    timestamp=timestamp,
+                    kind=kind_by_name[t.name],
+                    select_columns=sel,
+                    split_positions=split_positions,
+                    desired_resolution=desired_resolution,
+                    metadata=metadata,
+                    allow_missing_lookups=allow_missing_lookups,
+                    allow_invalid_root_ids=allow_invalid_root_ids,
+                    # random_sample drives the primary (driving) source only
+                    random_sample=random_sample if t.name == primary else None,
+                    allow_version_fallback=allow_version_fallback,
+                    datastack_name=datastack_name,
+                    **fkw,
+                )
+            except UnroutableQueryError as e:
+                names = ", ".join(repr(t.name) for t in tables)
+                raise UnroutableQueryError(
+                    f"This join ({names}) is run as a local merge of separate "
+                    f"sub-queries, and the sub-query for `{t.name}` ({kind_by_name[t.name]}) "
+                    f"could not be served:\n{e}"
+                ) from e
 
         return local_merge_query(
             tables,

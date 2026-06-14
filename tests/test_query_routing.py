@@ -90,6 +90,14 @@ class TestRouting:
         with pytest.raises(UnroutableQueryError):
             self.sb.route(spec, caps)
 
+    def test_unroutable_message_names_the_source_and_address(self):
+        # the refusal must identify the exact source (and where it failed), so a
+        # failing local-merge sub-query points at the table/view at fault
+        spec = QuerySpec(source=Source("my_view", kind="view"), at=At(timestamp=NOW))
+        caps = Capabilities(server_version=Version("5.20.0"), has_chunkedgraph=True)
+        with pytest.raises(UnroutableQueryError, match=r"`my_view` \(view\) at timestamp"):
+            self.sb.route(spec, caps)
+
 
 class TestCanHandleReasons:
     def test_materialized_declines_live(self):

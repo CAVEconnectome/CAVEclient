@@ -232,8 +232,15 @@ class Switchboard:
             if verdict is True:
                 return backend
             reasons.append(f"{backend.name}: {verdict}")
+        if spec.is_live:
+            address = f"timestamp {spec.at.timestamp}"
+        elif spec.at.version is not None:
+            address = f"version {spec.at.version}"
+        else:
+            address = "the default version"
         raise UnroutableQueryError(
-            "No query backend could serve this query:\n  " + "\n  ".join(reasons)
+            f"No query backend could serve `{spec.source.name}` "
+            f"({spec.source.kind}) at {address}:\n  " + "\n  ".join(reasons)
         )
 
     def execute(self, spec: QuerySpec, caps: Capabilities, client):
