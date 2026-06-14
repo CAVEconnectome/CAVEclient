@@ -21,7 +21,7 @@ from typing import Optional, Union
 
 from packaging.version import Version
 
-from .serialize import filters_to_method_kwargs
+from .serialize import filters_to_method_kwargs, joins_to_pairs, joins_to_quads
 from .spec import QuerySpec
 
 # live_live_query carries @_check_version_compatibility(method_constraint=">=5.13.0")
@@ -83,11 +83,28 @@ class MaterializedBackend(QueryBackend):
             return "materialized backend serves versioned queries, not timestamps"
         if spec.source.kind not in ("table", "auto"):
             return f"materialized backend serves tables, not {spec.source.kind}s"
-        if spec.source.is_join:
-            return "explicit joins are not yet supported through the switchboard"
+        if spec.source.joins and len(spec.source.joins) > 1:
+            return (
+                "frozen queries support a single explicit join; use a live query "
+                "for multi-table joins"
+            )
         return True
 
     def execute(self, spec, client):
+        if spec.source.is_join:
+            return client.join_query(
+                joins_to_pairs(spec.source.joins),
+                materialization_version=spec.at.version,
+                select_columns=spec.select_columns,
+                offset=spec.offset,
+                limit=spec.limit,
+                split_positions=spec.output.split_positions,
+                desired_resolution=spec.output.desired_resolution,
+                metadata=spec.output.metadata,
+                suffixes=spec.source.suffixes,
+                random_sample=spec.random_sample,
+                **filters_to_method_kwargs(spec.filters, spec.source.name, nested=True),
+            )
         return client.query_table(
             spec.source.name,
             materialization_version=spec.at.version,
@@ -151,9 +168,11 @@ class LiveBackend(QueryBackend):
         return True
 
     def execute(self, spec, client):
+        joins = joins_to_quads(spec.source.joins) if spec.source.is_join else None
         return client.live_live_query(
             spec.source.name,
             timestamp=spec.at.timestamp,
+            joins=joins,
             select_columns=spec.select_columns,
             offset=spec.offset,
             limit=spec.limit,

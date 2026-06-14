@@ -19,6 +19,7 @@ from .serialize import filters_to_method_kwargs, filters_to_payload
 from .spec import (
     At,
     InvalidQueryError,
+    Join,
     OutputOptions,
     QuerySpec,
     Source,
@@ -35,6 +36,7 @@ __all__ = [
     "FilterOp",
     "InvalidFilterError",
     "InvalidQueryError",
+    "Join",
     "OutputOptions",
     "QueryBackend",
     "QuerySpec",

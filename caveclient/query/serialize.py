@@ -122,6 +122,29 @@ def filters_from_kwargs(by_kwarg: dict, default_table: str) -> tuple:
     return tuple(filters)
 
 
+def joins_to_pairs(joins: Iterable) -> list:
+    """Serialize joins to ``join_query``'s ``[[table, column], ...]`` form.
+
+    Only a single join is well-defined in this pair encoding; raises for
+    multiple joins (use a live query, which has a clean per-join encoding, or
+    call ``join_query`` directly).
+    """
+    joins = list(joins)
+    if len(joins) != 1:
+        raise ValueError(
+            "frozen (versioned) queries support a single explicit join through "
+            "the switchboard; use a live query for multi-table joins, or call "
+            "join_query directly"
+        )
+    j = joins[0]
+    return [[j.left_table, j.left_column], [j.right_table, j.right_column]]
+
+
+def joins_to_quads(joins: Iterable) -> list:
+    """Serialize joins to ``live_live_query``'s ``[[t1, c1, t2, c2], ...]`` form."""
+    return [[j.left_table, j.left_column, j.right_table, j.right_column] for j in joins]
+
+
 def _group_filters(filters, default_table, key):
     grouped: dict[str, dict[str, dict[str, Any]]] = {}
     for f in filters:

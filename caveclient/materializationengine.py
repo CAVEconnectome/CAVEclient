@@ -645,6 +645,18 @@ class MaterializationClient(ClientBase):
             deltalake_available=False,
         )
 
+    @cached(cache=TTLCache(maxsize=128, ttl=300))
+    def _available_version_set(self, datastack_name=None) -> frozenset:
+        """Currently-available (non-expired) versions, cached briefly.
+
+        Used by the stale-version fallback in ``query()``; a short TTL keeps a
+        version deleted mid-session from lingering as "available" while avoiding
+        a ``get_versions`` round-trip on every pinned query.
+        """
+        return frozenset(
+            self.get_versions(expired=False, datastack_name=datastack_name)
+        )
+
     def _resolve_source_kind(self, name: str, datastack_name=None) -> str:
         """Resolve an ``auto`` source to ``"view"`` or ``"table"`` via metadata.
 
@@ -672,6 +684,8 @@ class MaterializationClient(ClientBase):
         split_positions: bool = False,
         desired_resolution: Iterable = None,
         metadata: bool = True,
+        joins: list = None,
+        suffixes: dict = None,
         allow_version_fallback: bool = True,
         datastack_name: str = None,
         **filter_kwargs,
@@ -748,12 +762,14 @@ class MaterializationClient(ClientBase):
                 split_positions=split_positions,
                 desired_resolution=desired_resolution,
                 metadata=metadata,
+                joins=joins,
+                suffixes=suffixes,
             )
 
         if allow_version_fallback and spec.at.version is not None:
             spec, fell_back = resolve_version_fallback(
                 spec,
-                self.get_versions(expired=False, datastack_name=datastack_name),
+                self._available_version_set(datastack_name),
                 lambda v: self._safe_timestamp(v, datastack_name),
             )
             if fell_back:

@@ -347,7 +347,21 @@ pure `resolve_version_fallback(spec, available_versions, timestamp_lookup)`:
 
 This is a behavior toggle on `query()` (default on). It is silent in the sense
 of not raising, but it logs a warning and records the fallback in `df.attrs` so
-the substitution is observable.
+the substitution is observable. The available-version set is cached
+(`_available_version_set`, short TTL) so the fallback check does not add a
+`get_versions` round-trip to every pinned query.
+
+### Joins
+
+Joins are expressed with a typed `Join(left_table, left_column, right_table,
+right_column)` rather than either of the server's two divergent encodings.
+`caveclient.query.serialize` renders it to whichever form the target needs —
+`join_query`'s `[[table, column], ...]` pairs or `live_live_query`'s
+`[[t1, c1, t2, c2], ...]` quads. A single join works on both frozen and live
+paths; multi-table joins go through the live path (the quad encoding handles N
+joins cleanly) while frozen multi-join is declined with a reason. Reference-
+table joins are unaffected — they remain `query_table`'s automatic
+`merge_reference` behavior, a separate path from explicit joins.
 
 ## 8. Open decisions
 

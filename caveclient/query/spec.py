@@ -66,6 +66,22 @@ class At:
 
 
 @dataclass(frozen=True)
+class Join:
+    """A single join between two tables on a column each.
+
+    A readable replacement for the server's two divergent join encodings
+    (``join_query``'s ``[[table, col], ...]`` pairs and ``live_live_query``'s
+    ``[[t1, c1, t2, c2], ...]`` quads); serialization to either form lives in
+    ``caveclient.query.serialize``.
+    """
+
+    left_table: str
+    left_column: str
+    right_table: str
+    right_column: str
+
+
+@dataclass(frozen=True)
 class Source:
     """What is being queried: a table, a view, or an external dataset.
 
@@ -77,7 +93,7 @@ class Source:
         ``"table"``, ``"view"``, ``"dataset"`` (deltalake), or ``"auto"`` to let
         the switchboard resolve it from metadata.
     joins :
-        Optional explicit joins, each ``[table_a, col_a, table_b, col_b]``.
+        Optional explicit joins, as a tuple of :class:`Join`.
     suffixes :
         Optional per-table column suffixes for disambiguating joined columns,
         ``{table_name: suffix}``.
@@ -85,7 +101,7 @@ class Source:
 
     name: str
     kind: SourceKind = "auto"
-    joins: Optional[list] = None
+    joins: Optional[tuple] = None
     suffixes: Optional[dict] = None
 
     @property
@@ -205,7 +221,12 @@ def build_query_spec(
     """
     filters = filters_from_kwargs(filters_by_kwarg or {}, source)
     return QuerySpec(
-        source=Source(source, kind=kind, joins=joins, suffixes=suffixes),
+        source=Source(
+            source,
+            kind=kind,
+            joins=tuple(joins) if joins else None,
+            suffixes=suffixes,
+        ),
         at=At(version=version, timestamp=timestamp),
         filters=filters,
         select_columns=select_columns,

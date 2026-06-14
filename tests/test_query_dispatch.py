@@ -12,6 +12,7 @@ from packaging.version import Version
 from caveclient.query import (
     At,
     Capabilities,
+    Join,
     QuerySpec,
     Source,
 )
@@ -127,6 +128,33 @@ def test_queryspec_plus_kwargs_is_rejected(myclient):  # noqa: F811
         assert "QuerySpec" in str(e)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_join_kwarg_delegates_to_join_query(myclient, mocker):  # noqa: F811
+    spy = mocker.patch.object(myclient.materialize, "join_query", return_value="DF")
+    out = myclient.materialize.query(
+        "syn",
+        version=3,
+        kind="table",
+        joins=[Join("syn", "post_pt_root_id", "nuc", "pt_root_id")],
+        suffixes={"syn": "", "nuc": "_nuc"},
+        allow_version_fallback=False,
+    )
+    assert out == "DF"
+    args, kwargs = spy.call_args
+    assert args[0] == [["syn", "post_pt_root_id"], ["nuc", "pt_root_id"]]
+    assert kwargs["suffixes"] == {"syn": "", "nuc": "_nuc"}
+
+
+def test_available_version_set_is_cached(myclient, mocker):  # noqa: F811
+    spy = mocker.patch.object(
+        myclient.materialize, "get_versions", return_value=[1, 2, 3]
+    )
+    a = myclient.materialize._available_version_set()
+    b = myclient.materialize._available_version_set()
+    assert a == b == frozenset({1, 2, 3})
+    # second call served from the short-TTL cache, not a second round-trip
+    assert spy.call_count == 1
 
 
 def test_unknown_filter_kwarg_is_rejected(myclient):  # noqa: F811

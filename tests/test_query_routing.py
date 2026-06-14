@@ -10,6 +10,7 @@ from caveclient.query import (
     Filter,
     FilterKind,
     FilterOp,
+    Join,
     QuerySpec,
     Source,
 )
@@ -23,7 +24,11 @@ from caveclient.query.backends import (
     UnroutableQueryError,
     ViewBackend,
 )
-from caveclient.query.serialize import filters_to_method_kwargs
+from caveclient.query.serialize import (
+    filters_to_method_kwargs,
+    joins_to_pairs,
+    joins_to_quads,
+)
 
 UTC = datetime.timezone.utc
 NOW = datetime.datetime(2024, 1, 1, tzinfo=UTC)
@@ -165,6 +170,74 @@ class TestExecutionDelegation:
             get_counts=False,
             random_sample=None,
         )
+
+
+class TestJoins:
+    J = Join("syn", "post_pt_root_id", "nuc", "pt_root_id")
+
+    def test_pairs_encoding_single_join(self):
+        assert joins_to_pairs([self.J]) == [
+            ["syn", "post_pt_root_id"],
+            ["nuc", "pt_root_id"],
+        ]
+
+    def test_pairs_encoding_rejects_multiple(self):
+        with pytest.raises(ValueError, match="single explicit join"):
+            joins_to_pairs([self.J, self.J])
+
+    def test_quads_encoding_handles_multiple(self):
+        assert joins_to_quads([self.J, self.J]) == [
+            ["syn", "post_pt_root_id", "nuc", "pt_root_id"],
+            ["syn", "post_pt_root_id", "nuc", "pt_root_id"],
+        ]
+
+    def test_frozen_single_join_routes_to_materialized(self):
+        spec = QuerySpec(
+            source=Source("syn", kind="table", joins=(self.J,)), at=At(version=3)
+        )
+        backend = Switchboard().route(
+            spec, Capabilities(server_version=Version("5.20.0"))
+        )
+        assert backend.name == "materialized"
+
+    def test_frozen_multi_join_is_refused(self):
+        spec = QuerySpec(
+            source=Source("syn", kind="table", joins=(self.J, self.J)),
+            at=At(version=3),
+        )
+        with pytest.raises(UnroutableQueryError, match="single explicit join"):
+            Switchboard().route(spec, Capabilities(server_version=Version("5.20.0")))
+
+    def test_frozen_join_delegates_to_join_query_with_pairs(self):
+        client = MagicMock()
+        spec = QuerySpec(
+            source=Source("syn", kind="table", joins=(self.J,), suffixes={"syn": ""}),
+            at=At(version=3),
+            filters=(
+                Filter(
+                    ColumnHandle("size", FilterKind.NUMERIC, table="syn"),
+                    FilterOp.GREATER,
+                    100,
+                ),
+            ),
+        )
+        MaterializedBackend().execute(spec, client)
+        client.join_query.assert_called_once()
+        args, kwargs = client.join_query.call_args
+        assert args[0] == [["syn", "post_pt_root_id"], ["nuc", "pt_root_id"]]
+        assert kwargs["suffixes"] == {"syn": ""}
+        # join filters are nested by table
+        assert kwargs["filter_greater_dict"] == {"syn": {"size": 100}}
+
+    def test_live_join_delegates_to_live_live_query_with_quads(self):
+        client = MagicMock()
+        spec = QuerySpec(
+            source=Source("syn", kind="table", joins=(self.J,)),
+            at=At(timestamp=NOW),
+        )
+        LiveBackend().execute(spec, client)
+        _, kwargs = client.live_live_query.call_args
+        assert kwargs["joins"] == [["syn", "post_pt_root_id", "nuc", "pt_root_id"]]
 
 
 class TestFlatVsNestedKwargs:
