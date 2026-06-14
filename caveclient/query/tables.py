@@ -96,22 +96,48 @@ class _Part:
     # so the reference's columns are filterable directly off this table
     reference: Optional[tuple] = None
 
+    def _reference_columns(self) -> dict:
+        """Reference-table columns as ``display_name -> (real_column, kind)``.
+
+        A reference column that collides with one of our own (every table has
+        ``id``, so that always collides) comes back from the server suffixed with
+        ``_ref``; we expose it under that same name so the filterable set mirrors
+        the result frame, mapping it back to the real column for the wire filter.
+        """
+        if not self.reference:
+            return {}
+        own = set(self.column_kinds)
+        out = {}
+        for col, kind in self.reference[1].items():
+            display = f"{col}_ref" if col in own else col
+            out[display] = (col, kind)
+        return out
+
     @property
     def all_kinds(self) -> dict:
         """Own columns plus the reference table's (own columns win on collision)."""
         merged = dict(self.column_kinds)
-        if self.reference:
-            for col, kind in self.reference[1].items():
-                merged.setdefault(col, kind)
+        for display, (_, kind) in self._reference_columns().items():
+            merged.setdefault(display, kind)
         return merged
 
     def column_tables(self) -> dict:
-        """Map each filterable column to its owning table."""
+        """Map each (display) column to its owning table."""
         owners = {col: self.name for col in self.column_kinds}
         if self.reference:
-            for col in self.reference[1]:
-                owners.setdefault(col, self.reference[0])
+            for display in self._reference_columns():
+                owners.setdefault(display, self.reference[0])
         return owners
+
+    def column_real_names(self) -> dict:
+        """Map each (display) column to its real name on the owning table.
+
+        Identity for everything except a reference column that collided and is
+        therefore exposed as ``<col>_ref`` -> ``<col>``."""
+        names = {col: col for col in self.column_kinds}
+        for display, (real, _) in self._reference_columns().items():
+            names.setdefault(display, real)
+        return names
 
 
 class TableQuery:
@@ -169,7 +195,11 @@ class TableQuery:
         part = object.__getattribute__(self, "_parts")[0]
         kinds = part.all_kinds
         if item in kinds:
-            return Column(item, kinds[item], table=part.column_tables()[item])
+            return Column(
+                part.column_real_names()[item],
+                kinds[item],
+                table=part.column_tables()[item],
+            )
         raise AttributeError(
             f"{part.name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
         )
@@ -178,7 +208,11 @@ class TableQuery:
         # column handle by item access (for dynamic / non-identifier names)
         kinds = self._primary.all_kinds
         if item in kinds:
-            return Column(item, kinds[item], table=self._primary.column_tables()[item])
+            return Column(
+                self._primary.column_real_names()[item],
+                kinds[item],
+                table=self._primary.column_tables()[item],
+            )
         raise KeyError(
             f"{self._primary.name!r} has no column {item!r}{_did_you_mean(item, kinds)}"
         )
@@ -200,6 +234,7 @@ class TableQuery:
             kwargs,
             table=self._primary.name,
             column_tables=self._primary.column_tables(),
+            column_real_names=self._primary.column_real_names(),
         )
         return self._with(filters=self._filters + new)
 
@@ -387,8 +422,12 @@ class TableManager(_Accessor):
                     column_kinds[name] = classify_table_schema(schema)
                 except (KeyError, TypeError):
                     continue
-        # for a table whose reference table we also have, expose the reference's
-        # columns for filtering (auto-joined when one is used)
+        # Referential transparency: a user shouldn't have to know whether a
+        # column lives on the annotation table or its reference table. Reference
+        # tables merge by default, so their columns appear in the result -- and
+        # therefore must be filterable by the same name (if `pt_root_id` comes
+        # back, `pt_root_id=[...]` should filter it). So expose the reference's
+        # columns here; filtering one auto-joins the reference.
         references = {
             name: (ref_table[name], column_kinds[ref_table[name]])
             for name in column_kinds

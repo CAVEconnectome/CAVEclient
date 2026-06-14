@@ -205,6 +205,30 @@ class TestReferenceColumns:
         assert tables["nuc"].filter_in == {"pre_pt_root_id": [1, 2]}
         assert tables["mtypes"].merge_reference is False
 
+    def test_colliding_reference_column_exposed_as_ref(self):
+        # `id` exists on every table, so the reference's `id` collides and the
+        # server returns it as `id_ref`; it must be filterable under that name.
+        tq = make_reference_tq()
+        assert tq.columns["id"] is FilterKind.NUMERIC  # primary's id
+        assert tq.columns["id_ref"] is FilterKind.NUMERIC  # reference's id
+        # the handle carries the real wire name and the reference table
+        assert tq.id_ref.name == "id"
+        assert tq.id_ref.table == "nuc"
+
+    def test_colliding_reference_column_filter_routes_to_real_name(self):
+        client = MagicMock()
+        # filter `id_ref` -> reference join, filter on the reference's real `id`
+        make_reference_tq(client)(id_ref=[5, 6]).query(version=3)
+        tables = {t.name: t for t in client.query.call_args.args[0]}
+        assert set(tables) == {"mtypes", "nuc"}
+        assert tables["nuc"].filter_in == {"id": [5, 6]}
+        # primary's own id is unaffected and still routes to the primary
+        client.reset_mock()
+        make_reference_tq(client)(id=9).query(version=3)
+        only = client.query.call_args.args[0]
+        assert [t.name for t in only] == ["mtypes"]
+        assert only[0].filter_equal == {"id": 9}
+
 
 class TestTableQueryIntrospection:
     def test_columns_and_handles(self):

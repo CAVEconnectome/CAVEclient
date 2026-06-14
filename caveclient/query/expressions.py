@@ -137,6 +137,7 @@ def parse_filter_kwargs(
     kwargs: dict,
     table: Optional[str] = None,
     column_tables: Optional[dict] = None,
+    column_real_names: Optional[dict] = None,
 ) -> tuple:
     """Turn ``col=``/``col__op=`` keyword filters into typed ``Filter`` objects.
 
@@ -157,8 +158,13 @@ def parse_filter_kwargs(
     column_tables :
         Optional ``{column: owning_table}`` overriding ``table`` per column (so a
         filter on a merged reference-table column routes to the reference table).
+    column_real_names :
+        Optional ``{display_column: real_column}`` for columns exposed under a
+        different name than they carry on the wire (a reference column that
+        collided and is surfaced as ``<col>_ref`` maps back to ``<col>``).
     """
     column_tables = column_tables or {}
+    column_real_names = column_real_names or {}
     filters = []
     for key, value in kwargs.items():
         col, _, suffix = key.partition("__")
@@ -195,5 +201,6 @@ def parse_filter_kwargs(
                 + hint
             )
         owning = column_tables.get(col, table)
-        filters.append(Filter(ColumnHandle(col, kind, owning), op, value))
+        real = column_real_names.get(col, col)
+        filters.append(Filter(ColumnHandle(real, kind, owning), op, value))
     return tuple(filters)
