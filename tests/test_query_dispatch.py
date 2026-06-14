@@ -250,6 +250,19 @@ def test_short_string_is_single_source_not_a_join(myclient, mocker):  # noqa: F8
     assert spy.call_args.args[0] == "xy"
 
 
+def test_non_table_list_is_refused_clearly(myclient):  # noqa: F811
+    # a list that's neither a Table pair nor Table edges fails legibly
+    for bad in (["a", "b"], [Table("a", "x"), "b"], []):
+        with pytest.raises(ValueError, match="flat pair of Table|Table edges"):
+            myclient.materialize.query(bad, version=3)
+
+
+def test_edge_list_of_non_tables_is_refused_clearly(myclient):  # noqa: F811
+    # a list-of-lists is an edge list; its contents must be Tables
+    with pytest.raises(ValueError, match="Table objects"):
+        myclient.materialize.query([["a", "b"]], version=3)
+
+
 def test_flat_three_tables_is_refused(myclient):  # noqa: F811
     # no implicit chain: a flat list past two tables points at the edge-list form
     with pytest.raises(ValueError, match="single two-table join"):

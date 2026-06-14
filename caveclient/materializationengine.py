@@ -1022,6 +1022,12 @@ class MaterializationClient(ClientBase):
             and len(source) > 0
             and all(isinstance(e, (list, tuple)) for e in source)
         )
+        if isinstance(source, (list, tuple)) and not (is_table_objs or is_edge_list):
+            raise ValueError(
+                "a list source must be a flat pair of Table objects (a single join) "
+                "or a list of [left, right] Table edges (a join graph); got "
+                f"{[type(x).__name__ for x in source]}"
+            )
         if isinstance(source, QuerySpec):
             if filter_kwargs or version is not None or timestamp is not None:
                 raise ValueError(
