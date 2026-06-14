@@ -891,20 +891,26 @@ class MaterializationClient(ClientBase):
             # views have no reference table to merge
             want_merge = [source] if spec.merge_reference and kind != "view" else []
 
-        # Resolve merge_reference into explicit, deduped reference joins. join_query
-        # is never used, so a reference (like any join) is served by live_live_query;
-        # references are resolved here, client-side, reusing cached metadata.
-        spec = self._inject_reference_joins(spec, want_merge, datastack_name)
-
-        # Any join is served only by live_live_query. A versioned join runs at the
-        # version's timestamp, which reproduces the frozen result.
-        if spec.source.is_join and not spec.is_live:
-            ref_version = (
-                spec.at.version if spec.at.version is not None else self.version
-            )
-            spec = replace(
-                spec, at=At(timestamp=self.get_timestamp(ref_version, datastack_name))
-            )
+        # A single table plus its (one) reference table can be merged frozen by
+        # query_table itself, cheaply and without a chunkedgraph client. Anything
+        # with an explicit join, or any live query, goes through live_live_query,
+        # with references resolved into explicit, deduped joins. join_query is
+        # never used.
+        if spec.source.is_join or spec.is_live:
+            spec = self._inject_reference_joins(spec, want_merge, datastack_name)
+            # a versioned join runs live at the version's timestamp, which
+            # reproduces the frozen result.
+            if spec.source.is_join and not spec.is_live:
+                ref_version = (
+                    spec.at.version if spec.at.version is not None else self.version
+                )
+                spec = replace(
+                    spec,
+                    at=At(timestamp=self.get_timestamp(ref_version, datastack_name)),
+                )
+        else:
+            # single-table frozen: query_table performs the reference merge itself
+            spec = replace(spec, merge_reference=spec.source.name in want_merge)
 
         # Stale versioned (non-join) queries fall back to a live query at the
         # version's timestamp instead of failing.

@@ -76,9 +76,10 @@ class QueryBackend(abc.ABC):
 class MaterializedBackend(QueryBackend):
     """Versioned (frozen) single-table queries, via ``query_table``.
 
-    The fast path. Joins (including reference merges) are resolved upstream into
-    explicit joins and routed to the live backend, so this backend only ever sees
-    single-table, join-free queries.
+    The fast path. ``query_table`` can also merge a table's single reference
+    table itself (frozen, no chunkedgraph needed), so a single-table query with
+    ``merge_reference`` stays here. Explicit/multi-table joins are routed to the
+    live backend, so this backend only sees single-table queries.
     """
 
     name = "materialized"
@@ -89,7 +90,7 @@ class MaterializedBackend(QueryBackend):
         if spec.source.kind not in ("table", "auto"):
             return f"materialized backend serves tables, not {spec.source.kind}s"
         if spec.source.is_join:
-            return "joins are served by the live backend"
+            return "explicit joins are served by the live backend"
         return True
 
     def execute(self, spec, client):
@@ -104,9 +105,8 @@ class MaterializedBackend(QueryBackend):
             metadata=spec.output.metadata,
             get_counts=spec.get_counts,
             random_sample=spec.random_sample,
-            # references are resolved upstream into joins (which route live), so
-            # there is never a reference to merge here.
-            merge_reference=False,
+            # query_table merges the (single) reference table itself, frozen.
+            merge_reference=spec.merge_reference,
             **filters_to_method_kwargs(spec.filters, spec.source.name, nested=False),
         )
 

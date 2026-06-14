@@ -360,24 +360,31 @@ single-table frozen queries (the fast `simple_query` path) and
 subsumed) and `live_query` is never used (its client-side emulation updates root
 IDs but not the row set, so it silently diverges when tables are edited).
 
-Because `live_live_query` at a version's exact timestamp reproduces that frozen
-version, **any joined query — frozen or live — runs through `live_live_query`**;
-a versioned join is converted to a query at `get_timestamp(version)` before
-dispatch. Joins are typed `Join(left_table, left_column, right_table,
-right_column)` serialized to the live endpoint's `[[t1, c1, t2, c2], ...]` form,
-which handles N joins. (Consequence: any join, including a reference merge,
-requires a chunkedgraph client and the live endpoint; pure single-table queries
-keep the fast `query_table` path.)
+`query_table`'s only join capability is the automatic single reference-table
+merge, which it performs *frozen* (no chunkedgraph client). So a **single table
+plus its reference**, queried by version, stays on the fast `query_table` path.
+**Explicit joins** (and anything live) go to `live_live_query`: because it at a
+version's exact timestamp reproduces that frozen version, a versioned explicit
+join is converted to a query at `get_timestamp(version)` before dispatch. Joins
+are typed `Join(left_table, left_column, right_table, right_column)` serialized
+to the live endpoint's `[[t1, c1, t2, c2], ...]` form, which handles N joins.
+(Consequence: an *explicit* join requires a chunkedgraph client and the live
+endpoint; a single table — with or without a reference merge — keeps the fast
+frozen `query_table` path.)
 
 ### Reference merges as deduped joins
 
-`merge_reference` (per-`Table`, default True) is resolved in `query()` — not in
-any backend — into explicit reference `Join`s (`table.target_id ==
-reference_table.id`, reference columns suffixed `_ref`), reusing the cached
-`_resolve_merge_reference`. References are **deduped**: if several tables in a
-join reference the same base table, it is merged exactly once (and never if it
-is already an explicit table in the query). Since a reference is just another
-join, it flows through the same live path as explicit joins.
+`merge_reference` (per-`Table`, default True) has two resolutions depending on
+the query shape:
+
+- **Single table, frozen** → `query_table` does the merge itself (frozen, no
+  chunkedgraph), the cheap common case.
+- **Explicit join, or live** → `query()` resolves references into explicit
+  reference `Join`s (`table.target_id == reference_table.id`, reference columns
+  suffixed `_ref`), reusing the cached `_resolve_merge_reference`, and routes to
+  `live_live_query`. References are **deduped**: if several tables in a join
+  reference the same base table, it is merged exactly once (and never if it is
+  already an explicit table in the query).
 
 ## 8. Open decisions
 

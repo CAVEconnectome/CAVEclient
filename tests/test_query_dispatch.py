@@ -79,8 +79,8 @@ def test_frozen_single_table_delegates_to_query_table(myclient, mocker):  # noqa
     # delegated query_table receives the _dict argument names
     assert kw["filter_in_dict"] == {"pre_pt_root_id": [500]}
     assert kw["filter_out_dict"] == {"post_pt_root_id": [501]}
-    # references are resolved upstream into joins, never via query_table
-    assert kw["merge_reference"] is False
+    # query_table merges the reference itself for single-table frozen queries
+    assert kw["merge_reference"] is True
 
 
 def test_live_table_delegates_to_live_live_query(myclient, mocker):  # noqa: F811
@@ -272,11 +272,22 @@ def test_live_flags_are_noops_for_frozen_query(myclient, mocker):  # noqa: F811
 # ---------------------------------------------------------------------------
 
 
-def test_reference_resolves_into_a_live_join(myclient, mocker):  # noqa: F811
+def test_single_table_frozen_reference_uses_query_table(myclient, mocker):  # noqa: F811
+    # single table + its reference, frozen -> query_table merges it itself
+    # (cheap, no chunkedgraph, no live endpoint)
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    myclient.materialize.query(
+        "syn", version=3, kind="table", allow_version_fallback=False
+    )
+    assert spy.call_args.kwargs["merge_reference"] is True
+
+
+def test_live_reference_resolves_into_a_live_join(myclient, mocker):  # noqa: F811
+    # for a LIVE query, live_live_query can't auto-merge, so the reference is
+    # injected as an explicit join
     mocker.patch.object(
         myclient.materialize, "_query_capabilities", return_value=MODERN
     )
-    mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
     mocker.patch.object(
         myclient.materialize,
         "_resolve_merge_reference",
@@ -285,9 +296,7 @@ def test_reference_resolves_into_a_live_join(myclient, mocker):  # noqa: F811
     spy = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
     )
-    # a versioned query whose table has a reference becomes a live join at the
-    # version timestamp (join_query is never used)
-    myclient.materialize.query("syn", version=3, kind="table")
+    myclient.materialize.query("syn", timestamp=NOW, kind="table")
     _, kwargs = spy.call_args
     assert kwargs["timestamp"] == NOW
     assert kwargs["joins"] == [["syn", "target_id", "nuc", "id"]]
@@ -335,15 +344,6 @@ def test_shared_reference_is_merged_once(myclient, mocker):  # noqa: F811
         ["mtypes_v2", "target_id", "nucleus_detection_v0", "id"],  # one ref, deduped
     ]
     assert sum(1 for j in joins if j[2] == "nucleus_detection_v0") == 1
-
-
-def test_query_table_never_merges_references(myclient, mocker):  # noqa: F811
-    # merge_reference handling moved upstream; query_table always gets False
-    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
-    myclient.materialize.query(
-        "synapses", version=3, kind="table", allow_version_fallback=False
-    )
-    assert spy.call_args.kwargs["merge_reference"] is False
 
 
 def test_merge_reference_false_skips_resolution(myclient, mocker):  # noqa: F811
