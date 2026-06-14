@@ -50,6 +50,9 @@ def test_live_table_delegates_to_live_live_query(myclient, mocker):  # noqa: F81
     mocker.patch.object(
         myclient.materialize, "_query_capabilities", return_value=MODERN
     )
+    mocker.patch.object(
+        myclient.materialize, "_reference_join_for", return_value=(None, None)
+    )
     spy = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
     )
@@ -101,6 +104,9 @@ def test_stale_version_falls_back_to_live(myclient, mocker):  # noqa: F811
     )
     mocker.patch.object(myclient.materialize, "get_versions", return_value=[943, 944])
     mocker.patch.object(myclient.materialize, "get_timestamp", return_value=NOW)
+    mocker.patch.object(
+        myclient.materialize, "_reference_join_for", return_value=(None, None)
+    )
     live = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
     )
@@ -199,6 +205,9 @@ def test_live_flags_passed_through_to_live_query(myclient, mocker):  # noqa: F81
     mocker.patch.object(
         myclient.materialize, "_query_capabilities", return_value=MODERN
     )
+    mocker.patch.object(
+        myclient.materialize, "_reference_join_for", return_value=(None, None)
+    )
     spy = mocker.patch.object(
         myclient.materialize, "live_live_query", return_value="DF"
     )
@@ -246,6 +255,58 @@ def test_table_merge_reference_false_passed_through(myclient, mocker):  # noqa: 
         allow_version_fallback=False,
     )
     assert spy.call_args.kwargs["merge_reference"] is False
+
+
+def test_live_merge_reference_injects_reference_join(myclient, mocker):  # noqa: F811
+    # live_live_query doesn't auto-merge; the backend injects the reference join,
+    # reusing the cached _resolve_merge_reference (mocked here to report a ref).
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    mocker.patch.object(
+        myclient.materialize,
+        "_resolve_merge_reference",
+        return_value=(
+            [["syn", "target_id"], ["nuc", "id"]],
+            {"syn": "", "nuc": "_ref"},
+        ),
+    )
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    myclient.materialize.query("syn", timestamp=NOW, kind="table")
+    _, kwargs = spy.call_args
+    # mirrors the server's own reference-join pattern (quad encoding) + _ref suffix
+    assert kwargs["joins"] == [["syn", "target_id", "nuc", "id"]]
+    assert kwargs["suffixes"] == {"syn": "", "nuc": "_ref"}
+
+
+def test_live_merge_reference_false_injects_nothing(myclient, mocker):  # noqa: F811
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    resolve = mocker.patch.object(myclient.materialize, "_resolve_merge_reference")
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    myclient.materialize.query(Table("syn", merge_reference=False), timestamp=NOW)
+    assert spy.call_args.kwargs["joins"] is None
+    resolve.assert_not_called()
+
+
+def test_live_no_reference_table_no_join(myclient, mocker):  # noqa: F811
+    mocker.patch.object(
+        myclient.materialize, "_query_capabilities", return_value=MODERN
+    )
+    # _resolve_merge_reference returns a single-table list when there's no reference
+    mocker.patch.object(
+        myclient.materialize, "_resolve_merge_reference", return_value=(["syn"], None)
+    )
+    spy = mocker.patch.object(
+        myclient.materialize, "live_live_query", return_value="DF"
+    )
+    myclient.materialize.query("syn", timestamp=NOW, kind="table")
+    assert spy.call_args.kwargs["joins"] is None
 
 
 def test_available_version_set_is_cached(myclient, mocker):  # noqa: F811

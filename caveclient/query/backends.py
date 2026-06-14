@@ -169,18 +169,27 @@ class LiveBackend(QueryBackend):
         return True
 
     def execute(self, spec, client):
-        joins = joins_to_quads(spec.source.joins) if spec.source.is_join else None
+        joins = spec.source.joins
+        suffixes = spec.source.suffixes
+        # live_live_query does not auto-merge references; mirror the server's own
+        # pattern by injecting the reference join explicitly. Reuses the client's
+        # cached _resolve_merge_reference rather than re-resolving metadata here.
+        if spec.merge_reference and not spec.source.is_join:
+            ref_join, ref_suffixes = client._reference_join_for(spec.source.name)
+            if ref_join is not None:
+                joins = (ref_join,)
+                suffixes = ref_suffixes
         return client.live_live_query(
             spec.source.name,
             timestamp=spec.at.timestamp,
-            joins=joins,
+            joins=joins_to_quads(joins) if joins else None,
             select_columns=spec.select_columns,
             offset=spec.offset,
             limit=spec.limit,
             split_positions=spec.output.split_positions,
             desired_resolution=spec.output.desired_resolution,
             metadata=spec.output.metadata,
-            suffixes=spec.source.suffixes,
+            suffixes=suffixes,
             random_sample=spec.random_sample,
             allow_missing_lookups=spec.allow_missing_lookups,
             allow_invalid_root_ids=spec.allow_invalid_root_ids,
@@ -207,6 +216,8 @@ class LiveEmulationBackend(QueryBackend):
         return True
 
     def execute(self, spec, client):
+        # live_query does its own reference merge internally; pass the flag
+        # through rather than injecting a join (it has no joins argument).
         return client.live_query(
             spec.source.name,
             timestamp=spec.at.timestamp,
@@ -216,6 +227,7 @@ class LiveEmulationBackend(QueryBackend):
             split_positions=spec.output.split_positions,
             desired_resolution=spec.output.desired_resolution,
             metadata=spec.output.metadata,
+            merge_reference=spec.merge_reference,
             random_sample=spec.random_sample,
             **filters_to_method_kwargs(spec.filters, spec.source.name, nested=False),
         )

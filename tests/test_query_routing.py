@@ -142,6 +142,7 @@ class TestExecutionDelegation:
 
     def test_live_calls_live_live_query_with_nested_filters(self):
         client = MagicMock()
+        client._reference_join_for.return_value = (None, None)
         spec = live_table(
             filters=(
                 Filter(ColumnHandle("pre_pt_root_id", FilterKind.ID), FilterOp.IN, [1]),

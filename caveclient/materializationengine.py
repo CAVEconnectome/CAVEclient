@@ -27,7 +27,7 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
-from .query import Capabilities, QuerySpec, Switchboard, Table
+from .query import Capabilities, Join, QuerySpec, Switchboard, Table
 from .query.spec import (
     FILTER_KWARG_NAMES,
     build_query_spec,
@@ -657,6 +657,30 @@ class MaterializationClient(ClientBase):
         return frozenset(
             self.get_versions(expired=False, datastack_name=datastack_name)
         )
+
+    def _reference_join_for(self, table: str, datastack_name=None):
+        """Resolve a table's reference join, if any, as a typed ``Join``.
+
+        Reuses :meth:`_resolve_merge_reference` (backed by the cached
+        ``get_table_metadata``) so the live path merges references exactly as the
+        versioned path does, rather than re-implementing the lookup.
+
+        Returns
+        -------
+        (Join | None, dict | None)
+            The reference join and per-table suffixes, or ``(None, None)`` if the
+            table has no reference table.
+        """
+        tables, suffix_map = self._resolve_merge_reference(
+            True, table, datastack_name, None
+        )
+        if len(tables) < 2:
+            return None, None
+        (left, left_col), (right, right_col) = tables[0], tables[1]
+        suffixes = (
+            suffix_map if isinstance(suffix_map, dict) else {left: "", right: "_ref"}
+        )
+        return Join(left, left_col, right, right_col), suffixes
 
     def _resolve_source_kind(self, name: str, datastack_name=None) -> str:
         """Resolve an ``auto`` source to ``"view"`` or ``"table"`` via metadata.
