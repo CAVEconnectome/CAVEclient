@@ -85,6 +85,16 @@ def test_frozen_single_table_delegates_to_query_table(myclient, mocker):  # noqa
     assert kw["merge_reference"] is True
 
 
+def test_string_source_merge_reference_false(myclient, mocker):  # noqa: F811
+    # merge_reference is settable on the basic string-source query()
+    spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
+    myclient.materialize.query(
+        "synapses", version=3, kind="table", merge_reference=False,
+        allow_version_fallback=False,
+    )
+    assert spy.call_args.kwargs["merge_reference"] is False
+
+
 def test_live_table_delegates_to_live_live_query(myclient, mocker):  # noqa: F811
     mocker.patch.object(
         myclient.materialize, "_query_capabilities", return_value=MODERN
@@ -261,6 +271,13 @@ def test_edge_list_of_non_tables_is_refused_clearly(myclient):  # noqa: F811
     # a list-of-lists is an edge list; its contents must be Tables
     with pytest.raises(ValueError, match="Table objects"):
         myclient.materialize.query([["a", "b"]], version=3)
+
+
+def test_invalid_kind_is_refused(myclient):  # noqa: F811
+    # kind is limited to auto/table/view; a stray value fails clearly rather than
+    # leaking the not-yet-real dataset/deltalake path
+    with pytest.raises(ValueError, match="kind must be 'auto', 'table', or 'view'"):
+        myclient.materialize.query("syn", version=3, kind="dataset")
 
 
 def test_flat_three_tables_is_refused(myclient):  # noqa: F811

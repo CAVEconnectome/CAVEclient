@@ -7,7 +7,7 @@ import warnings
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import datetime
-from typing import Iterable, Optional, Union
+from typing import Iterable, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -907,7 +907,7 @@ class MaterializationClient(ClientBase):
         *,
         version: Optional[int] = None,
         timestamp: Optional[datetime] = None,
-        kind: str = "auto",
+        kind: Literal["auto", "table", "view"] = "auto",
         filter_in: dict = None,
         filter_out: dict = None,
         filter_equal: dict = None,
@@ -928,6 +928,7 @@ class MaterializationClient(ClientBase):
         allow_missing_lookups: bool = False,
         allow_invalid_root_ids: bool = False,
         allow_version_fallback: bool = True,
+        merge_reference: bool = True,
         datastack_name: str = None,
     ):
         """Unified query entry point that routes to the right backend.
@@ -967,8 +968,8 @@ class MaterializationClient(ClientBase):
         timestamp :
             Timestamp to query at (live). Mutually exclusive with ``version``.
         kind :
-            ``"auto"`` (default, resolved from metadata), ``"table"``,
-            ``"view"``, or ``"dataset"``.
+            ``"auto"`` (default, resolved from metadata), ``"table"``, or
+            ``"view"``. Only used for a string source.
         allow_missing_lookups, allow_invalid_root_ids :
             Live-query behavior, passed through for timestamp queries and ignored
             (no-op) for versioned queries. ``allow_missing_lookups`` returns
@@ -977,6 +978,12 @@ class MaterializationClient(ClientBase):
         allow_version_fallback :
             If True (default) and a pinned ``version`` no longer exists, fall
             back to a live query at that version's timestamp instead of failing.
+        merge_reference :
+            For a single table/view source (string or one ``Table``), whether to
+            auto-merge the table's reference table, if it has one (default True;
+            no-op for views and tables without a reference). With ``Table``
+            objects or an edge list, set ``merge_reference`` per ``Table`` instead
+            — this argument is ignored for those inputs.
         random_sample :
             If set, draw roughly this many rows by sampling the primary
             (driving) table before any join — not a sample of the joined result.
@@ -1120,6 +1127,10 @@ class MaterializationClient(ClientBase):
         else:
             if source is None:
                 raise ValueError("a source table/view name (or QuerySpec) is required")
+            if kind not in ("auto", "table", "view"):
+                raise ValueError(
+                    f"kind must be 'auto', 'table', or 'view', got {kind!r}"
+                )
             if kind == "auto":
                 kind = self._resolve_source_kind(source, datastack_name=datastack_name)
             spec = build_query_spec(
@@ -1136,6 +1147,7 @@ class MaterializationClient(ClientBase):
                 split_positions=split_positions,
                 desired_resolution=desired_resolution,
                 metadata=metadata,
+                merge_reference=merge_reference,
                 allow_missing_lookups=allow_missing_lookups,
                 allow_invalid_root_ids=allow_invalid_root_ids,
             )
