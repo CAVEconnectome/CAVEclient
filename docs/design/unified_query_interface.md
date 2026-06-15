@@ -536,10 +536,17 @@ the query shape:
 
 1. **Taxonomy home** — proposed: `caveclient/query/` is the single definition,
    `table_manager` imports it. (Leaning yes.)
-2. **`Filter`/`QuerySpec` public?** — leaning public-but-thin: power users can
-   build a spec directly (useful for the deltalake-direct case and for testing),
-   and the closed-kind validation makes it safe to accept. Commits us to an API
-   surface.
+2. **`Filter`/`QuerySpec` public?** — **resolved: public-but-thin, and
+   un-blessed.** The accessor (`tables.<name>(...).query()`) is the recommended
+   user-facing path, so the spec types (`Table`/`Filter`/`QuerySpec`) stay a
+   power-user/testing/deltalake-direct surface — importable but not the primary
+   API. This takes the pressure off making them ergonomic or discoverable: the
+   accessor owns column completion and kwarg parsing, and nothing below the
+   `query(list[Table], **opts)` seam knows the caller is an accessor, so the two
+   layers don't compete. Corollary: do **not** make `Table(...)` "friendlier" —
+   that would re-duplicate the accessor's job. (One spot to keep single-homed:
+   the reference-column `_ref` display rule lives in `_Part` (`query/tables.py`),
+   not the merge path — see §7 reference merges.)
 3. **Deltalake dependency** — direct dep on `deltalake`/`pyarrow` as a
    `caveclient[delta]` extra (true client-direct reads) vs waiting for a
    server-side read/redirect endpoint. The advertise + cloudpath model is usable
