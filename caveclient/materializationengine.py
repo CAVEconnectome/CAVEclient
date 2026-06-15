@@ -884,8 +884,13 @@ class MaterializationClient(ClientBase):
                         run, tables_by_name, incoming, bcols, random_sample=rs, **opts
                     )
                 return self._run_cave_node(
-                    run, tables_by_name, suffixes, incoming, bcols,
-                    random_sample=rs, **opts,
+                    run,
+                    tables_by_name,
+                    suffixes,
+                    incoming,
+                    bcols,
+                    random_sample=rs,
+                    **opts,
                 )
             except UnroutableQueryError as e:
                 joined = ", ".join(f"`{n}`" for n in table_order)
@@ -1132,7 +1137,22 @@ class MaterializationClient(ClientBase):
                     allow_missing_lookups=allow_missing_lookups,
                     allow_invalid_root_ids=allow_invalid_root_ids,
                 )
-                want_merge = [t.name for t in flat if t.merge_reference]
+                # Resolve the kind from metadata when not explicitly set, exactly
+                # as the string and join paths do (`_participant_kind` no-ops when
+                # the Table already declares "view"/"dataset"). Without this a lone
+                # `Table("a_view")` would default to kind="table" and mis-route,
+                # even though the same Table in a join is auto-resolved.
+                resolved_kind = self._participant_kind(flat[0], datastack_name)
+                if resolved_kind != spec.source.kind:
+                    spec = replace(
+                        spec, source=replace(spec.source, kind=resolved_kind)
+                    )
+                # views have no reference table to merge (mirrors the string path)
+                want_merge = [
+                    t.name
+                    for t in flat
+                    if t.merge_reference and resolved_kind != "view"
+                ]
             else:
                 spec, by_name = build_query_spec_from_edges(
                     edges,

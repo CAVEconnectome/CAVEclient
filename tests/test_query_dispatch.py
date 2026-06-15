@@ -89,7 +89,10 @@ def test_string_source_merge_reference_false(myclient, mocker):  # noqa: F811
     # merge_reference is settable on the basic string-source query()
     spy = mocker.patch.object(myclient.materialize, "query_table", return_value="DF")
     myclient.materialize.query(
-        "synapses", version=3, kind="table", merge_reference=False,
+        "synapses",
+        version=3,
+        kind="table",
+        merge_reference=False,
         allow_version_fallback=False,
     )
     assert spy.call_args.kwargs["merge_reference"] is False
@@ -126,6 +129,31 @@ def test_auto_kind_resolves_view_via_get_views(myclient, mocker):  # noqa: F811
     mocker.patch.object(myclient.materialize, "get_views", return_value=["my_view"])
     spy = mocker.patch.object(myclient.materialize, "query_view", return_value="DF")
     myclient.materialize.query("my_view", version=3, allow_version_fallback=False)
+    spy.assert_called_once()
+
+
+def test_single_table_spec_auto_resolves_view(myclient, mocker):  # noqa: F811
+    # A lone Table with the default kind="table" pointing at a view name must be
+    # resolved the same way a bare string / a Table in a join is -- otherwise it
+    # would mis-route to query_table. kind="view" is therefore optional here too.
+    mocker.patch.object(myclient.materialize, "get_views", return_value=["my_view"])
+    spy = mocker.patch.object(myclient.materialize, "query_view", return_value="DF")
+    out = myclient.materialize.query(
+        Table("my_view"), version=3, allow_version_fallback=False
+    )
+    assert out == "DF"
+    spy.assert_called_once()
+    assert spy.call_args.args[0] == "my_view"
+
+
+def test_single_table_spec_resolved_view_skips_reference_merge(myclient, mocker):  # noqa: F811
+    # A view resolved from a Table spec must not be put on the reference-merge
+    # path (views have no reference table) -- mirrors the string-source guard.
+    mocker.patch.object(myclient.materialize, "get_views", return_value=["my_view"])
+    spy = mocker.patch.object(myclient.materialize, "query_view", return_value="DF")
+    myclient.materialize.query(
+        Table("my_view", merge_reference=True), version=3, allow_version_fallback=False
+    )
     spy.assert_called_once()
 
 
@@ -213,8 +241,10 @@ def test_edge_list_star_join_via_live(myclient, mocker):  # noqa: F811
     )
     out = myclient.materialize.query(
         [
-            [Table("table_a", "column_a", filter_equal={"cell_type": "L2a"}),
-             Table("alpha", "id")],
+            [
+                Table("table_a", "column_a", filter_equal={"cell_type": "L2a"}),
+                Table("alpha", "id"),
+            ],
             [Table("table_a", "column_b"), Table("beta", "id")],
         ],
         version=3,
