@@ -163,6 +163,21 @@ def _tables_metadata_key(matclient, *args, **kwargs):
     return hashkey(datastack_name, version)
 
 
+# query() filter_*_dict kwarg -> the accessor's col__<suffix>= operator suffix,
+# for routing a reference-column filter on a string source through the accessor.
+_FILTER_DICT_SUFFIX = {
+    "filter_in_dict": "in",
+    "filter_out_dict": "not_in",
+    "filter_equal_dict": "eq",
+    "filter_greater_dict": "gt",
+    "filter_less_dict": "lt",
+    "filter_greater_equal_dict": "gte",
+    "filter_less_equal_dict": "lte",
+    "filter_spatial_dict": "bbox",
+    "filter_regex_dict": "regex",
+}
+
+
 direct_sql_error_msg = textwrap.dedent("""After CAVEclient v8.0.0 we changed to utilizing a different way
 of returning data from sql which does a better job of preserving types.\n
 This requires a server version >= 5.13.0 to work properly.\n
@@ -760,6 +775,44 @@ class MaterializationClient(ClientBase):
             return table.kind
         return self._resolve_source_kind(table.name, datastack_name=datastack_name)
 
+    def _table_has_reference(self, name: str, datastack_name=None) -> bool:
+        """Whether a table has a reference table.
+
+        Prefers the already-built accessor (no server round-trip — it already
+        knows the reference layout); falls back to a cheap cached metadata lookup
+        only when the accessor isn't built, so a reference-less table needn't
+        build the whole accessor just to find out.
+        """
+        if datastack_name is None and self._tables is not None:
+            return name in self._tables._references
+        try:
+            meta = self.get_table_metadata(name, datastack_name=datastack_name)
+        except Exception:
+            return False
+        return bool(meta.get("reference_table"))
+
+    @staticmethod
+    def _accessor_filter_kwargs(filter_kwargs, source):
+        """Convert ``query()``'s ``filter_*_dict`` kwargs into accessor
+        ``col__op=`` kwargs (and the set of columns filtered).
+
+        Returns ``(kwargs, columns)``, or ``(None, None)`` if a filter is nested
+        under a table other than ``source`` (not flatly convertible)."""
+        out, cols = {}, set()
+        for key, d in filter_kwargs.items():
+            suffix = _FILTER_DICT_SUFFIX[key]
+            for col, val in d.items():
+                if isinstance(val, dict):  # nested {table: {col: val}}
+                    if col != source:
+                        return None, None
+                    for inner_col, inner_val in val.items():
+                        out[f"{inner_col}__{suffix}"] = inner_val
+                        cols.add(inner_col)
+                else:
+                    out[f"{col}__{suffix}"] = val
+                    cols.add(col)
+        return out, cols
+
     def _local_merge_query(
         self,
         tables_by_name,
@@ -1133,6 +1186,38 @@ class MaterializationClient(ClientBase):
                 )
             if kind == "auto":
                 kind = self._resolve_source_kind(source, datastack_name=datastack_name)
+            # Reference-transparency: a reference table's columns appear in the
+            # result (merge_reference), so they must be filterable by name even via
+            # the plain string form. If a *reference* column is filtered, route
+            # through the accessor (which auto-joins the reference); primary-only
+            # filters stay on the fast query_table path below.
+            if (
+                kind == "table"
+                and merge_reference
+                and self.fc is not None
+                and datastack_name is None
+                and self._table_has_reference(source)
+                and source in self.tables
+            ):
+                akw, cols = self._accessor_filter_kwargs(filter_kwargs, source)
+                if akw is not None:
+                    owners = self.tables[source]._primary.column_tables()
+                    if any(owners.get(c) not in (None, source) for c in cols):
+                        return self.tables[source](**akw).query(
+                            version=version,
+                            timestamp=timestamp,
+                            select=select_columns,
+                            offset=offset,
+                            limit=limit,
+                            random_sample=random_sample,
+                            get_counts=get_counts,
+                            split_positions=split_positions,
+                            desired_resolution=desired_resolution,
+                            metadata=metadata,
+                            allow_missing_lookups=allow_missing_lookups,
+                            allow_invalid_root_ids=allow_invalid_root_ids,
+                            allow_version_fallback=allow_version_fallback,
+                        )
             spec = build_query_spec(
                 source,
                 kind=kind,

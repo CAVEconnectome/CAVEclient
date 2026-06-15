@@ -393,6 +393,29 @@ def test_frozen_table_view_local_merge(mat):
     assert (out["target_id"] == out["id_y"]).all()
 
 
+def test_raw_string_reference_column_filter(mat):
+    # reference-table columns (pt_root_id, pt_position live on the nucleus base
+    # table) are filterable via the plain string form -- query() routes them
+    # through the reference auto-join instead of 500-ing
+    ref_table = CONFIG["ref_tables"][0]  # allen_column_mtypes_v2, references nucleus
+    sample = mat.query(ref_table, version=V, limit=5)
+    roots = [int(r) for r in sample["pt_root_id"].tolist() if r]
+
+    by_root = mat.query(ref_table, version=V, filter_in={"pt_root_id": roots})
+    assert isinstance(by_root, pd.DataFrame)
+    assert "pt_root_id" in by_root.columns
+
+    by_bbox = mat.query(
+        ref_table,
+        version=V,
+        filter_spatial={"pt_position": [[244000, 188000, 20000], [260000, 200000, 22000]]},
+        split_positions=True,
+        limit=10,
+    )
+    assert isinstance(by_bbox, pd.DataFrame)
+    assert any(c.startswith("pt_position") for c in by_bbox.columns)
+
+
 def test_grouped_cave_run_then_view_local_merge(mat):
     # Two CAVE tables are grouped into ONE server-side join (suffixed _x/_y), then
     # merged locally with the view (suffixed _z): mtypes_v2 ⋈ mtypes_v1 (shared

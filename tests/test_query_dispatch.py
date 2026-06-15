@@ -273,6 +273,41 @@ def test_edge_list_of_non_tables_is_refused_clearly(myclient):  # noqa: F811
         myclient.materialize.query([["a", "b"]], version=3)
 
 
+def test_accessor_filter_kwargs_conversion():
+    from caveclient.materializationengine import MaterializationClient as MC
+
+    akw, cols = MC._accessor_filter_kwargs(
+        {
+            "filter_in_dict": {"cell_type": ["A"]},
+            "filter_spatial_dict": {"pt_position": [[0, 0, 0], [1, 1, 1]]},
+            "filter_greater_dict": {"size": 5},
+        },
+        "tbl",
+    )
+    assert akw == {
+        "cell_type__in": ["A"],
+        "pt_position__bbox": [[0, 0, 0], [1, 1, 1]],
+        "size__gt": 5,
+    }
+    assert cols == {"cell_type", "pt_position", "size"}
+
+
+def test_accessor_filter_kwargs_unwraps_source_nesting():
+    from caveclient.materializationengine import MaterializationClient as MC
+
+    akw, _ = MC._accessor_filter_kwargs({"filter_in_dict": {"tbl": {"x": [1]}}}, "tbl")
+    assert akw == {"x__in": [1]}
+
+
+def test_accessor_filter_kwargs_bails_on_foreign_nesting():
+    from caveclient.materializationengine import MaterializationClient as MC
+
+    akw, cols = MC._accessor_filter_kwargs(
+        {"filter_in_dict": {"some_other_table": {"x": [1]}}}, "tbl"
+    )
+    assert akw is None and cols is None
+
+
 def test_invalid_kind_is_refused(myclient):  # noqa: F811
     # kind is limited to auto/table/view; a stray value fails clearly rather than
     # leaking the not-yet-real dataset/deltalake path
