@@ -39,7 +39,7 @@ and they surface as clear refusals rather than silent wrong answers:
 | `merge_reference` | ✅ table concept | n/a — views have no reference table (no-op) |
 | Participates in joins | ✅ | ✅ — but as its own engine run, merged client-side (same result, different path) |
 | `kind=` needed? | no (auto) | no (auto) — fully optional everywhere: string, accessor, single `Table` spec, and joins all resolve it from metadata |
-| Column-kind inference | precise, from the JSON schema (spatial points expand to `_position`/`_root_id`/`_supervoxel_id`) | heuristic, from column name + type; unknowns fall back to "any op" |
+| Column-kind inference | from the annotation schema's *point structure* — bound spatial points expand to `_position`/`_root_id`/`_supervoxel_id` with exact op legality | from the view's *flat* schema — declared types pin numeric/string/bool precisely; spatial/ID kinds inferred by name convention (no point structure), with an "any op" fallback for types the schema doesn't pin |
 
 Each example below marks **Same** where tables and views are interchangeable and
 **Diverges** where they aren't.
@@ -103,50 +103,89 @@ df = mat.query(
 `filter_spatial`, `filter_regex`. A spatial (bounding-box) filter is
 `[[min_x, min_y, min_z], [max_x, max_y, max_z]]`.
 
-*Subtle point, not a syntax difference:* on a table, columns are typed precisely
-from the schema, so an illegal op (a regex on a numeric column) is caught up
-front. On a view, kinds are inferred heuristically; a column the heuristic can't
-type accepts any op, with only the value *shape* checked. The call you write is
-the same either way.
+*Subtle point, not a syntax difference:* both tables and views have a schema, but
+of different shapes. A table's annotation schema declares *point structure* — a
+`BoundSpatialPoint` field expands into `_position`/`_root_id`/`_supervoxel_id`
+with exact op legality — so an illegal op (a regex on a numeric column) is caught
+up front. A view's schema is *flat* (`field → type`): its declared types still
+pin numeric/string/boolean kinds precisely, but there is no point structure to
+read, so spatial/ID columns are recognized by name convention (`*position`,
+`*root_id`, `*supervoxel_id`) and a column whose type the schema doesn't pin
+falls back to "any op" (value *shape* still checked). The call you write is the
+same either way.
 
 ---
 
-## 3. The same query through the accessor
+## 3. The same query through the accessor (a Polars-like builder)
 
-The accessor knows the columns, so you get tab-completion and immediate
-validation. Bind it to a variable first so completion works. The `tables` and
-`views` accessors are the same object type — only the namespace differs:
+The accessor is a **lazy, immutable, chainable builder** shaped after Polars: each
+verb returns a new builder, nothing hits the server until the terminal. The
+terminal is `query()` (Polars' `collect()`); we *mirror* Polars, we are not a
+drop-in for it, so the terminal keeps its CAVE name and carries CAVE kwargs
+(`version=`/`timestamp=`/…). The accessor knows the source's columns, so you get
+tab-completion and validation. Bind it to a variable first so completion works;
+the `tables` and `views` accessors are the same object type.
 
 ```python
 syn = mat.tables.synapses_pni_2
 stp = mat.views.synapse_target_predictions
 
-# keyword filters: col=, col__op=
-df = syn(post_pt_root_id=[864691135517653777], size__gt=100).query()
-df = stp(target_id=[864691135517653777], score__gt=0.9).query()
+# .filter() is the canonical verb; keyword filters (col=, col__op=)
+df = syn.filter(post_pt_root_id=[864691135517653777], size__gt=100).query()
+df = stp.filter(target_id=[864691135517653777], score__gt=0.9).query()
 
-# or column-handle expressions, SQLAlchemy-style
-df = syn(syn.size > 100).query()
-df = stp(stp.score > 0.9).query()
+# ...or column-handle expressions, combined with `&` (Polars/SQLAlchemy style)
+df = syn.filter((syn.size > 100) & syn.post_pt_root_id.is_in([864691135517653777])).query()
+df = stp.filter(stp.score > 0.9).query()
 ```
 
-**Same.** Operator suffixes for the keyword form: `__in`, `__not_in`, `__eq`,
-`__gt`, `__lt`, `__ge`/`__gte`, `__le`/`__lte`, `__regex`, `__bbox`/`__within`. A
-bare `col=[...]` is `in`; a bare `col=value` is `equal`.
+`syn(...)` still works as a shorthand for `syn.filter(...)`, but it is a
+**deprecated alias** — prefer `.filter()`.
 
-Temporal address and options go on `.query()`:
+**Same.** Keyword operator suffixes: `__in`, `__not_in`, `__eq`, `__gt`, `__lt`,
+`__ge`/`__gte`, `__le`/`__lte`, `__regex`, `__bbox`/`__within`. A bare `col=[...]`
+is `in`; a bare `col=value` is `equal`. Column-handle methods: `> < >= <=`,
+`==`/`!=` (scalar → equal, list → in), `.is_in()`/`.isin()`, `.notin()`,
+`.is_between(lo, hi, closed="both")`, `.regex()`, and the spatial `.within()`
+below. Multiple `.filter(...)` calls (and predicates within one) **AND** together.
+
+**Spatial filtering — a CAVE-native op Polars lacks.** A position column takes a
+bounding box; there is no scalar comparison on it (and no Polars equivalent — you'd
+otherwise split into x/y/z and hand-write six range predicates):
 
 ```python
-df = syn(size__gt=100).query(version=1043, limit=1000)
-df = stp(score__gt=0.9).query(version=1043, limit=1000)
+bbox = [[100_000, 100_000, 20_000], [110_000, 110_000, 21_000]]
+df = syn.filter(syn.pre_pt_position.within(bbox)).query()       # handle form
+df = syn.filter(pre_pt_position__bbox=bbox).query()             # keyword form
+```
+
+Corners may be given in any order (normalized to min-first), and `syn.pre_pt_position > 5`
+is rejected up front (a position only takes a box).
+
+**Select and slice** chain like Polars; `.select()` accepts names or handles:
+
+```python
+df = syn.select(syn.id, "size", "post_pt_root_id").filter(size__gt=100).query()
+df = syn.filter(size__gt=100).head(1000).query()                # first N
+df = syn.filter(size__gt=100).slice(2000, 500).query()          # offset, length
+```
+
+**The boundary is loud (out-of-algebra).** Verbs the server can't do raise with
+guidance instead of silently misleading — do them after `query()`:
+
+```python
+syn.filter(size__gt=100).sort("size")        # raises: not a server op — sort the returned frame
+syn.group_by("post_pt_root_id")              # raises: aggregation is a view, or group post-query
+(syn.size > 100) | (syn.size < 10)           # raises: OR isn't expressible (server filters are conjunctive)
+syn.size > syn.id                            # raises: can't compare a column to another column
 ```
 
 **Diverges — `.live_query()`.** It exists on both (it's just `query(timestamp=)`),
 but on a view it hits the same refusal as step 1:
 
 ```python
-df = syn(size__gt=100).live_query(datetime(2026, 6, 1))   # ✅
-df = stp(score__gt=0.9).live_query(datetime(2026, 6, 1))  # ❌ refused
+df = syn.filter(size__gt=100).live_query(datetime(2026, 6, 1))   # ✅ table
+df = stp.filter(score__gt=0.9).live_query(datetime(2026, 6, 1))  # ❌ view refused
 ```
 
 ---
@@ -199,14 +238,21 @@ df = mat.query([
 ])
 ```
 
-The accessor spelling — `on` is `(my_col, other_col)`, or a single string when
-both sides share the column name:
+The accessor spelling mirrors Polars' `join`: give `on` (a shared column name or a
+`(my_col, other_col)` pair) or separate `left_on`/`right_on`, plus `how`:
 
 ```python
 syn = mat.tables.synapses_pni_2
 nuc = mat.tables.nucleus_detection_v0
+
 df = syn.join(nuc, on=("post_pt_root_id", "pt_root_id")).query()
+df = syn.join(nuc, left_on="post_pt_root_id", right_on="pt_root_id").query()  # same thing
 ```
+
+`how="inner"` is the default. `how="left"` is accepted by the API but **gated** —
+it raises until the server supports left within a join (the client is built ready
+to enable it without an API change). The accessor handles a **single** join today;
+for more than one join use the `Table` edge list (step 7).
 
 **Same syntax, diverging execution when a view is involved.** Swap a view into
 either side and the call looks identical — the view's kind is auto-resolved, no
@@ -254,17 +300,21 @@ df = mat.query([
 ])
 ```
 
-**Same authoring experience.** Accessor form carries each side's filters along:
+**Same authoring experience.** Accessor form carries each side's filters along —
+filter each handle before joining:
 
 ```python
-df = (syn(size__gt=100)
-      .join(mat.views.synapse_target_predictions(score__gt=0.9),
+df = (syn.filter(size__gt=100)
+      .join(mat.views.synapse_target_predictions.filter(score__gt=0.9),
             on=("post_pt_root_id", "target_id"))
       .query(version=1043))
 ```
 
 Filtering the view side here is what keeps the local merge tractable — it bounds
-the view sub-query instead of reading it whole.
+the view sub-query instead of reading it whole. (Filters added *after* the join
+route back to their column's origin table just the same; for inner joins that is
+equivalent — the accessor never has to guess which side a filter belongs to,
+because each column carries its origin.)
 
 ---
 
@@ -306,7 +356,7 @@ reference-transparency invariant.)
 
 ```python
 prox = mat.tables.proofreading_status_public_release
-df = prox(valid=True).query(version=1043)   # `valid` lives on the reference table
+df = prox.filter(valid=True).query(version=1043)   # `valid` lives on the reference table
 ```
 
 ### How it resolves
@@ -488,6 +538,9 @@ What the switchboard does with this, invisibly and identically for both kinds:
   `.attrs` metadata are applied the same regardless of which backend (or local
   merge) produced the bytes.
 
-At this complexity the explicit `Table` edge list usually reads more clearly than
-a chain of accessor `.join()` calls — but both produce the same query, and both
-treat tables and views the same way you've seen throughout.
+A query this shape — a **star** with two joins — needs the explicit `Table` edge
+list: the accessor handles single joins today (its multi-join/chaining refactor is
+still ahead), and the edge list is the way to author arbitrary join graphs
+regardless. For the common single-join, filtered, sliced case, the accessor
+(step 3) reads more like Polars; the two surfaces produce the same query and treat
+tables and views identically throughout.

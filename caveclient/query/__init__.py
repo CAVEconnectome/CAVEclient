@@ -14,7 +14,7 @@ from .backends import (
     UnroutableQueryError,
 )
 from .expressions import Column, parse_filter_kwargs
-from .filters import ColumnHandle, Filter, InvalidFilterError
+from .filters import AllOf, ColumnHandle, Filter, InvalidFilterError, flatten_filters
 from .kinds import FilterKind, FilterOp, legal_ops
 from .serialize import filters_to_method_kwargs, filters_to_payload
 from .spec import (
@@ -30,6 +30,7 @@ from .spec import (
 from .tables import TableManager, TableQuery, ViewManager
 
 __all__ = [
+    "AllOf",
     "At",
     "Capabilities",
     "Column",
@@ -53,6 +54,7 @@ __all__ = [
     "ViewManager",
     "filters_to_method_kwargs",
     "filters_to_payload",
+    "flatten_filters",
     "legal_ops",
     "parse_filter_kwargs",
     "resolve_version_fallback",

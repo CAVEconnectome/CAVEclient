@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from caveclient.query import FilterKind
+from caveclient.query import FilterKind, InvalidFilterError
 from caveclient.query.tables import (
     TableManager,
     TableQuery,
@@ -175,6 +175,198 @@ def make_reference_tq(client=None):
         reference=("nuc", ref_kinds),
     )
     return TableQuery(client or MagicMock(), part, description="ref table")
+
+
+class TestPolarsFilterSurface:
+    def test_filter_method_positional_and_kwargs(self):
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.filter(syn.size > 100, tag__regex="^L").query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.filter_greater == {"size": 100}
+        assert t.filter_regex == {"tag": "^L"}
+
+    def test_call_passes_through_to_filter_positional(self):
+        # the now-valid syn(expr) form (previously only kwargs were accepted)
+        client = MagicMock()
+        syn = make_tq(client)
+        syn(syn.size > 100).query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.filter_greater == {"size": 100}
+
+    def test_chained_filters_and_together(self):
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.filter(syn.size > 1).filter(tag="x").query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.filter_greater == {"size": 1}
+        assert t.filter_equal == {"tag": "x"}
+
+    def test_ampersand_conjunction_flattens(self):
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.filter((syn.size > 1) & syn.tag.regex("^L")).query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.filter_greater == {"size": 1}
+        assert t.filter_regex == {"tag": "^L"}
+
+    def test_or_and_invert_raise(self):
+        syn = make_tq()
+        with pytest.raises(InvalidFilterError, match="OR"):
+            (syn.size > 1) | (syn.size < 9)
+        with pytest.raises(InvalidFilterError, match="NOT"):
+            ~(syn.size > 1)
+
+    def test_bare_column_combinators_raise(self):
+        syn = make_tq()
+        with pytest.raises(InvalidFilterError):
+            syn.size & syn.tag
+        with pytest.raises(InvalidFilterError, match="OR"):
+            syn.size | syn.tag
+        with pytest.raises(InvalidFilterError, match="NOT"):
+            ~syn.size
+
+    def test_column_vs_column_raises(self):
+        syn = make_tq()
+        with pytest.raises(InvalidFilterError, match="another column"):
+            syn.size > syn.id
+        with pytest.raises(InvalidFilterError, match="another column"):
+            syn.size == syn.id
+
+    def test_is_in_alias(self):
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.filter(syn.pre_pt_root_id.is_in([7, 8])).query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.filter_in == {"pre_pt_root_id": [7, 8]}
+
+    def test_is_between_numeric(self):
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.filter(syn.size.is_between(10, 20)).query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.filter_greater_equal == {"size": 10}
+        assert t.filter_less_equal == {"size": 20}
+
+    def test_is_between_closed_variants(self):
+        syn = make_tq()
+        # left-open: lower bound is strict greater, upper is <=
+        f = syn.size.is_between(1, 2, closed="right")
+        ops = sorted(flt.op.field_key for flt in f.filters)
+        assert ops == ["filter_greater", "filter_less_equal"]
+        with pytest.raises(ValueError, match="closed"):
+            syn.size.is_between(1, 2, closed="bogus")
+
+    def test_is_between_non_numeric_raises(self):
+        syn = make_tq()
+        with pytest.raises(InvalidFilterError):
+            syn.tag.is_between("a", "b")
+
+    def test_select_accepts_handles(self):
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.select(syn.id, "size").query(version=3)
+        t = client.query.call_args.args[0][0]
+        assert t.select == ["id", "size"]
+
+    def test_spatial_bbox_filter_passes_through(self):
+        # POSITION columns take a bounding box (no Polars scalar analog); the bbox
+        # flows straight to the server's filter_spatial, with corners normalized
+        # to min-first regardless of the order given.
+        client = MagicMock()
+        syn = make_tq(client)
+        syn.filter(syn.pre_pt_position.within([[10, 10, 10], [0, 0, 0]])).query(
+            version=3
+        )
+        t = client.query.call_args.args[0][0]
+        assert t.filter_spatial == {"pre_pt_position": [[0, 0, 0], [10, 10, 10]]}
+        # keyword form (__bbox / legacy _bbox) lands the same
+        client.reset_mock()
+        syn.filter(pre_pt_position__bbox=[[0, 0, 0], [10, 10, 10]]).query(version=3)
+        assert client.query.call_args.args[0][0].filter_spatial == {
+            "pre_pt_position": [[0, 0, 0], [10, 10, 10]]
+        }
+
+    def test_scalar_comparison_on_position_rejected(self):
+        syn = make_tq()
+        with pytest.raises(InvalidFilterError, match="not valid for column"):
+            syn.pre_pt_position > 5
+
+
+class TestPolarsSliceVerbs:
+    def test_limit_and_head(self):
+        client = MagicMock()
+        make_tq(client).limit(5).query(version=3)
+        assert client.query.call_args.kwargs["limit"] == 5
+        client.reset_mock()
+        make_tq(client).head(7).query(version=3)
+        assert client.query.call_args.kwargs["limit"] == 7
+
+    def test_slice_sets_offset_and_limit(self):
+        client = MagicMock()
+        make_tq(client).slice(100, 25).query(version=3)
+        kwargs = client.query.call_args.kwargs
+        assert kwargs["offset"] == 100
+        assert kwargs["limit"] == 25
+
+    def test_explicit_query_limit_overrides_verb(self):
+        client = MagicMock()
+        make_tq(client).limit(5).query(version=3, limit=99)
+        assert client.query.call_args.kwargs["limit"] == 99
+
+
+class TestPolarsJoinKwargs:
+    def test_join_left_on_right_on(self):
+        client = MagicMock()
+        syn = make_tq(client, name="synapses")
+        nuc = make_tq(client, name="nuclei")
+        syn.join(nuc, left_on="post_pt_root_id", right_on="pre_pt_root_id").query(
+            version=3
+        )
+        tables = {t.name: t for t in client.query.call_args.args[0]}
+        assert tables["synapses"].join_on == "post_pt_root_id"
+        assert tables["nuclei"].join_on == "pre_pt_root_id"
+
+    def test_join_on_and_left_on_together_errors(self):
+        syn = make_tq(name="synapses")
+        nuc = make_tq(name="nuclei")
+        with pytest.raises(ValueError, match="not both"):
+            syn.join(nuc, on="x", left_on="a", right_on="b")
+
+    def test_join_missing_columns_errors(self):
+        syn = make_tq(name="synapses")
+        nuc = make_tq(name="nuclei")
+        with pytest.raises(ValueError, match="requires|needs"):
+            syn.join(nuc)
+
+    def test_join_how_inner_ok_left_gated(self):
+        syn = make_tq(name="synapses")
+        nuc = make_tq(name="nuclei")
+        # inner is fine
+        syn.join(nuc, on="post_pt_root_id", how="inner")
+        with pytest.raises(NotImplementedError, match="left"):
+            syn.join(nuc, on="post_pt_root_id", how="left")
+        with pytest.raises(ValueError, match="how"):
+            syn.join(nuc, on="post_pt_root_id", how="outer")
+
+    def test_filter_after_join_routes_to_origin(self):
+        # §4.1: a filter added after the join lands on the joined table's origin,
+        # not the primary.
+        client = MagicMock()
+        syn = make_tq(client, name="synapses")
+        nuc = make_tq(client, name="nuclei")
+        syn.join(nuc, on="post_pt_root_id").filter(nuc.size < 9).query(version=3)
+        tables = {t.name: t for t in client.query.call_args.args[0]}
+        assert tables["nuclei"].filter_less == {"size": 9}
+        assert tables["synapses"].filter_less is None
+
+
+class TestOutOfAlgebraStubs:
+    @pytest.mark.parametrize("verb", ["sort", "with_columns", "group_by", "agg"])
+    def test_stubs_raise_educational(self, verb):
+        syn = make_tq()
+        with pytest.raises(AttributeError, match="not a CAVE query operation"):
+            getattr(syn, verb)()
 
 
 class TestReferenceColumns:

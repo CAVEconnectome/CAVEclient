@@ -26,6 +26,21 @@ class InvalidFilterError(ValueError):
     """Raised when a filter is structurally invalid (illegal op or bad value)."""
 
 
+# Why OR/NOT are refused: the CAVE server WHERE is a conjunction of per-column
+# predicates (see docs/design/accessor_polars_alignment.md §5). AND lowers; OR and
+# general negation do not, so they fail in the caller's frame with a pointer to the
+# escape hatch rather than silently producing something lossy.
+_OR_MESSAGE = (
+    "`|` (OR) is not expressible against the CAVE backend: the server filters are a "
+    "conjunction of per-column predicates. Combine predicates with `&`, post-filter "
+    "the returned frame, or issue separate queries and concatenate."
+)
+_NOT_MESSAGE = (
+    "`~` (NOT) is not expressible against the CAVE backend; use `.notin([...])` for "
+    "set-exclusion, or post-filter the returned frame."
+)
+
+
 @dataclass(frozen=True)
 class ColumnHandle:
     """A reference to a single filterable column.
@@ -136,3 +151,72 @@ class Filter:
         if self.op is FilterOp.SPATIAL:
             # sort the corners so callers needn't give them min-first
             object.__setattr__(self, "value", _normalized_bbox(self.value))
+
+    # -- combinators (Polars-style) ------------------------------------------
+    # `&` builds a conjunction (the only combinator the server supports); `|`/`~`
+    # are refused because the backend WHERE is a conjunction of per-column
+    # predicates. See docs/design/accessor_polars_alignment.md §5.
+    def __and__(self, other) -> "AllOf":
+        return AllOf((self, *_as_filter_tuple(other)))
+
+    def __or__(self, other):
+        raise InvalidFilterError(_OR_MESSAGE)
+
+    def __invert__(self):
+        raise InvalidFilterError(_NOT_MESSAGE)
+
+
+@dataclass(frozen=True)
+class AllOf:
+    """A conjunction of filters — the result of ``filter_a & filter_b``.
+
+    A thin carrier so ``a & b & c`` reads like Polars; it flattens to its
+    underlying :class:`Filter` tuple at query-build time (every CAVE filter is
+    AND-ed anyway). Only ``&`` extends it; ``|``/``~`` are refused.
+    """
+
+    filters: tuple
+
+    def __and__(self, other) -> "AllOf":
+        return AllOf((*self.filters, *_as_filter_tuple(other)))
+
+    def __or__(self, other):
+        raise InvalidFilterError(_OR_MESSAGE)
+
+    def __invert__(self):
+        raise InvalidFilterError(_NOT_MESSAGE)
+
+
+def _as_filter_tuple(item) -> tuple:
+    """Coerce a combinator operand to a tuple of ``Filter``, or raise."""
+    if isinstance(item, Filter):
+        return (item,)
+    if isinstance(item, AllOf):
+        return item.filters
+    raise InvalidFilterError(
+        f"cannot combine a filter with {type(item).__name__}; expected a filter "
+        "expression (e.g. `col > 1`). A bare column handle is not a predicate."
+    )
+
+
+def flatten_filters(items) -> tuple:
+    """Expand a mix of ``Filter`` and ``AllOf`` into a flat tuple of ``Filter``.
+
+    Used by the accessor's ``.filter()``/``.query()`` to accept both single
+    predicates and ``&``-conjunctions. Anything else (a bare column handle, a
+    bool, ...) raises with a clear message rather than silently dropping.
+    """
+    out = []
+    for item in items:
+        if isinstance(item, Filter):
+            out.append(item)
+        elif isinstance(item, AllOf):
+            out.extend(item.filters)
+        else:
+            raise InvalidFilterError(
+                f"expected a filter expression (e.g. `col > 1` or `col.isin([...])`)"
+                f", got {type(item).__name__}. A bare column handle is not a "
+                "predicate; apply an operator. Use keyword filters (col=, col__op=) "
+                "for value filters."
+            )
+    return tuple(out)

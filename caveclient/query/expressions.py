@@ -26,7 +26,15 @@ from __future__ import annotations
 import difflib
 from typing import Any, Optional
 
-from .filters import ColumnHandle, Filter, _is_sequence
+from .filters import (
+    _NOT_MESSAGE,
+    _OR_MESSAGE,
+    AllOf,
+    ColumnHandle,
+    Filter,
+    InvalidFilterError,
+    _is_sequence,
+)
 from .kinds import FilterKind, FilterOp
 
 
@@ -50,6 +58,13 @@ class Column:
         return ColumnHandle(self.name, self.kind, self.table)
 
     def _filter(self, op: FilterOp, value: Any) -> Filter:
+        if isinstance(value, (Column, ColumnHandle)):
+            raise InvalidFilterError(
+                f"cannot compare column `{self.name}` to another column "
+                f"(`{getattr(value, 'name', value)!r}`): CAVE filters compare a "
+                "column to a literal value, not to another column. Compute the "
+                "comparison on the returned frame instead."
+            )
         return Filter(self._handle(), op, value)
 
     # ordering operators
@@ -71,16 +86,53 @@ class Column:
         return self._filter(op, value)
 
     def __ne__(self, value):
+        if isinstance(value, (Column, ColumnHandle)):
+            return self._filter(FilterOp.NOT_IN, value)  # _filter raises
         return self._filter(FilterOp.NOT_IN, value if _is_sequence(value) else [value])
 
     __hash__ = object.__hash__  # identity; handles aren't value-compared
+
+    # boolean combinators: `&` joins *filter expressions* (not bare columns), so
+    # combining bare columns, or using `|`/`~`, is refused with a clear message.
+    def __and__(self, other):
+        raise InvalidFilterError(
+            "`&` combines filter expressions, not bare columns; write "
+            "`(col > 1) & (col2 < 2)`, applying an operator to each column first."
+        )
+
+    def __or__(self, other):
+        raise InvalidFilterError(_OR_MESSAGE)
+
+    def __invert__(self):
+        raise InvalidFilterError(_NOT_MESSAGE)
 
     # explicit, readable methods
     def isin(self, values):
         return self._filter(FilterOp.IN, values)
 
+    def is_in(self, values):
+        """Polars spelling of :meth:`isin`."""
+        return self.isin(values)
+
     def notin(self, values):
         return self._filter(FilterOp.NOT_IN, values)
+
+    def is_between(self, lower, upper, closed: str = "both"):
+        """Range filter, like Polars: ``lower <= col <= upper`` for ``closed="both"``.
+
+        ``closed`` is one of ``"both"``, ``"left"``, ``"right"``, ``"none"``. Lowers
+        to a conjunction of two bound filters, so it inherits numeric-only legality
+        (a non-numeric column raises ``InvalidFilterError``).
+        """
+        if closed not in ("both", "left", "right", "none"):
+            raise ValueError(
+                f"closed must be 'both', 'left', 'right', or 'none', got {closed!r}"
+            )
+        lo_op = (
+            FilterOp.GREATER_EQUAL if closed in ("both", "left") else FilterOp.GREATER
+        )
+        hi_op = FilterOp.LESS_EQUAL if closed in ("both", "right") else FilterOp.LESS
+        return AllOf((self._filter(lo_op, lower), self._filter(hi_op, upper)))
 
     def equals(self, value):
         return self._filter(FilterOp.EQUAL, value)

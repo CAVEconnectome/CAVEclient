@@ -15,9 +15,13 @@ from dataclasses import dataclass, replace
 from typing import Optional
 
 from .expressions import Column, parse_filter_kwargs
+from .filters import flatten_filters
 from .kinds import FilterKind
 from .serialize import _serialize_value
 from .spec import Table
+
+# sentinel so `_with(limit=None)` can distinguish "clear it" from "leave unchanged"
+_UNSET = object()
 
 
 def _did_you_mean(name: str, candidates) -> str:
@@ -155,25 +159,31 @@ class TableQuery:
         object.__setattr__(self, "_client", client)
         object.__setattr__(self, "_parts", (part,))
         object.__setattr__(self, "_filters", ())
+        object.__setattr__(self, "_limit", None)
+        object.__setattr__(self, "_offset", None)
         object.__setattr__(self, "__doc__", description)
 
     # -- construction helpers ------------------------------------------------
 
     @classmethod
-    def _make(cls, client, parts, filters, description):
+    def _make(cls, client, parts, filters, description, limit=None, offset=None):
         obj = cls.__new__(cls)
         object.__setattr__(obj, "_client", client)
         object.__setattr__(obj, "_parts", tuple(parts))
         object.__setattr__(obj, "_filters", tuple(filters))
+        object.__setattr__(obj, "_limit", limit)
+        object.__setattr__(obj, "_offset", offset)
         object.__setattr__(obj, "__doc__", description)
         return obj
 
-    def _with(self, filters=None, parts=None):
+    def _with(self, filters=None, parts=None, limit=_UNSET, offset=_UNSET):
         return self._make(
             self._client,
             parts if parts is not None else self._parts,
             filters if filters is not None else self._filters,
             self.__doc__,
+            limit=self._limit if limit is _UNSET else limit,
+            offset=self._offset if offset is _UNSET else offset,
         )
 
     @property
@@ -249,36 +259,135 @@ class TableQuery:
 
     # -- filtering -----------------------------------------------------------
 
-    def __call__(self, **kwargs) -> "TableQuery":
-        """Add keyword filters (``col=``, ``col__gt=``, ...). Reference-table
-        columns are accepted and routed to the reference table."""
-        new = parse_filter_kwargs(
-            self._primary.all_kinds,
-            kwargs,
-            table=self._primary.name,
-            column_tables=self._primary.column_tables(),
-            column_real_names=self._primary.column_real_names(),
-        )
+    def filter(self, *exprs, **kwargs) -> "TableQuery":
+        """Add filters (the canonical Polars-style verb).
+
+        Positional arguments are column-handle filter expressions (``tq.size > 100``,
+        ``tq.tag.regex("^L")``, or ``&``-conjunctions of them); keyword arguments are
+        ``col=`` / ``col__op=`` filters. Both forms (and repeated/chained ``.filter``
+        calls) AND together. Reference-table columns are accepted and routed to the
+        reference table.
+        """
+        new = flatten_filters(exprs)
+        if kwargs:
+            new = new + parse_filter_kwargs(
+                self._primary.all_kinds,
+                kwargs,
+                table=self._primary.name,
+                column_tables=self._primary.column_tables(),
+                column_real_names=self._primary.column_real_names(),
+            )
         return self._with(filters=self._filters + new)
 
+    def __call__(self, *exprs, **kwargs) -> "TableQuery":
+        """Backward-compatible alias for :meth:`filter`.
+
+        .. deprecated:: use :meth:`filter`. ``tq(...)`` will warn in a future
+           release and be removed in a later major version.
+        """
+        return self.filter(*exprs, **kwargs)
+
     def select(self, *columns) -> "TableQuery":
-        """Return only these columns from this table. Each joined table keeps its
-        own ``select``, so ``a.select(...).join(b.select(...), ...)`` selects
-        per-table."""
-        primary = replace(self._primary, select=tuple(columns) or None)
+        """Return only these columns from this table. Accepts column names or column
+        handles (``tq.select(tq.id, "size")``). Each joined table keeps its own
+        ``select``, so ``a.select(...).join(b.select(...), ...)`` selects per-table."""
+        names = tuple(c.name if isinstance(c, Column) else c for c in columns)
+        primary = replace(self._primary, select=names or None)
         return self._with(parts=(primary, *self._parts[1:]))
 
-    def join(self, other: "TableQuery", on) -> "TableQuery":
-        """Join another table. ``on`` is ``(my_column, other_column)`` or a single
-        column name shared by both."""
-        if isinstance(on, str):
-            my_col, other_col = on, on
+    def join(
+        self,
+        other: "TableQuery",
+        on=None,
+        *,
+        left_on=None,
+        right_on=None,
+        how: str = "inner",
+    ) -> "TableQuery":
+        """Join another table, Polars-style.
+
+        Give the join columns as either ``on`` — a single column name shared by both
+        sides, or a ``(my_column, other_column)`` pair — or as separate ``left_on``
+        and ``right_on``. ``how`` is ``"inner"`` (default) or ``"left"``; ``"left"``
+        is not yet available (see below).
+        """
+        if on is not None and (left_on is not None or right_on is not None):
+            raise ValueError("pass either `on=` or `left_on=`/`right_on=`, not both")
+        if on is not None:
+            my_col, other_col = (on, on) if isinstance(on, str) else on
+        elif left_on is not None and right_on is not None:
+            my_col, other_col = left_on, right_on
         else:
-            my_col, other_col = on
+            raise ValueError(
+                "join needs `on=` (a shared column name or a (left, right) pair) or "
+                "both `left_on=` and `right_on=`"
+            )
+        if how not in ("inner", "left"):
+            raise ValueError(f"how must be 'inner' or 'left', got {how!r}")
+        if how == "left":
+            # Capability gate: the client is designed to enable left without an API
+            # change once the server supports left within a CAVE-side join run; until
+            # then we refuse rather than half-build it (see the impl plan §6).
+            raise NotImplementedError(
+                "left joins are not yet supported by the server; only how='inner' is "
+                "available currently."
+            )
         primary = replace(self._primary, join_on=my_col)
         partner = replace(other._primary, join_on=other_col)
         parts = (primary, *self._parts[1:], partner, *other._parts[1:])
         return self._with(parts=parts, filters=self._filters + other._filters)
+
+    # -- slicing (Polars-style) ----------------------------------------------
+
+    def limit(self, n: int) -> "TableQuery":
+        """Cap the number of rows returned (folds into ``query(limit=n)``)."""
+        return self._with(limit=n)
+
+    def head(self, n: int = 10) -> "TableQuery":
+        """Alias for :meth:`limit` (the server returns the first ``n`` rows; there
+        is no ordering, so this is not 'top-n by a column')."""
+        return self._with(limit=n)
+
+    def slice(self, offset: int, length: Optional[int] = None) -> "TableQuery":
+        """Skip ``offset`` rows and return up to ``length`` (folds into
+        ``query(offset=, limit=)``)."""
+        return self._with(offset=offset, limit=length)
+
+    # -- out-of-algebra: not server query operations -------------------------
+    # These exist only to turn a Polars reflex into a helpful message instead of a
+    # bare AttributeError. See docs/design/accessor_polars_alignment.md §5.
+
+    def sort(self, *args, **kwargs):
+        self._not_a_query_op(
+            "sort",
+            "the server does not order results, so `limit` is 'first N returned', "
+            "not 'top-N'. Call .query() and sort the returned frame.",
+        )
+
+    def with_columns(self, *args, **kwargs):
+        self._not_a_query_op(
+            "with_columns",
+            "computed/derived columns aren't a server operation. Call .query() and "
+            "add columns on the returned frame (pandas/Polars).",
+        )
+
+    def group_by(self, *args, **kwargs):
+        self._not_a_query_op(
+            "group_by",
+            "aggregation isn't a server query operation — in CAVE an aggregate is a "
+            "view (`client.materialize.views.<name>`); for ad-hoc rollups call "
+            ".query() then group on the returned frame.",
+        )
+
+    def agg(self, *args, **kwargs):
+        self._not_a_query_op(
+            "agg",
+            "aggregation isn't a server query operation — use a view "
+            "(`client.materialize.views.<name>`) or group on the returned frame.",
+        )
+
+    def _not_a_query_op(self, verb: str, guidance: str):
+        raise AttributeError(f"`.{verb}()` is not a CAVE query operation — {guidance}")
 
     # -- execution -----------------------------------------------------------
 
@@ -334,10 +443,15 @@ class TableQuery:
         ``allow_version_fallback``, ``datastack_name``.
         """
         select = opts.pop("select", None)
-        base = self._with(filters=self._filters + tuple(exprs))
+        base = self.filter(*exprs) if exprs else self
         if select is not None:
-            primary = replace(base._primary, select=tuple(select))
-            base = base._with(parts=(primary, *base._parts[1:]))
+            base = base.select(*select)
+        # slice verbs (.limit/.head/.slice) fold into the query opts unless the
+        # caller passed them explicitly here.
+        if "limit" not in opts and base._limit is not None:
+            opts["limit"] = base._limit
+        if "offset" not in opts and base._offset is not None:
+            opts["offset"] = base._offset
         return base._client.query(base._build_tables(), **opts)
 
     def live_query(self, timestamp, *exprs, **opts):
