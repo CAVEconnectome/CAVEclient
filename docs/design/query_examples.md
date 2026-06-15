@@ -35,6 +35,7 @@ and they surface as clear refusals rather than silent wrong answers:
 |---|---|---|
 | Address by `version=` (frozen) | ✅ | ✅ |
 | Address by `timestamp=` (live) | ✅ *if it has a bound spatial point* | ❌ refused — not live-queryable yet (Phase 3 unlocks projection/filter views via `live_compatible`; aggregating views never) |
+| Stale-version fallback (`allow_version_fallback`, default on) | ✅ degrades a vanished `version=` to a live query at its timestamp — *if* the table is live-able | ❌ falls back onto the live backend, which views can't use yet — so a vanished version stays an error |
 | `merge_reference` | ✅ table concept | n/a — views have no reference table (no-op) |
 | Participates in joins | ✅ | ✅ — but as its own engine run, merged client-side (same result, different path) |
 | `kind=` needed? | no (auto) | no (auto) — fully optional everywhere: string, accessor, single `Table` spec, and joins all resolve it from metadata |
@@ -294,18 +295,85 @@ from the auto-resolved kinds. You don't annotate any of that.
 
 ---
 
-## 8. Reference tables (a table-only concept)
+## 8. Reference merges and how `merge_reference` is handled (table-only)
 
-**Diverges — tables only.** A table with a reference table merges it by default,
-so the reference's columns appear in the result *and* are filterable by the same
-name, off the base table, without your knowing they live on the reference. (A
-reference column that collides with a base column surfaces suffixed `_ref`, and
-you filter it under that name — see the reference-transparency invariant.)
+**Diverges — tables only.** A table with a reference table merges it by default
+(`merge_reference=True`), so the reference's columns appear in the result *and*
+are filterable by the same name, off the base table, without your knowing they
+live on the reference. (A reference column that collides with a base column
+surfaces suffixed `_ref`, and you filter it under that name — see the
+reference-transparency invariant.)
 
 ```python
 prox = mat.tables.proofreading_status_public_release
 df = prox(valid=True).query(version=1043)   # `valid` lives on the reference table
 ```
+
+### How it resolves
+
+`merge_reference` is a **per-table** flag (set it on each `Table`, or as the
+`merge_reference=` argument of the single-source string form). How it's satisfied
+depends on the query shape — and you never choose; `query()` picks the cheaper
+path:
+
+- **Single table, frozen** (`version=`, no explicit join) → `query_table` merges
+  the reference *itself*, server-side, with no chunkedgraph call. The cheap common
+  case (the `prox` example above).
+- **Any explicit join, or any live query** → `live_live_query` can't auto-merge,
+  so the reference is rewritten into an explicit reference **`Join`**
+  (`base.target_id == reference.id`, reference columns suffixed `_ref`) and routed
+  to the live endpoint. A *versioned* explicit join runs live at the version's
+  timestamp, so its references resolve as joins there too.
+
+Either way the resulting columns are identical — the path is an internal
+optimization, not something you address.
+
+### Multiple tables sharing a reference: merged exactly once
+
+The interesting case: a join where several participating tables reference the
+**same** base table. The reference is merged **once**, not once per referrer —
+and never at all if that base table is already an explicit table in the query.
+
+```python
+# two cell-type tables, both of which reference nucleus_detection_v0
+df = mat.query([
+    Table("mtypes_v2", join_on="target_id", suffix="_v2",
+          filter_equal={"cell_type": "L2a"}),
+    Table("mtypes_v1", join_on="target_id", suffix="_v1"),
+], version=943)
+```
+
+Both `mtypes_v2` and `mtypes_v1` would, on their own, merge
+`nucleus_detection_v0`. In the join, `query()` resolves the explicit
+`mtypes_v2 ↔ mtypes_v1` join and then injects the shared reference **a single
+time**:
+
+```text
+joins = [
+    ["mtypes_v2", "target_id", "mtypes_v1", "target_id"],          # the explicit join
+    ["mtypes_v2", "target_id", "nucleus_detection_v0", "id"],      # the reference — deduped, added once
+]
+```
+
+The dedup rule (`_inject_reference_joins`): walk the tables that asked to merge,
+and add each one's reference join only if that reference table isn't already
+**present** — where "present" means an explicit query table *or* a reference
+already injected by an earlier table. So a base table that two tables reference is
+merged once; a base table you already joined explicitly is not merged again.
+(Covered by `test_shared_reference_is_merged_once`.)
+
+### Turning it off
+
+Set `merge_reference=False` on a `Table` (or on the string-source call) to skip
+resolution entirely — the reference's columns won't appear and won't be
+filterable:
+
+```python
+df = mat.query(Table("proofreading_status_public_release", merge_reference=False),
+               version=1043)
+```
+
+### Views
 
 Views have no reference table, so `merge_reference` is simply a **no-op** for
 them — not an error, just nothing to merge. This is the one capability that has
@@ -313,7 +381,55 @@ no view counterpart at all (rather than a deferred one).
 
 ---
 
-## 9. A complex, multifaceted query (tables + a view together)
+## 9. Stale-version fallback (you usually get this for free)
+
+Materialization versions churn: a pinned `version=N` can name a version whose
+database has since been deleted, even though its metadata row — and therefore its
+*timestamp* — survives. A query at a version's exact timestamp reconstructs
+equivalent data (the server rolls root IDs forward from the nearest surviving
+version), so rather than failing on a vanished version, `query()` silently
+degrades to a live query at that version's timestamp.
+
+This is on by default — every example above that passed `version=` already had it.
+You only ever *see* it as a logged warning when it fires:
+
+```python
+# version 900's database is gone, but its metadata/timestamp remain
+df = mat.query("synapses_pni_2", version=900)
+# -> logs: "Materialization version is no longer available; falling back to a
+#           live query at its timestamp (...)" and returns equivalent data
+```
+
+Turn it off to get the hard error instead (e.g. when a missing version must fail
+loudly rather than degrade):
+
+```python
+df = mat.query("synapses_pni_2", version=900, allow_version_fallback=False)  # raises
+```
+
+The mechanics: if the pinned version isn't in the currently-available set but its
+timestamp still resolves, the spec's address is rewritten `version=N` →
+`timestamp=ts` and routed to the live backend; a *wholly* unknown version (no
+metadata row) is left alone so the natural "version not found" error surfaces.
+The available-version set is cached behind a short TTL, so this costs no extra
+round-trip on the common (version-still-here) path.
+
+**Diverges — it lands on the live backend, so it inherits live's limits.** The
+fallback only helps sources that can be queried live:
+
+- A **table with bound spatial points** falls back cleanly. ✅
+- A **metadata-only table** (no bound point) or a **view** can't be live-queried
+  today, so the fallback rewrites to a timestamp and then hits live's refusal —
+  it converts "version gone" into "can't be queried live," not into data. For
+  those, a vanished version is simply an error (with or without the flag).
+
+So the fallback is, in practice, the same capability as live queries (step 1):
+a clean win for live-able tables, a no-op for views until the server makes them
+live-compatible.
+
+---
+
+## 10. A complex, multifaceted query (tables + a view together)
 
 Everything at once: a star join that mixes tables **and** a view, each side with
 its own filters and column selection, a spatial bound on the driving table,
