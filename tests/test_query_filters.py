@@ -89,6 +89,15 @@ class TestFilterValidation:
             handle("pre_pt_root_id", FilterKind.ID), FilterOp.IN, np.array([1, 2, 3])
         )
 
+    def test_spatial_bounds_sorted_per_axis(self):
+        # corners given in any order are normalized to [[min...], [max...]]
+        f = Filter(
+            handle("pt_position", FilterKind.POSITION),
+            FilterOp.SPATIAL,
+            [[258012, 199706, 20263], [244493, 188736, 21510]],
+        )
+        assert f.value == [[244493, 188736, 20263], [258012, 199706, 21510]]
+
 
 class TestSerialize:
     def test_each_op_maps_to_its_wire_key(self):

@@ -99,6 +99,18 @@ def _validate_bbox(value: Any) -> None:
             )
 
 
+def _normalized_bbox(value: Any) -> list:
+    """Sort a 2-corner bounding box into ``[[min...], [max...]]`` per axis.
+
+    The server requires the lower corner to be strictly the min on every axis;
+    sorting client-side lets a caller pass any two opposite corners in any order.
+    """
+    a, b = value[0], value[1]
+    lo = [min(a[i], b[i]) for i in range(len(a))]
+    hi = [max(a[i], b[i]) for i in range(len(a))]
+    return [lo, hi]
+
+
 @dataclass(frozen=True)
 class Filter:
     """A single typed filter: a column, an operation, and a value.
@@ -121,3 +133,6 @@ class Filter:
                 f"permitted operations: {permitted}"
             )
         _validate_value(self.op, self.value)
+        if self.op is FilterOp.SPATIAL:
+            # sort the corners so callers needn't give them min-first
+            object.__setattr__(self, "value", _normalized_bbox(self.value))
