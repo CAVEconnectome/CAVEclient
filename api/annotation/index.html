@@ -1303,7 +1303,7 @@
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="get_tables(aligned_volume_name=None) (caveclient.annotationengine.AnnotationClient.get_tables)" href="#caveclient.annotationengine.AnnotationClient.get_tables">get_tables</a></code></td>
+              <td><code><a class="autorefs autorefs-internal" title="get_tables(aligned_volume_name=None, timestamp=None) (caveclient.annotationengine.AnnotationClient.get_tables)" href="#caveclient.annotationengine.AnnotationClient.get_tables">get_tables</a></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Gets a list of table names for a aligned_volume_name</p>
@@ -2220,7 +2220,7 @@ each dict must contain an "id" field which is the ID of the annotation to update
 
 
 <h2 id="caveclient.annotationengine.AnnotationClient.get_tables" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_tables</span><span class="p">(</span><span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_tables</span><span class="p">(</span><span class="n">aligned_volume_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#caveclient.annotationengine.AnnotationClient.get_tables" class="headerlink" title="Permanent link">&para;</a></h2>
 
@@ -2253,6 +2253,23 @@ each dict must contain an "id" field which is the ID of the annotation to update
                 <p>Name of the aligned_volume, by default None.
 If None, uses the one specified in the client.
 Will be set correctly if you are using the framework_client</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>timestamp</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If set, gets the tables as of that timestamp. By default None.
+If None, gets the current tables as of now.</p>
               </div>
             </td>
             <td>

@@ -853,6 +853,48 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#retrieving-large-numbers-of-skeletons-with-fetch_skeletons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieving large numbers of skeletons with fetch_skeletons()
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Retrieving large numbers of skeletons with fetch_skeletons()">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-side-decoding-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Server-side decoding (default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-gcs-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Direct GCS download
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queuing-missing-skeletons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Queuing missing skeletons
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#generating-multiple-skeletons-in-parallel" class="md-nav__link">
     <span class="md-ellipsis">
       Generating multiple skeletons in parallel
@@ -1201,6 +1243,47 @@
     <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
+<h3 id="retrieving-large-numbers-of-skeletons-with-fetch_skeletons">Retrieving large numbers of skeletons with <code>fetch_skeletons()</code><a class="headerlink" href="#retrieving-large-numbers-of-skeletons-with-fetch_skeletons" title="Permanent link">&para;</a></h3>
+<p><code>get_bulk_skeletons()</code> has a hard limit of 10 root IDs because it may need to generate missing skeletons inline. For larger batches of already-cached skeletons, use <code>fetch_skeletons()</code>, which accepts up to 500 root IDs per call and returns a plain dict of <code>{root_id: skeleton}</code>. Root IDs not found in the cache are simply absent from the result.</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">fetch_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<h4 id="server-side-decoding-default">Server-side decoding (default)<a class="headerlink" href="#server-side-decoding-default" title="Permanent link">&para;</a></h4>
+<p>By default (<code>method="server"</code>), root IDs are sent to the server, which retrieves and decodes skeletons before returning them:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">fetch_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">output_format</span><span class="o">=</span><span class="s2">&quot;dict&quot;</span><span class="p">,</span>   <span class="c1"># or &quot;swc&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<h4 id="direct-gcs-download">Direct GCS download<a class="headerlink" href="#direct-gcs-download" title="Permanent link">&para;</a></h4>
+<p>For maximum throughput when retrieving many skeletons, use <code>method="gcs"</code>. The client obtains a short-lived downscoped GCS access token (cached client-side and auto-refreshed) and downloads H5 files directly from the storage bucket, bypassing the service for data transfer:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">fetch_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">&quot;gcs&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>method="gcs"</code> only supports <code>output_format="dict"</code> (the default). Use <code>method="server"</code> if you need SWC output.</p>
+</div>
+<h4 id="queuing-missing-skeletons">Queuing missing skeletons<a class="headerlink" href="#queuing-missing-skeletons" title="Permanent link">&para;</a></h4>
+<p>In either mode, passing <code>generate_missing_skeletons=True</code> will queue any root IDs that are not in the cache for asynchronous background generation. They will still be absent from the returned dict until they are generated:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">fetch_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>The same optional parameters apply:</p>
+<div class="highlight"><pre><span></span><code><span class="n">skeletons</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">fetch_skeletons</span><span class="p">(</span>
+    <span class="n">root_ids</span><span class="o">=</span><span class="p">[</span><span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">root_id</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">datastack_name</span><span class="o">=&lt;</span><span class="n">datastack_name</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">skeleton_version</span><span class="o">=&lt;</span><span class="n">sk_version</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">output_format</span><span class="o">=&lt;</span><span class="s2">&quot;dict&quot;</span><span class="o">|</span><span class="s2">&quot;swc&quot;</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=&lt;</span><span class="s2">&quot;server&quot;</span><span class="o">|</span><span class="s2">&quot;gcs&quot;</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
 <h3 id="generating-multiple-skeletons-in-parallel">Generating multiple skeletons in parallel<a class="headerlink" href="#generating-multiple-skeletons-in-parallel" title="Permanent link">&para;</a></h3>
 <p><code>get_bulk_skeletons()</code> is not an effective way to produce a large number of skeletons since it operates synchronously, generating one skeleton at a time. In order to generate a large number of skeletons it is better to do so in parallel. The following function dispatches numerous root ids for skeletonization without returning anything immediately. The root ids are then distributed on the server for parallel skeletonization and eventual caching. Once they are in the cache, you can retrieve them. Of course, it can be tricky to know when they are available. That is addressed further below. Here's how to dispatch asynchronous bulk skeletonization:</p>
 <div class="highlight"><pre><span></span><code><span class="n">generate_bulk_skeletons_async</span><span class="p">(</span>
@@ -1216,19 +1299,19 @@
 </code></pre></div>
 <h3 id="retrieving-asynchronously-generated-skeletons">Retrieving asynchronously generated skeletons<a class="headerlink" href="#retrieving-asynchronously-generated-skeletons" title="Permanent link">&para;</a></h3>
 <p>In order to retrieve asynchronously generated skeletons, it is necessary to <em>poll</em> the cache for the availability of the skeletons and then eventually retrieve them. Here's an example of such a workflow:</p>
-<div class="highlight"><pre><span></span><code># Dispatch multiple asynchronous, parallel skeletonization and caching processes
-generate_bulk_skeletons_async(root_ids)
+<div class="highlight"><pre><span></span><code><span class="c1"># Dispatch multiple asynchronous, parallel skeletonization and caching processes</span>
+<span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">generate_bulk_skeletons_async</span><span class="p">(</span><span class="n">root_ids</span><span class="p">)</span>
 
-# Repeatedly query the cache for the existence of the skeletons until they are all available
-while True:
-    skeletons_that_exist = client.skeleton.skeletons_exist(root_ids=root_ids)
-    num_skeletons_found = sum(skeletons_that_exist.values())
-    if num_skeletons_found == len(root_ids):
-        break
-    sleep(10)  # Pause for ten seconds and check again
+<span class="c1"># Repeatedly query the cache for the existence of the skeletons until they are all available</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="n">skeletons_that_exist</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">skeletons_exist</span><span class="p">(</span><span class="n">root_ids</span><span class="o">=</span><span class="n">root_ids</span><span class="p">)</span>
+    <span class="n">num_skeletons_found</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">skeletons_that_exist</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">num_skeletons_found</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">root_ids</span><span class="p">):</span>
+        <span class="k">break</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># Pause for ten seconds and check again</span>
 
-# Retrieve the skeletons (remember, SWC is also offered)
-skeletons_json = get_bulk_skeletons(root_ids)
+<span class="c1"># Retrieve all skeletons at once — fetch_skeletons() supports up to 500 at a time</span>
+<span class="n">skeletons</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">skeleton</span><span class="o">.</span><span class="n">fetch_skeletons</span><span class="p">(</span><span class="n">root_ids</span><span class="p">)</span>
 </code></pre></div>
 
 

@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#800-november-2-2025" class="md-skip">
+        <a href="#810-march-13-2026" class="md-skip">
           Skip to content
         </a>
       
@@ -661,6 +661,15 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#810-march-13-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.1.0 (March 13, 2026)
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#800-november-2-2025" class="md-nav__link">
@@ -1253,6 +1262,14 @@
 
   <h1>Changelog</h1>
 
+<h3 id="810-march-13-2026">8.1.0 (March 13, 2026)<a class="headerlink" href="#810-march-13-2026" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added <code>fetch_skeletons()</code>: unified bulk retrieval of already-cached skeletons with a 500 root ID limit (vs. the 10-skeleton limit of <code>get_bulk_skeletons()</code>). Returns a plain <code>{root_id: skeleton}</code> dict; missing root IDs are simply absent. Requires server-side SkeletonService &gt;= v0.22.51.</li>
+<li><code>method="server"</code> (default): root IDs are POSTed to the server, which decodes and returns skeletons. Supports both <code>"dict"</code> and <code>"swc"</code> output formats.</li>
+<li><code>method="gcs"</code>: the client obtains a short-lived downscoped GCS access token (cached client-side, auto-refreshed) and downloads skeleton H5 files directly from the storage bucket, bypassing the service for data transfer. Supports <code>"dict"</code> output only. Significantly faster for large batches.</li>
+<li><code>generate_missing_skeletons=True</code>: in either mode, root IDs absent from the cache are queued for asynchronous background generation.</li>
+<li>Added <code>h5py</code> as a required dependency (needed for H5 parsing in <code>method="gcs"</code>).</li>
+</ul>
 <h3 id="800-november-2-2025">8.0.0 (November 2, 2025)<a class="headerlink" href="#800-november-2-2025" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Improved mangling of types from sql queries.  Previously, the server side method to read data from PostGres into pandas was via csv streaming, which was caused pandas to infer types.  There were cases where this inference was wrong or incomplete.  For example if you had a string column, but all your entries for your query happened to be numbers (i.e ["1", "2"]) the result would return those as numbers not strings, but then if your query changed so there was a mix of numbers and strings, those same rows which were numbers would go back to strings (i.e. ["1", "apple"]). Also, boolean columns were being returned as strings "t" or "f". </li>

@@ -923,6 +923,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#caveclient.skeletonservice.SkeletonClient.fetch_skeletons" class="md-nav__link">
+    <span class="md-ellipsis">
+      fetch_skeletons
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1192,6 +1201,14 @@
               <td>
                 <div class="doc-md-description">
                   <p>Generates skeletons for a list of root ids without retrieving them.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="fetch_skeletons(root_ids, datastack_name=None, skeleton_version=4, output_format='dict', method='server', generate_missing_skeletons=False, verbose_level=0) (caveclient.skeletonservice.SkeletonClient.fetch_skeletons)" href="#caveclient.skeletonservice.SkeletonClient.fetch_skeletons">fetch_skeletons</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Retrieve already-cached skeletons in bulk, up to 500 at a time.</p>
                 </div>
               </td>
             </tr>
@@ -1598,6 +1615,188 @@ version of the datastack itself.</p>
             <td>
               <div class="doc-md-description">
                 <p>The estimated time in seconds to generate all skeletons (a comparable message will be output to the console prior to return).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="caveclient.skeletonservice.SkeletonClient.fetch_skeletons" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">fetch_skeletons</span><span class="p">(</span><span class="n">root_ids</span><span class="p">,</span> <span class="n">datastack_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">skeleton_version</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">output_format</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;server&#39;</span><span class="p">,</span> <span class="n">generate_missing_skeletons</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose_level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+
+<a href="#caveclient.skeletonservice.SkeletonClient.fetch_skeletons" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve already-cached skeletons in bulk, up to 500 at a time.</p>
+<p>Unlike :meth:<code>get_bulk_skeletons</code>, this method:</p>
+<ul>
+<li>Accepts up to 500 root IDs per call (vs the 10-skeleton limit of <code>get_bulk_skeletons</code>)</li>
+<li>Skips per-RID chunkedgraph validation, so it never blocks on network calls</li>
+<li>Never generates skeletons inline; only returns what is already in the cache</li>
+</ul>
+<p>Root IDs not found in the cache are simply absent from the returned dict.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>root_ids</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Root IDs to retrieve. Truncated to 500 if longer.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>datastack_name</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Datastack name. Defaults to the client's configured datastack.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>skeleton_version</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Skeleton version. Default is 4 (latest).</p>
+              </div>
+            </td>
+            <td>
+                  <code>4</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>output_format</code>
+            </td>
+            <td>
+                  <code>&#39;dict&#39; or &#39;swc&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Output format. Default is <code>"dict"</code>. <code>method="gcs"</code> only supports <code>"dict"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;dict&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>method</code>
+            </td>
+            <td>
+                  <code>&#39;server&#39; or &#39;gcs&#39;</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>How to retrieve skeletons.</p>
+<p><code>"server"</code> (default) — POST root IDs to the server; server decodes and returns skeletons.</p>
+<p><code>"gcs"</code> — Obtain a short-lived downscoped GCS token (cached client-side), then
+download and parse H5 files directly from the storage bucket, bypassing the service
+for data transfer. Significantly faster for large batches. Only supports
+<code>output_format="dict"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;server&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>generate_missing_skeletons</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>True</code>, root IDs not found in the cache are queued for async background
+generation. They will still be absent from the returned dict. Default <code>False</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose_level</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Verbosity level for server-side logging.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping of root_id (str) → skeleton object. Only root IDs successfully retrieved
+appear in the dict; missing ones are absent.</p>
               </div>
             </td>
           </tr>
