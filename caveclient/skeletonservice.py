@@ -554,7 +554,7 @@ class SkeletonClient(ClientBase):
                 endpoint_format = "jsoncompressed"
             else:
                 endpoint_format = "flatdict"
-        elif output_format == "swc":
+        elif output_format == "swc": 
             endpoint_format = "swccompressed"
 
         skeleton_versions = self.get_versions()
