@@ -80,7 +80,7 @@ sk = client.skeleton.get_skeleton(
 
 ## The root id refusal list
 
-Some root ids are consistently problematic and should not be subject to repeated skeletonization attempts. Examples include enormous objects (like volume-spanning blood vessel networks). To prevent such root ids from continually blocking resources that could be better applied to skeletonizing other root ids, the skeleton service utilizes a *refusal list*. Any root id added to, and subsequently found in, the refusal list will not be processed. Since a user might find it helpful to understand that certain root ids will not work for this reason, the service provides a function that lets one see the entire refusal list:
+Some root ids are consistently problematic and should not be subjected to repeated skeletonization attempts. Examples include enormous objects (like volume-spanning blood vessel networks). To prevent such root ids from continually blocking resources that could be better applied to skeletonizing other root ids, the skeleton service utilizes a *refusal list*. Any root id added to, and subsequently found in, the refusal list will not be processed. Since a user might find it helpful to understand that certain root ids will not work for this reason, the service provides a function that lets one see the entire refusal list:
 
 ```python
 get_refusal_list(

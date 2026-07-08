@@ -144,7 +144,12 @@ class TestAnnoClinet:
             headers={"content-type": "application/json"},
             match=[responses.matchers.json_params_matcher(anno_data)],
         )
-        myclient.annotation.upload_staged_annotations(new_stage)
+        myclient.annotation.upload_staged_annotations(new_stage, progress=False)
+
+        assert len(new_stage.annotation_list_nonuploaded) == 0
+        anno_obj = new_stage._anno_list[0]
+        assert getattr(anno_obj, new_stage.IS_UPLOADED_FIELD) is True
+        assert getattr(anno_obj, new_stage.UPLOADED_ID_FIELD) == 1
 
         update_stage = myclient.annotation.stage_annotations(
             self.default_mapping.get("table_name"),
@@ -173,7 +178,7 @@ class TestAnnoClinet:
         responses.add(
             responses.PUT,
             post_url,
-            body=json.dumps([{"1000": 1001}]),
+            body=json.dumps({"1000": 1001}),
             status=200,
             headers={"content-type": "application/json"},
             match=[responses.matchers.json_params_matcher(update_data)],
@@ -187,7 +192,55 @@ class TestAnnoClinet:
         with pytest.raises(ValueError):
             myclient.annotation.upload_staged_annotations(schema_stage)
         schema_stage.table_name = self.default_mapping.get("table_name")
-        myclient.annotation.upload_staged_annotations(schema_stage)
+        myclient.annotation.upload_staged_annotations(schema_stage, progress=False)
+
+        # Multi-batch: two annotations uploaded in separate batches of 1
+        multi_stage = myclient.annotation.stage_annotations(
+            self.default_mapping.get("table_name")
+        )
+        multi_stage.add(
+            cell_type="BC", classification_system="Exc", pt_position=[1, 2, 3]
+        )
+        multi_stage.add(
+            cell_type="IN", classification_system="Inh", pt_position=[4, 5, 6]
+        )
+        assert len(multi_stage) == 2
+        assert len(multi_stage.annotation_list_nonuploaded) == 2
+
+        multi_post_url = self.ae_endpoints.get("annotations").format_map(
+            endpoint_mapping
+        )
+        responses.add(
+            responses.POST,
+            multi_post_url,
+            body=json.dumps([10]),
+            status=200,
+            headers={"content-type": "application/json"},
+            match=[
+                responses.matchers.json_params_matcher(
+                    {"annotations": [{"cell_type": "BC", "classification_system": "Exc", "pt": {"position": [1, 2, 3]}}]}
+                )
+            ],
+        )
+        responses.add(
+            responses.POST,
+            multi_post_url,
+            body=json.dumps([11]),
+            status=200,
+            headers={"content-type": "application/json"},
+            match=[
+                responses.matchers.json_params_matcher(
+                    {"annotations": [{"cell_type": "IN", "classification_system": "Inh", "pt": {"position": [4, 5, 6]}}]}
+                )
+            ],
+        )
+        ids = myclient.annotation.upload_staged_annotations(
+            multi_stage, batch_size=1, progress=False
+        )
+        assert ids == [10, 11]
+        assert len(multi_stage.annotation_list_nonuploaded) == 0
+        assert getattr(multi_stage._anno_list[0], multi_stage.UPLOADED_ID_FIELD) == 10
+        assert getattr(multi_stage._anno_list[1], multi_stage.UPLOADED_ID_FIELD) == 11
 
     @responses.activate
     def test_update_metadata(self, myclient):

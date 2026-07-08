@@ -1,8 +1,14 @@
 import json
+import time
 from typing import Dict, Iterable, List, Mapping, Optional, Union
 
 import numpy as np
 import pandas as pd
+
+try:
+    import tqdm
+except ImportError:
+    tqdm = None
 
 from .auth import AuthClient
 from .base import BaseEncoder, ClientBase, _api_endpoints, _check_version_compatibility, handle_response
@@ -812,6 +818,9 @@ class AnnotationClient(ClientBase):
         self,
         staged_annos: stage.StagedAnnotations,
         aligned_volume_name: Optional[str] = None,
+        batch_size: int = 10_000,
+        progress: bool = True,
+        retries: int = 3,
     ) -> Union[list[int], dict[int, int]]:
         """
         Upload annotations directly from an Annotation Guide object.
@@ -823,7 +832,13 @@ class AnnotationClient(ClientBase):
             AnnotationGuide object with a specified table name and a collection of annotations already filled in.
         aligned_volume_name : str or None, optional
             Name of the aligned_volume. If None, uses the one specified in the client.
-
+        batch_size : int, optional
+            If the number of annotations exceeds this batch size, the upload will be split into multiple requests, by default 10,000.
+        progress : bool, optional
+            Whether to show a progress bar during upload, by default True.
+        retries : int, optional
+            Number of times to retry a batch if it fails, by default 3. Will sleep for 2^n seconds between retries, where n is the number of attempts so far.
+            
         Returns
         -------
         List or dict
@@ -835,14 +850,36 @@ class AnnotationClient(ClientBase):
                 "Only annotation guide objects with a specified table name can be used here"
             )
         if staged_annos.is_update:
-            return self.update_annotation(
-                staged_annos.table_name,
-                staged_annos.annotation_list,
-                aligned_volume_name=aligned_volume_name,
-            )
+            upload_function = self.update_annotation
+            ids_all = {}  # type: ignore
         else:
-            return self.post_annotation(
-                staged_annos.table_name,
-                staged_annos.annotation_list,
-                aligned_volume_name=aligned_volume_name,
-            )
+            upload_function = self.post_annotation
+            ids_all = []  # type: ignore
+
+        batches = staged_annos._annotation_batches(batch_size)
+        
+        if tqdm is not None:
+            progress_ = tqdm.tqdm(batches, desc="Annotation Batches") if progress else batches
+        else:
+            progress_ = batches
+        for batch in progress_:
+            attempts = 0
+            while attempts < retries:
+                try:
+                    batch_ids = upload_function(
+                        staged_annos.table_name,
+                        [staged_annos._process_annotation(a) for a in batch],
+                        aligned_volume_name=aligned_volume_name,
+                    )
+                    staged_annos._apply_upload_result(batch, batch_ids)
+                    if staged_annos.is_update:
+                        ids_all.update(batch_ids)  # type: ignore
+                    else:
+                        ids_all.extend(batch_ids)
+                    break
+                except Exception as e:
+                    attempts += 1
+                    if attempts >= retries:
+                        raise e
+                    time.sleep(2 ** attempts)  # Exponential backoff
+        return ids_all

@@ -621,6 +621,77 @@ class TestChunkedgraph:
         assert np.all(is_latest == qis_latest)
 
     @responses.activate
+    def test_suggest_latest_roots(self, myclient):
+        endpoint_mapping = self._default_endpoint_map.copy()
+        root_id = 864691135217871271
+        endpoint_mapping["root_id"] = root_id
+        stop_layer = 2
+        now = datetime.datetime.now(datetime.timezone.utc)
+
+        # 10 chunks at stop_layer for the original root: 7 now belong to
+        # new_root_a, 2 to new_root_b, 1 to new_root_c.
+        chunk_ids = np.arange(101, 111, dtype=np.int64)
+        new_root_a = 864691135999999001
+        new_root_b = 864691135999999002
+        new_root_c = 864691135999999003
+        curr_chunks = np.array(
+            [new_root_a] * 7 + [new_root_b] * 2 + [new_root_c] * 1,
+            dtype=np.uint64,
+        )
+
+        leaves_url = chunkedgraph_endpoints_v1["leaves_from_root"].format_map(
+            endpoint_mapping
+        )
+        leaves_qurl = leaves_url + "?" + urlencode({"stop_layer": stop_layer})
+        responses.add(
+            responses.GET,
+            url=leaves_qurl,
+            json={"leaf_ids": chunk_ids.tolist()},
+        )
+
+        roots_url = chunkedgraph_endpoints_v1["get_roots"].format_map(
+            endpoint_mapping
+        )
+        roots_qurl = roots_url + "?" + urlencode(package_timestamp(now))
+        responses.add(
+            responses.POST,
+            url=roots_qurl,
+            body=curr_chunks.tobytes(),
+        )
+
+        top_root = myclient.chunkedgraph.suggest_latest_roots(
+            root_id, timestamp=now, stop_layer=stop_layer
+        )
+        assert top_root == new_root_a
+        assert isinstance(top_root, int)
+
+        top_root, top_frac = myclient.chunkedgraph.suggest_latest_roots(
+            root_id,
+            timestamp=now,
+            stop_layer=stop_layer,
+            return_fraction_overlap=True,
+        )
+        assert top_root == new_root_a
+        assert top_frac == pytest.approx(0.7)
+        assert isinstance(top_root, int)
+        assert isinstance(top_frac, float)
+
+        all_roots = myclient.chunkedgraph.suggest_latest_roots(
+            root_id, timestamp=now, stop_layer=stop_layer, return_all=True
+        )
+        assert list(all_roots) == [new_root_a, new_root_b, new_root_c]
+
+        all_roots, all_fracs = myclient.chunkedgraph.suggest_latest_roots(
+            root_id,
+            timestamp=now,
+            stop_layer=stop_layer,
+            return_all=True,
+            return_fraction_overlap=True,
+        )
+        assert list(all_roots) == [new_root_a, new_root_b, new_root_c]
+        np.testing.assert_allclose(all_fracs, [0.7, 0.2, 0.1])
+
+    @responses.activate
     def test_past_ids(self, myclient):
         endpoint_mapping = self._default_endpoint_map
 

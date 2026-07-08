@@ -18,7 +18,7 @@ state. You can download a state with `get_state_json`.
 
 ```python
 example_id = 4845531975188480
-example_state = client.state.get_state_json(test_id)
+example_state = client.state.get_state_json(example_id)
 example_state['layers'][0]
 ```
 
