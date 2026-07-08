@@ -5,6 +5,8 @@ import gzip
 import io
 import json
 import logging
+import urllib.parse
+from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
 from timeit import default_timer
 from typing import List, Literal, Optional, Union
@@ -27,6 +29,7 @@ SERVER_KEY = "skeleton_server_address"
 
 MAX_SKELETONS_EXISTS_QUERY_SIZE = 1000
 MAX_BULK_SYNCHRONOUS_SKELETONS = 10
+MAX_BULK_CACHED_SKELETONS = 500  # mirrors server-side MAX_BULK_CACHED_SKELETONS
 MAX_BULK_ASYNCHRONOUS_SKELETONS = 10000
 BULK_SKELETONS_BATCH_SIZE = 1000
 
@@ -84,6 +87,7 @@ class SkeletonClient(ClientBase):
         )
 
         self._datastack_name = datastack_name
+        self._gcs_token_cache: dict = {}
 
     def _test_l2cache_exception(self):
         raise NoL2CacheException(
@@ -956,3 +960,246 @@ class SkeletonClient(ClientBase):
         )
 
         return estimated_async_time_secs_upper_bound_sum
+
+    @_check_version_compatibility(method_constraint=">=0.22.51")
+    def fetch_skeletons(
+        self,
+        root_ids: List,
+        datastack_name: Optional[str] = None,
+        skeleton_version: Optional[int] = 4,
+        output_format: Literal["dict", "swc"] = "dict",
+        method: Literal["server", "gcs"] = "server",
+        generate_missing_skeletons: bool = False,
+        verbose_level: Optional[int] = 0,
+    ) -> dict:
+        """Retrieve already-cached skeletons in bulk, up to 500 at a time.
+
+        Unlike :meth:`get_bulk_skeletons`, this method:
+
+        - Accepts up to 500 root IDs per call (vs the 10-skeleton limit of ``get_bulk_skeletons``)
+        - Skips per-RID chunkedgraph validation, so it never blocks on network calls
+        - Never generates skeletons inline; only returns what is already in the cache
+
+        Root IDs not found in the cache are simply absent from the returned dict.
+
+        Parameters
+        ----------
+        root_ids : List
+            Root IDs to retrieve. Truncated to 500 if longer.
+        datastack_name : str, optional
+            Datastack name. Defaults to the client's configured datastack.
+        skeleton_version : int, optional
+            Skeleton version. Default is 4 (latest).
+        output_format : "dict" or "swc"
+            Output format. Default is ``"dict"``. ``method="gcs"`` only supports ``"dict"``.
+        method : "server" or "gcs"
+            How to retrieve skeletons.
+
+            ``"server"`` (default) — POST root IDs to the server; server decodes and returns skeletons.
+
+            ``"gcs"`` — Obtain a short-lived downscoped GCS token (cached client-side), then
+            download and parse H5 files directly from the storage bucket, bypassing the service
+            for data transfer. Significantly faster for large batches. Only supports
+            ``output_format="dict"``.
+        generate_missing_skeletons : bool
+            If ``True``, root IDs not found in the cache are queued for async background
+            generation. They will still be absent from the returned dict. Default ``False``.
+        verbose_level : int, optional
+            Verbosity level for server-side logging.
+
+        Returns
+        -------
+        dict
+            Mapping of root_id (str) → skeleton object. Only root IDs successfully retrieved
+            appear in the dict; missing ones are absent.
+        """
+        if datastack_name is None:
+            datastack_name = self._datastack_name
+        assert datastack_name is not None
+        
+        skeleton_versions = self.get_versions()
+        if skeleton_version not in skeleton_versions:
+            raise ValueError(
+                f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
+            )
+
+        if method == "server":
+            return self._fetch_skeletons_via_server(
+                root_ids,
+                datastack_name,
+                skeleton_version,
+                output_format,
+                generate_missing_skeletons,
+                verbose_level,
+            )
+        elif method == "gcs":
+            return self._fetch_skeletons_via_gcs(
+                root_ids,
+                datastack_name,
+                skeleton_version,
+                output_format,
+                generate_missing_skeletons,
+                verbose_level,
+            )
+        else:
+            raise ValueError(f"method must be 'server' or 'gcs', got '{method}'")
+
+    def _fetch_skeletons_via_server(
+        self,
+        root_ids: List,
+        datastack_name: str,
+        skeleton_version: int,
+        output_format: str,
+        generate_missing_skeletons: bool,
+        verbose_level: int,
+    ) -> dict:
+        if len(root_ids) > MAX_BULK_CACHED_SKELETONS:
+            logging.warning(
+                f"The number of root_ids exceeds MAX_BULK_CACHED_SKELETONS ({MAX_BULK_CACHED_SKELETONS}). "
+                f"Only the first {MAX_BULK_CACHED_SKELETONS} will be requested."
+            )
+            root_ids = root_ids[:MAX_BULK_CACHED_SKELETONS]
+
+        if output_format == "dict":
+            server_format = "flatdict"
+        elif output_format == "swc":
+            server_format = "swccompressed"
+        else:
+            raise ValueError(f"output_format must be 'dict' or 'swc', got '{output_format}'")
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        endpoint_mapping["output_format"] = server_format
+        url = self._endpoints["get_cached_skeletons_bulk_as_post"].format_map(endpoint_mapping)
+
+        data = {
+            "root_ids": root_ids,
+            "generate_missing": generate_missing_skeletons,
+            "verbose_level": verbose_level,
+        }
+        response = self.session.post(url, json=data)
+        raw = handle_response(response)
+
+        skeletons = {}
+        for rid, encoded in raw.items():
+            try:
+                if output_format == "dict":
+                    skeletons[rid] = SkeletonClient.decompressBytesToDict(
+                        io.BytesIO(binascii.unhexlify(encoded)).getvalue()
+                    )
+                elif output_format == "swc":
+                    sk_csv = io.BytesIO(binascii.unhexlify(encoded)).getvalue().decode()
+                    skeletons[rid] = pd.read_csv(
+                        StringIO(sk_csv),
+                        sep=" ",
+                        names=["id", "type", "x", "y", "z", "radius", "parent"],
+                    )
+            except Exception as e:
+                logging.error(f"Error decoding skeleton for root_id {rid}: {e}")
+
+        return skeletons
+
+    def _fetch_skeletons_via_gcs(
+        self,
+        root_ids: List,
+        datastack_name: str,
+        skeleton_version: int,
+        output_format: str,
+        generate_missing_skeletons: bool,
+        verbose_level: int,
+    ) -> dict:
+        if output_format != "dict":
+            raise ValueError(
+                "method='gcs' only supports output_format='dict'. "
+                "Use method='server' for SWC output."
+            )
+
+        token_resp = self._get_or_refresh_gcs_token(datastack_name, skeleton_version, verbose_level)
+        token = token_resp["token"]
+        bucket = token_resp["bucket"]
+        path_template = token_resp["path_template"]
+
+        gcs_headers = {"Authorization": f"Bearer {token}"}
+        skeletons = {}
+        missing = []
+
+        for rid in root_ids:
+            obj_path = path_template.format(rid=rid)
+            encoded_path = urllib.parse.quote(obj_path, safe="")
+            url = (
+                f"https://storage.googleapis.com/download/storage/v1/b/"
+                f"{bucket}/o/{encoded_path}?alt=media"
+            )
+            try:
+                resp = self.session.get(url, headers=gcs_headers)
+                if resp.status_code == 404:
+                    missing.append(rid)
+                    continue
+                resp.raise_for_status()
+                skeletons[str(rid)] = SkeletonClient._parse_h5gz_to_dict(resp.content)
+            except Exception as e:
+                logging.error(f"Error downloading skeleton for root_id {rid}: {e}")
+
+        if generate_missing_skeletons and missing:
+            try:
+                self.generate_bulk_skeletons_async(
+                    missing,
+                    datastack_name=datastack_name,
+                    skeleton_version=skeleton_version,
+                )
+            except Exception as e:
+                logging.warning(f"Failed to queue missing skeletons for async generation: {e}")
+
+        return skeletons
+
+    def _get_or_refresh_gcs_token(
+        self,
+        datastack_name: str,
+        skeleton_version: int,
+        verbose_level: int = 0,
+    ) -> dict:
+        cache_key = (datastack_name, skeleton_version)
+        cached = self._gcs_token_cache.get(cache_key)
+        if cached is not None:
+            expiry_str = cached.get("expiry")
+            if expiry_str:
+                expiry = datetime.fromisoformat(expiry_str)
+                if expiry.tzinfo is None:
+                    expiry = expiry.replace(tzinfo=timezone.utc)
+                if datetime.now(tz=timezone.utc) + timedelta(minutes=5) < expiry:
+                    return cached
+
+        endpoint_mapping = self.default_url_mapping
+        endpoint_mapping["datastack_name"] = datastack_name
+        endpoint_mapping["skeleton_version"] = skeleton_version
+        url = self._endpoints["get_skeleton_token_as_post"].format_map(endpoint_mapping)
+
+        data = {"verbose_level": verbose_level}
+        response = self.session.post(url, json=data)
+        token_resp = handle_response(response)
+        self._gcs_token_cache[cache_key] = token_resp
+        return token_resp
+
+    @staticmethod
+    def _parse_h5gz_to_dict(h5gz_bytes: bytes) -> dict:
+        import h5py
+
+        h5_bytes = gzip.decompress(h5gz_bytes)
+        with h5py.File(io.BytesIO(h5_bytes), "r") as f:
+            sk = {
+                "vertices": np.array(f["vertices"][()]),
+                "edges": np.array(f["edges"][()]),
+            }
+            if "mesh_to_skel_map" in f:
+                sk["mesh_to_skel_map"] = np.array(f["mesh_to_skel_map"][()])
+            if "lvl2_ids" in f:
+                sk["lvl2_ids"] = np.array(f["lvl2_ids"][()])
+            if "vertex_properties" in f:
+                for vp_key in f["vertex_properties"].keys():
+                    sk[vp_key] = np.array(
+                        json.loads(f["vertex_properties"][vp_key][()])
+                    )
+            if "meta" in f:
+                sk["meta"] = json.loads(f["meta"][()].tobytes())
+        return sk

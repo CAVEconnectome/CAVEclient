@@ -208,6 +208,65 @@ get_bulk_skeletons(
 )
 ```
 
+## Retrieving large numbers of skeletons with `fetch_skeletons()`
+
+`get_bulk_skeletons()` has a hard limit of 10 root IDs because it may need to generate missing skeletons inline. For larger batches of already-cached skeletons, use `fetch_skeletons()`, which accepts up to 500 root IDs per call and returns a plain dict of `{root_id: skeleton}`. Root IDs not found in the cache are simply absent from the result.
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+)
+```
+
+### Server-side decoding (default)
+
+By default (`method="server"`), root IDs are sent to the server, which retrieves and decodes skeletons before returning them:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    output_format="dict",   # or "swc"
+)
+```
+
+### Direct GCS download
+
+For maximum throughput when retrieving many skeletons, use `method="gcs"`. The client obtains a short-lived downscoped GCS access token (cached client-side and auto-refreshed) and downloads H5 files directly from the storage bucket, bypassing the service for data transfer:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    method="gcs",
+)
+```
+
+!!! note
+    `method="gcs"` only supports `output_format="dict"` (the default). Use `method="server"` if you need SWC output.
+
+### Queuing missing skeletons
+
+In either mode, passing `generate_missing_skeletons=True` will queue any root IDs that are not in the cache for asynchronous background generation. They will still be absent from the returned dict until they are generated:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    generate_missing_skeletons=True,
+)
+```
+
+The same optional parameters apply:
+
+```python
+skeletons = client.skeleton.fetch_skeletons(
+    root_ids=[<root_id>, <root_id>, ...],
+    datastack_name=<datastack_name>,
+    skeleton_version=<sk_version>,
+    output_format=<"dict"|"swc">,
+    method=<"server"|"gcs">,
+    generate_missing_skeletons=True,
+)
+```
+
 ## Generating multiple skeletons in parallel
 
 `get_bulk_skeletons()` is not an effective way to produce a large number of skeletons since it operates synchronously, generating one skeleton at a time. In order to generate a large number of skeletons it is better to do so in parallel. The following function dispatches numerous root ids for skeletonization without returning anything immediately. The root ids are then distributed on the server for parallel skeletonization and eventual caching. Once they are in the cache, you can retrieve them. Of course, it can be tricky to know when they are available. That is addressed further below. Here's how to dispatch asynchronous bulk skeletonization:
@@ -232,9 +291,9 @@ generate_bulk_skeletons_async(
 
 In order to retrieve asynchronously generated skeletons, it is necessary to _poll_ the cache for the availability of the skeletons and then eventually retrieve them. Here's an example of such a workflow:
 
-```
+```python
 # Dispatch multiple asynchronous, parallel skeletonization and caching processes
-generate_bulk_skeletons_async(root_ids)
+client.skeleton.generate_bulk_skeletons_async(root_ids)
 
 # Repeatedly query the cache for the existence of the skeletons until they are all available
 while True:
@@ -244,6 +303,6 @@ while True:
         break
     sleep(10)  # Pause for ten seconds and check again
 
-# Retrieve the skeletons (remember, SWC is also offered)
-skeletons_json = get_bulk_skeletons(root_ids)
+# Retrieve all skeletons at once — fetch_skeletons() supports up to 500 at a time
+skeletons = client.skeleton.fetch_skeletons(root_ids)
 ```
