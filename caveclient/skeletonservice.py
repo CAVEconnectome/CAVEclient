@@ -961,7 +961,7 @@ class SkeletonClient(ClientBase):
 
         return estimated_async_time_secs_upper_bound_sum
 
-    @_check_version_compatibility(method_constraint=">=0.23.3")
+    @_check_version_compatibility(method_constraint=">=0.23.9")
     def fetch_skeletons(
         self,
         root_ids: List,
