@@ -1131,8 +1131,13 @@ class SkeletonClient(ClientBase):
                 f"https://storage.googleapis.com/download/storage/v1/b/"
                 f"{bucket}/o/{encoded_path}?alt=media"
             )
+            if verbose_level >= 1:
+                logging.info(f"Fetching skeleton for root_id {rid} from GCS: {url}")
             try:
                 resp = self.session.get(url, headers=gcs_headers)
+                if verbose_level >= 1:
+                    logging.info(f"GCS response for root_id {rid}: {resp}")
+                    logging.info(f"Response content: {type(resp.content)} {len(resp.content)} {resp.content[:100]}... (truncated)")
                 if resp.status_code == 404:
                     missing.append(rid)
                     continue
@@ -1185,7 +1190,15 @@ class SkeletonClient(ClientBase):
     def _parse_h5gz_to_dict(h5gz_bytes: bytes) -> dict:
         import h5py
 
-        h5_bytes = gzip.decompress(h5gz_bytes)
+        # Check if content is gzip-compressed by looking for gzip magic number
+        if h5gz_bytes[:2] == b'\x1f\x8b':
+            h5_bytes = gzip.decompress(h5gz_bytes)
+        else:
+            h5_bytes = h5gz_bytes
+        
+        # Verify it's an HDF5 file by checking the magic number
+        if h5_bytes[:8] != b'\x89HDF\r\n\x1a\n':
+            raise ValueError(f"Content is not a valid HDF5 file. Expected HDF5 magic number, got: {h5_bytes[:8]}")
         with h5py.File(io.BytesIO(h5_bytes), "r") as f:
             sk = {
                 "vertices": np.array(f["vertices"][()]),
