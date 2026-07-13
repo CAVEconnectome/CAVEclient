@@ -9,7 +9,6 @@ from urllib.parse import urlencode
 import networkx as nx
 import numpy as np
 import pandas as pd
-import pytz
 from packaging.version import Version
 
 from .auth import AuthClient
@@ -25,6 +24,7 @@ from .endpoints import (
     chunkedgraph_endpoints_common,
     default_global_server_address,
 )
+from .timestamps import to_utc
 
 SERVER_KEY = "cg_server_address"
 
@@ -57,12 +57,7 @@ def package_timestamp(timestamp, name="timestamp"):
     if timestamp is None:
         query_d = {}
     else:
-        if timestamp.tzinfo is None:
-            timestamp = pytz.UTC.localize(timestamp)
-        else:
-            timestamp = timestamp.astimezone(datetime.timezone.utc)
-
-        query_d = {name: timestamp.timestamp()}
+        query_d = {name: to_utc(timestamp).timestamp()}
     return query_d
 
 
@@ -201,16 +196,16 @@ class ChunkedGraphClient(ClientBase):
     def _process_timestamp(
         self, timestamp: Optional[datetime.datetime]
     ) -> datetime.datetime:
-        """Process timestamp with default logic"""
+        """Process timestamp with default logic, normalizing to UTC"""
         if timestamp is None:
             if self.timestamp is not None:
                 # refers to the framework client if it exists, otherwise uses the
                 # value set for this chunkedgraph client
-                return self.timestamp
+                return to_utc(self.timestamp)
             else:
                 return datetime.datetime.now(datetime.timezone.utc)
         else:
-            return timestamp
+            return to_utc(timestamp)
 
     def get_roots(
         self,
@@ -426,9 +421,7 @@ class ChunkedGraphClient(ClientBase):
 
         d = handle_response(response)
         df = pd.DataFrame(d)
-        df["timestamp"] = df["timestamp"].map(
-            lambda x: datetime.datetime.fromtimestamp(x / 1000, pytz.UTC)
-        )
+        df["timestamp"] = df["timestamp"].map(lambda x: to_utc(x / 1000))
         return df
 
     def get_tabular_change_log(
@@ -952,7 +945,7 @@ class ChunkedGraphClient(ClientBase):
         url = self._endpoints["remesh_level2_chunks"].format_map(endpoint_mapping)
         data = {"new_lvl2_ids": [int(x) for x in chunk_ids]}
         r = self.session.post(url, json=data)
-        r.raise_for_status()
+        handle_response(r, as_json=False)
 
     def get_operation_details(self, operation_ids: IntArrayLike) -> dict:
         """Get the details of a list of operations.
@@ -999,8 +992,7 @@ class ChunkedGraphClient(ClientBase):
         query_str = urlencode(query_d)
         url = url + "?" + query_str
         r = self.session.get(url)
-        r.raise_for_status()
-        return r.json()
+        return handle_response(r)
 
     def get_lineage_graph(
         self,
@@ -1074,7 +1066,7 @@ class ChunkedGraphClient(ClientBase):
         if timestamp_future is not None:
             params.update(package_timestamp(timestamp_future, name="timestamp_future"))
         else:
-            params.update(package_timestamp(self.timestamp), name="timestamp_future")
+            params.update(package_timestamp(self.timestamp, name="timestamp_future"))
 
         url = self._endpoints["handle_lineage_graph"].format_map(endpoint_mapping)
         data = json.dumps({"root_ids": root_id}, cls=BaseEncoder)
@@ -1083,8 +1075,7 @@ class ChunkedGraphClient(ClientBase):
         if exclude_links_to_future or exclude_links_to_past:
             bad_ids = []
             for node in r["nodes"]:
-                node_ts = datetime.datetime.fromtimestamp(node["timestamp"])
-                node_ts = node_ts.astimezone(datetime.timezone.utc)
+                node_ts = to_utc(node["timestamp"])
                 if (
                     exclude_links_to_past and (node_ts < timestamp_past)
                     if timestamp_past is not None
@@ -1149,9 +1140,6 @@ class ChunkedGraphClient(ClientBase):
             timestamp = timestamp_future
 
         timestamp = self._process_timestamp(timestamp)
-
-        if timestamp.tzinfo is None:
-            timestamp = timestamp.replace(tzinfo=datetime.timezone.utc)
 
         # or if timestamp_root is less than timestamp_future
         if (timestamp is None) or (timestamp_root < timestamp):
@@ -1462,12 +1450,7 @@ class ChunkedGraphClient(ClientBase):
         else:
             delta_t = datetime.timedelta(milliseconds=0)
 
-        return np.array(
-            [
-                datetime.datetime.fromtimestamp(ts, pytz.UTC) - delta_t
-                for ts in r["timestamp"]
-            ]
-        )
+        return np.array([to_utc(ts) - delta_t for ts in r["timestamp"]])
 
     def get_past_ids(
         self,

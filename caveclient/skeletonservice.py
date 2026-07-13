@@ -108,7 +108,7 @@ class SkeletonClient(ClientBase):
             logging.info("404")
             return None
         else:
-            version_str = response.json()
+            version_str = handle_response(response)
             logging.info(f"version_str: {type(version_str)} {version_str}")
             version = Version(version_str)
             logging.info(f"version: {version}")
@@ -128,7 +128,7 @@ class SkeletonClient(ClientBase):
             logging.info("404")
             return None
         else:
-            versions = response.json()
+            versions = handle_response(response)
             logging.info(f"versions: {type(versions)} {versions}")
             return versions
 
@@ -328,7 +328,7 @@ class SkeletonClient(ClientBase):
         url += f"?verbose_level={verbose_level}"
 
         response = self.session.get(url)
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
 
         logging.info(
             f"get_refusal_list() response contains content of size {len(response.content)} bytes"
@@ -384,13 +384,13 @@ class SkeletonClient(ClientBase):
         url += f"?verbose_level={verbose_level}"
 
         response = self.session.get(url)
-        self.raise_for_status(response, log_warning=log_warning)
+        result = handle_response(response, log_warning=log_warning)
 
         logging.info(
             f"get_cache_contents() response contains content of size {len(response.content)} bytes"
         )
 
-        return response.json()
+        return result
 
     @_check_version_compatibility(method_constraint=">=0.5.10")
     def skeletons_exist(
@@ -450,7 +450,7 @@ class SkeletonClient(ClientBase):
 
             if self._server_version < Version("0.9.0"):
                 response = self.session.get(url)
-                self.raise_for_status(response, log_warning=log_warning)
+                handle_response(response, as_json=False, log_warning=log_warning)
 
                 logging.info(
                     f"skeletons_exist() response contains content of size {len(response.content)} bytes"
@@ -502,13 +502,13 @@ class SkeletonClient(ClientBase):
         url = self._endpoints["skeleton_info_versioned"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        self.raise_for_status(response)
+        result = handle_response(response)
 
         logging.info(
             f"get_precomputed_skeleton_info() response contains content of size {len(response.content)} bytes"
         )
 
-        return response.json()
+        return result
 
     def get_skeleton(
         self,
@@ -605,7 +605,7 @@ class SkeletonClient(ClientBase):
         )
 
         response = self.session.get(url)
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
 
         logging.info(
             f"get_skeleton() response contains content of size {len(response.content)} bytes"
@@ -738,7 +738,7 @@ class SkeletonClient(ClientBase):
             verbose_level,
         )
         response = self.session.get(url)
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
 
         logging.info(
             f"get_bulk_skeletons() response contains content of size {len(response.content)} bytes"
@@ -898,7 +898,7 @@ class SkeletonClient(ClientBase):
 
             if self._server_version < Version("0.8.0"):
                 response = self.session.get(url)
-                self.raise_for_status(response, log_warning=log_warning)
+                handle_response(response, as_json=False, log_warning=log_warning)
 
                 logging.info(
                     f"generate_bulk_skeletons_async() response contains content of size {len(response.content)} bytes"

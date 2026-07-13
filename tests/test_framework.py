@@ -58,6 +58,14 @@ def test_api_version(mat_apiv2_specified_client):  # noqa: F811
     assert "api/v2" in mat_apiv2_specified_client.materialize._endpoints["simple_query"]
 
 
+def test_change_auth_preserves_token_file_and_key(global_client):  # noqa: F811
+    global_client.change_auth(auth_token_file="~/my_token.json", auth_token_key="mykey")
+    global_client.change_auth(auth_token="newtoken")
+    assert global_client._auth_config["token_file"] == "~/my_token.json"
+    assert global_client._auth_config["token_key"] == "mykey"
+    assert global_client._auth_config["token"] == "newtoken"
+
+
 class TestFrameworkClient:
     default_mapping = {
         "me_server_address": datastack_dict["local_server"],

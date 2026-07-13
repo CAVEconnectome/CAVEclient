@@ -329,9 +329,9 @@ class CAVEclientGlobal(object):
             Direct entry of a new token, by default None.
         """
         if auth_token_file is None:
-            auth_token_file = self._auth_config.get("auth_token_file", None)
+            auth_token_file = self._auth_config.get("token_file", None)
         if auth_token_key is None:
-            auth_token_key = self._auth_config.get("auth_token_key", None)
+            auth_token_key = self._auth_config.get("token_key", None)
 
         self._auth_config = {
             "token_file": auth_token_file,
@@ -592,6 +592,11 @@ class CAVEclientFull(CAVEclientGlobal):
         """
         if self._chunkedgraph is None:
             seg_source = self.info.segmentation_source()
+            if seg_source is None:
+                raise ValueError(
+                    f"Datastack '{self.datastack_name}' does not have a segmentation "
+                    "source, so no chunkedgraph client could be created."
+                )
             table_name = seg_source.split("/")[-1]
 
             self._chunkedgraph = ChunkedGraphClient(

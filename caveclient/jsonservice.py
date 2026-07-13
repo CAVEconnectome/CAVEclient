@@ -141,8 +141,7 @@ class JSONService(ClientBase):
         if response.status_code == 404:
             return {}
 
-        handle_response(response, as_json=False)
-        return json.loads(response.content)
+        return handle_response(response)
 
     def get_state_json(
         self,
@@ -169,8 +168,7 @@ class JSONService(ClientBase):
         except ValueError:
             url = state_id
         response = self.session.get(url)
-        handle_response(response, as_json=False)
-        return json.loads(response.content)
+        return handle_response(response)
 
     @_check_version_compatibility(method_constraint=">=0.4.0")
     def get_property_json(self, state_id: int) -> dict:
@@ -190,8 +188,7 @@ class JSONService(ClientBase):
         url_mapping["state_id"] = state_id
         url = self._endpoints["get_properties"].format_map(url_mapping)
         response = self.session.get(url)
-        handle_response(response, as_json=False)
-        return json.loads(response.content)
+        return handle_response(response)
 
     def upload_state_json(
         self,

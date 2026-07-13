@@ -146,8 +146,6 @@ class InfoServiceClient(ClientBaseWithDatastack):
             else:
                 params = None
             response = self.session.get(url, params=params)
-            self.raise_for_status(response)
-
             self.info_cache[datastack_name] = handle_response(response)
 
         return self.info_cache.get(datastack_name, None)

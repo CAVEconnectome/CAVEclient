@@ -5,13 +5,13 @@ import re
 import textwrap
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
-from typing import Iterable, Optional, Union
+from dataclasses import replace
+from datetime import datetime
+from typing import Iterable, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import pytz
 from cachetools import TTLCache, cached
 from cachetools.keys import hashkey
 from IPython.display import HTML
@@ -28,7 +28,29 @@ from .base import (
 )
 from .endpoints import materialization_api_versions, materialization_common
 from .mytimer import MyTimeIt
-from .tools.table_manager import TableManager, ViewManager
+from .query import (
+    At,
+    Capabilities,
+    Join,
+    QuerySpec,
+    Switchboard,
+    Table,
+    UnroutableQueryError,
+)
+from .query.merge import (
+    build_run_tree,
+    default_suffixes,
+    graph_merge_query,
+    plan_runs,
+)
+from .query.spec import (
+    build_query_spec,
+    build_query_spec_from_edges,
+    build_query_spec_from_tables,
+    resolve_version_fallback,
+)
+from .query.tables import TableManager, ViewManager
+from .timestamps import to_utc
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +69,11 @@ def deserialize_query_response(response):
     elif content_type == "x-application/pyarrow":
         try:
             return pa.deserialize(response.content)
-        except NameError:
-            (
+        except AttributeError as e:
+            raise ImportError(
                 "Deserialization of this request requires an older version of Pyarrow (version 3 works)."
                 " Update Materialization Deployment or locally downgrade Pyarrow."
-            )
+            ) from e
     else:
         raise ValueError(
             f"Unknown response type: {response.headers.get('Content-Type')}"
@@ -116,21 +138,10 @@ def concatenate_position_columns(df, inplace=False):
     return df2
 
 
-def convert_timestamp(ts: datetime) -> datetime:
-    if ts == "now":
-        ts = datetime.now(timezone.utc)
-
-    if isinstance(ts, datetime):
-        if ts.tzinfo is None:
-            return pytz.UTC.localize(dt=ts)
-        else:
-            return ts.astimezone(timezone.utc)
-    elif isinstance(ts, float):
-        return datetime.fromtimestamp(ts)
-    elif ts is None:
+def convert_timestamp(ts: Union[datetime, int, float, str, None]) -> datetime:
+    if ts is None:
         return pd.Timestamp.max.to_pydatetime()
-    dt = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f")
-    return dt.replace(tzinfo=timezone.utc)
+    return to_utc(ts)
 
 
 def string_format_timestamp(ts):
@@ -150,6 +161,21 @@ def _tables_metadata_key(matclient, *args, **kwargs):
     else:
         datastack_name = matclient.datastack_name
     return hashkey(datastack_name, version)
+
+
+# query() filter_*_dict kwarg -> the accessor's col__<suffix>= operator suffix,
+# for routing a reference-column filter on a string source through the accessor.
+_FILTER_DICT_SUFFIX = {
+    "filter_in_dict": "in",
+    "filter_out_dict": "not_in",
+    "filter_equal_dict": "eq",
+    "filter_greater_dict": "gt",
+    "filter_less_dict": "lt",
+    "filter_greater_equal_dict": "gte",
+    "filter_less_equal_dict": "lte",
+    "filter_spatial_dict": "bbox",
+    "filter_regex_dict": "regex",
+}
 
 
 direct_sql_error_msg = textwrap.dedent("""After CAVEclient v8.0.0 we changed to utilizing a different way
@@ -332,8 +358,7 @@ class MaterializationClient(ClientBase):
         url = self._endpoints["versions"].format_map(endpoint_mapping)
         query_args = {"expired": expired}
         response = self.session.get(url, params=query_args)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def get_tables(self, datastack_name=None, version: Optional[int] = None) -> list:
         """Gets a list of table names for a datastack
@@ -363,8 +388,7 @@ class MaterializationClient(ClientBase):
         url = self._endpoints["tables"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def get_annotation_count(self, table_name: str, datastack_name=None, version=None):
         if datastack_name is None:
@@ -379,8 +403,7 @@ class MaterializationClient(ClientBase):
         url = self._endpoints["table_count"].format_map(endpoint_mapping)
 
         response = self.session.get(url)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def get_version_metadata(
         self, version: Optional[int] = None, datastack_name: str = None
@@ -640,6 +663,646 @@ class MaterializationClient(ClientBase):
             suffix_map = None
         return tables, suffix_map
 
+    def _query_capabilities(self) -> Capabilities:
+        """Snapshot what the server and client support, for query routing."""
+        # Avoid forcing construction of a chunkedgraph client just to probe; an
+        # over_client (framework client) means one can be built on demand.
+        has_cg = self._cg_client is not None or self.fc is not None
+        return Capabilities(
+            server_version=self.server_version,
+            has_chunkedgraph=has_cg,
+            # Phase 1: the server's per-view live flag is inert; Phase 3 reads it.
+            source_live_compatible=False,
+            deltalake_available=False,
+        )
+
+    @cached(cache=TTLCache(maxsize=128, ttl=300))
+    def _available_version_set(self, datastack_name=None) -> frozenset:
+        """Currently-available (non-expired) versions, cached briefly.
+
+        Used by the stale-version fallback in ``query()``; a short TTL keeps a
+        version deleted mid-session from lingering as "available" while avoiding
+        a ``get_versions`` round-trip on every pinned query.
+        """
+        return frozenset(
+            self.get_versions(expired=False, datastack_name=datastack_name)
+        )
+
+    def _reference_join_for(self, table: str, datastack_name=None):
+        """Resolve a table's reference join, if any, as a typed ``Join``.
+
+        Reuses :meth:`_resolve_merge_reference` (backed by the cached
+        ``get_table_metadata``) rather than re-implementing the lookup.
+
+        Returns
+        -------
+        (Join | None, dict)
+            The reference join and the reference table's suffix
+            (``{reference_table: "_ref"}``), or ``(None, {})`` if the table has no
+            reference table.
+        """
+        tables, suffix_map = self._resolve_merge_reference(
+            True, table, datastack_name, None
+        )
+        if len(tables) < 2:
+            return None, {}
+        (left, left_col), (right, right_col) = tables[0], tables[1]
+        ref_suffix = (
+            suffix_map.get(right, "_ref") if isinstance(suffix_map, dict) else "_ref"
+        )
+        return Join(left, left_col, right, right_col), {right: ref_suffix}
+
+    def _inject_reference_joins(self, spec, want_merge, datastack_name=None):
+        """Add deduped reference joins for the named tables to ``spec``.
+
+        For each table that requested ``merge_reference``, resolve its reference
+        table and add a reference join — but only once per reference table, and
+        never for a table already present in the query, so two tables sharing a
+        reference merge it a single time.
+        """
+        if not want_merge:
+            return spec
+        present = {spec.source.name}
+        for j in spec.source.joins or ():
+            present.add(j.left_table)
+            present.add(j.right_table)
+        new_joins = list(spec.source.joins or ())
+        new_suffixes = dict(spec.source.suffixes or {})
+        for table in want_merge:
+            ref_join, ref_suffix = self._reference_join_for(table, datastack_name)
+            if ref_join is None or ref_join.right_table in present:
+                continue
+            present.add(ref_join.right_table)
+            new_joins.append(ref_join)
+            new_suffixes.update(ref_suffix)
+        if len(new_joins) == len(spec.source.joins or ()):
+            return spec
+        return replace(
+            spec,
+            source=replace(
+                spec.source, joins=tuple(new_joins), suffixes=new_suffixes or None
+            ),
+        )
+
+    @cached(cache=TTLCache(maxsize=128, ttl=300))
+    def _view_name_set(self, datastack_name=None) -> frozenset:
+        """View names, cached briefly, for source-kind resolution in ``query()``.
+
+        Kind resolution happens once per join participant and again for each
+        local-merge sub-query, so an un-cached ``get_views`` would mean several
+        round-trips per query; a short TTL keeps a freshly-created view from
+        staying invisible for long. Lookup failures are left to raise (and so are
+        not cached) — :meth:`_resolve_source_kind` treats them as "not a view".
+        """
+        return frozenset(self.get_views(datastack_name=datastack_name))
+
+    def _resolve_source_kind(self, name: str, datastack_name=None) -> str:
+        """Resolve an ``auto`` source to ``"view"`` or ``"table"`` via metadata.
+
+        Defaults to ``"table"`` if views cannot be listed (e.g. an older server
+        without the views endpoint).
+        """
+        try:
+            views = self._view_name_set(datastack_name)
+        except Exception:
+            return "table"
+        return "view" if name in views else "table"
+
+    def _participant_kind(self, table: Table, datastack_name=None) -> str:
+        """Kind of one ``Table`` in a join: honor an explicit non-table kind,
+        otherwise resolve table-vs-view from metadata."""
+        if table.kind in ("view", "dataset"):
+            return table.kind
+        return self._resolve_source_kind(table.name, datastack_name=datastack_name)
+
+    def _table_has_reference(self, name: str, datastack_name=None) -> bool:
+        """Whether a table has a reference table.
+
+        Prefers the already-built accessor (no server round-trip — it already
+        knows the reference layout); falls back to a cheap cached metadata lookup
+        only when the accessor isn't built, so a reference-less table needn't
+        build the whole accessor just to find out.
+        """
+        if datastack_name is None and self._tables is not None:
+            return name in self._tables._references
+        try:
+            meta = self.get_table_metadata(name, datastack_name=datastack_name)
+        except Exception:
+            return False
+        return bool(meta.get("reference_table"))
+
+    @staticmethod
+    def _accessor_filter_kwargs(filter_kwargs, source):
+        """Convert ``query()``'s ``filter_*_dict`` kwargs into accessor
+        ``col__op=`` kwargs (and the set of columns filtered).
+
+        Returns ``(kwargs, columns)``, or ``(None, None)`` if a filter is nested
+        under a table other than ``source`` (not flatly convertible)."""
+        out, cols = {}, set()
+        for key, d in filter_kwargs.items():
+            suffix = _FILTER_DICT_SUFFIX[key]
+            for col, val in d.items():
+                if isinstance(val, dict):  # nested {table: {col: val}}
+                    if col != source:
+                        return None, None
+                    for inner_col, inner_val in val.items():
+                        out[f"{inner_col}__{suffix}"] = inner_val
+                        cols.add(inner_col)
+                else:
+                    out[f"{col}__{suffix}"] = val
+                    cols.add(col)
+        return out, cols
+
+    def _local_merge_query(
+        self,
+        tables_by_name,
+        joins,
+        kinds,
+        suffixes,
+        *,
+        version=None,
+        timestamp=None,
+        offset=None,
+        limit=None,
+        random_sample=None,
+        split_positions=False,
+        desired_resolution=None,
+        metadata=True,
+        allow_missing_lookups=False,
+        allow_invalid_root_ids=False,
+        allow_version_fallback=True,
+        get_counts=False,
+        datastack_name=None,
+    ):
+        """Execute a heterogeneous join the only way the server allows: split the
+        join *graph* along engine boundaries, run each piece where it can be
+        served, and merge locally.
+
+        Connected CAVE tables become one server-side join (so a reference table --
+        itself an annotation+reference merge -- joined to a view is one
+        ``query_table`` plus one ``query_view``); each view is its own sub-query.
+        The cross-run edges must form a single connected tree (the pure planner in
+        :mod:`caveclient.query.merge` refuses cycles/disconnected graphs). Every
+        sub-query is an ordinary :meth:`query`, so it routes through the switchboard
+        on its own; this method only supplies the per-run executor.
+        """
+        if get_counts:
+            raise ValueError(
+                "get_counts is not supported for joins that merge a view locally"
+            )
+        table_order = list(tables_by_name)
+        runs, run_of = plan_runs(table_order, joins, kinds, suffixes)
+        order, edges = build_run_tree(runs, run_of, joins, suffixes)
+        primary = table_order[0]
+
+        # (table, column) pairs that are boundary keys on each run, so a narrowed
+        # `select` still returns the columns the local merge joins on
+        boundary: dict = {}
+        for child_idx, e in edges.items():
+            boundary.setdefault(e.parent, set()).add((e.parent_table, e.parent_column))
+            boundary.setdefault(child_idx, set()).add((e.child_table, e.child_column))
+        boundary_by_run = {runs[i].tables[0]: cols for i, cols in boundary.items()}
+
+        opts = dict(
+            version=version,
+            timestamp=timestamp,
+            split_positions=split_positions,
+            desired_resolution=desired_resolution,
+            metadata=metadata,
+            allow_missing_lookups=allow_missing_lookups,
+            allow_invalid_root_ids=allow_invalid_root_ids,
+            allow_version_fallback=allow_version_fallback,
+            datastack_name=datastack_name,
+        )
+
+        def run_executor(run, incoming):
+            rs = random_sample if primary in run.tables else None
+            bcols = boundary_by_run.get(run.tables[0], set())
+            try:
+                if run.kind == "view":
+                    return self._run_view_node(
+                        run, tables_by_name, incoming, bcols, random_sample=rs, **opts
+                    )
+                return self._run_cave_node(
+                    run,
+                    tables_by_name,
+                    suffixes,
+                    incoming,
+                    bcols,
+                    random_sample=rs,
+                    **opts,
+                )
+            except UnroutableQueryError as e:
+                joined = ", ".join(f"`{n}`" for n in table_order)
+                culprit = ", ".join(f"`{n}`" for n in run.tables)
+                raise UnroutableQueryError(
+                    f"This join ({joined}) is run as a local merge of separate "
+                    f"sub-queries, and the sub-query for {culprit} ({run.kind}) "
+                    f"could not be served:\n{e}"
+                ) from e
+
+        return graph_merge_query(
+            runs, order, edges, run_executor, offset=offset, limit=limit
+        )
+
+    def _run_view_node(self, run, tables_by_name, incoming, bcols, **opts):
+        """Run a one-view run as a single ``query_view`` (via :meth:`query`)."""
+        name = run.tables[0]
+        t = tables_by_name[name]
+        fkw = {op.field_key: dict(d) for op, d in t._filter_dicts().items()}
+        if incoming:
+            _, col, vals = incoming
+            self._fold_pushdown(fkw.setdefault("filter_in", {}), {col: vals})
+        sel = list(t.select) if t.select else None
+        if sel is not None:
+            for _, col in bcols:
+                if col not in sel:
+                    sel.append(col)
+        return self.query(name, kind="view", select_columns=sel, **opts, **fkw)
+
+    def _run_cave_node(self, run, tables_by_name, suffixes, incoming, bcols, **opts):
+        """Run a connected group of CAVE tables as one server-side join.
+
+        Rebuilds the run's tables with their global suffixes, folds the semi-join
+        pushdown into the table that owns the incoming boundary column, and keeps
+        join/boundary keys in any narrowed ``select``. A single-table run (e.g. a
+        reference table, which merges its reference itself) is just that one Table.
+        """
+        target = incoming[0] if incoming else None
+        run_tables = []
+        for name in run.tables:
+            t = tables_by_name[name]
+            fin = dict(t.filter_in or {})
+            if incoming and name == target:
+                _, col, vals = incoming
+                self._fold_pushdown(fin, {col: vals})
+            sel = list(t.select) if t.select else None
+            if sel is not None:
+                keep = {t.join_on} | {c for (tb, c) in bcols if tb == name}
+                for c in keep:
+                    if c and c not in sel:
+                        sel.append(c)
+            run_tables.append(
+                replace(t, filter_in=(fin or None), suffix=suffixes[name], select=sel)
+            )
+        source = run_tables if len(run_tables) > 1 else run_tables[0]
+        return self.query(source, **opts)
+
+    @staticmethod
+    def _fold_pushdown(filter_in, extra_filter_in):
+        """Merge a semi-join key-set pushdown into a ``filter_in`` dict, intersecting
+        with any existing filter on the pushed column. Mutates ``filter_in``."""
+        for col, vals in (extra_filter_in or {}).items():
+            filter_in[col] = (
+                list(set(filter_in[col]) & set(vals))
+                if col in filter_in
+                else list(vals)
+            )
+
+    def query(
+        self,
+        source=None,
+        *,
+        version: Optional[int] = None,
+        timestamp: Optional[datetime] = None,
+        kind: Literal["auto", "table", "view"] = "auto",
+        filter_in: dict = None,
+        filter_out: dict = None,
+        filter_equal: dict = None,
+        filter_greater: dict = None,
+        filter_less: dict = None,
+        filter_greater_equal: dict = None,
+        filter_less_equal: dict = None,
+        filter_spatial: dict = None,
+        filter_regex: dict = None,
+        select_columns=None,
+        offset: int = None,
+        limit: int = None,
+        random_sample: int = None,
+        get_counts: bool = False,
+        split_positions: bool = False,
+        desired_resolution: Iterable = None,
+        metadata: bool = True,
+        allow_missing_lookups: bool = False,
+        allow_invalid_root_ids: bool = False,
+        allow_version_fallback: bool = True,
+        merge_reference: bool = True,
+        datastack_name: str = None,
+    ):
+        """Unified query entry point that routes to the right backend.
+
+        A single call covers versioned table queries, live (timestamp) queries,
+        and view queries. The temporal address selects the backend: pass
+        ``version=`` for a frozen materialization, ``timestamp=`` for a live
+        query, or neither to use the client's default version. The source kind
+        (table vs view) is resolved from metadata unless given explicitly via
+        ``kind``.
+
+        For the common single-source case, pass the table or view name as a
+        string with ``filter_*={column: value}`` keyword arguments
+        (``filter_in``, ``filter_out``, ``filter_equal``, ``filter_greater``,
+        ``filter_less``, ``filter_greater_equal``, ``filter_less_equal``,
+        ``filter_spatial``, ``filter_regex``; flat or nested shapes accepted).
+
+        Joins follow one rule: **a join is an edge** ``[left, right]`` of
+        :class:`~caveclient.query.Table` objects (each carrying its own join
+        column, suffix, and filters). A single join can be written as a flat pair
+        ``[Table(a, join_on=...), Table(b, join_on=...)]``; more than one join is a
+        list of such edges, ``[[a, b], [b, c], ...]`` (a general join graph, e.g.
+        a star where one table joins two others on different columns).
+
+        Parameters
+        ----------
+        source :
+            One of: a table/view name (string); a single
+            :class:`~caveclient.query.Table`; a flat pair of ``Table`` objects (a
+            single join); a list of ``[left, right]`` edges (a join graph); or a
+            pre-built :class:`~caveclient.query.QuerySpec`. With ``Table`` objects
+            or a ``QuerySpec``, the filter/join/suffix keyword arguments must not
+            be supplied.
+        version :
+            Materialization version to query (frozen). Mutually exclusive with
+            ``timestamp``.
+        timestamp :
+            Timestamp to query at (live). Mutually exclusive with ``version``.
+        kind :
+            ``"auto"`` (default, resolved from metadata), ``"table"``, or
+            ``"view"``. Only used for a string source.
+        allow_missing_lookups, allow_invalid_root_ids :
+            Live-query behavior, passed through for timestamp queries and ignored
+            (no-op) for versioned queries. ``allow_missing_lookups`` returns
+            results even if some supervoxels are not yet resolved;
+            ``allow_invalid_root_ids`` ignores root IDs not valid at the timestamp.
+        allow_version_fallback :
+            If True (default) and a pinned ``version`` no longer exists, fall
+            back to a live query at that version's timestamp instead of failing.
+        merge_reference :
+            For a single table/view source (string or one ``Table``), whether to
+            auto-merge the table's reference table, if it has one (default True;
+            no-op for views and tables without a reference). With ``Table``
+            objects or an edge list, set ``merge_reference`` per ``Table`` instead
+            — this argument is ignored for those inputs.
+        random_sample :
+            If set, draw roughly this many rows by sampling the primary
+            (driving) table before any join — not a sample of the joined result.
+        select_columns, offset, limit, get_counts, split_positions, desired_resolution, metadata, datastack_name :
+            As for :meth:`query_table`. (For ``Table`` inputs, ``select`` lives
+            on each ``Table`` instead of ``select_columns``.)
+
+        filter_in, filter_out, filter_equal, filter_greater, filter_less, filter_greater_equal, filter_less_equal, filter_spatial, filter_regex :
+            Filters on the source, as ``{column: value}`` (flat) or
+            ``{table: {column: value}}`` (nested). With ``Table`` objects, filters
+            live on each ``Table`` instead.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The query result, as produced by the routed backend.
+        """
+        # Public kwargs drop the redundant `_dict`; the internal pipeline and the
+        # delegated methods still use the `_dict` argument names.
+        filter_kwargs = {
+            name: value
+            for name, value in {
+                "filter_in_dict": filter_in,
+                "filter_out_dict": filter_out,
+                "filter_equal_dict": filter_equal,
+                "filter_greater_dict": filter_greater,
+                "filter_less_dict": filter_less,
+                "filter_greater_equal_dict": filter_greater_equal,
+                "filter_less_equal_dict": filter_less_equal,
+                "filter_spatial_dict": filter_spatial,
+                "filter_regex_dict": filter_regex,
+            }.items()
+            if value is not None
+        }
+        is_table_objs = isinstance(source, Table) or (
+            isinstance(source, (list, tuple))
+            and len(source) > 0
+            and all(isinstance(t, Table) for t in source)
+        )
+        # a join *graph*: a list of [left, right] edges (each a pair of Tables)
+        is_edge_list = (
+            isinstance(source, (list, tuple))
+            and len(source) > 0
+            and all(isinstance(e, (list, tuple)) for e in source)
+        )
+        if isinstance(source, (list, tuple)) and not (is_table_objs or is_edge_list):
+            raise ValueError(
+                "a list source must be a flat pair of Table objects (a single join) "
+                "or a list of [left, right] Table edges (a join graph); got "
+                f"{[type(x).__name__ for x in source]}"
+            )
+        if isinstance(source, QuerySpec):
+            if filter_kwargs or version is not None or timestamp is not None:
+                raise ValueError(
+                    "when passing a QuerySpec, do not also pass query keyword arguments"
+                )
+            spec = source
+            want_merge = [spec.source.name] if spec.merge_reference else []
+        elif is_table_objs or is_edge_list:
+            if filter_kwargs or select_columns is not None:
+                raise ValueError(
+                    "when passing Table objects, filters/suffixes/select live on the "
+                    "Table objects, not as query() keyword arguments"
+                )
+            # One coherent rule: a join is an edge `[left, right]`, given as a list
+            # of edges. A flat list of Tables is sugar -- one table is a single
+            # source, a pair [A, B] is the single-edge graph [[A, B]]. More than
+            # one join must be written as an explicit edge list.
+            if is_edge_list:
+                edges = [list(e) for e in source]
+            else:
+                flat = [source] if isinstance(source, Table) else list(source)
+                if len(flat) > 2:
+                    raise ValueError(
+                        "a flat list of Tables is a single two-table join; for more "
+                        "than one join pass a list of [left, right] edges, e.g. "
+                        "[[Table('a', join_on='x'), Table('b', join_on='y')], "
+                        "[Table('b', join_on='y'), Table('c', join_on='z')]]"
+                    )
+                edges = [flat] if len(flat) == 2 else None  # None -> single source
+            if edges is None:
+                spec = build_query_spec_from_tables(
+                    flat,
+                    version=version,
+                    timestamp=timestamp,
+                    offset=offset,
+                    limit=limit,
+                    random_sample=random_sample,
+                    get_counts=get_counts,
+                    split_positions=split_positions,
+                    desired_resolution=desired_resolution,
+                    metadata=metadata,
+                    allow_missing_lookups=allow_missing_lookups,
+                    allow_invalid_root_ids=allow_invalid_root_ids,
+                )
+                # Resolve the kind from metadata when not explicitly set, exactly
+                # as the string and join paths do (`_participant_kind` no-ops when
+                # the Table already declares "view"/"dataset"). Without this a lone
+                # `Table("a_view")` would default to kind="table" and mis-route,
+                # even though the same Table in a join is auto-resolved.
+                resolved_kind = self._participant_kind(flat[0], datastack_name)
+                if resolved_kind != spec.source.kind:
+                    spec = replace(
+                        spec, source=replace(spec.source, kind=resolved_kind)
+                    )
+                # views have no reference table to merge (mirrors the string path)
+                want_merge = [
+                    t.name
+                    for t in flat
+                    if t.merge_reference and resolved_kind != "view"
+                ]
+            else:
+                spec, by_name = build_query_spec_from_edges(
+                    edges,
+                    version=version,
+                    timestamp=timestamp,
+                    offset=offset,
+                    limit=limit,
+                    random_sample=random_sample,
+                    get_counts=get_counts,
+                    split_positions=split_positions,
+                    desired_resolution=desired_resolution,
+                    metadata=metadata,
+                    allow_missing_lookups=allow_missing_lookups,
+                    allow_invalid_root_ids=allow_invalid_root_ids,
+                )
+                kinds = {
+                    n: self._participant_kind(t, datastack_name)
+                    for n, t in by_name.items()
+                }
+                # A join that includes a view can't be a single server call (views
+                # have no joinable SQL), so split the graph, run each piece, and
+                # merge locally -- this is what lets a view be joined at all.
+                if spec.source.is_join and any(k == "view" for k in kinds.values()):
+                    return self._local_merge_query(
+                        by_name,
+                        spec.source.joins,
+                        kinds,
+                        spec.source.suffixes
+                        or default_suffixes(list(by_name.values())),
+                        version=version,
+                        timestamp=timestamp,
+                        offset=offset,
+                        limit=limit,
+                        random_sample=random_sample,
+                        split_positions=split_positions,
+                        desired_resolution=desired_resolution,
+                        metadata=metadata,
+                        allow_missing_lookups=allow_missing_lookups,
+                        allow_invalid_root_ids=allow_invalid_root_ids,
+                        allow_version_fallback=allow_version_fallback,
+                        get_counts=get_counts,
+                        datastack_name=datastack_name,
+                    )
+                want_merge = [n for n, t in by_name.items() if t.merge_reference]
+        else:
+            if source is None:
+                raise ValueError("a source table/view name (or QuerySpec) is required")
+            if kind not in ("auto", "table", "view"):
+                raise ValueError(
+                    f"kind must be 'auto', 'table', or 'view', got {kind!r}"
+                )
+            if kind == "auto":
+                kind = self._resolve_source_kind(source, datastack_name=datastack_name)
+            # Reference-transparency: a reference table's columns appear in the
+            # result (merge_reference), so they must be filterable by name even via
+            # the plain string form. If a *reference* column is filtered, route
+            # through the accessor (which auto-joins the reference); primary-only
+            # filters stay on the fast query_table path below.
+            if (
+                kind == "table"
+                and merge_reference
+                and self.fc is not None
+                and datastack_name is None
+                and self._table_has_reference(source)
+                and source in self.tables
+            ):
+                akw, cols = self._accessor_filter_kwargs(filter_kwargs, source)
+                if akw is not None:
+                    owners = self.tables[source]._primary.column_tables()
+                    if any(owners.get(c) not in (None, source) for c in cols):
+                        return self.tables[source](**akw).query(
+                            version=version,
+                            timestamp=timestamp,
+                            select=select_columns,
+                            offset=offset,
+                            limit=limit,
+                            random_sample=random_sample,
+                            get_counts=get_counts,
+                            split_positions=split_positions,
+                            desired_resolution=desired_resolution,
+                            metadata=metadata,
+                            allow_missing_lookups=allow_missing_lookups,
+                            allow_invalid_root_ids=allow_invalid_root_ids,
+                            allow_version_fallback=allow_version_fallback,
+                        )
+            spec = build_query_spec(
+                source,
+                kind=kind,
+                version=version,
+                timestamp=timestamp,
+                filters_by_kwarg=filter_kwargs,
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                random_sample=random_sample,
+                get_counts=get_counts,
+                split_positions=split_positions,
+                desired_resolution=desired_resolution,
+                metadata=metadata,
+                merge_reference=merge_reference,
+                allow_missing_lookups=allow_missing_lookups,
+                allow_invalid_root_ids=allow_invalid_root_ids,
+            )
+            # views have no reference table to merge
+            want_merge = [source] if spec.merge_reference and kind != "view" else []
+
+        # A single table plus its (one) reference table can be merged frozen by
+        # query_table itself, cheaply and without a chunkedgraph client. Anything
+        # with an explicit join, or any live query, goes through live_live_query,
+        # with references resolved into explicit, deduped joins. join_query is
+        # never used.
+        if spec.source.is_join or spec.is_live:
+            spec = self._inject_reference_joins(spec, want_merge, datastack_name)
+            # a versioned join runs live at the version's timestamp, which
+            # reproduces the frozen result.
+            if spec.source.is_join and not spec.is_live:
+                ref_version = (
+                    spec.at.version if spec.at.version is not None else self.version
+                )
+                spec = replace(
+                    spec,
+                    at=At(timestamp=self.get_timestamp(ref_version, datastack_name)),
+                )
+        else:
+            # single-table frozen: query_table performs the reference merge itself
+            spec = replace(spec, merge_reference=spec.source.name in want_merge)
+
+        # Stale versioned (non-join) queries fall back to a live query at the
+        # version's timestamp instead of failing.
+        if allow_version_fallback and spec.at.version is not None:
+            spec, fell_back = resolve_version_fallback(
+                spec,
+                self._available_version_set(datastack_name),
+                lambda v: self._safe_timestamp(v, datastack_name),
+            )
+            if fell_back:
+                logger.warning(
+                    f"Materialization version is no longer available; falling back "
+                    f"to a live query at its timestamp ({spec.at.timestamp})."
+                )
+
+        caps = self._query_capabilities()
+        return Switchboard().execute(spec, caps, self)
+
+    def _safe_timestamp(self, version, datastack_name=None):
+        try:
+            return self.get_timestamp(version=version, datastack_name=datastack_name)
+        except Exception:
+            return None
+
     @_check_version_compatibility(
         kwarg_use_constraints={
             "filter_greater_dict": ">=4.34.4",
@@ -826,7 +1489,7 @@ class MaterializationClient(ClientBase):
             params=query_args,
             stream=not return_df,
         )
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -1023,44 +1686,45 @@ class MaterializationClient(ClientBase):
             params=query_args,
             stream=not return_df,
         )
-        self.raise_for_status(response, log_warning=log_warning)
-        if return_df:
-            with warnings.catch_warnings():
-                warnings.simplefilter(action="ignore", category=FutureWarning)
-                warnings.simplefilter(action="ignore", category=DeprecationWarning)
-                df = deserialize_query_response(response)
+        handle_response(response, as_json=False, log_warning=log_warning)
+        if not return_df:
+            return response.json()
+        with warnings.catch_warnings():
+            warnings.simplefilter(action="ignore", category=FutureWarning)
+            warnings.simplefilter(action="ignore", category=DeprecationWarning)
+            df = deserialize_query_response(response)
 
-            if metadata:
-                attrs = self._assemble_attributes(
-                    tables,
-                    suffixes=suffixes,
-                    desired_resolution=response.headers.get(
-                        "dataframe_resolution", desired_resolution
-                    ),
-                    filters={
-                        "inclusive": filter_in_dict,
-                        "exclusive": filter_out_dict,
-                        "equal": filter_equal_dict,
-                        "greater": filter_greater_dict,
-                        "less": filter_less_dict,
-                        "greater_equal": filter_greater_equal_dict,
-                        "less_equal": filter_less_equal_dict,
-                        "spatial": filter_spatial_dict,
-                        "regex": filter_regex_dict,
-                    },
-                    select_columns=select_columns,
-                    offset=offset,
-                    limit=limit,
-                    live_query=False,
-                    timestamp=None,
-                    materialization_version=materialization_version,
-                    column_names=response.headers.get("column_names", None),
-                )
-                df.attrs.update(attrs)
-            if split_positions:
-                return df
-            else:
-                return concatenate_position_columns(df, inplace=True)
+        if metadata:
+            attrs = self._assemble_attributes(
+                tables,
+                suffixes=suffixes,
+                desired_resolution=response.headers.get(
+                    "dataframe_resolution", desired_resolution
+                ),
+                filters={
+                    "inclusive": filter_in_dict,
+                    "exclusive": filter_out_dict,
+                    "equal": filter_equal_dict,
+                    "greater": filter_greater_dict,
+                    "less": filter_less_dict,
+                    "greater_equal": filter_greater_equal_dict,
+                    "less_equal": filter_less_equal_dict,
+                    "spatial": filter_spatial_dict,
+                    "regex": filter_regex_dict,
+                },
+                select_columns=select_columns,
+                offset=offset,
+                limit=limit,
+                live_query=False,
+                timestamp=None,
+                materialization_version=materialization_version,
+                column_names=response.headers.get("column_names", None),
+            )
+            df.attrs.update(attrs)
+        if split_positions:
+            return df
+        else:
+            return concatenate_position_columns(df, inplace=True)
 
     def map_filters(self, filters, timestamp, timestamp_past):
         """Translate a list of filter dictionaries from a point in the
@@ -1544,7 +2208,7 @@ class MaterializationClient(ClientBase):
                 stream=not return_df,
                 verify=self.verify,
             )
-            self.raise_for_status(response, log_warning=log_warning)
+            handle_response(response, as_json=False, log_warning=log_warning)
 
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
@@ -1819,58 +2483,44 @@ class MaterializationClient(ClientBase):
 
     @property
     def tables(self) -> TableManager:
-        """The table manager for the materialization engine."""
+        """The table manager: query annotation tables by name (``.tables.<name>``).
+
+        Tip: for tab-completion of table names, bind it to a variable first
+        (``tbls = client.materialize.tables``) and complete ``tbls.<TAB>``.
+        IPython won't run a property getter during completion, so completing the
+        full ``client.materialize.tables.<TAB>`` chain directly requires
+        ``%config IPCompleter.evaluation = 'unsafe'``.
+        """
         if self._tables is None:
-            if self.fc is not None and self.fc._materialize is not None:
-                if Version(str(self.api_version)) < Version("3"):
-                    tables = TableManager(self.fc)
-                else:
-                    metadata = []
-                    with ThreadPoolExecutor(max_workers=2) as executor:
-                        metadata.append(
-                            executor.submit(
-                                self.get_tables_metadata,
-                            )
-                        )
-                        metadata.append(
-                            executor.submit(self.fc.schema.schema_definition_all)
-                        )
-                    if (
-                        metadata[0].result() is not None
-                        and metadata[1].result() is not None
-                    ):
-                        tables = TableManager(
-                            self.fc, metadata[0].result(), metadata[1].result()
-                        )
-                    else:
-                        logger.warning("Warning: Metadata for tables not available.")
-                        tables = TableManager(self.fc)
-                self._tables = tables
-            else:
+            if self.fc is None or self.fc._materialize is None:
                 raise ValueError("No full CAVEclient specified")
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                metadata = executor.submit(self.get_tables_metadata)
+                schemas = executor.submit(self.fc.schema.schema_definition_all)
+                metadata, schemas = metadata.result(), schemas.result()
+            if metadata is None or schemas is None:
+                raise ValueError(
+                    "Table metadata/schemas are unavailable from this server"
+                )
+            self._tables = TableManager.build(self.fc, metadata, schemas)
         return self._tables
 
     @property
     def views(self) -> ViewManager:
-        """The view manager for the materialization engine."""
-        if self.fc is not None and self.fc._materialize is not None:
-            if Version(str(self.api_version)) < Version("3"):
-                views = ViewManager(self.fc)
-            else:
-                metadata = []
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    metadata.append(
-                        executor.submit(
-                            self.get_views,
-                        )
-                    )
-                    metadata.append(executor.submit(self.get_view_schemas))
+        """The view manager: query views by name (``.views.<name>``).
 
-                views = ViewManager(self.fc, metadata[0].result(), metadata[1].result())
-
-            self._views = views
-        else:
-            raise ValueError("No full CAVEclient specified")
+        Tip: for tab-completion of view names, bind it to a variable first
+        (``vws = client.materialize.views``) and complete ``vws.<TAB>`` — IPython
+        won't run a property getter during completion.
+        """
+        if self._views is None:
+            if self.fc is None or self.fc._materialize is None:
+                raise ValueError("No full CAVEclient specified")
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                metadata = executor.submit(self.get_views)
+                schemas = executor.submit(self.get_view_schemas)
+                metadata, schemas = metadata.result(), schemas.result()
+            self._views = ViewManager.build(self.fc, metadata, schemas)
         return self._views
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
@@ -2153,10 +2803,10 @@ class MaterializationClient(ClientBase):
                 "Accept-Encoding": encoding,
             },
             params=query_args,
-            stream=~return_df,
+            stream=not return_df,
             verify=self.verify,
         )
-        self.raise_for_status(response, log_warning=log_warning)
+        handle_response(response, as_json=False, log_warning=log_warning)
 
         with MyTimeIt("deserialize"):
             with warnings.catch_warnings():
@@ -2214,10 +2864,10 @@ class MaterializationClient(ClientBase):
                 )
                 df.attrs.update(attrs)
             except HTTPError as e:
-                raise Exception(
-                    e.message
-                    + " Metadata could not be loaded, try with metadata=False if not needed"
-                )
+                raise HTTPError(
+                    f"{e} Metadata could not be loaded, try with metadata=False if not needed",
+                    response=e.response,
+                ) from e
         return df
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
@@ -2249,8 +2899,7 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["version"] = version
         url = self._endpoints["get_views"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_metadata(
@@ -2289,8 +2938,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["get_view_metadata"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response, log_warning=log_warning)
-        return response.json()
+        return handle_response(response, log_warning=log_warning)
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_schema(
@@ -2329,8 +2977,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["view_schema"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response, log_warning=log_warning)
-        return response.json()
+        return handle_response(response, log_warning=log_warning)
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
     def get_view_schemas(
@@ -2364,8 +3011,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["view_schemas"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response, log_warning=log_warning)
-        return response.json()
+        return handle_response(response, log_warning=log_warning)
 
     @_check_version_compatibility(
         method_api_constraint=">=3.0.0",
@@ -2515,7 +3161,7 @@ class MaterializationClient(ClientBase):
             params=query_args,
             stream=not return_df,
         )
-        self.raise_for_status(response)
+        handle_response(response, as_json=False)
         if return_df:
             with warnings.catch_warnings():
                 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -2583,8 +3229,7 @@ class MaterializationClient(ClientBase):
 
         url = self._endpoints["unique_string_values"].format_map(endpoint_mapping)
         response = self.session.get(url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)
 
     def neuroglancer_annotation_path(
         self,
@@ -2598,8 +3243,10 @@ class MaterializationClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
-        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(endpoint_mapping)
-        
+        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(
+            endpoint_mapping
+        )
+
         if for_neuroglancer:
             anno_url = "precomputed://middleauth+" + anno_url
         return anno_url
@@ -2616,9 +3263,8 @@ class MaterializationClient(ClientBase):
         )
         info_url = url + "/info"
         response = self.session.get(info_url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
-    
+        return handle_response(response)
+
     def neuroglancer_segprop_path(
         self,
         table_name: str,
@@ -2635,8 +3281,10 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["version"] = materialization_version
-        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(endpoint_mapping)
-        
+        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(
+            endpoint_mapping
+        )
+
         if for_neuroglancer:
             segprop_url = "precomputed://middleauth+" + segprop_url
         return segprop_url
@@ -2655,5 +3303,4 @@ class MaterializationClient(ClientBase):
         )
         info_url = url + "/info"
         response = self.session.get(info_url, verify=self.verify)
-        self.raise_for_status(response)
-        return response.json()
+        return handle_response(response)

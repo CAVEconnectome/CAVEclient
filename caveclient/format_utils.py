@@ -12,16 +12,6 @@ def format_precomputed_neuroglancer(objurl):
     return objurl_out
 
 
-def format_neuroglancer(objurl):
-    qry = urlparse(objurl)
-    if qry.scheme == "graphene" or "https":
-        return format_graphene(objurl)
-    elif qry.scheme == "precomputed":
-        return format_precomputed_neuroglancer(objurl)
-    else:
-        return format_raw(objurl)
-
-
 def format_precomputed_https(objurl):
     qry = urlparse(objurl)
     if qry.scheme == "gs":
@@ -50,6 +40,8 @@ def format_verbose_graphene(objurl):
         objurl_out = f"graphene://middleauth+{objurl}"
     elif qry.scheme == "graphene":
         objurl_out = f"graphene://middleauth+{qry.netloc}{qry.path}"
+    else:
+        objurl_out = None
     return objurl_out
 
 
@@ -79,12 +71,13 @@ def format_cave_explorer(objurl):
         return None
 
 
-# Use graphene://https:// links for both neuroglancer and cloudvolume
+# Neuroglancer and cave-explorer/spelunker now take the same source format,
+# so all of them share one formatter.
 
 output_map = {
     "raw": format_raw,
     "cloudvolume": format_cloudvolume,
-    "neuroglancer": format_neuroglancer,
+    "neuroglancer": format_cave_explorer,
     "cave_explorer": format_cave_explorer,
     "cave-explorer": format_cave_explorer,
     "spelunker": format_cave_explorer,

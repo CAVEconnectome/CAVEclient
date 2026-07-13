@@ -1,0 +1,129 @@
+"""The closed set of column kinds and filter operations.
+
+CAVE's schema flexibility reduces, at the level of what can be *filtered*, to a
+small fixed taxonomy. A schema column is one of a handful of declared types
+(integer, float, boolean, string, SpatialPoint, BoundSpatialPoint); each expands
+into one or more *filterable* columns, and the operations each filterable column
+permits follow from its kind rather than being freeform.
+
+This module is the single source of truth for that taxonomy. Both filter
+validation (``caveclient.query.filters``) and, eventually, the dynamic per-table
+classes in ``caveclient.tools.table_manager`` should derive from it so they
+agree by construction.
+"""
+
+from __future__ import annotations
+
+import enum
+
+# Schema-declared column types, as they appear in emannotationschemas / the
+# server's JSON schema definitions. Mirrors the constants historically kept in
+# tools/table_manager.py.
+SCALAR_TYPES = ("integer", "boolean", "string", "float")
+NUMERIC_TYPES = ("integer", "float")
+SPATIAL_POINT_TYPE = "SpatialPoint"
+BOUND_SPATIAL_POINT_TYPE = "BoundSpatialPoint"
+
+
+class FilterKind(enum.Enum):
+    """The kind of a *filterable* column — i.e. a leaf column a filter can target.
+
+    A ``BoundSpatialPoint`` schema column is not itself a ``FilterKind``; it
+    expands into a ``POSITION`` column plus ``ID`` columns (supervoxel_id,
+    root_id). ``SpatialPoint`` expands into a single ``POSITION`` column.
+    """
+
+    NUMERIC = "numeric"
+    STRING = "string"
+    BOOLEAN = "boolean"
+    ID = "id"  # root_id / supervoxel_id: an equatable integer, but never ordered
+    POSITION = "position"  # the x/y/z of a spatial point; bounding-box filterable
+    UNTYPED = "untyped"  # kind unknown (raw-dict kwargs path): any op permitted,
+    # but value shape is still validated per operation
+
+
+class FilterOp(enum.Enum):
+    """A filter operation, with its server wire key.
+
+    The ``out`` operation is sent over the wire as ``filter_notin_dict`` — a
+    historical quirk that previously leaked into every query method separately.
+    """
+
+    IN = "in"
+    NOT_IN = "not_in"
+    EQUAL = "equal"
+    GREATER = "greater"
+    LESS = "less"
+    GREATER_EQUAL = "greater_equal"
+    LESS_EQUAL = "less_equal"
+    REGEX = "regex"
+    SPATIAL = "spatial"
+
+    @property
+    def payload_key(self) -> str:
+        """The key this operation uses in the server request payload (wire name)."""
+        return _PAYLOAD_KEYS[self]
+
+    @property
+    def kwarg_key(self) -> str:
+        """The keyword-argument name the existing client methods use.
+
+        Identical to ``payload_key`` except that ``NOT_IN`` is ``filter_out_dict``
+        as a method argument but ``filter_notin_dict`` on the wire — the methods
+        rename it when building the request.
+        """
+        return _KWARG_KEYS[self]
+
+    @property
+    def field_key(self) -> str:
+        """The ``kwarg_key`` without the redundant ``_dict`` suffix.
+
+        The name used on a :class:`~caveclient.query.spec.Table` field and as the
+        public ``query()`` filter keyword (e.g. ``filter_in``, ``filter_out``).
+        """
+        return _KWARG_KEYS[self][: -len("_dict")]
+
+
+_PAYLOAD_KEYS = {
+    FilterOp.IN: "filter_in_dict",
+    FilterOp.NOT_IN: "filter_notin_dict",
+    FilterOp.EQUAL: "filter_equal_dict",
+    FilterOp.GREATER: "filter_greater_dict",
+    FilterOp.LESS: "filter_less_dict",
+    FilterOp.GREATER_EQUAL: "filter_greater_equal_dict",
+    FilterOp.LESS_EQUAL: "filter_less_equal_dict",
+    FilterOp.REGEX: "filter_regex_dict",
+    FilterOp.SPATIAL: "filter_spatial_dict",
+}
+
+_KWARG_KEYS = {**_PAYLOAD_KEYS, FilterOp.NOT_IN: "filter_out_dict"}
+
+_ORDERED_OPS = frozenset(
+    {
+        FilterOp.GREATER,
+        FilterOp.LESS,
+        FilterOp.GREATER_EQUAL,
+        FilterOp.LESS_EQUAL,
+    }
+)
+
+_EQUATABLE_OPS = frozenset({FilterOp.IN, FilterOp.NOT_IN, FilterOp.EQUAL})
+
+# Which operations each filterable-column kind permits. This is the same
+# constraint the server enforces (e.g. inequality only on numeric columns,
+# surfaced server-side as InvalidInequalityException).
+LEGAL_OPS: dict[FilterKind, frozenset[FilterOp]] = {
+    FilterKind.NUMERIC: _EQUATABLE_OPS | _ORDERED_OPS,
+    FilterKind.STRING: _EQUATABLE_OPS | frozenset({FilterOp.REGEX}),
+    FilterKind.BOOLEAN: _EQUATABLE_OPS,
+    FilterKind.ID: _EQUATABLE_OPS,
+    FilterKind.POSITION: frozenset({FilterOp.SPATIAL}),
+    # UNTYPED permits every operation; the user chose the op by picking the
+    # filter dict, and per-op value-shape validation still applies.
+    FilterKind.UNTYPED: frozenset(FilterOp),
+}
+
+
+def legal_ops(kind: FilterKind) -> frozenset[FilterOp]:
+    """Return the operations permitted on a column of the given kind."""
+    return LEGAL_OPS[kind]

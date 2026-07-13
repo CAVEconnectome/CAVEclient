@@ -91,8 +91,12 @@ class TestApplyUploadResult:
         """The server's {old_id: new_id} dict is keyed-lookup, not zipped, so
         a reordered response must still produce the correct old→new mapping."""
         stage = _make_stage(update=True)
-        stage.add(id=1000, cell_type="A", classification_system="X", pt_position=[1, 2, 3])
-        stage.add(id=2000, cell_type="B", classification_system="Y", pt_position=[4, 5, 6])
+        stage.add(
+            id=1000, cell_type="A", classification_system="X", pt_position=[1, 2, 3]
+        )
+        stage.add(
+            id=2000, cell_type="B", classification_system="Y", pt_position=[4, 5, 6]
+        )
 
         shuffled = {"2000": 2001, "1000": 1001}
         stage._apply_upload_result(list(stage._anno_list), shuffled)
@@ -135,7 +139,9 @@ class TestAnnotationDataframe:
 
     def test_update_dataframe_preserves_old_and_new_id(self):
         stage = _make_stage(update=True)
-        stage.add(id=1000, cell_type="A", classification_system="X", pt_position=[1, 2, 3])
+        stage.add(
+            id=1000, cell_type="A", classification_system="X", pt_position=[1, 2, 3]
+        )
         setattr(stage._anno_list[0], stage.IS_UPLOADED_FIELD, True)
         setattr(stage._anno_list[0], stage.UPLOADED_ID_FIELD, 1001)
 
