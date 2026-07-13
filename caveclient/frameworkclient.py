@@ -1,4 +1,6 @@
 import getpass
+import logging
+import os
 import re
 from datetime import datetime
 from typing import Optional
@@ -8,7 +10,12 @@ from requests.exceptions import HTTPError
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient
-from .datastack_lookup import handle_server_address
+from .datastack_lookup import (
+    DEFAULT_DATASTACK_FILE,
+    DEFAULT_LOCATION,
+    handle_server_address,
+    is_writable,
+)
 from .emannotationschemas import SchemaClient
 from .endpoints import default_global_server_address
 from .infoservice import InfoServiceClient
@@ -16,6 +23,8 @@ from .jsonservice import JSONService
 from .l2cache import L2CacheClient
 from .materializationengine import MaterializationClient
 from .skeletonservice import SkeletonClient
+
+logger = logging.getLogger(__name__)
 
 
 class GlobalClientError(Exception):
@@ -115,10 +124,6 @@ class CAVEclient(object):
                 info_cache=info_cache,
             )
         else:
-            server_address = handle_server_address(
-                datastack_name, server_address, write=write_server_cache
-            )
-
             return CAVEclientFull(
                 datastack_name=datastack_name,
                 server_address=server_address,
@@ -131,6 +136,7 @@ class CAVEclient(object):
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
                 version=version,
+                write_server_cache=write_server_cache,
             )
 
     @staticmethod
@@ -448,6 +454,7 @@ class CAVEclientFull(CAVEclientGlobal):
         desired_resolution=None,
         info_cache=None,
         version: Optional[int] = None,
+        write_server_cache=True,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -512,6 +519,20 @@ class CAVEclientFull(CAVEclientGlobal):
 
         [get_session_defaults](../extended_api/session_config.md/#caveclient.session_config.get_session_defaults)
         """
+
+        if write_server_cache and not is_writable(
+            os.path.join(DEFAULT_LOCATION, DEFAULT_DATASTACK_FILE)
+        ):
+            write_server_cache = False
+
+        old_server_address = server_address
+        server_address = handle_server_address(
+            datastack_name,
+            old_server_address,
+            write=False,
+            do_log=False,
+        )
+
         super(CAVEclientFull, self).__init__(
             server_address=server_address,
             auth_token_file=auth_token_file,
@@ -531,8 +552,25 @@ class CAVEclientFull(CAVEclientGlobal):
         self._skeleton = None
         self._l2cache = None
         self.desired_resolution = desired_resolution
-        self.local_server = self.info.local_server()
+        try:
+            self.local_server = self.info.local_server()
+        except HTTPError as e:
+            if e.response.status_code in (401, 403):
+                logger.warning(
+                    f"Access denied to datastack {datastack_name}. "
+                    f"To set up a token for server {server_address}, run "
+                    f"CAVEclient.setup_token(server_address='{server_address}')."
+                )
+            raise
         self.auth.local_server = self.local_server
+
+        if write_server_cache:
+            handle_server_address(
+                datastack=datastack_name,
+                server_address=old_server_address,
+                write=True,
+                do_log=True,
+            )
 
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
