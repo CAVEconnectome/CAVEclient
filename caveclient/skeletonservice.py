@@ -560,7 +560,7 @@ class SkeletonClient(ClientBase):
                 endpoint_format = "jsoncompressed"
             else:
                 endpoint_format = "flatdict"
-        elif output_format == "swc": 
+        elif output_format == "swc":
             endpoint_format = "swccompressed"
 
         skeleton_versions = self.get_versions()
@@ -1018,7 +1018,7 @@ class SkeletonClient(ClientBase):
         if datastack_name is None:
             datastack_name = self._datastack_name
         assert datastack_name is not None
-        
+
         skeleton_versions = self.get_versions()
         if skeleton_version not in skeleton_versions:
             raise ValueError(
@@ -1067,13 +1067,17 @@ class SkeletonClient(ClientBase):
         elif output_format == "swc":
             server_format = "swccompressed"
         else:
-            raise ValueError(f"output_format must be 'dict' or 'swc', got '{output_format}'")
+            raise ValueError(
+                f"output_format must be 'dict' or 'swc', got '{output_format}'"
+            )
 
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["skeleton_version"] = skeleton_version
         endpoint_mapping["output_format"] = server_format
-        url = self._endpoints["get_cached_skeletons_bulk_as_post"].format_map(endpoint_mapping)
+        url = self._endpoints["get_cached_skeletons_bulk_as_post"].format_map(
+            endpoint_mapping
+        )
 
         data = {
             "root_ids": root_ids,
@@ -1117,7 +1121,9 @@ class SkeletonClient(ClientBase):
                 "Use method='server' for SWC output."
             )
 
-        token_resp = self._get_or_refresh_gcs_token(datastack_name, skeleton_version, verbose_level)
+        token_resp = self._get_or_refresh_gcs_token(
+            datastack_name, skeleton_version, verbose_level
+        )
         token = token_resp["token"]
         bucket = token_resp["bucket"]
         path_template = token_resp["path_template"]
@@ -1139,7 +1145,9 @@ class SkeletonClient(ClientBase):
                 resp = self.session.get(url, headers=gcs_headers)
                 if verbose_level >= 1:
                     logger.debug(f"GCS response for root_id {rid}: {resp}")
-                    logger.debug(f"Response content: {type(resp.content)} {len(resp.content)} {resp.content[:100]}... (truncated)")
+                    logger.debug(
+                        f"Response content: {type(resp.content)} {len(resp.content)} {resp.content[:100]}... (truncated)"
+                    )
                 if resp.status_code == 404:
                     missing.append(rid)
                     continue
@@ -1156,7 +1164,9 @@ class SkeletonClient(ClientBase):
                     skeleton_version=skeleton_version,
                 )
             except Exception as e:
-                logger.warning(f"Failed to queue missing skeletons for async generation: {e}")
+                logger.warning(
+                    f"Failed to queue missing skeletons for async generation: {e}"
+                )
 
         return skeletons
 
@@ -1193,14 +1203,16 @@ class SkeletonClient(ClientBase):
         import h5py
 
         # Check if content is gzip-compressed by looking for gzip magic number
-        if h5gz_bytes[:2] == b'\x1f\x8b':
+        if h5gz_bytes[:2] == b"\x1f\x8b":
             h5_bytes = gzip.decompress(h5gz_bytes)
         else:
             h5_bytes = h5gz_bytes
-        
+
         # Verify it's an HDF5 file by checking the magic number
-        if h5_bytes[:8] != b'\x89HDF\r\n\x1a\n':
-            raise ValueError(f"Content is not a valid HDF5 file. Expected HDF5 magic number, got: {h5_bytes[:8]}")
+        if h5_bytes[:8] != b"\x89HDF\r\n\x1a\n":
+            raise ValueError(
+                f"Content is not a valid HDF5 file. Expected HDF5 magic number, got: {h5_bytes[:8]}"
+            )
         with h5py.File(io.BytesIO(h5_bytes), "r") as f:
             sk = {
                 "vertices": np.array(f["vertices"][()]),
