@@ -25,6 +25,8 @@ from .base import (
 )
 from .endpoints import skeletonservice_api_versions, skeletonservice_common
 
+logger = logging.getLogger(__name__)
+
 SERVER_KEY = "skeleton_server_address"
 
 MAX_SKELETONS_EXISTS_QUERY_SIZE = 1000
@@ -95,41 +97,41 @@ class SkeletonClient(ClientBase):
         )
 
     def get_version(self):
-        logging.info("get_version()")
+        logger.debug("get_version()")
         endpoint_mapping = self.default_url_mapping
         endpoint = self._endpoints.get("get_version", None)
-        logging.info(f"endpoint: {endpoint}")
+        logger.debug(f"endpoint: {endpoint}")
 
         url = endpoint.format_map(endpoint_mapping)
-        logging.info(f"url: {url}")
+        logger.debug(f"url: {url}")
         response = self.session.get(url)
-        logging.info(f"response: {response}")
+        logger.debug(f"response: {response}")
         if response.status_code == 404:  # server doesn't have this endpoint yet
-            logging.info("404")
+            logger.debug("404")
             return None
         else:
             version_str = response.json()
-            logging.info(f"version_str: {type(version_str)} {version_str}")
+            logger.debug(f"version_str: {type(version_str)} {version_str}")
             version = Version(version_str)
-            logging.info(f"version: {version}")
+            logger.debug(f"version: {version}")
             return version
 
     def get_versions(self):
-        logging.info("get_versions()")
+        logger.debug("get_versions()")
         endpoint_mapping = self.default_url_mapping
         endpoint = self._endpoints.get("get_versions", None)
-        logging.info(f"endpoint: {endpoint}")
+        logger.debug(f"endpoint: {endpoint}")
 
         url = endpoint.format_map(endpoint_mapping)
-        logging.info(f"url: {url}")
+        logger.debug(f"url: {url}")
         response = self.session.get(url)
-        logging.info(f"response: {response}")
+        logger.debug(f"response: {response}")
         if response.status_code == 404:  # server doesn't have this endpoint yet
-            logging.info("404")
+            logger.debug("404")
             return None
         else:
             versions = response.json()
-            logging.info(f"versions: {type(versions)} {versions}")
+            logger.debug(f"versions: {type(versions)} {versions}")
             return versions
 
     @staticmethod
@@ -330,7 +332,7 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
-        logging.info(
+        logger.debug(
             f"get_refusal_list() response contains content of size {len(response.content)} bytes"
         )
 
@@ -386,7 +388,7 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
-        logging.info(
+        logger.debug(
             f"get_cache_contents() response contains content of size {len(response.content)} bytes"
         )
 
@@ -404,9 +406,9 @@ class SkeletonClient(ClientBase):
         """
         Confirm or deny that a set of root ids have H5 skeletons in the cache.
         """
-        logging.info(f"SkeletonService version: {self._server_version}")
+        logger.debug(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.9.0"):
-            logging.warning(
+            logger.warning(
                 "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
             )
 
@@ -430,7 +432,7 @@ class SkeletonClient(ClientBase):
             root_ids = [root_ids]
 
         if len(root_ids) > MAX_SKELETONS_EXISTS_QUERY_SIZE:
-            logging.warning(
+            logger.warning(
                 f"The number of root_ids exceeds the current limit of {MAX_SKELETONS_EXISTS_QUERY_SIZE}. Only the first {MAX_SKELETONS_EXISTS_QUERY_SIZE} will be processed."
             )
             root_ids = root_ids[:MAX_SKELETONS_EXISTS_QUERY_SIZE]
@@ -452,7 +454,7 @@ class SkeletonClient(ClientBase):
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
 
-                logging.info(
+                logger.debug(
                     f"skeletons_exist() response contains content of size {len(response.content)} bytes"
                 )
             else:
@@ -504,7 +506,7 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response)
 
-        logging.info(
+        logger.debug(
             f"get_precomputed_skeleton_info() response contains content of size {len(response.content)} bytes"
         )
 
@@ -567,9 +569,9 @@ class SkeletonClient(ClientBase):
                 f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
-        logging.info(f"SkeletonService version: {self._server_version}")
+        logger.debug(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.6.0"):
-            logging.warning(
+            logger.warning(
                 "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
             )
 
@@ -581,7 +583,7 @@ class SkeletonClient(ClientBase):
         async_ = True
         if self._server_version < Version("0.13.7"):
             async_ = False
-            logging.warning(
+            logger.warning(
                 "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
             )
 
@@ -607,7 +609,7 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
-        logging.info(
+        logger.debug(
             f"get_skeleton() response contains content of size {len(response.content)} bytes"
         )
 
@@ -680,7 +682,7 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
-        logging.info(f"SkeletonService version: {self._server_version}")
+        logger.debug(f"SkeletonService version: {self._server_version}")
 
         valid_output_formats = ["dict", "swc"]
         if output_format not in valid_output_formats:
@@ -707,25 +709,25 @@ class SkeletonClient(ClientBase):
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
-                logging.warning(
+                logger.warning(
                     f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
                 )
                 continue
             if not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(
+                logger.warning(
                     f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
                 )
                 continue
             valid_rids.append(rid)
         if not valid_rids:
-            logging.error("No valid root ids were submitted.")
+            logger.error("No valid root ids were submitted.")
             return {}
         root_ids = valid_rids
 
         if len(root_ids) > MAX_BULK_SYNCHRONOUS_SKELETONS:
             root_ids = root_ids[:MAX_BULK_SYNCHRONOUS_SKELETONS]
             if verbose_level >= 1:
-                logging.warning(
+                logger.warning(
                     f"Truncating bulk skeleton list to {MAX_BULK_SYNCHRONOUS_SKELETONS}"
                 )
 
@@ -740,11 +742,11 @@ class SkeletonClient(ClientBase):
         response = self.session.get(url)
         self.raise_for_status(response, log_warning=log_warning)
 
-        logging.info(
+        logger.debug(
             f"get_bulk_skeletons() response contains content of size {len(response.content)} bytes"
         )
 
-        logging.info(
+        logger.debug(
             f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
         )
 
@@ -758,7 +760,7 @@ class SkeletonClient(ClientBase):
                         )
                         sk_jsons[rid] = sk_json
                     except Exception as e:
-                        logging.error(
+                        logger.error(
                             f"Error decompressing skeleton for root_id {rid}: {e}"
                         )
             return sk_jsons
@@ -780,7 +782,7 @@ class SkeletonClient(ClientBase):
                         )
                         sk_dfs[rid] = sk_df
                     except Exception as e:
-                        logging.error(
+                        logger.error(
                             f"Error decompressing skeleton for root_id {rid}: {e}"
                         )
             return sk_dfs
@@ -815,14 +817,14 @@ class SkeletonClient(ClientBase):
         if not self.fc.l2cache.has_cache():
             raise NoL2CacheException("SkeletonClient requires an L2Cache.")
 
-        logging.info(f"SkeletonService version: {self._server_version}")
+        logger.debug(f"SkeletonService version: {self._server_version}")
         if self._server_version < Version("0.8.0"):
-            logging.warning(
+            logger.warning(
                 "Server version is old and only supports GET interactions for bulk async skeletons. Consider upgrading to a newer server version to enable POST interactions."
             )
 
         if skeleton_version is None:
-            logging.warning(
+            logger.warning(
                 "The optional nature of the 'skeleton_version' parameter will be deprecated in the future. Please specify a skeleton version."
             )
             skeleton_version = 4
@@ -846,25 +848,25 @@ class SkeletonClient(ClientBase):
         cv = self.fc.info.segmentation_cloudvolume()
         for rid in root_ids:
             if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
-                logging.warning(
+                logger.warning(
                     f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
                 )
                 continue
             # The following test is disabled, due to its serialized and time-intensive cost.
             # The same test will be performed by the parallelized skeletonization worker later anyway.
             if False:  # not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(
+                logger.warning(
                     f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
                 )
                 continue
             valid_rids.append(rid)
         if not valid_rids:
-            logging.error("No valid root ids were submitted.")
+            logger.error("No valid root ids were submitted.")
             return {}
         root_ids = valid_rids
 
         if len(root_ids) > MAX_BULK_ASYNCHRONOUS_SKELETONS:
-            logging.warning(
+            logger.warning(
                 f"The number of root_ids exceeds the current limit of {MAX_BULK_ASYNCHRONOUS_SKELETONS}. Only the first {MAX_BULK_ASYNCHRONOUS_SKELETONS} will be processed."
             )
             root_ids = root_ids[:MAX_BULK_ASYNCHRONOUS_SKELETONS]
@@ -900,7 +902,7 @@ class SkeletonClient(ClientBase):
                 response = self.session.get(url)
                 self.raise_for_status(response, log_warning=log_warning)
 
-                logging.info(
+                logger.debug(
                     f"generate_bulk_skeletons_async() response contains content of size {len(response.content)} bytes"
                 )
             else:
@@ -920,10 +922,10 @@ class SkeletonClient(ClientBase):
                 estimated_async_time_secs_upper_bound
             )
 
-            logging.info(
+            logger.info(
                 f"Queued asynchronous skeleton generation for one batch of root_ids: {rids_one_batch}"
             )
-            logging.info(
+            logger.debug(
                 f"Upper estimate to generate one batch of {len(rids_one_batch)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
             )
 
@@ -946,7 +948,7 @@ class SkeletonClient(ClientBase):
         # else:
         #     estimate_time_str = f"{(estimated_async_time_secs_upper_bound_sum / 86400):.2f} days"
 
-        logging.info(
+        logger.info(
             f"Upper estimate to generate all {len(root_ids)} skeletons: {estimate_time_str}"
         )
 
@@ -955,7 +957,7 @@ class SkeletonClient(ClientBase):
         t1_et = t1 - t0
         t2_et = t2 - t1
         t5_et = t5 - t5_0
-        logging.info(
+        logger.debug(
             f"generate_bulk_skeletons_async elapsed time: {t1_et:.3f}s {t2_et:.3f}s {t3_et:.3f}s {t4_et:.3f}s {t5_et:.3f}s"
         )
 
@@ -1054,7 +1056,7 @@ class SkeletonClient(ClientBase):
         verbose_level: int,
     ) -> dict:
         if len(root_ids) > MAX_BULK_CACHED_SKELETONS:
-            logging.warning(
+            logger.warning(
                 f"The number of root_ids exceeds MAX_BULK_CACHED_SKELETONS ({MAX_BULK_CACHED_SKELETONS}). "
                 f"Only the first {MAX_BULK_CACHED_SKELETONS} will be requested."
             )
@@ -1096,7 +1098,7 @@ class SkeletonClient(ClientBase):
                         names=["id", "type", "x", "y", "z", "radius", "parent"],
                     )
             except Exception as e:
-                logging.error(f"Error decoding skeleton for root_id {rid}: {e}")
+                logger.error(f"Error decoding skeleton for root_id {rid}: {e}")
 
         return skeletons
 
@@ -1132,19 +1134,19 @@ class SkeletonClient(ClientBase):
                 f"{bucket}/o/{encoded_path}?alt=media"
             )
             if verbose_level >= 1:
-                logging.info(f"Fetching skeleton for root_id {rid} from GCS: {url}")
+                logger.debug(f"Fetching skeleton for root_id {rid} from GCS: {url}")
             try:
                 resp = self.session.get(url, headers=gcs_headers)
                 if verbose_level >= 1:
-                    logging.info(f"GCS response for root_id {rid}: {resp}")
-                    logging.info(f"Response content: {type(resp.content)} {len(resp.content)} {resp.content[:100]}... (truncated)")
+                    logger.debug(f"GCS response for root_id {rid}: {resp}")
+                    logger.debug(f"Response content: {type(resp.content)} {len(resp.content)} {resp.content[:100]}... (truncated)")
                 if resp.status_code == 404:
                     missing.append(rid)
                     continue
                 resp.raise_for_status()
                 skeletons[str(rid)] = SkeletonClient._parse_h5gz_to_dict(resp.content)
             except Exception as e:
-                logging.error(f"Error downloading skeleton for root_id {rid}: {e}")
+                logger.error(f"Error downloading skeleton for root_id {rid}: {e}")
 
         if generate_missing_skeletons and missing:
             try:
@@ -1154,7 +1156,7 @@ class SkeletonClient(ClientBase):
                     skeleton_version=skeleton_version,
                 )
             except Exception as e:
-                logging.warning(f"Failed to queue missing skeletons for async generation: {e}")
+                logger.warning(f"Failed to queue missing skeletons for async generation: {e}")
 
         return skeletons
 
