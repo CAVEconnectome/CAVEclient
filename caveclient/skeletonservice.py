@@ -746,7 +746,7 @@ class SkeletonClient(ClientBase):
             f"get_bulk_skeletons() response contains content of size {len(response.content)} bytes"
         )
 
-        logger.debug(
+        logger.info(
             f"Generated skeletons for root_ids {root_ids} (with generate_missing_skeletons={generate_missing_skeletons})"
         )
 
@@ -925,7 +925,7 @@ class SkeletonClient(ClientBase):
             logger.info(
                 f"Queued asynchronous skeleton generation for one batch of root_ids: {rids_one_batch}"
             )
-            logger.debug(
+            logger.info(
                 f"Upper estimate to generate one batch of {len(rids_one_batch)} skeletons: {estimated_async_time_secs_upper_bound} seconds"
             )
 
@@ -957,7 +957,7 @@ class SkeletonClient(ClientBase):
         t1_et = t1 - t0
         t2_et = t2 - t1
         t5_et = t5 - t5_0
-        logger.debug(
+        logger.info(
             f"generate_bulk_skeletons_async elapsed time: {t1_et:.3f}s {t2_et:.3f}s {t3_et:.3f}s {t4_et:.3f}s {t5_et:.3f}s"
         )
 
@@ -1140,7 +1140,7 @@ class SkeletonClient(ClientBase):
                 f"{bucket}/o/{encoded_path}?alt=media"
             )
             if verbose_level >= 1:
-                logger.debug(f"Fetching skeleton for root_id {rid} from GCS: {url}")
+                logger.info(f"Fetching skeleton for root_id {rid} from GCS: {url}")
             try:
                 resp = self.session.get(url, headers=gcs_headers)
                 if verbose_level >= 1:
