@@ -1302,10 +1302,7 @@ class ChunkedGraphClient(ClientBase):
 
         DELTA_LAYERS = 4  # Empirical value, revisit if this is no long within a typical neuron.
         if stop_layer is None:
-            stop_layer = (
-                self.segmentation_info.get("graph", {}).get("n_layers", 6)
-                - DELTA_LAYERS
-            )
+            stop_layer = (self.n_layers or 6) - DELTA_LAYERS
         stop_layer = max(1, stop_layer)
         chunks_orig = self.get_leaves(root_id, stop_layer=stop_layer)
         
@@ -1597,3 +1594,33 @@ class ChunkedGraphClient(ClientBase):
             3-long list of x/y/z voxel dimensions in nm
         """
         return self.segmentation_info["scales"][0].get("resolution")
+
+    @property
+    def n_layers(self) -> Optional[int]:
+        """Number of layers in the ChunkedGraph, the topmost of which holds the root ids.
+
+        Returns
+        -------
+        int or None
+            None if the segmentation is not a ChunkedGraph.
+        """
+        return self.segmentation_info.get("graph", {}).get("n_layers")
+
+    def get_chunk_layer(self, node_id: int) -> int:
+        """Layer of the ChunkedGraph a node id sits on, decoded from its leading bits.
+
+        Parameters
+        ----------
+        node_id : int
+            Node id at any level of the ChunkedGraph.
+
+        Returns
+        -------
+        int
+            Layer of the node, where `n_layers` is the root layer and 1 is a supervoxel.
+        """
+        n_bits_for_layer_id = self.segmentation_info.get("graph", {}).get(
+            "n_bits_for_layer_id", 8
+        )
+        # int() so that numpy integer ids shift consistently across numpy versions
+        return int(node_id) >> (64 - n_bits_for_layer_id)

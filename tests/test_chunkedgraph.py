@@ -1081,6 +1081,31 @@ class TestChunkedgraph:
         assert np.all(base_resolution == [8, 8, 40])
 
     @responses.activate
+    def test_chunk_layer(self, myclient):
+        endpoint_mapping = self._default_endpoint_map
+        url = chunkedgraph_endpoints_common["info"].format_map(endpoint_mapping)
+        responses.add(
+            responses.GET,
+            status=200,
+            url=url,
+            json={"graph": {"n_layers": 12, "n_bits_for_layer_id": 8}},
+        )
+
+        assert myclient.chunkedgraph.n_layers == 12
+        # Root ids sit on the top layer, level 2 ids well below it
+        assert myclient.chunkedgraph.get_chunk_layer(864691135495137700) == 12
+        assert myclient.chunkedgraph.get_chunk_layer(173056326983745934) == 2
+        assert myclient.chunkedgraph.get_chunk_layer(np.uint64(864691135495137700)) == 12
+
+    @responses.activate
+    def test_chunk_layer__no_chunkedgraph(self, myclient):
+        endpoint_mapping = self._default_endpoint_map
+        url = chunkedgraph_endpoints_common["info"].format_map(endpoint_mapping)
+        responses.add(responses.GET, status=200, url=url, json={"scales": []})
+
+        assert myclient.chunkedgraph.n_layers is None
+
+    @responses.activate
     def test_is_valid_nodes(self, myclient):
         endpoint_mapping = self._default_endpoint_map
         url = chunkedgraph_endpoints_v1["valid_nodes"].format_map(endpoint_mapping)
