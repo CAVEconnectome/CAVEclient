@@ -309,6 +309,38 @@ class SkeletonClient(ClientBase):
         url += f"?verbose_level={verbose_level}"
         return url
 
+    def _is_root_id(self, root_id: int) -> bool:
+        """
+        True if `root_id` sits on the top PCG layer, i.e. is a root id rather than, say,
+        a supervoxel id. Also true when the segmentation is not a PCG, since the layer
+        can't be decoded then and nothing should be rejected.
+        """
+        n_layers = self.fc.chunkedgraph.n_layers
+        return (
+            n_layers is None
+            or self.fc.chunkedgraph.get_chunk_layer(root_id) == n_layers
+        )
+
+    def _filter_valid_root_ids(self, root_ids: List, check_exists: bool = True) -> List:
+        """
+        Drop the ids that can't be skeletonized, warning about each one. `check_exists`
+        costs one request per id, so callers whose skeletonization workers repeat the
+        check later can skip it.
+        """
+        valid_rids = []
+        for rid in root_ids:
+            if not self._is_root_id(rid):
+                logging.warning(
+                    f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
+                )
+            elif check_exists and not self.fc.chunkedgraph.is_valid_nodes(rid):
+                logging.warning(
+                    f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
+                )
+            else:
+                valid_rids.append(rid)
+        return valid_rids
+
     @_check_version_compatibility(method_constraint=">=0.21.0")
     def get_refusal_list(
         self,
@@ -585,8 +617,7 @@ class SkeletonClient(ClientBase):
                 "Skeleton version is old and does not support asynchronous skeletonization. Please specify a skeleton version."
             )
 
-        cv = self.fc.info.segmentation_cloudvolume()
-        if cv and cv.meta.decode_layer_id(root_id) != cv.meta.n_layers:
+        if not self._is_root_id(root_id):
             raise ValueError(
                 f"Invalid root id: {root_id} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id)"
             )
@@ -703,20 +734,7 @@ class SkeletonClient(ClientBase):
                 f"Unknown skeleton version: {skeleton_version}. Valid options: {skeleton_versions}"
             )
 
-        valid_rids = []
-        cv = self.fc.info.segmentation_cloudvolume()
-        for rid in root_ids:
-            if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
-                logging.warning(
-                    f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
-                )
-                continue
-            if not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(
-                    f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
-                )
-                continue
-            valid_rids.append(rid)
+        valid_rids = self._filter_valid_root_ids(root_ids)
         if not valid_rids:
             logging.error("No valid root ids were submitted.")
             return {}
@@ -842,22 +860,9 @@ class SkeletonClient(ClientBase):
 
         t1 = default_timer()
 
-        valid_rids = []
-        cv = self.fc.info.segmentation_cloudvolume()
-        for rid in root_ids:
-            if cv and cv.meta.decode_layer_id(rid) != cv.meta.n_layers:
-                logging.warning(
-                    f"Invalid root id: {rid} (perhaps this is an id corresponding to a different level of the PCG, e.g., a supervoxel id). It won't be processed."
-                )
-                continue
-            # The following test is disabled, due to its serialized and time-intensive cost.
-            # The same test will be performed by the parallelized skeletonization worker later anyway.
-            if False:  # not self.fc.chunkedgraph.is_valid_nodes(rid):
-                logging.warning(
-                    f"Invalid root id: {rid} (perhaps it doesn't exist; the error is unclear). It won't be processed."
-                )
-                continue
-            valid_rids.append(rid)
+        # The existence check is skipped due to its serialized and time-intensive cost.
+        # The parallelized skeletonization workers perform the same check later anyway.
+        valid_rids = self._filter_valid_root_ids(root_ids, check_exists=False)
         if not valid_rids:
             logging.error("No valid root ids were submitted.")
             return {}

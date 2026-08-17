@@ -19,8 +19,8 @@ A full description of the Connectome Annotation Versioning Engine can be found [
 pip install caveclient
 ```
 
-To add optional dependencies (currently for interfacing with the segmentation, imagery,
-and some skeleton formats via cloud-volume), you can install with the following:
+To add optional dependencies (currently for interfacing with the segmentation and
+imagery via cloud-volume), you can install with the following:
 
 ```bash
 pip install caveclient[cv]

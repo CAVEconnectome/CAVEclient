@@ -3,7 +3,6 @@ import pytest
 from caveclient.tools.testing import (
     TEST_LOCAL_SERVER,
     CAVEclientMock,
-    CloudVolumeMock,
     default_info,
     get_server_information,
     get_server_versions,
@@ -92,8 +91,3 @@ def mat_apiv2_specified_client():
         materialization_api_versions=[2],
         **server_versions,
     )
-
-
-@pytest.fixture()
-def my_cloudvolume():
-    return CloudVolumeMock()

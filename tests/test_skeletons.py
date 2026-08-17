@@ -10,7 +10,9 @@ from packaging.version import Version
 from requests import HTTPError
 
 from caveclient import CAVEclient, endpoints
+from caveclient.endpoints import chunkedgraph_endpoints_common
 from caveclient.skeletonservice import SkeletonClient
+from caveclient.tools.testing import get_table_name
 
 from .conftest import (
     datastack_dict,
@@ -45,6 +47,24 @@ info_mapping = {
 url_template = endpoints.infoservice_endpoints_v2["datastack_info"]
 info_url = url_template.format_map(info_mapping)
 info_version_url = endpoints.infoservice_common["get_version"].format_map(info_mapping)
+
+pcg_info_url = chunkedgraph_endpoints_common["info"].format_map(
+    {
+        "cg_server_address": datastack_dict["local_server"],
+        "table_id": get_table_name(test_info),
+    }
+)
+# The layer of an id is stored in its leading `n_bits_for_layer_id` bits, so a root id
+# of a 12-layer graph starts at 12 << (64 - 8) == 864691128455135232.
+pcg_info = {"graph": {"n_layers": 12, "n_bits_for_layer_id": 8}}
+# A plain precomputed segmentation has no "graph" key, so no layer to validate against
+non_pcg_info = {"scales": []}
+TEST_ROOT_ID = 864691135495137700
+TEST_L2_ID = 173056326983745934
+
+
+def add_pcg_info_response(info):
+    responses.add(responses.GET, url=pcg_info_url, json=info, status=200)
 
 
 class TestSkeletonsClient:
@@ -196,12 +216,10 @@ class TestSkeletonsClient:
         assert result == info
 
     @responses.activate
-    def test_get_skeleton__dict(self, myclient, my_cloudvolume, mocker):
+    def test_get_skeleton__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get(
             "get_skeleton_async_via_skvn_rid_fmt"
@@ -265,12 +283,10 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sk_result)
 
     @responses.activate
-    def test_get_skeleton__swc(self, myclient, my_cloudvolume, mocker):
+    def test_get_skeleton__swc(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get(
             "get_skeleton_async_via_skvn_rid_fmt"
@@ -335,12 +351,25 @@ class TestSkeletonsClient:
                 )
 
     @responses.activate
-    def test_get_skeleton__invalid_layer(self, myclient, my_cloudvolume, mocker):
+    def test_is_root_id(self, myclient):
+        add_pcg_info_response(pcg_info)
+
+        assert myclient.skeleton._is_root_id(TEST_ROOT_ID)
+        assert not myclient.skeleton._is_root_id(TEST_L2_ID)
+
+    @responses.activate
+    def test_is_root_id__no_chunkedgraph(self, myclient):
+        # Without chunkedgraph metadata the layer can't be decoded, so nothing is rejected
+        add_pcg_info_response(non_pcg_info)
+
+        assert myclient.skeleton._is_root_id(TEST_ROOT_ID)
+        assert myclient.skeleton._is_root_id(TEST_L2_ID)
+
+    @responses.activate
+    def test_get_skeleton__invalid_layer(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(pcg_info)
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
@@ -357,12 +386,10 @@ class TestSkeletonsClient:
             )
 
     @responses.activate
-    def test_get_skeleton__invalid_nodes(self, myclient, my_cloudvolume, mocker):
+    def test_get_skeleton__invalid_nodes(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=False)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
@@ -379,12 +406,10 @@ class TestSkeletonsClient:
             )
 
     @responses.activate
-    def test_get_skeleton__refusal_list(self, myclient, my_cloudvolume, mocker):
+    def test_get_skeleton__refusal_list(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
@@ -412,12 +437,10 @@ class TestSkeletonsClient:
             )
 
     @responses.activate
-    def test_get_bulk_skeletons__dict(self, myclient, my_cloudvolume, mocker):
+    def test_get_bulk_skeletons__dict(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get(
             "get_bulk_skeletons_via_skvn_rids"
@@ -481,12 +504,10 @@ class TestSkeletonsClient:
         assert not deepdiff.DeepDiff(result, sks_result)
 
     @responses.activate
-    def test_get_bulk_skeletons__swc(self, myclient, my_cloudvolume, mocker):
+    def test_get_bulk_skeletons__swc(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get(
             "get_bulk_skeletons_via_skvn_rids"
@@ -546,12 +567,10 @@ class TestSkeletonsClient:
                 )
 
     @responses.activate
-    def test_generate_bulk_skeletons_async(self, myclient, my_cloudvolume, mocker):
+    def test_generate_bulk_skeletons_async(self, myclient, mocker):
         mocker.patch.object(myclient.l2cache, "has_cache", return_value=True)
         mocker.patch.object(myclient.chunkedgraph, "is_valid_nodes", return_value=True)
-        mocker.patch.object(
-            myclient.info, "segmentation_cloudvolume", return_value=my_cloudvolume
-        )
+        add_pcg_info_response(non_pcg_info)
 
         metadata_url = self.sk_endpoints.get("get_versions").format_map(sk_mapping)
         responses.add(
