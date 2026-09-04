@@ -263,7 +263,8 @@ class ServerMetadataRegistry:
                 condition = threading.Condition(lock)
 
                 # `condition` is what makes concurrent misses collapse into a
-                # single upstream call; `lock` alone does not.
+                # single upstream call; `lock` alone does not. It requires
+                # cachetools >= 6.0.0, which the package pins.
                 @cached(
                     cache, key=lambda key, fetch: key, lock=lock, condition=condition
                 )

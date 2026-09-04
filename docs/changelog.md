@@ -57,7 +57,7 @@ title: Changelog
   twelve hours. They are now keyed on the server, datastack and table, so the
   entries are shared rather than leaked.
 
-- Requires `cachetools >= 5.5.0`.
+- Requires `cachetools >= 6.0.0`.
 
 ## 8.1.0 (March 13, 2026)
 - Added `fetch_skeletons()`: unified bulk retrieval of already-cached skeletons with a 500 root ID limit (vs. the 10-skeleton limit of `get_bulk_skeletons()`). Returns a plain `{root_id: skeleton}` dict; missing root IDs are simply absent. Requires server-side SkeletonService >= v0.22.51.

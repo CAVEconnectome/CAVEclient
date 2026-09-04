@@ -329,6 +329,25 @@ class TestInvalidateAndRefresh:
         assert registry.get_or_fetch(key, lambda: pytest.fail("refetched")) == "1.0.0"
 
 
+class TestDependencyFloor:
+    def test_cachetools_supports_single_flight(self):
+        """`condition=` arrived in cachetools 6.0.0.
+
+        Without it `cached()` raises TypeError during client construction, so a
+        resolution below the floor breaks the package outright. Assert it here
+        to fail with an explanatory message rather than deep in a constructor.
+        """
+        import inspect
+
+        from cachetools import cached
+
+        assert "condition" in inspect.signature(cached).parameters, (
+            "installed cachetools is too old: `cached(condition=...)` requires "
+            "cachetools >= 6.0.0, which caveclient depends on for single-flight "
+            "server metadata lookups"
+        )
+
+
 class TestRegistrySemantics:
     def test_disabled_registry_never_stores(self):
         registry = ServerMetadataRegistry()

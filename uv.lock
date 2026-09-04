@@ -446,7 +446,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=21.3.0" },
-    { name = "cachetools", specifier = ">=5.5.0" },
+    { name = "cachetools", specifier = ">=6.0.0" },
     { name = "cloud-volume", marker = "extra == 'cv'" },
     { name = "h5py" },
     { name = "ipython", specifier = ">6" },

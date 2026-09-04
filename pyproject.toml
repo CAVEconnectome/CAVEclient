@@ -3,7 +3,7 @@ authors = [{ name = "CAVE Developers" }]
 classifiers = []
 dependencies = [
     "attrs>=21.3.0",
-    "cachetools>=5.5.0",
+    "cachetools>=6.0.0",
     "ipython>6",
     "jsonschema",
     "networkx",
