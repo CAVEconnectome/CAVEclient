@@ -1,6 +1,64 @@
 ---
 title: Changelog
 ---
+## 8.3.0 (unreleased)
+
+- Server metadata -- the software version a service reports, the API versions it
+  speaks, a datastack's info payload, and materialization version metadata -- can
+  now be cached process-wide, so that building many clients against the same
+  deployment performs each lookup once rather than once per client. This is aimed
+  at applications that construct a client per request.
+
+  Caching is **opt-in** and off by default. Enable it once at startup:
+
+  ```python
+  from caveclient import set_server_cache_defaults
+
+  set_server_cache_defaults(enabled=True)
+  ```
+
+  Entries are shared across auth tokens, since they describe the deployment
+  rather than the user; pass `token_scoped_info=True` if tokens in one process
+  have different permissions on the same datastack. Concurrent lookups of the
+  same cold value are collapsed into a single request. Failed lookups are never
+  cached, so a momentary outage cannot pin a degraded answer.
+
+  Use `caveclient.invalidate()` or `caveclient.refresh()` to force a cold rebuild
+  after a stale-metadata error rather than waiting out the time to live.
+  `caveclient.get_server_cache_defaults()` reports the current configuration, and
+  individual clients can override it with `CAVEclient(..., server_cache=True)`.
+
+- **A service's version is now looked up on first use rather than at client
+  construction.** Most code paths never read it, and fetching it eagerly cost a
+  blocking request for every sub-client built. `server_version` returns exactly
+  what it did before; only the timing of the request has changed. Constructing a
+  client for a datastack now issues one request instead of two. Pass
+  `set_server_cache_defaults(eager_server_version=True)` to restore the previous
+  behaviour of failing at construction when a server is unreachable.
+
+- `_api_versions` now goes through the configured session, so API negotiation
+  during client construction respects the retry, backoff and connection-pool
+  settings from `set_session_defaults`. It previously used a bare request with no
+  timeout, which could block a caller indefinitely against an unresponsive host.
+  Both metadata requests now carry a timeout, configurable with
+  `set_server_cache_defaults(metadata_timeout=...)`.
+
+- `CachedClient` is reimplemented on the shared cache. Its signature and
+  behaviour are unchanged, and it now benefits from the same policy as the rest
+  of the client.
+
+- Fixed: a datastack's cached info payload was shared by reference between
+  clients, so a request for a specific `image_mirror` overwrote the entry every
+  other client was reading. Payloads are now copied, and mirror-specific requests
+  bypass the cache.
+
+- Fixed: `get_table_metadata` and `get_versions_metadata` keyed their caches on
+  the client instance, pinning whole client graphs -- sessions included -- for
+  twelve hours. They are now keyed on the server, datastack and table, so the
+  entries are shared rather than leaked.
+
+- Requires `cachetools >= 5.5.0`.
+
 ## 8.1.0 (March 13, 2026)
 - Added `fetch_skeletons()`: unified bulk retrieval of already-cached skeletons with a 500 root ID limit (vs. the 10-skeleton limit of `get_bulk_skeletons()`). Returns a plain `{root_id: skeleton}` dict; missing root IDs are simply absent. Requires server-side SkeletonService >= v0.22.51.
   - `method="server"` (default): root IDs are POSTed to the server, which decodes and returns skeletons. Supports both `"dict"` and `"swc"` output formats.

@@ -57,6 +57,7 @@ class SkeletonClient(ClientBase):
         pool_maxsize: int = None,
         pool_block: bool = None,
         over_client: Optional[CAVEclientFull] = None,  # noqa: F821 # type: ignore
+        server_cache=None,
     ):
         if auth_client is None:
             auth_client = AuthClient()
@@ -71,6 +72,10 @@ class SkeletonClient(ClientBase):
             auth_header,
             fallback_version=1,
             verify=verify,
+            server_cache=server_cache,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
         super(SkeletonClient, self).__init__(
@@ -84,6 +89,7 @@ class SkeletonClient(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
 
         self._datastack_name = datastack_name

@@ -14,14 +14,21 @@ import requests
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from . import servermeta
 from .session_config import _patch_session
 
 logger = logging.getLogger(__name__)
 
+#: Distinguishes "version not looked up yet" from "looked up, and the server
+#: has no version endpoint" -- the latter is a legitimate None.
+_UNSET = object()
+
 
 class BaseEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, (np.ndarray, pd.Series, pd.Index, pd.arrays.ArrowExtensionArray)):
+        if isinstance(
+            obj, (np.ndarray, pd.Series, pd.Index, pd.arrays.ArrowExtensionArray)
+        ):
             return obj.tolist()
         if isinstance(obj, set):
             return list(obj)
@@ -119,19 +126,61 @@ client=CAVEclient(server_address="{urlp.scheme + "://" + urlp.netloc}")"""
         )
 
 
+def _metadata_session(max_retries=None, pool_maxsize=None, pool_block=None):
+    """A short-lived session for metadata lookups made before a client exists.
+
+    Deliberately not shared between callers: `requests.Session` accumulates
+    response cookies, and CAVE servers set a `middle_auth_token` cookie, so a
+    shared session would carry one user's credentials onto another's request.
+    """
+    session = requests.Session()
+    _patch_session(
+        session,
+        max_retries=max_retries,
+        pool_block=pool_block,
+        pool_maxsize=pool_maxsize,
+    )
+    return session
+
+
 def _api_versions(
-    server_name, server_address, endpoints_common, auth_header, verify=True
+    server_name,
+    server_address,
+    endpoints_common,
+    auth_header,
+    verify=True,
+    timeout=None,
+    server_cache=None,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
 ):
     """Asks a server what API versions are available, if possible"""
-    url_mapping = {server_name: server_address}
     url_base = endpoints_common.get("get_api_versions", None)
-    if url_base is not None:
-        url = url_base.format_map(url_mapping)
-        response = requests.get(url, headers=auth_header, verify=verify)
-        _raise_for_status(response)
-        return response.json()
-    else:
+    if url_base is None:
+        # A static client-side fact needing no request, so nothing to cache.
         return None
+    url = url_base.format_map({server_name: server_address})
+
+    registry, enabled = servermeta.resolve(server_cache)
+    if timeout is None:
+        timeout = registry.metadata_timeout
+
+    def _fetch():
+        session = _metadata_session(max_retries, pool_maxsize, pool_block)
+        try:
+            response = session.get(
+                url, headers=auth_header, verify=verify, timeout=timeout
+            )
+            _raise_for_status(response)
+            return response.json()
+        finally:
+            session.close()
+
+    key = servermeta.MetaKey(
+        servermeta.CATEGORY_API_VERSIONS, server_address, extra=(url,)
+    )
+    return registry.get_or_fetch(key, _fetch, enabled=enabled)
 
 
 def _api_endpoints(
@@ -143,6 +192,11 @@ def _api_endpoints(
     auth_header,
     fallback_version=None,
     verify=True,
+    timeout=None,
+    server_cache=None,
+    max_retries=None,
+    pool_maxsize=None,
+    pool_block=None,
 ):
     "Gets the latest client API version"
     if api_version == "latest":
@@ -153,6 +207,11 @@ def _api_endpoints(
                 endpoints_common,
                 auth_header,
                 verify=verify,
+                timeout=timeout,
+                server_cache=server_cache,
+                max_retries=max_retries,
+                pool_maxsize=pool_maxsize,
+                pool_block=pool_block,
             )
             avail_vs_server = set(avail_vs_server)
         except:  # noqa: E722
@@ -189,6 +248,7 @@ class ClientBase(object):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
     ):
         self._server_address = server_address
         self._default_url_mapping = {server_name: self._server_address}
@@ -214,7 +274,12 @@ class ClientBase(object):
         self._api_version = api_version
         self._endpoints = endpoints
         self._fc = over_client
-        self._server_version = self._get_version()
+        self._server_meta, self._use_server_cache = servermeta.resolve(server_cache)
+        # Deferred: most call paths never read the server version, and fetching
+        # it here costs a blocking request per sub-client constructed.
+        self.__server_version = _UNSET
+        if self._server_meta.config.get("eager_server_version", False):
+            self.server_version
 
     @property
     def fc(self):
@@ -239,20 +304,43 @@ class ClientBase(object):
             return None
 
         url = endpoint.format_map(endpoint_mapping)
-        response = self.session.get(url)
-        if response.status_code == 404:  # server doesn't have this endpoint yet
-            return None
-        else:
-            version_str = handle_response(response, as_json=True)
-            version = Version(version_str)
-            return version
+        registry = self._server_meta
+        timeout = registry.metadata_timeout
+
+        def _fetch():
+            response = self.session.get(url, timeout=timeout)
+            if response.status_code == 404:
+                # A definite answer: this deployment has no version endpoint.
+                return None
+            return Version(handle_response(response, as_json=True))
+
+        key = servermeta.MetaKey(
+            servermeta.CATEGORY_SERVER_VERSION, self._server_address, extra=(url,)
+        )
+        return registry.get_or_fetch(key, _fetch, enabled=self._use_server_cache)
 
     @property
     def server_version(self) -> Optional[Version]:
         """The version of the service running on the remote server. Note that this
         refers to the software running on the server and has nothing to do with the
-        version of the datastack itself."""
-        return self._server_version
+        version of the datastack itself.
+
+        Looked up on first access rather than at construction. `None` means the
+        server does not report a version.
+        """
+        if self.__server_version is _UNSET:
+            self.__server_version = self._get_version()
+        return self.__server_version
+
+    @property
+    def _server_version(self) -> Optional[Version]:
+        """Backwards-compatible alias for `server_version`."""
+        return self.server_version
+
+    def reset_server_version(self) -> Optional[Version]:
+        """Discard this client's memoized server version and look it up again."""
+        self.__server_version = _UNSET
+        return self.server_version
 
     @staticmethod
     def raise_for_status(r, log_warning=True):
@@ -275,6 +363,7 @@ class ClientBaseWithDataset(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
     ):
         super(ClientBaseWithDataset, self).__init__(
             server_address,
@@ -287,6 +376,7 @@ class ClientBaseWithDataset(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
         self._dataset_name = dataset_name
 
@@ -309,6 +399,7 @@ class ClientBaseWithDatastack(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
     ):
         super(ClientBaseWithDatastack, self).__init__(
             server_address,
@@ -321,6 +412,7 @@ class ClientBaseWithDatastack(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
         self._datastack_name = datastack_name
         self._default_url_mapping["datastack_name"] = self._datastack_name

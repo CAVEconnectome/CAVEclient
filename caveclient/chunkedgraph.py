@@ -133,6 +133,7 @@ class ChunkedGraphClient(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
     ):
         if server_address is None:
             server_address = default_global_server_address
@@ -150,6 +151,10 @@ class ChunkedGraphClient(ClientBase):
             chunkedgraph_api_versions,
             auth_header,
             verify=verify,
+            server_cache=server_cache,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
         super(ChunkedGraphClient, self).__init__(
             server_address,
@@ -162,6 +167,7 @@ class ChunkedGraphClient(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
         self._default_url_mapping["table_id"] = table_name
         self._default_timestamp = timestamp

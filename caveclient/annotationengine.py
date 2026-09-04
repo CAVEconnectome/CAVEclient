@@ -10,11 +10,18 @@ try:
 except ImportError:
     tqdm = None
 
+from datetime import datetime
+
 from .auth import AuthClient
-from .base import BaseEncoder, ClientBase, _api_endpoints, _check_version_compatibility, handle_response
+from .base import (
+    BaseEncoder,
+    ClientBase,
+    _api_endpoints,
+    _check_version_compatibility,
+    handle_response,
+)
 from .endpoints import annotation_api_versions, annotation_common
 from .tools import stage
-from datetime import datetime
 
 SERVER_KEY = "ae_server_address"
 
@@ -33,6 +40,7 @@ class AnnotationClient(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
         schema_client=None,
     ):
         """
@@ -78,6 +86,10 @@ class AnnotationClient(ClientBase):
             annotation_api_versions,
             auth_header,
             verify=verify,
+            server_cache=server_cache,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
         super(AnnotationClient, self).__init__(
@@ -91,6 +103,7 @@ class AnnotationClient(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
 
         self._aligned_volume_name = aligned_volume_name

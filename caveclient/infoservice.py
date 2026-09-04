@@ -3,6 +3,7 @@ from typing import Literal, Optional
 
 import numpy as np
 
+from . import servermeta
 from .auth import AuthClient
 from .base import (
     ClientBaseWithDatastack,
@@ -37,6 +38,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
         info_cache=None,
     ):
         if server_address is None:
@@ -54,6 +56,10 @@ class InfoServiceClient(ClientBaseWithDatastack):
             infoservice_api_versions,
             auth_header,
             verify=verify,
+            server_cache=server_cache,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
         super(InfoServiceClient, self).__init__(
             server_address,
@@ -67,6 +73,7 @@ class InfoServiceClient(ClientBaseWithDatastack):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
         if not info_cache:
             self.info_cache = dict()
@@ -145,12 +152,41 @@ class InfoServiceClient(ClientBaseWithDatastack):
                 params = {"image_source_name": image_mirror}
             else:
                 params = None
-            response = self.session.get(url, params=params)
-            self.raise_for_status(response)
 
-            self.info_cache[datastack_name] = handle_response(response)
+            def _fetch():
+                response = self.session.get(url, params=params)
+                self.raise_for_status(response)
+                return handle_response(response)
+
+            if image_mirror is not None or not use_stored:
+                # A mirror-specific payload is a different document, and an
+                # explicit refresh must not be served from a shared cache.
+                info = _fetch()
+            else:
+                info = self._server_meta.get_or_fetch(
+                    self._info_key(datastack_name),
+                    _fetch,
+                    enabled=self._use_server_cache,
+                )
+            self.info_cache[datastack_name] = info
 
         return self.info_cache.get(datastack_name, None)
+
+    def _info_key(self, datastack_name):
+        """Cache key for a datastack's info payload.
+
+        Token-independent by default, so one lookup is shared by every user in
+        the process; see `set_server_cache_defaults(token_scoped_info=...)`.
+        """
+        extra = ()
+        if self._server_meta.config.get("token_scoped_info", False):
+            extra = (servermeta.token_fingerprint(self.session.headers),)
+        return servermeta.MetaKey(
+            servermeta.CATEGORY_INFO,
+            self._server_address,
+            datastack=datastack_name,
+            extra=extra,
+        )
 
     def _get_property(
         self,

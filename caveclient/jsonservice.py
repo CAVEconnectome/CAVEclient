@@ -54,6 +54,7 @@ class JSONService(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
     ):
         """
         Parameters
@@ -98,6 +99,7 @@ class JSONService(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
         self._ngl_url = ngl_url
 

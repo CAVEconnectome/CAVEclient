@@ -3,7 +3,7 @@ authors = [{ name = "CAVE Developers" }]
 classifiers = []
 dependencies = [
     "attrs>=21.3.0",
-    "cachetools>=4.2.1",
+    "cachetools>=5.5.0",
     "ipython>6",
     "jsonschema",
     "networkx",
@@ -102,6 +102,7 @@ lint = ['lint-check', 'lint-format']
 lint-check = "uv run ruff check . --extend-select I"
 lint-format = "uv run ruff format . "
 test = "uv run pytest --cov --cov-report xml tests"
+bench-servermeta = "uv run python scripts/bench_servermeta.py"
 lint-fix = "uv run ruff format caveclient tests"
 
 

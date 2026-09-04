@@ -18,6 +18,7 @@ from IPython.display import HTML
 from packaging.version import Version
 from requests import HTTPError
 
+from . import servermeta
 from .auth import AuthClient
 from .base import (
     BaseEncoder,
@@ -140,6 +141,33 @@ def string_format_timestamp(ts):
         return ts
 
 
+# Shared across clients: these are keyed by server, datastack and table rather
+# than by client identity, so one process looks each up once.
+_versions_metadata_cache = TTLCache(maxsize=100, ttl=60 * 60 * 12)
+_table_metadata_cache = TTLCache(maxsize=100, ttl=60 * 60 * 12)
+_tables_metadata_cache = TTLCache(maxsize=100, ttl=60 * 60 * 12)
+
+for _cache in (_versions_metadata_cache, _table_metadata_cache, _tables_metadata_cache):
+    servermeta.register_auxiliary_cache(_cache)
+
+
+def _versions_metadata_key(matclient, datastack_name=None, expired=False):
+    """Key on the server rather than the client.
+
+    Keying on `matclient` pins the whole client graph -- session, parent client
+    and all -- for the lifetime of the entry. The arguments are used as passed,
+    so that cache hits and misses fall exactly where they did before.
+    """
+    return hashkey(matclient.server_address, datastack_name, expired)
+
+
+def _table_metadata_key(
+    matclient, table_name, datastack_name=None, version=None, log_warning=True
+):
+    """Key on the server rather than the client. See `_versions_metadata_key`."""
+    return hashkey(matclient.server_address, table_name, datastack_name, version)
+
+
 def _tables_metadata_key(matclient, *args, **kwargs):
     if "version" in kwargs:
         version = kwargs["version"]
@@ -179,6 +207,7 @@ class MaterializationClient(ClientBase):
         pool_block=None,
         desired_resolution=None,
         over_client=None,
+        server_cache=None,
     ):
         """
         Parameters
@@ -216,6 +245,10 @@ class MaterializationClient(ClientBase):
             auth_header,
             fallback_version=2,
             verify=verify,
+            server_cache=server_cache,
+            max_retries=max_retries,
+            pool_maxsize=pool_maxsize,
+            pool_block=pool_block,
         )
 
         super(MaterializationClient, self).__init__(
@@ -229,6 +262,7 @@ class MaterializationClient(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
         )
         self._datastack_name = datastack_name
         self._version = version
@@ -331,9 +365,21 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions"].format_map(endpoint_mapping)
         query_args = {"expired": expired}
-        response = self.session.get(url, params=query_args)
-        self.raise_for_status(response)
-        return response.json()
+
+        def _fetch():
+            response = self.session.get(url, params=query_args)
+            self.raise_for_status(response)
+            return response.json()
+
+        key = servermeta.MetaKey(
+            servermeta.CATEGORY_MAT_VERSIONS,
+            self._server_address,
+            datastack=datastack_name,
+            extra=(bool(expired),),
+        )
+        return self._server_meta.get_or_fetch(
+            key, _fetch, enabled=self._use_server_cache
+        )
 
     def get_tables(self, datastack_name=None, version: Optional[int] = None) -> list:
         """Gets a list of table names for a datastack
@@ -403,6 +449,7 @@ class MaterializationClient(ClientBase):
         if datastack_name is None:
             datastack_name = self.datastack_name
         if version is None:
+            # Resolve before keying: `self.version` may itself be a lookup.
             version = self.version
 
         endpoint_mapping = self.default_url_mapping
@@ -410,11 +457,22 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["version"] = version
         url = self._endpoints["version_metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
-        d = handle_response(response)
-        d["time_stamp"] = convert_timestamp(d["time_stamp"])
-        d["expires_on"] = convert_timestamp(d["expires_on"])
-        return d
+        def _fetch():
+            response = self.session.get(url)
+            d = handle_response(response)
+            d["time_stamp"] = convert_timestamp(d["time_stamp"])
+            d["expires_on"] = convert_timestamp(d["expires_on"])
+            return d
+
+        key = servermeta.MetaKey(
+            servermeta.CATEGORY_MAT_VERSION_METADATA,
+            self._server_address,
+            datastack=datastack_name,
+            extra=(int(version),),
+        )
+        return self._server_meta.get_or_fetch(
+            key, _fetch, enabled=self._use_server_cache
+        )
 
     def get_timestamp(
         self, version: Optional[int] = None, datastack_name: str = None
@@ -437,7 +495,7 @@ class MaterializationClient(ClientBase):
         meta = self.get_version_metadata(version=version, datastack_name=datastack_name)
         return convert_timestamp(meta["time_stamp"])
 
-    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
+    @cached(cache=_versions_metadata_cache, key=_versions_metadata_key)
     def get_versions_metadata(self, datastack_name=None, expired=False) -> list[dict]:
         """Get the metadata for all the versions that are presently available and valid
 
@@ -467,7 +525,7 @@ class MaterializationClient(ClientBase):
             md["expires_on"] = convert_timestamp(md["expires_on"])
         return d
 
-    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12))
+    @cached(cache=_table_metadata_cache, key=_table_metadata_key)
     def get_table_metadata(
         self,
         table_name: str,
@@ -1874,7 +1932,7 @@ class MaterializationClient(ClientBase):
         return self._views
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
-    @cached(cache=TTLCache(maxsize=100, ttl=60 * 60 * 12), key=_tables_metadata_key)
+    @cached(cache=_tables_metadata_cache, key=_tables_metadata_key)
     def get_tables_metadata(
         self,
         datastack_name=None,
@@ -2598,8 +2656,10 @@ class MaterializationClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
-        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(endpoint_mapping)
-        
+        anno_url = self._endpoints["neuroglancer_annotation_path"].format_map(
+            endpoint_mapping
+        )
+
         if for_neuroglancer:
             anno_url = "precomputed://middleauth+" + anno_url
         return anno_url
@@ -2618,7 +2678,7 @@ class MaterializationClient(ClientBase):
         response = self.session.get(info_url, verify=self.verify)
         self.raise_for_status(response)
         return response.json()
-    
+
     def neuroglancer_segprop_path(
         self,
         table_name: str,
@@ -2635,8 +2695,10 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["version"] = materialization_version
-        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(endpoint_mapping)
-        
+        segprop_url = self._endpoints["neuroglancer_segprop_path"].format_map(
+            endpoint_mapping
+        )
+
         if for_neuroglancer:
             segprop_url = "precomputed://middleauth+" + segprop_url
         return segprop_url

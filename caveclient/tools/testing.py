@@ -522,6 +522,13 @@ def CAVEclientMock(
                 status=200,
             )
 
+        schema_apiv_url = api_version_url(
+            global_server, endpoints.schema_endpoints_common, "emas_server_address"
+        )
+        responses.add(
+            responses.GET, schema_apiv_url, json=schema_api_versions, status=200
+        )
+
         client = CAVEclient(
             datastack_name=datastack_name,
             server_address=global_server,
@@ -529,16 +536,26 @@ def CAVEclientMock(
             auth_token="just_a_test",
             global_only=global_only,
             version=set_version,
+            server_cache=False,
         )
+        # Server versions are looked up lazily, so they must be resolved here,
+        # while the mocked responses are still registered. Only these services
+        # have a version endpoint: annotation and l2cache have none, and schema
+        # exposes API versions only.
         client.info
+        client.info.server_version
         if chunkedgraph or l2cache or materialization:
             client.chunkedgraph
+            client.chunkedgraph.server_version
         if materialization:
             client.materialize
+            client.materialize.server_version
         if json_service:
             client.state
+            client.state.server_version
         if skeleton_service:
             client.skeleton
+            client.skeleton.server_version
         if l2cache:
             table_mapping_endpoint = endpoints.l2cache_endpoints_v1[
                 "l2cache_table_mapping"

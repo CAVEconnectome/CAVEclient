@@ -5,6 +5,7 @@ from typing import Optional
 
 from requests.exceptions import HTTPError
 
+from . import servermeta
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient
@@ -36,6 +37,7 @@ class CAVEclient(object):
         pool_block=None,
         desired_resolution=None,
         info_cache=None,
+        server_cache=None,
         write_server_cache=True,
         version: Optional[int] = None,
     ):
@@ -95,6 +97,11 @@ class CAVEclient(object):
         desired_resolution : Iterable[float]or None, optional
             If given, should be a list or array of the desired resolution you want queries returned in
             useful for materialization queries.
+        server_cache: bool, ServerMetadataRegistry, or None, optional
+            Whether this client should use the process-wide cache of server
+            metadata. None (the default) follows the global setting configured by
+            `caveclient.set_server_cache_defaults`; True or False forces it on or
+            off for this client alone.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         write_server_cache: bool, optional
@@ -113,6 +120,7 @@ class CAVEclient(object):
                 pool_maxsize=pool_maxsize,
                 pool_block=pool_block,
                 info_cache=info_cache,
+                server_cache=server_cache,
             )
         else:
             server_address = handle_server_address(
@@ -130,6 +138,7 @@ class CAVEclient(object):
                 pool_block=pool_block,
                 desired_resolution=desired_resolution,
                 info_cache=info_cache,
+                server_cache=server_cache,
                 version=version,
             )
 
@@ -245,6 +254,7 @@ class CAVEclientGlobal(object):
         pool_maxsize=None,
         pool_block=None,
         info_cache=None,
+        server_cache=None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
 
@@ -286,6 +296,11 @@ class CAVEclientGlobal(object):
             Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
         pool_block: bool or None, optional
             If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
+        server_cache: bool, ServerMetadataRegistry, or None, optional
+            Whether this client should use the process-wide cache of server
+            metadata. None (the default) follows the global setting configured by
+            `caveclient.set_server_cache_defaults`; True or False forces it on or
+            off for this client alone.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
 
@@ -309,6 +324,7 @@ class CAVEclientGlobal(object):
         self._pool_maxsize = pool_maxsize
         self._pool_block = pool_block
         self._info_cache = info_cache
+        self._server_cache = server_cache
 
     def change_auth(
         self,
@@ -374,6 +390,7 @@ class CAVEclientGlobal(object):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
                 info_cache=self._info_cache,
             )
@@ -392,6 +409,7 @@ class CAVEclientGlobal(object):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._state
@@ -409,6 +427,7 @@ class CAVEclientGlobal(object):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._schema
@@ -447,6 +466,7 @@ class CAVEclientFull(CAVEclientGlobal):
         pool_block=None,
         desired_resolution=None,
         info_cache=None,
+        server_cache=None,
         version: Optional[int] = None,
     ):
         """A manager for all clients sharing common datastack and authentication information.
@@ -499,6 +519,11 @@ class CAVEclientFull(CAVEclientGlobal):
         desired_resolution : Iterable[float]or None, optional
             If given, should be a list or array of the desired resolution you want queries returned in
             useful for materialization queries.
+        server_cache: bool, ServerMetadataRegistry, or None, optional
+            Whether this client should use the process-wide cache of server
+            metadata. None (the default) follows the global setting configured by
+            `caveclient.set_server_cache_defaults`; True or False forces it on or
+            off for this client alone.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         version:
@@ -521,6 +546,7 @@ class CAVEclientFull(CAVEclientGlobal):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             info_cache=info_cache,
+            server_cache=server_cache,
         )
 
         self._datastack_name = datastack_name
@@ -533,6 +559,11 @@ class CAVEclientFull(CAVEclientGlobal):
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
         self.auth.local_server = self.local_server
+        # Server-scoped cache entries name no datastack, so record which servers
+        # serve this one; that is what lets `invalidate(datastack=...)` find them.
+        registry, _ = servermeta.resolve(server_cache)
+        registry.note_datastack(datastack_name, self.local_server)
+        registry.note_datastack(datastack_name, self._server_address)
 
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
@@ -601,6 +632,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._chunkedgraph
@@ -619,6 +651,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._annotation
@@ -638,6 +671,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
                 desired_resolution=self.desired_resolution,
             )
@@ -657,6 +691,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._skeleton
@@ -675,6 +710,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._state
@@ -696,6 +732,7 @@ class CAVEclientFull(CAVEclientGlobal):
                 max_retries=self._max_retries,
                 pool_maxsize=self._pool_maxsize,
                 pool_block=self._pool_block,
+                server_cache=self._server_cache,
                 over_client=self,
             )
         return self._l2cache

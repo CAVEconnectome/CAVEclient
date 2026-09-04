@@ -77,6 +77,7 @@ class L2CacheClient(ClientBase):
         pool_maxsize=None,
         pool_block=None,
         over_client=None,
+        server_cache=None,
         verify=True,
     ):
         if auth_client is None:
@@ -101,6 +102,7 @@ class L2CacheClient(ClientBase):
             pool_maxsize=pool_maxsize,
             pool_block=pool_block,
             over_client=over_client,
+            server_cache=server_cache,
             verify=verify,
         )
         self._default_url_mapping["table_id"] = table_name
