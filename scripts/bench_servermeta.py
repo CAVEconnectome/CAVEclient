@@ -129,8 +129,11 @@ def one_page_load(touch_versions=True):
 def _set_cache(enabled):
     if servermeta is None:
         return not enabled  # baseline build can only do the "off" mode
-    servermeta.set_server_cache_defaults(enabled=enabled)
-    servermeta.get_registry().clear()
+    if enabled:
+        servermeta.enable_server_cache()
+    else:
+        servermeta.disable_server_cache()
+    servermeta.invalidate()
     return True
 
 

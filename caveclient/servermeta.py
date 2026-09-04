@@ -1,21 +1,29 @@
 """Process-wide caching of server-scoped metadata.
 
 Constructing a `CAVEclient` normally asks each service what version it is running
-and which API versions it speaks. Those answers are properties of the *server*,
-not of the caller, so a process that builds many clients against the same
-deployment -- a web application building one client per request, for instance --
-repeats identical lookups. This module caches them behind one policy.
+and which API versions it speaks, and fetches the datastack's info record. Those
+answers are properties of the *server*, not of the caller, so a process that
+builds many clients against the same deployment -- a service endpoint building
+one client per request, or a worker building one per task -- repeats identical
+lookups. This module caches them behind one policy.
 
-Caching is **opt-in**; with it disabled (the default) the cache is entirely out
-of the request path and behaviour is unchanged. Turn it on once at startup:
+Caching of the lookups made while *building* a client is opt-in; with it
+disabled (the default) they are entirely out of the request path. Turn it on
+once at startup:
 
-    from caveclient import set_server_cache_defaults
+    from caveclient import enable_server_cache
 
-    set_server_cache_defaults(enabled=True)
+    enable_server_cache()
+
+Materialization table and version metadata have always been cached for twelve
+hours and continue to be regardless of that switch; they are simply stored here
+now, so one reset and one token policy cover everything.
 
 Entries are deliberately shared across auth tokens, because the values they hold
-describe the deployment rather than the user. See `set_server_cache_defaults`
-for the one exception to that and how to opt out of it.
+describe the deployment rather than the user. That sharing has a security
+consequence: a cached answer is served to any caller in the process, including
+one whose own token would have been refused by the server. See
+`enable_server_cache` for what that exposes and how to opt out of it.
 """
 
 import copy
@@ -23,15 +31,14 @@ import hashlib
 import logging
 import os
 import threading
-from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Optional, Tuple
 
 from cachetools import TTLCache, cached
 
 __all__ = [
-    "set_server_cache_defaults",
-    "get_server_cache_defaults",
+    "enable_server_cache",
+    "disable_server_cache",
     "invalidate",
     "refresh",
 ]
@@ -45,6 +52,9 @@ CATEGORY_SERVER_VERSION = "server_version"
 CATEGORY_INFO = "info"
 CATEGORY_MAT_VERSIONS = "mat_versions"
 CATEGORY_MAT_VERSION_METADATA = "mat_version_metadata"
+CATEGORY_MAT_VERSIONS_METADATA = "mat_versions_metadata"
+CATEGORY_TABLE_METADATA = "table_metadata"
+CATEGORY_TABLES_METADATA = "tables_metadata"
 
 CATEGORIES = (
     CATEGORY_API_VERSIONS,
@@ -52,38 +62,47 @@ CATEGORIES = (
     CATEGORY_INFO,
     CATEGORY_MAT_VERSIONS,
     CATEGORY_MAT_VERSION_METADATA,
+    CATEGORY_MAT_VERSIONS_METADATA,
+    CATEGORY_TABLE_METADATA,
+    CATEGORY_TABLES_METADATA,
 )
 
-#: Categories whose value depends only on the server address.
+#: Categories whose value depends only on the server address. Returned as-is;
+#: everything else is a mutable payload and is copied out of the cache.
 SERVER_SCOPED = frozenset({CATEGORY_API_VERSIONS, CATEGORY_SERVER_VERSION})
 
-#: Categories whose cached payload is mutable and must be copied in and out.
-_COPY_CATEGORIES = frozenset(
-    {CATEGORY_INFO, CATEGORY_MAT_VERSIONS, CATEGORY_MAT_VERSION_METADATA}
+#: Categories cached regardless of `enabled`. These were cached before the
+#: registry existed, and a query issues one of these lookups per call.
+ALWAYS_ON = frozenset(
+    {
+        CATEGORY_MAT_VERSIONS_METADATA,
+        CATEGORY_TABLE_METADATA,
+        CATEGORY_TABLES_METADATA,
+    }
 )
 
-_TTL_CONFIG_KEY = {
-    CATEGORY_API_VERSIONS: "ttl_api_versions",
-    CATEGORY_SERVER_VERSION: "ttl_server_version",
-    CATEGORY_INFO: "ttl_info",
-    CATEGORY_MAT_VERSIONS: "ttl_mat_versions",
-    CATEGORY_MAT_VERSION_METADATA: "ttl_mat_version_metadata",
+#: Categories that use `ttl_fast`: the list of materialization versions changes
+#: whenever a new version is materialized. Everything else uses `ttl_slow`.
+FAST_CHANGING = frozenset({CATEGORY_MAT_VERSIONS})
+
+#: Seconds before a metadata request made while building a client gives up.
+#: Guards against a server that accepts connections but never answers, which
+#: would otherwise block client construction indefinitely.
+METADATA_TIMEOUT = 30.0
+
+_DEFAULT_SETTINGS = {
+    "enabled": False,
+    "ttl_slow": 43_200,
+    "ttl_fast": 600,
+    "token_scoped": False,
+    "maxsize": 512,
 }
-
-SERVER_CACHE_DEFAULTS = {}
-
-# Bumped on every configuration change so registries can rebuild their caches.
-_CONFIG_EPOCH = [0]
+_settings = dict(_DEFAULT_SETTINGS)
 
 
 @dataclass(frozen=True)
 class MetaKey:
-    """Identifies one cached lookup.
-
-    A structured key rather than an opaque tuple, so that `invalidate` can select
-    entries by field -- server-scoped entries do not mention a datastack, and
-    there is otherwise no way to find them from one.
-    """
+    """Identifies one cached lookup."""
 
     category: str
     server_address: str
@@ -91,337 +110,90 @@ class MetaKey:
     extra: Tuple = field(default=())
 
 
-def set_server_cache_defaults(
-    enabled: bool = False,
-    ttl_api_versions: Optional[float] = 86_400,
-    ttl_server_version: Optional[float] = 3_600,
-    ttl_info: Optional[float] = 3_600,
-    ttl_mat_versions: Optional[float] = 3_600,
-    ttl_mat_version_metadata: Optional[float] = 43_200,
+def enable_server_cache(
+    ttl_slow: Optional[float] = 43_200,
+    ttl_fast: Optional[float] = 600,
+    token_scoped: bool = False,
     maxsize: int = 512,
-    metadata_timeout: Optional[float] = 30.0,
-    token_scoped_info: bool = False,
-    eager_server_version: bool = False,
 ) -> None:
-    """Configure process-wide caching of server metadata.
+    """Turn on process-wide caching of server metadata.
 
-    Should be done prior to initializing a client. Calling this function with any
-    argument missing resets that value to its default, so a bare call restores
-    the original configuration.
+    Call once at startup, before building clients. With the cache on, the API
+    versions a service speaks, the version it runs, and a datastack's info
+    record are looked up once per process rather than once per client. Calling
+    again replaces the settings and drops every cached entry.
 
     Parameters
     ----------
-    enabled :
-        Whether to cache server metadata at all. Off by default; when off, no
-        lookup consults the cache and behaviour is exactly as it was before this
-        feature existed.
-    ttl_api_versions :
-        Seconds to cache the set of API versions a deployment speaks.
-    ttl_server_version :
-        Seconds to cache the software version a service reports.
-    ttl_info :
-        Seconds to cache a datastack's info-service payload.
-    ttl_mat_versions :
-        Seconds to cache the list of available materialization versions. Kept
-        short by default, since new versions appear as they are materialized.
-    ttl_mat_version_metadata :
-        Seconds to cache the metadata for one materialization version.
+    ttl_slow :
+        Seconds to keep slow-changing values: API versions, service versions,
+        the datastack info payload, and table and version metadata. Twelve hours
+        by default, since these change only when a service is deployed or a
+        datastack is reconfigured, and `invalidate` or `refresh` covers those.
+    ttl_fast :
+        Seconds to keep fast-changing values: the list of available
+        materialization versions, which grows as new versions are materialized.
+        Ten minutes by default.
+    token_scoped :
+        Whether to key every datastack-scoped entry by auth token as well as by
+        datastack. Off by default: one lookup is shared by every user in the
+        process. Turn it on when tokens in a single process have *different*
+        permissions on the same datastack.
     maxsize :
-        Maximum entries per category before least-recently-used eviction. Scale
-        this up if the process serves many distinct datastacks or users.
-    metadata_timeout :
-        Seconds before a metadata request gives up. Guards against a server that
-        accepts connections but never answers, which would otherwise block
-        client construction indefinitely.
-    token_scoped_info :
-        Whether to key the info payload by auth token as well as by datastack.
-        Off by default, matching long-standing behaviour: one lookup is shared by
-        every user in the process. Turn it on when tokens in a single process
-        have *different* permissions on the same datastack, where a shared entry
-        would let one user see a payload fetched with another user's token.
-    eager_server_version :
-        Whether to fetch a service's version during client construction rather
-        than on first use. Off by default. Turn it on to restore the previous
-        behaviour of failing fast at construction when a server is unreachable.
+        Maximum entries per kind of metadata before least-recently-used
+        eviction. Scale this up if the process serves many distinct datastacks
+        or, with `token_scoped`, many users.
 
     Notes
     -----
-    A TTL of 0 or None disables storage for that category while still collapsing
-    concurrent duplicate lookups into one request.
+    A TTL of 0 or None disables storage for that kind of entry while still
+    collapsing concurrent duplicate lookups into one request.
+
+    Warnings
+    --------
+    With caching enabled, the info service is not consulted for every client
+    built, so a caller whose token lacks access to a datastack still gets a
+    working client and can read the cached info payload (segmentation and image
+    source paths, table names) and materialization version history. Data
+    requests still carry that caller's own token and are refused as usual.
+
+    Enable caching only in processes that check datastack authorization
+    themselves before building a client. The intended setting is a service
+    endpoint guarded by an authorization decorator, which then uses the client to
+    reach other CAVE services on the user's behalf. In a process that serves
+    users with differing permissions and cannot make that check, set
+    `token_scoped=True` or leave caching off.
 
     See Also
     --------
-    [caveclient.get_server_cache_defaults][]
+    [caveclient.disable_server_cache][]
+    [caveclient.invalidate][]
+    [caveclient.refresh][]
     """
-    SERVER_CACHE_DEFAULTS.update(
-        enabled=enabled,
-        ttl_api_versions=ttl_api_versions,
-        ttl_server_version=ttl_server_version,
-        ttl_info=ttl_info,
-        ttl_mat_versions=ttl_mat_versions,
-        ttl_mat_version_metadata=ttl_mat_version_metadata,
+    _settings.update(
+        enabled=True,
+        ttl_slow=ttl_slow,
+        ttl_fast=ttl_fast,
+        token_scoped=token_scoped,
         maxsize=maxsize,
-        metadata_timeout=metadata_timeout,
-        token_scoped_info=token_scoped_info,
-        eager_server_version=eager_server_version,
     )
-    _CONFIG_EPOCH[0] += 1
+    _drop_storage()
 
 
-set_server_cache_defaults()
+def disable_server_cache() -> None:
+    """Turn off process-wide caching of server metadata.
 
-
-def get_server_cache_defaults() -> dict:
-    """Get the current configuration for server metadata caching.
-
-    Returns
-    -------
-    :
-        Dictionary of current default values.
+    Drops every cached entry and restores the default settings. Materialization
+    table and version metadata continue to be cached with the default
+    lifetimes, as they were before the cache existed.
 
     See Also
     --------
-    [caveclient.set_server_cache_defaults][]
+    [caveclient.enable_server_cache][]
     """
-    return SERVER_CACHE_DEFAULTS
-
-
-class ServerMetadataRegistry:
-    """A thread-safe, TTL-bounded store of server-scoped metadata.
-
-    Concurrent lookups of the same cold key issue a single upstream request; the
-    others wait for its result. Failed lookups are never stored, so a momentary
-    outage cannot pin a degraded answer.
-
-    Parameters
-    ----------
-    config :
-        Configuration mapping. Defaults to the process-wide configuration set by
-        [caveclient.set_server_cache_defaults][].
-    timer :
-        Callable returning a monotonically increasing time, used for expiry.
-        Injectable so that tests can advance a clock instead of sleeping.
-    """
-
-    def __init__(self, config=None, timer=None):
-        self._config_override = config
-        self._timer = timer
-        self._epoch = None
-        self._caches = {}
-        self._locks = {}
-        self._getters = {}
-        self._index = defaultdict(set)
-        self._index_lock = threading.RLock()
-        self._stats = Counter()
-        self._build_lock = threading.RLock()
-        self._ensure_caches()
-
-    def __copy__(self):
-        # The registry is shared process infrastructure holding locks, so a
-        # copied client must reference the same one rather than clone it.
-        return self
-
-    def __deepcopy__(self, memo):
-        memo[id(self)] = self
-        return self
-
-    # -- configuration ----------------------------------------------------
-
-    @property
-    def config(self) -> dict:
-        if self._config_override is not None:
-            return self._config_override
-        return SERVER_CACHE_DEFAULTS
-
-    @property
-    def enabled(self) -> bool:
-        return bool(self.config.get("enabled", False))
-
-    @property
-    def metadata_timeout(self) -> Optional[float]:
-        return self.config.get("metadata_timeout")
-
-    def _ttl_for(self, category: str) -> Optional[float]:
-        return self.config.get(_TTL_CONFIG_KEY[category])
-
-    def _ensure_caches(self) -> None:
-        """(Re)build per-category caches when the configuration has changed."""
-        epoch = _CONFIG_EPOCH[0] if self._config_override is None else id(self.config)
-        if self._epoch == epoch:
-            return
-        with self._build_lock:
-            if self._epoch == epoch:
-                return
-            maxsize = int(self.config.get("maxsize", 512))
-            for category in CATEGORIES:
-                ttl = self._ttl_for(category)
-                cache_kwargs = {"maxsize": maxsize, "ttl": ttl or 0}
-                if self._timer is not None:
-                    cache_kwargs["timer"] = self._timer
-                cache = TTLCache(**cache_kwargs)
-                lock = threading.RLock()
-                condition = threading.Condition(lock)
-
-                # `condition` is what makes concurrent misses collapse into a
-                # single upstream call; `lock` alone does not. It requires
-                # cachetools >= 6.0.0, which the package pins.
-                @cached(
-                    cache, key=lambda key, fetch: key, lock=lock, condition=condition
-                )
-                def _get(key, fetch):
-                    return fetch()
-
-                self._caches[category] = cache
-                self._locks[category] = lock
-                self._getters[category] = _get
-            self._epoch = epoch
-
-    # -- core lookup ------------------------------------------------------
-
-    def get_or_fetch(
-        self,
-        key: MetaKey,
-        fetch: Callable[[], Any],
-        enabled: Optional[bool] = None,
-    ) -> Any:
-        """Return a cached value for `key`, calling `fetch` only if needed.
-
-        `fetch` must raise on failure rather than returning a degraded value:
-        exceptions are never cached, which is what keeps a transient outage from
-        pinning a fallback. A definite answer that happens to be `None` -- a 404
-        from a server with no version endpoint, say -- is cached normally.
-        """
-        if enabled is None:
-            enabled = self.enabled
-        if not enabled:
-            # Structurally out of the path: no lock, no bookkeeping, no storage.
-            return fetch()
-
-        self._ensure_caches()
-        cache = self._caches[key.category]
-        lock = self._locks[key.category]
-
-        with lock:
-            hit = key in cache
-        self._stats["hits" if hit else "misses"] += 1
-        if not hit:
-            self._stats["fetches"] += 1
-
-        value = self._getters[key.category](key, fetch)
-
-        if key.datastack is not None:
-            self.note_datastack(key.datastack, key.server_address)
-        if key.category in _COPY_CATEGORIES:
-            return copy.deepcopy(value)
-        return value
-
-    def refresh(self, key: MetaKey, fetch: Callable[[], Any]) -> Any:
-        """Force a refetch of one key, replacing any cached value.
-
-        A failed refresh leaves the existing value in place.
-        """
-        value = fetch()
-        self._ensure_caches()
-        ttl = self._ttl_for(key.category)
-        if self.enabled and ttl:
-            with self._locks[key.category]:
-                self._caches[key.category][key] = value
-        if key.category in _COPY_CATEGORIES:
-            return copy.deepcopy(value)
-        return value
-
-    # -- bookkeeping ------------------------------------------------------
-
-    def note_datastack(self, datastack_name: str, server_address: str) -> None:
-        """Record that a datastack is served from an address.
-
-        Lets `invalidate(datastack=...)` also drop the server-scoped entries for
-        that deployment, which do not themselves mention the datastack.
-        """
-        if not datastack_name or not server_address:
-            return
-        with self._index_lock:
-            self._index[datastack_name].add(server_address)
-
-    def invalidate(
-        self,
-        datastack: Optional[str] = None,
-        server_address: Optional[str] = None,
-        category: Optional[str] = None,
-    ) -> int:
-        """Drop cached entries, forcing the next lookup to go upstream.
-
-        With no arguments, drops everything. Narrow the scope with `datastack`,
-        `server_address`, or `category`. Note that `datastack` also drops the
-        server-scoped entries for every address known to serve it, which may
-        affect sibling datastacks on the same deployment; the cost of that is one
-        extra lookup each.
-
-        Returns
-        -------
-        :
-            Number of entries removed.
-        """
-        self._ensure_caches()
-        addresses = set()
-        if datastack is not None:
-            with self._index_lock:
-                addresses = set(self._index.get(datastack, ()))
-        if server_address is not None:
-            addresses.add(server_address)
-
-        removed = 0
-        for cat in CATEGORIES:
-            if category is not None and cat != category:
-                continue
-            lock = self._locks[cat]
-            cache = self._caches[cat]
-            with lock:
-                for key in list(cache.keys()):
-                    if not self._matches(key, datastack, server_address, addresses):
-                        continue
-                    try:
-                        del cache[key]
-                    except KeyError:  # expired between listing and deleting
-                        continue
-                    removed += 1
-        if datastack is not None and server_address is None:
-            with self._index_lock:
-                self._index.pop(datastack, None)
-        self._stats["invalidations"] += removed
-        return removed
-
-    @staticmethod
-    def _matches(key, datastack, server_address, addresses) -> bool:
-        if datastack is None and server_address is None:
-            return True
-        if datastack is not None and key.datastack == datastack:
-            return True
-        if server_address is not None and key.server_address == server_address:
-            return True
-        # Server-scoped entries carry no datastack; match them via the reverse
-        # index of addresses known to serve the named datastack.
-        if key.datastack is None and key.server_address in addresses:
-            return True
-        return False
-
-    def clear(self) -> None:
-        """Drop every entry and reset statistics."""
-        self._ensure_caches()
-        for cat in CATEGORIES:
-            with self._locks[cat]:
-                self._caches[cat].clear()
-        with self._index_lock:
-            self._index.clear()
-        self._stats.clear()
-
-    def stats(self) -> dict:
-        """Cache counters, for tests and diagnostics."""
-        self._ensure_caches()
-        out = dict(self._stats)
-        out["enabled"] = self.enabled
-        out["size"] = sum(len(self._caches[c]) for c in CATEGORIES)
-        return out
+    _settings.clear()
+    _settings.update(_DEFAULT_SETTINGS)
+    _drop_storage()
 
 
 # Per-process salt: fingerprints must not be stable across processes, and the
@@ -437,44 +209,113 @@ def token_fingerprint(headers: Optional[Mapping]) -> str:
     return hashlib.sha256(_SALT + value.encode("utf-8")).hexdigest()[:16]
 
 
-_REGISTRY = ServerMetadataRegistry()
+def datastack_key(
+    category: str,
+    server_address: str,
+    datastack: str,
+    headers: Optional[Mapping] = None,
+    extra: Tuple = (),
+) -> MetaKey:
+    """Key for a datastack-scoped entry, applying the token policy in one place.
 
-
-def get_registry() -> ServerMetadataRegistry:
-    """The process-wide registry."""
-    return _REGISTRY
-
-
-def set_registry(registry: Optional[ServerMetadataRegistry]) -> ServerMetadataRegistry:
-    """Install a registry as the process default, returning the previous one.
-
-    Passing None restores the built-in registry.
+    `headers` are the session headers of the client making the lookup; only a
+    fingerprint of the token ever reaches the key, and only when `token_scoped`
+    is set.
     """
-    global _REGISTRY
-    previous = _REGISTRY
-    _REGISTRY = registry if registry is not None else ServerMetadataRegistry()
-    return previous
+    if _settings["token_scoped"]:
+        extra = (token_fingerprint(headers),) + tuple(extra)
+    return MetaKey(category, server_address, datastack, tuple(extra))
 
 
-def resolve(
-    server_cache=None, registry: Optional[ServerMetadataRegistry] = None
-) -> tuple:
-    """Resolve a per-client `server_cache` argument to (registry, enabled).
+# -- storage -----------------------------------------------------------------
+#
+# One TTL cache per category, built lazily from the current configuration.
+# Each has a lock and a condition so that concurrent misses on one key issue a
+# single upstream request; the others wait for it. Exceptions are never stored.
 
-    `server_cache` may be None (follow the process-wide setting), a bool (force
-    on or off for this client), or a registry instance to use directly.
+#: Clock used for expiry; tests replace it to advance time without sleeping.
+_timer = None
+
+_storage = {}
+_storage_lock = threading.Lock()
+
+
+def _build_storage() -> dict:
+    maxsize = int(_settings["maxsize"])
+    built = {}
+    for category in CATEGORIES:
+        which = "ttl_fast" if category in FAST_CHANGING else "ttl_slow"
+        ttl = _settings[which] or 0
+        cache_kwargs = {"maxsize": maxsize, "ttl": ttl}
+        if _timer is not None:
+            cache_kwargs["timer"] = _timer
+        cache = TTLCache(**cache_kwargs)
+        lock = threading.RLock()
+        condition = threading.Condition(lock)
+
+        # `condition` is what makes concurrent misses collapse into a single
+        # upstream call; `lock` alone does not. Requires cachetools >= 6.0.0.
+        @cached(cache, key=lambda key, fetch: key, lock=lock, condition=condition)
+        def _get(key, fetch):
+            return fetch()
+
+        built[category] = (cache, lock, _get)
+    return built
+
+
+def _get_storage() -> dict:
+    if not _storage:
+        with _storage_lock:
+            if not _storage:
+                _storage.update(_build_storage())
+    return _storage
+
+
+def _drop_storage() -> None:
+    with _storage_lock:
+        _storage.clear()
+
+
+def _after_fork_in_child() -> None:
+    # A lock held at the moment of the fork is inherited locked and would
+    # deadlock the child, so the child starts cold with fresh locks.
+    global _storage_lock
+    _storage_lock = threading.Lock()
+    _storage.clear()
+
+
+if hasattr(os, "register_at_fork"):  # pragma: no cover - platform dependent
+    os.register_at_fork(after_in_child=_after_fork_in_child)
+
+
+# -- lookups -----------------------------------------------------------------
+
+
+def get_or_fetch(key: MetaKey, fetch: Callable[[], Any], enabled=None) -> Any:
+    """Return the cached value for `key`, calling `fetch` only if needed.
+
+    `enabled` is a client's own `server_cache` setting: None follows the
+    process-wide switch, a bool forces it. Categories in `ALWAYS_ON`
+    ignore it.
+
+    `fetch` must raise on failure rather than return a degraded value: exceptions
+    are never cached, which is what keeps a transient outage from pinning a
+    fallback. A definite answer that happens to be `None` -- a 404 from a server
+    with no version endpoint, say -- is cached normally.
     """
-    if isinstance(server_cache, ServerMetadataRegistry):
-        return server_cache, True
-    reg = registry if registry is not None else get_registry()
-    return reg, server_cache
+    if key.category not in ALWAYS_ON:
+        if enabled is None:
+            enabled = _settings["enabled"]
+        if not enabled:
+            return fetch()
+    _, _, getter = _get_storage()[key.category]
+    value = getter(key, fetch)
+    if key.category in SERVER_SCOPED:
+        return value
+    return copy.deepcopy(value)
 
 
-def invalidate(
-    datastack: Optional[str] = None,
-    server_address: Optional[str] = None,
-    category: Optional[str] = None,
-) -> int:
+def invalidate(server_address: Optional[str] = None) -> int:
     """Drop cached server metadata so the next lookup goes upstream.
 
     Use this after a stale-metadata error to force a cold rebuild and retry,
@@ -482,138 +323,72 @@ def invalidate(
 
     Parameters
     ----------
-    datastack :
-        Limit to entries for this datastack, including the server-scoped entries
-        of the deployments known to serve it.
     server_address :
-        Limit to entries for this server.
-    category :
-        Limit to one kind of metadata.
+        Limit to entries for this server. By default, everything is dropped;
+        a cold rebuild costs one request per kind of metadata, so that is
+        rarely worth narrowing.
 
     Returns
     -------
     :
         Number of entries removed.
     """
-    return get_registry().invalidate(
-        datastack=datastack, server_address=server_address, category=category
-    )
+    removed = 0
+    for cache, lock, _ in _get_storage().values():
+        with lock:
+            if server_address is None:
+                removed += len(cache)
+                cache.clear()
+                continue
+            for key in [k for k in cache if k.server_address == server_address]:
+                if cache.pop(key, None) is not None or key not in cache:
+                    removed += 1
+    return removed
 
 
-def refresh(
-    client=None,
-    datastack: Optional[str] = None,
-    server_address: Optional[str] = None,
-    category: Optional[str] = None,
-) -> int:
+#: Sub-clients a `CAVEclient` builds lazily, by property name.
+_SUB_CLIENTS = (
+    "info",
+    "chunkedgraph",
+    "materialize",
+    "skeleton",
+    "state",
+    "schema",
+    "annotation",
+    "l2cache",
+)
+
+
+def refresh(client=None, server_address: Optional[str] = None) -> int:
     """Drop cached metadata and, given a client, immediately re-prime it.
 
-    Invalidation alone cannot refetch, because the registry holds no credentials.
-    Passing a client lets the versions of its already-constructed sub-clients be
-    fetched again straight away, using that client's sessions and token.
+    Invalidation alone cannot refetch, because the cache holds no credentials.
+    Passing a client rebuilds the sub-clients it has already constructed, so that
+    API version negotiation is repeated and each service's version is looked up
+    again using that client's token. The rebuilt sub-clients are new objects:
+    a reference held to, say, `client.materialize` from before the call is not
+    refreshed and should be re-read from the client.
 
     Parameters
     ----------
     client :
-        A `CAVEclient` whose already-built sub-clients should be re-primed.
-    datastack :
-        Limit to entries for this datastack.
+        A `CAVEclient` whose already-built sub-clients should be rebuilt.
     server_address :
         Limit to entries for this server.
-    category :
-        Limit to one kind of metadata.
 
     Returns
     -------
     :
         Number of entries removed.
     """
-    if datastack is None and client is not None:
-        datastack = getattr(client, "datastack_name", None)
-    removed = invalidate(
-        datastack=datastack, server_address=server_address, category=category
-    )
+    removed = invalidate(server_address=server_address)
     if client is not None:
-        for name in (
-            "info",
-            "chunkedgraph",
-            "materialize",
-            "skeleton",
-            "state",
-            "schema",
-            "annotation",
-            "l2cache",
-        ):
-            sub = getattr(client, "_" + name, None)
-            if sub is None:
-                continue
+        built = [name for name in _SUB_CLIENTS if getattr(client, "_" + name, None)]
+        for name in built:
+            setattr(client, "_" + name, None)
+        for name in built:
             try:
-                sub.reset_server_version()
+                getattr(client, name).server_version
             except Exception:  # pragma: no cover - re-priming is best effort
-                logger.debug("could not re-prime %s server version", name)
+                logger.debug("could not rebuild %s sub-client", name)
     return removed
-
-
-#: Caches owned by other modules that should be dropped alongside the registry.
-_AUXILIARY_CACHES = []
-
-
-def register_auxiliary_cache(cache) -> None:
-    """Register a module-level cache so that `reset_server_cache` clears it too.
-
-    Method-level caches keyed independently of the client instance are shared
-    across clients by design; registering them keeps a single reset hook honest.
-    """
-    _AUXILIARY_CACHES.append(cache)
-
-
-def _rebuild_after_fork() -> None:
-    """Re-create locks in a forked child.
-
-    A child inherits the parent's cached values, which are still valid, but any
-    lock held at the moment of the fork is inherited locked and would deadlock.
-    Rebuilding the caches discards those locks. Relevant to pre-fork servers that
-    warm the cache in the master process, such as gunicorn with `--preload`.
-    """
-    registry = get_registry()
-    # Snapshot before rebuilding: the values are still good, only the locks
-    # guarding them are unusable.
-    surviving = {}
-    for category in CATEGORIES:
-        cache = registry._caches.get(category)
-        if cache is None:
-            continue
-        try:
-            surviving[category] = list(cache.items())
-        except Exception:  # pragma: no cover - a cache mid-mutation at fork
-            surviving[category] = []
-    index = {k: set(v) for k, v in registry._index.items()}
-
-    registry._epoch = None
-    registry._index_lock = threading.RLock()
-    registry._build_lock = threading.RLock()
-    registry._ensure_caches()
-
-    for category, items in surviving.items():
-        cache = registry._caches[category]
-        for key, value in items:
-            cache[key] = value
-    registry._index = defaultdict(set, index)
-
-
-if hasattr(os, "register_at_fork"):  # pragma: no cover - platform dependent
-    os.register_at_fork(after_in_child=_rebuild_after_fork)
-
-
-def reset_server_cache() -> None:
-    """Clear all cached server metadata and restore the default configuration.
-
-    Intended for tests and for callers that need a guaranteed cold start.
-    """
-    set_server_cache_defaults()
-    get_registry().clear()
-    for cache in _AUXILIARY_CACHES:
-        try:
-            cache.clear()
-        except Exception:  # pragma: no cover - a cache that cannot clear
-            logger.debug("could not clear auxiliary cache %r", cache)

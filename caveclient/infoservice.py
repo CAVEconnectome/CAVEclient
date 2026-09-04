@@ -163,30 +163,19 @@ class InfoServiceClient(ClientBaseWithDatastack):
                 # explicit refresh must not be served from a shared cache.
                 info = _fetch()
             else:
-                info = self._server_meta.get_or_fetch(
-                    self._info_key(datastack_name),
+                info = servermeta.get_or_fetch(
+                    servermeta.datastack_key(
+                        servermeta.CATEGORY_INFO,
+                        self._server_address,
+                        datastack_name,
+                        self.session.headers,
+                    ),
                     _fetch,
                     enabled=self._use_server_cache,
                 )
             self.info_cache[datastack_name] = info
 
         return self.info_cache.get(datastack_name, None)
-
-    def _info_key(self, datastack_name):
-        """Cache key for a datastack's info payload.
-
-        Token-independent by default, so one lookup is shared by every user in
-        the process; see `set_server_cache_defaults(token_scoped_info=...)`.
-        """
-        extra = ()
-        if self._server_meta.config.get("token_scoped_info", False):
-            extra = (servermeta.token_fingerprint(self.session.headers),)
-        return servermeta.MetaKey(
-            servermeta.CATEGORY_INFO,
-            self._server_address,
-            datastack=datastack_name,
-            extra=extra,
-        )
 
     def _get_property(
         self,

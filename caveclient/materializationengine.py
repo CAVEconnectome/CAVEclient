@@ -12,8 +12,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytz
-from cachetools import TTLCache, cached
-from cachetools.keys import hashkey
 from IPython.display import HTML
 from packaging.version import Version
 from requests import HTTPError
@@ -139,45 +137,6 @@ def string_format_timestamp(ts):
         return datetime.strftime(ts, "%Y-%m-%dT%H:%M:%S.%f")
     else:
         return ts
-
-
-# Shared across clients: these are keyed by server, datastack and table rather
-# than by client identity, so one process looks each up once.
-_versions_metadata_cache = TTLCache(maxsize=100, ttl=60 * 60 * 12)
-_table_metadata_cache = TTLCache(maxsize=100, ttl=60 * 60 * 12)
-_tables_metadata_cache = TTLCache(maxsize=100, ttl=60 * 60 * 12)
-
-for _cache in (_versions_metadata_cache, _table_metadata_cache, _tables_metadata_cache):
-    servermeta.register_auxiliary_cache(_cache)
-
-
-def _versions_metadata_key(matclient, datastack_name=None, expired=False):
-    """Key on the server rather than the client.
-
-    Keying on `matclient` pins the whole client graph -- session, parent client
-    and all -- for the lifetime of the entry. The arguments are used as passed,
-    so that cache hits and misses fall exactly where they did before.
-    """
-    return hashkey(matclient.server_address, datastack_name, expired)
-
-
-def _table_metadata_key(
-    matclient, table_name, datastack_name=None, version=None, log_warning=True
-):
-    """Key on the server rather than the client. See `_versions_metadata_key`."""
-    return hashkey(matclient.server_address, table_name, datastack_name, version)
-
-
-def _tables_metadata_key(matclient, *args, **kwargs):
-    if "version" in kwargs:
-        version = kwargs["version"]
-    else:
-        version = matclient.version
-    if "datastack_name" in kwargs:
-        datastack_name = kwargs["datastack_name"]
-    else:
-        datastack_name = matclient.datastack_name
-    return hashkey(datastack_name, version)
 
 
 direct_sql_error_msg = textwrap.dedent("""After CAVEclient v8.0.0 we changed to utilizing a different way
@@ -371,15 +330,14 @@ class MaterializationClient(ClientBase):
             self.raise_for_status(response)
             return response.json()
 
-        key = servermeta.MetaKey(
+        key = servermeta.datastack_key(
             servermeta.CATEGORY_MAT_VERSIONS,
             self._server_address,
-            datastack=datastack_name,
+            datastack_name,
+            self.session.headers,
             extra=(bool(expired),),
         )
-        return self._server_meta.get_or_fetch(
-            key, _fetch, enabled=self._use_server_cache
-        )
+        return servermeta.get_or_fetch(key, _fetch, enabled=self._use_server_cache)
 
     def get_tables(self, datastack_name=None, version: Optional[int] = None) -> list:
         """Gets a list of table names for a datastack
@@ -464,15 +422,14 @@ class MaterializationClient(ClientBase):
             d["expires_on"] = convert_timestamp(d["expires_on"])
             return d
 
-        key = servermeta.MetaKey(
+        key = servermeta.datastack_key(
             servermeta.CATEGORY_MAT_VERSION_METADATA,
             self._server_address,
-            datastack=datastack_name,
+            datastack_name,
+            self.session.headers,
             extra=(int(version),),
         )
-        return self._server_meta.get_or_fetch(
-            key, _fetch, enabled=self._use_server_cache
-        )
+        return servermeta.get_or_fetch(key, _fetch, enabled=self._use_server_cache)
 
     def get_timestamp(
         self, version: Optional[int] = None, datastack_name: str = None
@@ -495,7 +452,6 @@ class MaterializationClient(ClientBase):
         meta = self.get_version_metadata(version=version, datastack_name=datastack_name)
         return convert_timestamp(meta["time_stamp"])
 
-    @cached(cache=_versions_metadata_cache, key=_versions_metadata_key)
     def get_versions_metadata(self, datastack_name=None, expired=False) -> list[dict]:
         """Get the metadata for all the versions that are presently available and valid
 
@@ -518,14 +474,24 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         url = self._endpoints["versions_metadata"].format_map(endpoint_mapping)
         query_args = {"expired": expired}
-        response = self.session.get(url, params=query_args)
-        d = handle_response(response)
-        for md in d:
-            md["time_stamp"] = convert_timestamp(md["time_stamp"])
-            md["expires_on"] = convert_timestamp(md["expires_on"])
-        return d
 
-    @cached(cache=_table_metadata_cache, key=_table_metadata_key)
+        def _fetch():
+            response = self.session.get(url, params=query_args)
+            d = handle_response(response)
+            for md in d:
+                md["time_stamp"] = convert_timestamp(md["time_stamp"])
+                md["expires_on"] = convert_timestamp(md["expires_on"])
+            return d
+
+        key = servermeta.datastack_key(
+            servermeta.CATEGORY_MAT_VERSIONS_METADATA,
+            self._server_address,
+            datastack_name,
+            self.session.headers,
+            extra=(bool(expired),),
+        )
+        return servermeta.get_or_fetch(key, _fetch)
+
     def get_table_metadata(
         self,
         table_name: str,
@@ -561,16 +527,25 @@ class MaterializationClient(ClientBase):
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["table_name"] = table_name
         endpoint_mapping["version"] = version
-
         url = self._endpoints["metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
-        metadata_d = handle_response(response, log_warning=log_warning)
-        vx = metadata_d.pop("voxel_resolution_x", None)
-        vy = metadata_d.pop("voxel_resolution_y", None)
-        vz = metadata_d.pop("voxel_resolution_z", None)
-        metadata_d["voxel_resolution"] = [vx, vy, vz]
-        return metadata_d
+        def _fetch():
+            response = self.session.get(url)
+            metadata_d = handle_response(response, log_warning=log_warning)
+            vx = metadata_d.pop("voxel_resolution_x", None)
+            vy = metadata_d.pop("voxel_resolution_y", None)
+            vz = metadata_d.pop("voxel_resolution_z", None)
+            metadata_d["voxel_resolution"] = [vx, vy, vz]
+            return metadata_d
+
+        key = servermeta.datastack_key(
+            servermeta.CATEGORY_TABLE_METADATA,
+            self._server_address,
+            datastack_name,
+            self.session.headers,
+            extra=(int(version), table_name),
+        )
+        return servermeta.get_or_fetch(key, _fetch)
 
     def _format_query_components(
         self,
@@ -1932,7 +1907,6 @@ class MaterializationClient(ClientBase):
         return self._views
 
     @_check_version_compatibility(method_api_constraint=">=3.0.0")
-    @cached(cache=_tables_metadata_cache, key=_tables_metadata_key)
     def get_tables_metadata(
         self,
         datastack_name=None,
@@ -1963,17 +1937,26 @@ class MaterializationClient(ClientBase):
         endpoint_mapping = self.default_url_mapping
         endpoint_mapping["datastack_name"] = datastack_name
         endpoint_mapping["version"] = version
-
         url = self._endpoints["all_tables_metadata"].format_map(endpoint_mapping)
 
-        response = self.session.get(url)
-        all_metadata = handle_response(response, log_warning=log_warning)
-        for metadata_d in all_metadata:
-            vx = metadata_d.pop("voxel_resolution_x", None)
-            vy = metadata_d.pop("voxel_resolution_y", None)
-            vz = metadata_d.pop("voxel_resolution_z", None)
-            metadata_d["voxel_resolution"] = [vx, vy, vz]
-        return all_metadata
+        def _fetch():
+            response = self.session.get(url)
+            all_metadata = handle_response(response, log_warning=log_warning)
+            for metadata_d in all_metadata:
+                vx = metadata_d.pop("voxel_resolution_x", None)
+                vy = metadata_d.pop("voxel_resolution_y", None)
+                vz = metadata_d.pop("voxel_resolution_z", None)
+                metadata_d["voxel_resolution"] = [vx, vy, vz]
+            return all_metadata
+
+        key = servermeta.datastack_key(
+            servermeta.CATEGORY_TABLES_METADATA,
+            self._server_address,
+            datastack_name,
+            self.session.headers,
+            extra=(int(version),),
+        )
+        return servermeta.get_or_fetch(key, _fetch)
 
     @_check_version_compatibility(
         kwarg_use_constraints={

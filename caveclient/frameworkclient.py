@@ -5,7 +5,6 @@ from typing import Optional
 
 from requests.exceptions import HTTPError
 
-from . import servermeta
 from .annotationengine import AnnotationClient
 from .auth import AuthClient, default_token_file
 from .chunkedgraph import ChunkedGraphClient
@@ -97,11 +96,10 @@ class CAVEclient(object):
         desired_resolution : Iterable[float]or None, optional
             If given, should be a list or array of the desired resolution you want queries returned in
             useful for materialization queries.
-        server_cache: bool, ServerMetadataRegistry, or None, optional
+        server_cache: bool or None, optional
             Whether this client should use the process-wide cache of server
-            metadata. None (the default) follows the global setting configured by
-            `caveclient.set_server_cache_defaults`; True or False forces it on or
-            off for this client alone.
+            metadata. None (the default) follows `caveclient.enable_server_cache`;
+            True or False forces it on or off for this client alone.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         write_server_cache: bool, optional
@@ -296,11 +294,10 @@ class CAVEclientGlobal(object):
             Sets the max number of threads in a requests pool, although this value will be exceeded if pool_block is set to False. Optional, uses requests defaults if None.
         pool_block: bool or None, optional
             If True, prevents the number of threads in a requests pool from exceeding the max size. Optional, uses requests defaults (False) if None.
-        server_cache: bool, ServerMetadataRegistry, or None, optional
+        server_cache: bool or None, optional
             Whether this client should use the process-wide cache of server
-            metadata. None (the default) follows the global setting configured by
-            `caveclient.set_server_cache_defaults`; True or False forces it on or
-            off for this client alone.
+            metadata. None (the default) follows `caveclient.enable_server_cache`;
+            True or False forces it on or off for this client alone.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
 
@@ -519,11 +516,10 @@ class CAVEclientFull(CAVEclientGlobal):
         desired_resolution : Iterable[float]or None, optional
             If given, should be a list or array of the desired resolution you want queries returned in
             useful for materialization queries.
-        server_cache: bool, ServerMetadataRegistry, or None, optional
+        server_cache: bool or None, optional
             Whether this client should use the process-wide cache of server
-            metadata. None (the default) follows the global setting configured by
-            `caveclient.set_server_cache_defaults`; True or False forces it on or
-            off for this client alone.
+            metadata. None (the default) follows `caveclient.enable_server_cache`;
+            True or False forces it on or off for this client alone.
         info_cache: dict or None, optional
             Pre-computed info cache, bypassing the lookup of datastack info from the info service. Should only be used in cases where this information is cached and thus repetitive lookups can be avoided.
         version:
@@ -559,12 +555,6 @@ class CAVEclientFull(CAVEclientGlobal):
         self.desired_resolution = desired_resolution
         self.local_server = self.info.local_server()
         self.auth.local_server = self.local_server
-        # Server-scoped cache entries name no datastack, so record which servers
-        # serve this one; that is what lets `invalidate(datastack=...)` find them.
-        registry, _ = servermeta.resolve(server_cache)
-        registry.note_datastack(datastack_name, self.local_server)
-        registry.note_datastack(datastack_name, self._server_address)
-
         av_info = self.info.get_aligned_volume_info()
         self._aligned_volume_name = av_info["name"]
 

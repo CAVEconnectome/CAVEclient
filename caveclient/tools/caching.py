@@ -1,34 +1,26 @@
 """Convenience constructor for a client that reuses cached server metadata.
 
-Retained for backwards compatibility. `CAVEclient` can now cache the same
-information -- and more -- process-wide; prefer configuring that directly:
+`CachedClient` is a one-line way to opt a single client into the process-wide
+cache described in `caveclient.servermeta` without changing the process-wide
+configuration. To turn it on for every client instead:
 
-    from caveclient import set_server_cache_defaults
+    from caveclient import enable_server_cache
 
-    set_server_cache_defaults(enabled=True)
-
-`CachedClient` remains a one-line way to get the same effect for a single
-client without changing process-wide configuration.
+    enable_server_cache()
 """
 
-from cachetools import TTLCache, keys
+from cachetools import keys
 
 from caveclient import CAVEclient
-from caveclient.servermeta import CATEGORY_INFO, MetaKey, get_registry
-
-#: Retained so that existing imports keep working. The authoritative store is
-#: now the process-wide registry in `caveclient.servermeta`.
-info_cache_cache = TTLCache(maxsize=32, ttl=3600)
 
 
 def server_key(datastack_name, server_address, **kwargs):
-    """Cache key for a datastack's info payload.
+    """Cache key for a datastack's info payload, ignoring the auth token.
 
-    Deliberately excludes the auth token, so that one lookup is shared by every
-    user in the process.
+    Retained for callers that imported it; the cache itself now lives in
+    `caveclient.servermeta`.
     """
-    key = keys.hashkey(datastack_name, server_address)
-    return key
+    return keys.hashkey(datastack_name, server_address)
 
 
 def stored_info_cache(datastack_name, server_address=None, **kwargs):
@@ -48,21 +40,26 @@ def stored_info_cache(datastack_name, server_address=None, **kwargs):
         `info_cache`.
     """
     kwargs.pop("info_cache", None)
-    kwargs.setdefault("server_cache", True)
+    kwargs["server_cache"] = True
     client = CAVEclient(
-        datastack_name=datastack_name,
-        server_address=server_address,
-        **kwargs,
+        datastack_name=datastack_name, server_address=server_address, **kwargs
     )
     return client.info.info_cache
 
 
 def CachedClient(datastack_name, server_address=None, **kwargs):
-    """Initialize a CAVE client that reuses cached info service information.
+    """Initialize a CAVE client that reuses cached server metadata.
 
-    Server metadata is cached with a one hour time to live and shared across
-    auth tokens, so building many clients for the same datastack performs the
-    underlying lookups once rather than once per client.
+    The info payload, API versions and service versions are cached process-wide
+    and shared across auth tokens, so building many
+    clients for the same datastack performs the underlying lookups once rather
+    than once per client.
+
+    Because the cache is shared, a caller whose token would be refused by the
+    info service still receives a client and the cached info payload. Use this
+    only where datastack authorization has already been checked, such as in a
+    service endpoint behind an authorization decorator; see the warning on
+    [caveclient.enable_server_cache][].
 
     Parameters
     ----------
@@ -80,40 +77,12 @@ def CachedClient(datastack_name, server_address=None, **kwargs):
 
     See Also
     --------
-    [caveclient.set_server_cache_defaults][]
+    [caveclient.enable_server_cache][]
     """
     kwargs.setdefault("server_cache", True)
-    kwargs["info_cache"] = stored_info_cache(
-        datastack_name, server_address=server_address, **kwargs
-    )
     return CAVEclient(
         datastack_name=datastack_name, server_address=server_address, **kwargs
     )
 
 
-def invalidate_cached_info(datastack_name=None, server_address=None) -> int:
-    """Drop cached info payloads so the next lookup goes upstream.
-
-    Returns
-    -------
-    int
-        Number of entries removed.
-    """
-    return get_registry().invalidate(
-        datastack=datastack_name,
-        server_address=server_address,
-        category=CATEGORY_INFO,
-    )
-
-
-__all__ = [
-    "CachedClient",
-    "stored_info_cache",
-    "server_key",
-    "info_cache_cache",
-    "invalidate_cached_info",
-]
-
-# Referenced so the re-exported key type stays importable for callers building
-# keys by hand against the registry.
-_META_KEY = MetaKey
+__all__ = ["CachedClient", "stored_info_cache", "server_key"]

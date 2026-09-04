@@ -537,8 +537,8 @@ class TestMatclient:
             match=[json_params_matcher(correct_query_data_with_desired_resolution)],
         )
 
-        meta_url = self.endpoints["metadata"].format_map(endpoint_mapping)
-        responses.add(responses.GET, url=meta_url, json=self.table_metadata)
+        # The synapse table's metadata was fetched once above and is now cached
+        # for this server, datastack and version; no second request is made.
         df = myclient.materialize.query_table(
             test_info["synapse_table"],
             filter_in_dict={"pre_pt_root_id": [500]},
@@ -549,7 +549,7 @@ class TestMatclient:
         )
         assert len(df) == 1000
         assert isinstance(df, pd.DataFrame)
-        assert df.attrs["table_id"] == self.table_metadata["id"]
+        assert df.attrs["table_id"] == self.synapse_metadata["id"]
 
         correct_metadata = [
             {

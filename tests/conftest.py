@@ -108,9 +108,9 @@ def reset_server_metadata_cache():
     Reset on both sides, so that a test dying part-way through cannot leave a
     populated cache or a non-default configuration behind for its successor.
     """
-    servermeta.reset_server_cache()
+    servermeta.disable_server_cache()
     yield
-    servermeta.reset_server_cache()
+    servermeta.disable_server_cache()
 
 
 @pytest.fixture(autouse=True)
@@ -122,13 +122,10 @@ def reset_session_defaults():
 
 @pytest.fixture()
 def server_cache_on():
-    """Opt one test into server metadata caching, with an isolated registry."""
-    registry = servermeta.ServerMetadataRegistry()
-    previous = servermeta.set_registry(registry)
-    servermeta.set_server_cache_defaults(enabled=True)
-    yield registry
-    servermeta.set_registry(previous)
-    servermeta.set_server_cache_defaults()
+    """Opt one test into server metadata caching."""
+    servermeta.enable_server_cache()
+    yield
+    servermeta.disable_server_cache()
 
 
 @pytest.fixture()

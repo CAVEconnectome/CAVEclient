@@ -4,58 +4,70 @@ title: Changelog
 ## 8.3.0 (unreleased)
 
 - Server metadata -- the software version a service reports, the API versions it
-    speaks, a datastack's info payload, and materialization version metadata -- can
-    now be cached process-wide, so that building many clients against the same
-    deployment performs each lookup once rather than once per client. This is aimed
-    at applications that construct a client per request.
+    speaks, and a datastack's info payload -- can now be cached process-wide, so
+    that building many clients against the same deployment performs each lookup
+    once rather than once per client. This is aimed at a service endpoint that
+    builds a client per request, or a worker that builds one per task.
 
-    Caching is **opt-in** and off by default. Enable it once at startup:
+    Caching of those construction-time lookups is **opt-in** and off by default.
+    Enable it once at startup:
 
     ```python
-    from caveclient import set_server_cache_defaults
+    from caveclient import enable_server_cache
 
-    set_server_cache_defaults(enabled=True)
+    enable_server_cache()
     ```
 
     Entries are shared across auth tokens, since they describe the deployment
-    rather than the user; pass `token_scoped_info=True` if tokens in one process
-    have different permissions on the same datastack. Concurrent lookups of the
-    same cold value are collapsed into a single request. Failed lookups are never
-    cached, so a momentary outage cannot pin a degraded answer.
+    rather than the user. **Enable this only where datastack authorization is
+    already checked before a client is built**, such as an endpoint behind an
+    authorization decorator that uses the client to reach other services: with
+    the cache warm, a caller whose token lacks access still gets a client and
+    can read the cached info payload and materialization version history. Pass
+    `token_scoped=True` if tokens in one process have different permissions on
+    the same datastack. Concurrent lookups of the same cold value are collapsed
+    into a single request. Failed lookups are never cached, so a momentary
+    outage cannot pin a degraded answer.
 
-    Use `caveclient.invalidate()` or `caveclient.refresh()` to force a cold rebuild
-    after a stale-metadata error rather than waiting out the time to live.
-    `caveclient.get_server_cache_defaults()` reports the current configuration, and
-    individual clients can override it with `CAVEclient(..., server_cache=True)`.
+    Two lifetimes cover everything: `ttl_slow` (twelve hours by default) for
+    values that change only on deployment or reconfiguration, and `ttl_fast`
+    (ten minutes) for the list of materialization versions. `disable_server_cache()`
+    turns caching off and drops entries. Use `caveclient.invalidate()` to drop
+    everything, or `invalidate(server_address=...)` for one server, after a
+    stale-metadata error rather than waiting out the lifetime.
+    `caveclient.refresh(client)` does the same and then rebuilds the client's
+    sub-clients, so API version negotiation is repeated; references held to the
+    old sub-client objects are not updated. Individual clients can override the
+    process-wide switch with `CAVEclient(..., server_cache=True)`.
 
 - **A service's version is now looked up on first use rather than at client
     construction.** Most code paths never read it, and fetching it eagerly cost a
     blocking request for every sub-client built. `server_version` returns exactly
     what it did before; only the timing of the request has changed. Constructing a
-    client for a datastack now issues one request instead of two. Pass
-    `set_server_cache_defaults(eager_server_version=True)` to restore the previous
-    behaviour of failing at construction when a server is unreachable.
+    client for a datastack now issues one request instead of two, and an
+    unreachable service is reported on first use rather than at construction.
 
 - `_api_versions` now goes through the configured session, so API negotiation
     during client construction respects the retry, backoff and connection-pool
     settings from `set_session_defaults`. It previously used a bare request with no
     timeout, which could block a caller indefinitely against an unresponsive host.
-    Both metadata requests now carry a timeout, configurable with
-    `set_server_cache_defaults(metadata_timeout=...)`.
+    Both metadata requests now carry a thirty second timeout
+    (`caveclient.servermeta.METADATA_TIMEOUT`).
 
-- `CachedClient` is reimplemented on the shared cache. Its signature and
-    behaviour are unchanged, and it now benefits from the same policy as the rest
-    of the client.
+- `CachedClient` is now simply a client built with `server_cache=True`. The
+    module-level `info_cache_cache` it used is gone; `server_key` and
+    `stored_info_cache` remain importable.
 
 - Fixed: a datastack's cached info payload was shared by reference between
     clients, so a request for a specific `image_mirror` overwrote the entry every
     other client was reading. Payloads are now copied, and mirror-specific requests
     bypass the cache.
 
-- Fixed: `get_table_metadata` and `get_versions_metadata` keyed their caches on
-    the client instance, pinning whole client graphs -- sessions included -- for
-    twelve hours. They are now keyed on the server, datastack and table, so the
-    entries are shared rather than leaked.
+- Fixed: `get_table_metadata`, `get_tables_metadata` and `get_versions_metadata`
+    keyed their twelve-hour caches on the client instance, pinning whole client
+    graphs -- sessions included -- for the lifetime of the entry. They now live in
+    the shared cache, keyed on server, datastack, version and table, and are
+    cached whether or not the cache is enabled; `ttl_slow` controls their lifetime.
 
 - Requires `cachetools >= 6.0.0`.
 

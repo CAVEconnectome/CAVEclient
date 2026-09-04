@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import datetime
 import json
@@ -19,9 +21,25 @@ from .session_config import _patch_session
 
 logger = logging.getLogger(__name__)
 
-#: Distinguishes "version not looked up yet" from "looked up, and the server
-#: has no version endpoint" -- the latter is a legitimate None.
-_UNSET = object()
+
+class _Unset:
+    """Distinguishes "version not looked up yet" from "looked up, and the server
+    has no version endpoint" -- the latter is a legitimate None.
+
+    Pickles by name, so a client that has not yet looked up its version is still
+    lazy after a round trip rather than holding an anonymous object.
+    """
+
+    __slots__ = ()
+
+    def __repr__(self):
+        return "_UNSET"
+
+    def __reduce__(self):
+        return "_UNSET"
+
+
+_UNSET = _Unset()
 
 
 class BaseEncoder(json.JSONEncoder):
@@ -58,21 +76,14 @@ def _raise_for_status(r, log_warning=True):
         reason = r.reason
 
     if 400 <= r.status_code < 500:
-        http_error_msg = "%s Client Error: %s for url: %s content: %s" % (
-            r.status_code,
-            reason,
-            r.url,
-            r.content,
-        )
+        http_error_msg = f"{r.status_code} Client Error: {reason} for url: {r.url} content: {r.content}"
         json_data = None
         if r.headers.get("content-type") == "application/json":
             json_data = r.json()
 
-        if r.status_code == 403:
-            if json_data:
-                if "error" in json_data.keys():
-                    if json_data["error"] == "missing_tos":
-                        webbrowser.open(json_data["data"]["tos_form_url"])
+        if r.status_code == 403 and json_data and "error" in json_data:
+            if json_data["error"] == "missing_tos":
+                webbrowser.open(json_data["data"]["tos_form_url"])
 
     elif 500 <= r.status_code < 600:
         try:
@@ -80,12 +91,7 @@ def _raise_for_status(r, log_warning=True):
             reason = d.get("message", reason)
         except json.decoder.JSONDecodeError:
             pass
-        http_error_msg = "%s Server Error: %s for url: %s content:%s" % (
-            r.status_code,
-            reason,
-            r.url,
-            r.content,
-        )
+        http_error_msg = f"{r.status_code} Server Error: {reason} for url: {r.url} content:{r.content}"
 
     if http_error_msg:
         raise requests.HTTPError(http_error_msg, response=r)
@@ -162,9 +168,8 @@ def _api_versions(
         return None
     url = url_base.format_map({server_name: server_address})
 
-    registry, enabled = servermeta.resolve(server_cache)
     if timeout is None:
-        timeout = registry.metadata_timeout
+        timeout = servermeta.METADATA_TIMEOUT
 
     def _fetch():
         session = _metadata_session(max_retries, pool_maxsize, pool_block)
@@ -180,7 +185,7 @@ def _api_versions(
     key = servermeta.MetaKey(
         servermeta.CATEGORY_API_VERSIONS, server_address, extra=(url,)
     )
-    return registry.get_or_fetch(key, _fetch, enabled=enabled)
+    return servermeta.get_or_fetch(key, _fetch, enabled=server_cache)
 
 
 def _api_endpoints(
@@ -274,12 +279,11 @@ class ClientBase(object):
         self._api_version = api_version
         self._endpoints = endpoints
         self._fc = over_client
-        self._server_meta, self._use_server_cache = servermeta.resolve(server_cache)
+        # None follows the process-wide setting; a bool forces it for this client.
+        self._use_server_cache = server_cache
         # Deferred: most call paths never read the server version, and fetching
         # it here costs a blocking request per sub-client constructed.
         self.__server_version = _UNSET
-        if self._server_meta.config.get("eager_server_version", False):
-            self.server_version
 
     @property
     def fc(self):
@@ -304,8 +308,7 @@ class ClientBase(object):
             return None
 
         url = endpoint.format_map(endpoint_mapping)
-        registry = self._server_meta
-        timeout = registry.metadata_timeout
+        timeout = servermeta.METADATA_TIMEOUT
 
         def _fetch():
             response = self.session.get(url, timeout=timeout)
@@ -317,7 +320,7 @@ class ClientBase(object):
         key = servermeta.MetaKey(
             servermeta.CATEGORY_SERVER_VERSION, self._server_address, extra=(url,)
         )
-        return registry.get_or_fetch(key, _fetch, enabled=self._use_server_cache)
+        return servermeta.get_or_fetch(key, _fetch, enabled=self._use_server_cache)
 
     @property
     def server_version(self) -> Optional[Version]:
@@ -365,7 +368,7 @@ class ClientBaseWithDataset(ClientBase):
         over_client=None,
         server_cache=None,
     ):
-        super(ClientBaseWithDataset, self).__init__(
+        super().__init__(
             server_address,
             auth_header,
             api_version,
@@ -401,7 +404,7 @@ class ClientBaseWithDatastack(ClientBase):
         over_client=None,
         server_cache=None,
     ):
-        super(ClientBaseWithDatastack, self).__init__(
+        super().__init__(
             server_address,
             auth_header,
             api_version,

@@ -10,11 +10,11 @@ title: Configuration
     options:
         show_root_heading: true
 
-::: caveclient.set_server_cache_defaults
+::: caveclient.enable_server_cache
     options:
         show_root_heading: true
 
-::: caveclient.get_server_cache_defaults
+::: caveclient.disable_server_cache
     options:
         show_root_heading: true
 
