@@ -25,7 +25,7 @@ import os
 import threading
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Mapping, Optional, Tuple
 
 from cachetools import TTLCache, cached
 
@@ -429,7 +429,7 @@ class ServerMetadataRegistry:
 _SALT = os.urandom(16)
 
 
-def token_fingerprint(headers) -> str:
+def token_fingerprint(headers: Optional[Mapping]) -> str:
     """An opaque, non-reversible stand-in for an auth token, safe to use in a key."""
     value = (headers or {}).get("Authorization")
     if not value:
@@ -456,7 +456,9 @@ def set_registry(registry: Optional[ServerMetadataRegistry]) -> ServerMetadataRe
     return previous
 
 
-def resolve(server_cache=None, registry=None):
+def resolve(
+    server_cache=None, registry: Optional[ServerMetadataRegistry] = None
+) -> tuple:
     """Resolve a per-client `server_cache` argument to (registry, enabled).
 
     `server_cache` may be None (follow the process-wide setting), a bool (force
@@ -498,7 +500,12 @@ def invalidate(
     )
 
 
-def refresh(client=None, datastack=None, server_address=None, category=None) -> int:
+def refresh(
+    client=None,
+    datastack: Optional[str] = None,
+    server_address: Optional[str] = None,
+    category: Optional[str] = None,
+) -> int:
     """Drop cached metadata and, given a client, immediately re-prime it.
 
     Invalidation alone cannot refetch, because the registry holds no credentials.
