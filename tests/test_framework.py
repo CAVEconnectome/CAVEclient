@@ -5,6 +5,11 @@ from pytest import raises as assert_raises
 from responses.matchers import query_param_matcher
 
 from caveclient import CAVEclient, endpoints, set_session_defaults
+from caveclient.tools.testing import (
+    TEST_LOCAL_SERVER,
+    CAVEclientMock,
+    default_info,
+)
 
 from .conftest import (
     datastack_dict,
@@ -215,3 +220,15 @@ class TestFrameworkClient:
             504,
             505,
         )
+
+
+@responses.activate
+def test_segmentation_source_trailing_slash():
+    """A trailing slash in the info file's segmentation source should not
+    produce an empty chunkedgraph table name (issue #302)."""
+    info = default_info(TEST_LOCAL_SERVER)
+    info["segmentation_source"] = (
+        "graphene://https://local.cave.com/segmentation/table/test_table/"
+    )
+    client = CAVEclientMock(info_file=info, chunkedgraph=True)
+    assert client.chunkedgraph.table_name == "test_table"
