@@ -592,7 +592,7 @@ class CAVEclientFull(CAVEclientGlobal):
         """
         if self._chunkedgraph is None:
             seg_source = self.info.segmentation_source()
-            table_name = seg_source.split("/")[-1]
+            table_name = seg_source.rstrip("/").split("/")[-1]
 
             self._chunkedgraph = ChunkedGraphClient(
                 table_name=table_name,
@@ -687,7 +687,7 @@ class CAVEclientFull(CAVEclientGlobal):
         """
         if self._l2cache is None:
             seg_source = self.info.segmentation_source()
-            table_name = seg_source.split("/")[-1]
+            table_name = seg_source.rstrip("/").split("/")[-1]
 
             self._l2cache = L2CacheClient(
                 server_address=self.local_server,
