@@ -1,8 +1,10 @@
 import itertools
 import json
 import logging
+import random
 import re
 import textwrap
+import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -36,6 +38,16 @@ SERVER_KEY = "me_server_address"
 
 DEFAULT_COMPRESSION = "zstd"
 
+# A frozen-version query whose filter_in_dict lists more values than this in one column is
+# sent as several requests of this many values each, QUERY_MAX_WORKERS at a time, and the
+# results concatenated. Measured on minnie65 v1926 synapses_pni_2 (2026-11-10) with the server
+# reading Delta Lake exports: 40 values x 16 workers took 3,125 neurons from 52 s (10 x 8) to
+# 15 s; one request per query is bound by a single response stream.
+DEFAULT_QUERY_CHUNK_SIZE = 40
+DEFAULT_QUERY_MAX_WORKERS = 16
+# a chunk refused by the server's rate limit (HTTP 429) is retried after a pause, this often
+QUERY_CHUNK_RATE_LIMIT_RETRIES = 12
+
 
 def deserialize_query_response(response):
     """Deserialize pyarrow responses"""
@@ -56,6 +68,15 @@ def deserialize_query_response(response):
         raise ValueError(
             f"Unknown response type: {response.headers.get('Content-Type')}"
         )
+
+
+def _retry_after(response, attempt):
+    """Seconds to wait before retrying a rate-limited request: the server's Retry-After if
+    it sent one, else 5-10 s growing with the attempt (capped at 60)."""
+    try:
+        return float(response.headers["Retry-After"])
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return min(60.0, (5 + random.random() * 5) * (1 + attempt / 2))
 
 
 def convert_position_columns(df, given_resolution, desired_resolution):
@@ -179,6 +200,8 @@ class MaterializationClient(ClientBase):
         pool_block=None,
         desired_resolution=None,
         over_client=None,
+        query_chunk_size=DEFAULT_QUERY_CHUNK_SIZE,
+        query_max_workers=DEFAULT_QUERY_MAX_WORKERS,
     ):
         """
         Parameters
@@ -202,6 +225,12 @@ class MaterializationClient(ClientBase):
         desired_resolution : Iterable[float] or None, optional
             If given, should be a list or array of the desired resolution you want queries returned in
             useful for materialization queries.
+        query_chunk_size : int or None, optional
+            A query_table (or synapse_query) of a materialized version whose filter_in_dict
+            lists more than this many values for a column is split into requests of this many
+            values, run in parallel; None or 0 sends every query as one request.
+        query_max_workers : int, optional
+            How many of those requests run at once.
         """
         if auth_client is None:
             auth_client = AuthClient()
@@ -235,6 +264,8 @@ class MaterializationClient(ClientBase):
         self._cg_client = cg_client
         self.synapse_table = synapse_table
         self.desired_resolution = desired_resolution
+        self.query_chunk_size = query_chunk_size
+        self.query_max_workers = query_max_workers
         self._tables = None
         self._views = None
 
@@ -640,6 +671,26 @@ class MaterializationClient(ClientBase):
             suffix_map = None
         return tables, suffix_map
 
+    @staticmethod
+    def _query_chunks(filter_in_dict, chunk_size, allowed):
+        """(column, [values, ...]) to split the query on, or None for one request: the
+        filter_in_dict column with the most distinct values, if more than chunk_size."""
+        if not allowed or not chunk_size or not filter_in_dict:
+            return None
+        best = None
+        for column, values in filter_in_dict.items():
+            if isinstance(values, (str, bytes)) or not hasattr(values, "__len__"):
+                continue
+            unique = list(dict.fromkeys(np.asarray(values).tolist()))
+            if best is None or len(unique) > len(best[1]):
+                best = (column, unique)
+        if best is None or len(best[1]) <= chunk_size:
+            return None
+        column, unique = best
+        return column, [
+            unique[i : i + chunk_size] for i in range(0, len(unique), chunk_size)
+        ]
+
     @_check_version_compatibility(
         kwarg_use_constraints={
             "filter_greater_dict": ">=4.34.4",
@@ -676,6 +727,8 @@ class MaterializationClient(ClientBase):
         get_counts: bool = False,
         random_sample: int = None,
         log_warning: bool = True,
+        chunk_size: Optional[int] = None,
+        max_workers: Optional[int] = None,
     ) -> Union[pd.DataFrame, dict]:
         """Generic query on materialization tables
 
@@ -744,6 +797,14 @@ class MaterializationClient(ClientBase):
             annotations
         log_warning : bool, optional
             Whether to log warnings, by default True
+        chunk_size : int, optional
+            Split a filter_in_dict list longer than this into requests of this many values,
+            run in parallel and concatenated (the same rows: the chunks are disjoint). By
+            default the client's query_chunk_size; 0 sends one request. Not used with a
+            timestamp, offset, limit, random_sample, get_counts or return_df=False. Each
+            request is subject to the server's row limit on its own.
+        max_workers : int, optional
+            How many chunk requests run at once; by default the client's query_max_workers.
 
         Returns
         -------
@@ -753,6 +814,65 @@ class MaterializationClient(ClientBase):
 
         if desired_resolution is None:
             desired_resolution = self.desired_resolution
+        chunks = self._query_chunks(
+            filter_in_dict,
+            self.query_chunk_size if chunk_size is None else chunk_size,
+            timestamp is None
+            and return_df
+            and not get_counts
+            and offset is None
+            and limit is None
+            and random_sample is None,
+        )
+        if chunks is not None:
+            column, parts = chunks
+
+            def query_part(values):
+                for attempt in range(QUERY_CHUNK_RATE_LIMIT_RETRIES + 1):
+                    try:
+                        return self.query_table(
+                            table,
+                            filter_in_dict={**filter_in_dict, column: values},
+                            filter_out_dict=filter_out_dict,
+                            filter_equal_dict=filter_equal_dict,
+                            filter_greater_dict=filter_greater_dict,
+                            filter_less_dict=filter_less_dict,
+                            filter_greater_equal_dict=filter_greater_equal_dict,
+                            filter_less_equal_dict=filter_less_equal_dict,
+                            filter_spatial_dict=filter_spatial_dict,
+                            filter_regex_dict=filter_regex_dict,
+                            select_columns=select_columns,
+                            datastack_name=datastack_name,
+                            split_positions=True,
+                            materialization_version=materialization_version,
+                            metadata=metadata,
+                            merge_reference=merge_reference,
+                            desired_resolution=desired_resolution,
+                            log_warning=log_warning,
+                            chunk_size=0,
+                        )
+                    except HTTPError as e:
+                        status = getattr(e.response, "status_code", None)
+                        if status != 429 or attempt == QUERY_CHUNK_RATE_LIMIT_RETRIES:
+                            raise
+                        time.sleep(_retry_after(e.response, attempt))
+
+            workers = self.query_max_workers if max_workers is None else max_workers
+            with ThreadPoolExecutor(max_workers=max(1, min(workers, len(parts)))) as ex:
+                frames = list(ex.map(query_part, parts))
+            df = pd.concat(frames, ignore_index=True)
+            if metadata:
+                attrs = dict(frames[0].attrs)
+                attrs["filters"] = {
+                    **attrs.get("filters", {}),
+                    "inclusive": json.loads(
+                        json.dumps(filter_in_dict, cls=BaseEncoder)
+                    ),
+                }
+                df.attrs = attrs
+            if split_positions:
+                return df
+            return concatenate_position_columns(df, inplace=True)
         if timestamp is not None:
             if materialization_version is not None:
                 raise ValueError("cannot specify timestamp and materialization version")
@@ -1644,6 +1764,8 @@ class MaterializationClient(ClientBase):
         synapse_table: str = None,
         datastack_name: str = None,
         metadata: bool = True,
+        chunk_size: Optional[int] = None,
+        max_workers: Optional[int] = None,
     ) -> pd.DataFrame:
         """Convenience method for querying synapses.
 
@@ -1686,6 +1808,12 @@ class MaterializationClient(ClientBase):
             `version`, which defaults to the most recent version.
         metadata:
             Whether to attach metadata to dataframe in the df.attr dictionary.
+        chunk_size:
+            Split pre_ids or post_ids lists longer than this into parallel requests (see
+            query_table); by default the client's query_chunk_size, 0 for one request.
+        max_workers:
+            How many of those requests run at once; by default the client's
+            query_max_workers.
 
         Returns
         -------
@@ -1735,6 +1863,8 @@ class MaterializationClient(ClientBase):
             datastack_name=datastack_name,
             metadata=metadata,
             merge_reference=False,
+            chunk_size=chunk_size,
+            max_workers=max_workers,
         )
 
         if metadata:

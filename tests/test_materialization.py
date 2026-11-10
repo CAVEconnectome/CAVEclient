@@ -1,5 +1,6 @@
 import copy
 import datetime
+import json
 import textwrap
 from io import BytesIO
 from urllib.parse import urlencode
@@ -463,6 +464,73 @@ class TestMatclient:
                 pt_root_id=[123, 456], target_id=271700
             )
             qry.query()
+
+    @responses.activate
+    def test_query_table_splits_long_in_lists(self, myclient, mocker):
+        """A filter_in_dict list longer than query_chunk_size goes out as parallel requests
+        of disjoint chunks; the result holds every row once, and a 429 is retried."""
+        endpoint_mapping = self.default_mapping
+        api_versions_url = chunkedgraph_endpoints_common["get_api_versions"].format_map(
+            endpoint_mapping
+        )
+        responses.add(responses.GET, url=api_versions_url, json=[0, 1], status=200)
+        responses.add(
+            responses.GET,
+            url=self.endpoints["versions"].format_map(endpoint_mapping),
+            json=[1],
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            url=self.endpoints["metadata"].format_map(endpoint_mapping),
+            json=self.table_metadata,
+        )
+        url = self.endpoints["simple_query"].format_map(endpoint_mapping)
+        table = test_info["synapse_table"]
+        sent, refused = [], []
+
+        def answer(request):
+            body = json.loads(request.body)
+            ids = body["filter_in_dict"][table]["post_pt_root_id"]
+            assert body["filter_equal_dict"] == {table: {"size": 100}}
+            if not refused:  # the first request is rate limited once
+                refused.append(ids)
+                return (429, {"Retry-After": "0"}, "too many requests")
+            sent.append(ids)
+            df = pd.DataFrame(
+                {
+                    "id": [i * 10 + k for i in ids for k in range(2)],
+                    "post_pt_root_id": [i for i in ids for _ in range(2)],
+                }
+            )
+            return (200, {"Content-Type": "data.arrow"}, serialize_dataframe(df))
+
+        responses.add_callback(responses.POST, url=url, callback=answer)
+        mat = myclient.materialize
+        mat.query_chunk_size = 4
+        roots = list(range(1, 11)) + [3, 4]  # repeats are queried once
+        df = mat.query_table(
+            table,
+            filter_in_dict={"post_pt_root_id": np.array(roots)},
+            filter_equal_dict={"size": 100},
+            split_positions=True,
+        )
+        assert sorted(len(c) for c in sent) == [2, 4, 4]
+        assert sorted(i for c in sent for i in c) == list(range(1, 11))
+        assert sorted(df.post_pt_root_id) == sorted(list(range(1, 11)) * 2)
+        assert df.id.is_unique
+        assert df.attrs["filters"]["inclusive"] == {"post_pt_root_id": roots}
+
+        # limit (or chunk_size=0) sends one request
+        sent.clear()
+        mat.query_table(
+            table,
+            filter_in_dict={"post_pt_root_id": roots},
+            filter_equal_dict={"size": 100},
+            split_positions=True,
+            chunk_size=0,
+        )
+        assert len(sent) == 1
 
     @responses.activate
     def test_matclient(self, myclient, mocker):
