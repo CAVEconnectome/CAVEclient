@@ -711,7 +711,11 @@ class CAVEclientFull(CAVEclientGlobal):
         """
         if self._catalog is None:
             ds_info = self.info.get_datastack_info()
-            catalog_server = ds_info.get("catalog_url") or self.local_server
+            # catalog_url includes the service's /catalog prefix; without one the
+            # catalog is assumed to be served under /catalog on the local server.
+            catalog_server = (
+                ds_info.get("catalog_url") or f"{self.local_server.rstrip('/')}/catalog"
+            )
             self._catalog = CatalogClient(
                 server_address=catalog_server,
                 auth_client=self.auth,

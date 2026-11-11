@@ -215,3 +215,35 @@ class TestFrameworkClient:
             504,
             505,
         )
+
+    def _add_info_responses(self, info):
+        responses.add(responses.GET, url=info_url, json=info, status=200)
+        responses.add(
+            responses.GET,
+            url=info_version_url,
+            json=str(server_versions["info_server_version"]),
+            status=200,
+        )
+
+    @responses.activate
+    def test_catalog_server_defaults_to_local_server_prefix(self):
+        self._add_info_responses(test_info)
+        client = CAVEclient(
+            datastack_dict["datastack_name"],
+            server_address=datastack_dict["global_server"],
+            write_server_cache=False,
+        )
+        assert (
+            client.catalog.server_address == f"{datastack_dict['local_server']}/catalog"
+        )
+
+    @responses.activate
+    def test_catalog_server_uses_catalog_url(self):
+        catalog_url = "https://catalog.cave.com/catalog"
+        self._add_info_responses({**test_info, "catalog_url": catalog_url})
+        client = CAVEclient(
+            datastack_dict["datastack_name"],
+            server_address=datastack_dict["global_server"],
+            write_server_cache=False,
+        )
+        assert client.catalog.server_address == catalog_url
