@@ -258,6 +258,55 @@ def test_delete_asset_returns_none():
 
 
 # ---------------------------------------------------------------------------
+# check_uri and token
+# ---------------------------------------------------------------------------
+
+
+@responses.activate
+def test_check_uri_reports_existing_asset():
+    responses.add(
+        responses.GET,
+        url=_url("check_uri"),
+        match=[
+            responses.matchers.query_param_matcher({"uri": "gs://bucket/path/"})
+        ],
+        json={
+            "available": False,
+            "reason": "duplicate_uri",
+            "existing_id": ASSET_ID,
+        },
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER, datastack_name=TEST_DATASTACK
+    )
+    result = client.check_uri("gs://bucket/path/")
+    assert result["available"] is False
+    assert result["existing_id"] == ASSET_ID
+
+
+@responses.activate
+def test_token_is_sent_as_bearer():
+    responses.add(
+        responses.GET,
+        url=_url("get_asset", asset_id=ASSET_ID),
+        match=[
+            responses.matchers.header_matcher(
+                {"Authorization": "Bearer service-token"}
+            )
+        ],
+        json=_asset_record(),
+        status=200,
+    )
+    client = CatalogClient(
+        server_address=TEST_LOCAL_SERVER,
+        datastack_name=TEST_DATASTACK,
+        token="service-token",
+    )
+    assert client.get_asset(ASSET_ID)["id"] == ASSET_ID
+
+
+# ---------------------------------------------------------------------------
 # get_access (task 5.1)
 # ---------------------------------------------------------------------------
 

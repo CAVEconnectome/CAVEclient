@@ -26,9 +26,17 @@ class CatalogClient(ClientBase):
         pool_maxsize: int = None,
         pool_block: bool = None,
         over_client=None,
+        token: str | None = None,
     ):
+        """
+        Parameters
+        ----------
+        token : str or None
+            Auth token to use instead of ``auth_client``, e.g. a service's own
+            token. Ignored if ``auth_client`` is given.
+        """
         if auth_client is None:
-            auth_client = AuthClient()
+            auth_client = AuthClient(token=token)
 
         auth_header = auth_client.request_header
         endpoints, api_version = _api_endpoints(
@@ -248,6 +256,24 @@ class CatalogClient(ClientBase):
         """
         url = self._build_url("get_asset", asset_id=asset_id)
         response = self.session.get(url)
+        return handle_response(response)
+
+    def check_uri(self, uri: str) -> dict:
+        """Check whether a URI is already registered.
+
+        Parameters
+        ----------
+        uri : str
+            Cloud storage URI.
+
+        Returns
+        -------
+        dict
+            ``{"available": bool, "reason": str or None, "existing_id": str or None}``.
+            ``existing_id`` is the asset already registered at ``uri``, if any.
+        """
+        url = self._build_url("check_uri")
+        response = self.session.get(url, params={"uri": uri})
         return handle_response(response)
 
     def delete_asset(self, asset_id: str) -> None:
